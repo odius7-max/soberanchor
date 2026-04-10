@@ -100,7 +100,7 @@ export default function DashboardShell({ userId, phone, profile, recentCheckIns,
             {activeTab === 'journal' && <JournalTab userId={userId} entries={journalEntries} />}
             {activeTab === 'meetings' && <MeetingsTab userId={userId} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} meetingAttendance={meetingAttendance} />}
             {activeTab === 'tasks' && <TasksTab readingAssignments={readingAssignments} hasSponsor={activeSponsor !== null} />}
-            {activeTab === 'privacy' && <PrivacyTab userId={userId} displayName={profile?.display_name ?? null} phone={phone} journalCount={journalCount} stepWorkCount={stepWorkCount} checkInsTotal={checkInsTotal} meetingsTotal={meetingsTotal} />}
+            {activeTab === 'privacy' && <PrivacyTab userId={userId} displayName={profile?.display_name ?? null} phone={phone} journalCount={journalCount} stepWorkCount={stepWorkCount} checkInsTotal={checkInsTotal} meetingsTotal={meetingsTotal} isAvailableSponsor={isSponsor} />}
           </>
         )}
 

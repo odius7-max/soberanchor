@@ -1,28 +1,29 @@
-# Recovery Tools Page + Homepage Card Swap
+# Auth CTAs, Sponsor Toggle, Conditional Sponsor Tab
 
 ## Plan
 
-### Change 1 — `src/app/page.tsx`
-- Replace last entry in `categories` array ("For Loved Ones") with a new "Track Your Journey" card pointing to `/my-recovery`
-- The card renders differently from the directory cards: teal border, pills (Check-ins, Journal, Steps, Sponsor) below the subtitle
-- Since the card needs different rendering, extract the grid render into inline conditional or add a `special` flag to the category object
-- Update tagline string from `"Your Anchor to Sober Living"` → `"Your Anchor to Living Sober"`
+### Change 1 — /my-recovery CTA buttons
+- The page is a server component. Create a tiny `"use client"` component `src/app/my-recovery/AuthCTAButtons.tsx` that calls `useAuth().openAuthModal()`.
+- Replace the two `<Link>` CTA buttons in `page.tsx` with this client component.
+- The bottom "Get started" CTA also becomes a button that opens the modal.
 
-### Change 2 — `src/app/my-recovery/page.tsx` (new file)
-- Static server component (no auth, pure marketing)
-- Four sections top to bottom:
-  1. **Hero** — centered, label + heading + subtext + two CTA buttons + fine print
-  2. **Two perspectives** — off-white bg, two side-by-side feature cards (recovery / sponsor)
-  3. **Trust & security** — white bg, 2×2 grid of trust items
-  4. **How it works** — off-white bg, three numbered horizontal steps
-- Use design system variables: `var(--font-display)`, `var(--navy)`, `var(--teal)`, `var(--gold)`, `bg-off-white`, `bg-warm-gray`, `border-border`, etc.
+### Change 2 — Sponsor toggle in PrivacyTab
+- Add `isAvailableSponsor: boolean` prop to `PrivacyTab`.
+- Add local state for it. On toggle: update `user_profiles.is_available_sponsor` via Supabase client, then call `router.refresh()` so the server component re-fetches.
+- Render the toggle row in the Account section with label, description, and an on/off pill button.
+- Update `DashboardShell.tsx` to pass `isSponsor` down to `PrivacyTab`.
+
+### Change 3 — Sponsor View tab conditional
+- Already implemented in `DashboardShell.tsx` (line 65 spreads the sponsor role only when `isSponsor === true`).
+- No code change needed — just needs the toggle (Change 2) to trigger `router.refresh()` to take effect.
 
 ## Todo
 
-- [ ] 1. Update `categories` array and tagline in `src/app/page.tsx`
-- [ ] 2. Update card grid render to handle the special "Track Your Journey" card (teal border + pills)
-- [ ] 3. Create `src/app/my-recovery/page.tsx` with all four sections
-- [ ] 4. Commit and push
+- [ ] 1. Create `src/app/my-recovery/AuthCTAButtons.tsx` client component
+- [ ] 2. Update `src/app/my-recovery/page.tsx` to use `AuthCTAButtons`
+- [ ] 3. Add sponsor toggle to `PrivacyTab.tsx` (new prop + Supabase update + router.refresh)
+- [ ] 4. Pass `isAvailableSponsor` prop to `PrivacyTab` in `DashboardShell.tsx`
+- [ ] 5. Commit and push
 
 ## Review
 <!-- filled in after completion -->

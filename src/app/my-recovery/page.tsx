@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { HeroCTAButtons, GetStartedButton } from "./AuthCTAButtons";
 
 const recoveryFeatures = [
   { icon: "📊", title: "Daily check-in", desc: "How are you feeling? Sober today? Quick mood + notes — takes 30 seconds." },
@@ -48,20 +48,7 @@ export default function MyRecoveryPage() {
             Daily accountability, personal journaling, step work tracking, and a
             secure connection with your sponsor — all in one place.
           </p>
-          <div className="flex gap-3 justify-center flex-wrap mb-4">
-            <Link
-              href="/dashboard"
-              className="bg-teal text-white font-semibold text-base px-8 py-3.5 rounded-xl hover:opacity-90 transition-opacity"
-            >
-              Sign up free
-            </Link>
-            <Link
-              href="/dashboard"
-              className="border-2 border-teal text-teal font-semibold text-base px-8 py-3.5 rounded-xl hover:bg-[var(--teal-10)] transition-colors"
-            >
-              Sign in
-            </Link>
-          </div>
+          <HeroCTAButtons />
           <p className="text-[13px] text-mid">
             Free. Private. No ads. Delete your data anytime.
           </p>
@@ -207,12 +194,7 @@ export default function MyRecoveryPage() {
             ))}
           </div>
           <div className="text-center mt-12">
-            <Link
-              href="/dashboard"
-              className="inline-block bg-navy text-white font-semibold px-8 py-3.5 rounded-xl hover:bg-navy-dark transition-colors"
-            >
-              Get started — it&apos;s free →
-            </Link>
+            <GetStartedButton />
           </div>
         </div>
       </section>

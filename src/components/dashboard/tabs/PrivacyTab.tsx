@@ -4,13 +4,25 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
-interface Props { userId: string; displayName: string | null; phone: string | null; journalCount: number; stepWorkCount: number; checkInsTotal: number; meetingsTotal: number }
+interface Props { userId: string; displayName: string | null; phone: string | null; journalCount: number; stepWorkCount: number; checkInsTotal: number; meetingsTotal: number; isAvailableSponsor: boolean }
 
-export default function PrivacyTab({ userId, displayName, phone, journalCount, stepWorkCount, checkInsTotal, meetingsTotal }: Props) {
+export default function PrivacyTab({ userId, displayName, phone, journalCount, stepWorkCount, checkInsTotal, meetingsTotal, isAvailableSponsor }: Props) {
   const router = useRouter()
   const [editingName, setEditingName] = useState(false)
   const [newName, setNewName] = useState(displayName ?? '')
   const [savingName, setSavingName] = useState(false)
+  const [sponsorEnabled, setSponsorEnabled] = useState(isAvailableSponsor)
+  const [savingSponsor, setSavingSponsor] = useState(false)
+
+  async function toggleSponsor() {
+    const next = !sponsorEnabled
+    setSavingSponsor(true)
+    const supabase = createClient()
+    await supabase.from('user_profiles').update({ is_available_sponsor: next }).eq('id', userId)
+    setSponsorEnabled(next)
+    setSavingSponsor(false)
+    router.refresh()
+  }
 
   async function saveName() {
     if (!newName.trim()) return
@@ -59,12 +71,37 @@ export default function PrivacyTab({ userId, displayName, phone, journalCount, s
           </div>
           <span className="rounded-full font-semibold" style={{ fontSize: '11px', padding: '3px 10px', background: 'var(--teal-10)', border: '1px solid var(--teal-20)', color: 'var(--teal)' }}>Verified</span>
         </div>
-        <div className="flex items-center justify-between py-3">
+        <div className="flex items-center justify-between py-3" style={{ borderBottom: '1px solid var(--warm-gray)' }}>
           <div>
             <div className="font-medium text-dark" style={{ fontSize: '14px' }}>Two-Factor Auth</div>
             <div className="text-mid" style={{ fontSize: '13px', marginTop: '2px' }}>Phone OTP — your phone is your second factor</div>
           </div>
           <span className="rounded-full font-semibold" style={{ fontSize: '11px', padding: '3px 10px', background: 'var(--teal-10)', border: '1px solid var(--teal-20)', color: 'var(--teal)' }}>🔐 Active</span>
+        </div>
+        <div className="flex items-center justify-between py-3">
+          <div style={{ flex: 1, paddingRight: '16px' }}>
+            <div className="font-medium text-dark" style={{ fontSize: '14px' }}>Available as a sponsor</div>
+            <div className="text-mid" style={{ fontSize: '13px', marginTop: '2px', lineHeight: 1.5 }}>Enable this when you&apos;re ready to sponsor others. This unlocks the Sponsor View tab on your dashboard.</div>
+          </div>
+          <button
+            onClick={toggleSponsor}
+            disabled={savingSponsor}
+            style={{
+              flexShrink: 0,
+              width: '44px', height: '24px', borderRadius: '12px', border: 'none', cursor: savingSponsor ? 'wait' : 'pointer',
+              background: sponsorEnabled ? '#2A8A99' : '#D1CCC7',
+              position: 'relative', transition: 'background 0.2s', opacity: savingSponsor ? 0.6 : 1,
+            }}
+            aria-label={sponsorEnabled ? 'Disable sponsor mode' : 'Enable sponsor mode'}
+          >
+            <span style={{
+              position: 'absolute', top: '3px',
+              left: sponsorEnabled ? '23px' : '3px',
+              width: '18px', height: '18px', borderRadius: '50%',
+              background: '#fff', transition: 'left 0.2s',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+            }} />
+          </button>
         </div>
       </div>
 
