@@ -1,4 +1,3 @@
-import Link from "next/link";
 import ProviderAuthButton from "./ProviderAuthButton";
 
 const stats = [
@@ -109,12 +108,12 @@ export default function ForProvidersPage() {
             professionals with high-intent visitors at the moment they need you most.
           </p>
           <div className="flex gap-3 justify-center flex-wrap mb-4">
-            <Link
+            <a
               href="#claim"
               className="bg-navy text-white font-semibold text-base px-8 py-3.5 rounded-xl hover:bg-navy-dark transition-colors"
             >
               Claim your listing — free forever
-            </Link>
+            </a>
             <ProviderAuthButton />
           </div>
           <p className="text-[13px] text-mid">
@@ -344,12 +343,12 @@ export default function ForProvidersPage() {
             Claim your free listing today, or reach out to learn about Pro and Premium options.
           </p>
           <div className="flex gap-3 justify-center flex-wrap mb-6">
-            <Link
+            <a
               href="#claim"
               className="bg-teal text-white font-semibold text-base px-8 py-3.5 rounded-xl hover:opacity-90 transition-opacity"
             >
               Claim your listing
-            </Link>
+            </a>
             <a
               href="mailto:providers@soberanchor.com"
               className="border-2 border-white text-white font-semibold text-base px-8 py-3.5 rounded-xl hover:bg-white/10 transition-colors"
