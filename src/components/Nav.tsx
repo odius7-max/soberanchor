@@ -74,7 +74,11 @@ export default function Nav() {
           <span className="w-px h-6 bg-[var(--border)] mx-2" />
           <Link
             href="/for-providers"
-            className="text-[13px] text-mid hover:text-teal px-3 py-1.5 transition-colors"
+            className={`text-[13px] px-3 py-1.5 transition-colors ${
+              pathname === "/for-providers"
+                ? "text-teal font-semibold"
+                : "text-mid hover:text-teal"
+            }`}
           >
             For Providers
           </Link>
@@ -176,7 +180,9 @@ export default function Nav() {
           <Link
             href="/for-providers"
             onClick={() => setMobileOpen(false)}
-            className="block py-3.5 text-base font-medium text-dark border-b border-[var(--border)]"
+            className={`block py-3.5 text-base font-medium border-b border-[var(--border)] ${
+              pathname === "/for-providers" ? "text-teal" : "text-dark"
+            }`}
           >
             For Providers
           </Link>

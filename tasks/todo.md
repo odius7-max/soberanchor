@@ -1,26 +1,30 @@
-# Gate Lead Form and Phone Behind Facility Claim Status
+# Rebuild For Providers Page
 
 ## Plan
 
-### `src/app/find/[id]/page.tsx` — only file that needs changes
+### Files to change
+1. `src/components/Nav.tsx` — add active state for `/for-providers` link (desktop + mobile)
+2. `src/app/for-providers/ProviderAuthButton.tsx` (new) — tiny `"use client"` component for the "Already listed? Sign in" button that calls `openAuthModal()`
+3. `src/app/for-providers/page.tsx` — full rebuild as a server component with 7 sections
 
-The facility is already fetched with `select("*")`, so `is_claimed`, `listing_tier`, `is_featured`, `phone`, and `website` are already available.
+### Section order
+1. Hero — centered, label + heading + subtext + two CTAs + fine print
+2. Value props — 3 stat cards + supporting paragraph
+3. How it works — 3 numbered steps horizontal
+4. What you get — 2 feature cards (free/pro) side-by-side
+5. Who this is for — 3×2 provider type grid
+6. Trust signals — 2×2 grid
+7. FAQ — details/summary accordion (no JS needed)
+8. Footer CTA — navy gradient, two buttons + email
 
-Changes:
-1. **Verified badge** — after the existing Featured badge, add a Verified badge when `is_claimed && (listing_tier === 'enhanced' || listing_tier === 'premium')`.
-2. **Phone in details section** — wrap the `📞` line so it only renders when `facility.is_claimed` is true.
-3. **Sidebar** — replace the always-shown lead form with a conditional:
-   - `is_claimed === true` → show existing lead form (no change)
-   - `is_claimed === false/null` → show unclaimed card: website button (if available), SAMHSA helpline, divider, claim CTA linking to `/for-providers`
-
-### `src/app/find/page.tsx` — no changes needed
-Phone numbers are not currently rendered on listing cards, so the "hide phone for unclaimed" requirement is already satisfied.
+### Nav note
+The "For Providers" link is outside the main `links` array. Add `pathname === '/for-providers'` check to show teal + font-semibold active state, both desktop and mobile.
 
 ## Todo
 
-- [ ] 1. Add Verified badge to detail page header
-- [ ] 2. Gate phone number in details section behind `is_claimed`
-- [ ] 3. Replace sidebar with conditional: lead form (claimed) vs unclaimed card
+- [ ] 1. Update Nav.tsx active state for For Providers link (desktop + mobile)
+- [ ] 2. Create ProviderAuthButton.tsx client component
+- [ ] 3. Rebuild for-providers/page.tsx with all 8 sections
 - [ ] 4. Commit and push
 
 ## Review
