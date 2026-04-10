@@ -10,7 +10,7 @@ export type Article = {
   body: string | null;
   pillar: string | null;
   slug: string | null;
-  article_categories: { categories: { name: string }[] | null }[];
+  article_categories: { categories: { name: string } | null }[];
 };
 
 type Props = {
@@ -26,9 +26,9 @@ export default function ResourcesClient({ articles, pillars }: Props) {
   const allCategories = Array.from(
     new Set(
       articles.flatMap((a) =>
-        a.article_categories.flatMap((ac) =>
-          (ac.categories ?? []).map((c) => c.name)
-        )
+        a.article_categories
+          .map((ac) => ac.categories?.name)
+          .filter(Boolean) as string[]
       )
     )
   );
@@ -38,9 +38,7 @@ export default function ResourcesClient({ articles, pillars }: Props) {
       activePillar === "All" || a.pillar === activePillar;
     const categoryMatch =
       !activeCategory ||
-      a.article_categories.some((ac) =>
-        (ac.categories ?? []).some((c) => c.name === activeCategory)
-      );
+      a.article_categories.some((ac) => ac.categories?.name === activeCategory);
     return pillarMatch && categoryMatch;
   });
 

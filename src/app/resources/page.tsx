@@ -9,7 +9,7 @@ export default async function ResourcesPage() {
     .select("id, title, excerpt, author, body, pillar, slug, article_categories(categories(name))")
     .order("published_at", { ascending: false });
 
-  const articles: Article[] = (data ?? []) as Article[];
+  const articles: Article[] = (data ?? []) as unknown as Article[];
 
   // Collect unique non-null pillars for filter chips
   const pillars = Array.from(
