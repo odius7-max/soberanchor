@@ -32,6 +32,7 @@ interface MeetingAttendance { id: string; meeting_name: string; fellowship_name:
 interface ReadingAssignment { id: string; title: string; source: string | null; is_completed: boolean; due_date: string | null; created_at: string }
 
 interface Props {
+  userId: string
   currentStep: number
   journalCount: number
   stepWorkCount: number
@@ -40,14 +41,28 @@ interface Props {
   meetingsTotal: number
   recentMeetings: MeetingAttendance[]
   readingAssignments: ReadingAssignment[]
+  activeSponsor: string | null
+  isAvailableSponsor: boolean
   onCheckIn: () => void
   onJournal: () => void
 }
 
-export default function OverviewTab({ currentStep, journalCount, stepWorkCount, recentCheckIns, meetingsThisWeek, meetingsTotal, recentMeetings, readingAssignments, onCheckIn, onJournal }: Props) {
+export default function OverviewTab({ userId, currentStep, journalCount, stepWorkCount, recentCheckIns, meetingsThisWeek, meetingsTotal, recentMeetings, readingAssignments, activeSponsor, isAvailableSponsor, onCheckIn, onJournal }: Props) {
   const router = useRouter()
   const step = STEPS[currentStep - 1]
   const [toggling, setToggling] = useState<string | null>(null)
+  const [sponsorAvailable, setSponsorAvailable] = useState(isAvailableSponsor)
+  const [togglingRole, setTogglingRole] = useState(false)
+
+  async function toggleSponsorAvailability() {
+    const next = !sponsorAvailable
+    setTogglingRole(true)
+    const supabase = createClient()
+    await supabase.from('user_profiles').update({ is_available_sponsor: next }).eq('id', userId)
+    setSponsorAvailable(next)
+    setTogglingRole(false)
+    router.refresh()
+  }
 
   async function toggleTask(id: string, current: boolean) {
     setToggling(id)
@@ -151,6 +166,67 @@ export default function OverviewTab({ currentStep, journalCount, stepWorkCount, 
             <div style={{ fontSize: '12px', color: 'var(--mid)', flexShrink: 0, marginLeft: '8px' }}>{fmtDate(m.attended_at)}</div>
           </div>
         ))}
+      </div>
+
+      {/* Role indicator */}
+      <div className={card}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold text-navy" style={{ fontSize: '15px' }}>🤝 Your Role</h3>
+        </div>
+
+        {/* Sponsee status */}
+        <div className="flex items-center justify-between py-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+          <div>
+            <div className="font-semibold text-dark" style={{ fontSize: '13px' }}>Sponsee</div>
+            <div className="text-mid" style={{ fontSize: '12px', marginTop: '2px', lineHeight: 1.4 }}>
+              {activeSponsor ? <>Working with <span className="font-semibold" style={{ color: 'var(--teal)' }}>{activeSponsor}</span></> : 'No active sponsor'}
+            </div>
+          </div>
+          <span style={{
+            fontSize: '11px', fontWeight: 700, padding: '3px 10px', borderRadius: '20px',
+            background: activeSponsor ? 'rgba(42,138,153,0.1)' : 'rgba(136,136,136,0.08)',
+            color: activeSponsor ? 'var(--teal)' : 'var(--mid)',
+            border: `1px solid ${activeSponsor ? 'rgba(42,138,153,0.2)' : 'var(--border)'}`,
+            whiteSpace: 'nowrap' as const,
+          }}>
+            {activeSponsor ? 'Active' : 'Unlinked'}
+          </span>
+        </div>
+
+        {/* Sponsor status */}
+        <div className="flex items-center justify-between py-3">
+          <div style={{ flex: 1, paddingRight: '12px' }}>
+            <div className="font-semibold text-dark" style={{ fontSize: '13px' }}>Sponsor</div>
+            <div className="text-mid" style={{ fontSize: '12px', marginTop: '2px', lineHeight: 1.4 }}>
+              {sponsorAvailable ? 'Accepting sponsees — Sponsor View unlocked' : 'Toggle on when you\'re ready to sponsor others'}
+            </div>
+          </div>
+          <button
+            onClick={toggleSponsorAvailability}
+            disabled={togglingRole}
+            aria-label={sponsorAvailable ? 'Disable sponsor availability' : 'Enable sponsor availability'}
+            style={{
+              flexShrink: 0,
+              width: '44px', height: '24px', borderRadius: '12px', border: 'none',
+              cursor: togglingRole ? 'wait' : 'pointer',
+              background: sponsorAvailable ? 'var(--teal)' : '#D1CCC7',
+              position: 'relative', transition: 'background 0.2s', opacity: togglingRole ? 0.6 : 1,
+            }}>
+            <span style={{
+              position: 'absolute', top: '3px',
+              left: sponsorAvailable ? '23px' : '3px',
+              width: '18px', height: '18px', borderRadius: '50%',
+              background: '#fff', transition: 'left 0.2s',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+            }} />
+          </button>
+        </div>
+
+        {!activeSponsor && (
+          <div className="rounded-lg mt-2" style={{ background: 'var(--warm-gray)', padding: '10px 12px', fontSize: '12px', color: 'var(--mid)', lineHeight: 1.5 }}>
+            Don&apos;t have a sponsor yet? Ask in your home group or use the meeting check-in feature to connect.
+          </div>
+        )}
       </div>
 
       {/* Tasks from Sponsor */}

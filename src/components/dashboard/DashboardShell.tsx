@@ -55,10 +55,6 @@ export default function DashboardShell({ userId, phone, profile, recentCheckIns,
   const sobrietyDate = profile?.sobriety_date ?? null
   const isSponsor = profile?.is_available_sponsor ?? false
 
-  const daysClean = sobrietyDate
-    ? Math.floor((Date.now() - new Date(sobrietyDate + 'T00:00:00').getTime()) / 86400000)
-    : null
-
   const roles = [
     { id: 'my' as Role, label: '⚓ My Dashboard' },
     { id: 'meetings' as Role, label: '📍 Meeting Check-in' },
@@ -82,7 +78,7 @@ export default function DashboardShell({ userId, phone, profile, recentCheckIns,
         {/* ── My Dashboard ── */}
         {role === 'my' && (
           <>
-            <DashboardBanner displayName={displayName} sobrietyDate={sobrietyDate} currentStep={currentStep} daysClean={daysClean} />
+            <DashboardBanner userId={userId} displayName={displayName} sobrietyDate={sobrietyDate} currentStep={currentStep} />
 
             {/* Tabs */}
             <div className="flex mb-5 overflow-x-auto" style={{ borderBottom: '2px solid var(--border)', scrollbarWidth: 'none', gap: '0' }}>
@@ -95,7 +91,7 @@ export default function DashboardShell({ userId, phone, profile, recentCheckIns,
             </div>
 
             {activeTab === 'overview' && (
-              <OverviewTab currentStep={currentStep} journalCount={journalCount} stepWorkCount={stepWorkCount} recentCheckIns={recentCheckIns} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} recentMeetings={meetingAttendance.slice(0,3)} readingAssignments={readingAssignments} onCheckIn={() => setCheckInOpen(true)} onJournal={() => setActiveTab('journal')} />
+              <OverviewTab userId={userId} currentStep={currentStep} journalCount={journalCount} stepWorkCount={stepWorkCount} recentCheckIns={recentCheckIns} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} recentMeetings={meetingAttendance.slice(0,3)} readingAssignments={readingAssignments} activeSponsor={activeSponsor} isAvailableSponsor={isSponsor} onCheckIn={() => setCheckInOpen(true)} onJournal={() => setActiveTab('journal')} />
             )}
             {activeTab === 'journal' && <JournalTab userId={userId} entries={journalEntries} />}
             {activeTab === 'meetings' && <MeetingsTab userId={userId} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} meetingAttendance={meetingAttendance} />}

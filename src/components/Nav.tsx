@@ -14,7 +14,7 @@ const links = [
 export default function Nav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, profile, loading, openAuthModal, signOut } = useAuth();
+  const { user, profile, isProvider, loading, openAuthModal, signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -116,21 +116,33 @@ export default function Nav() {
                     {dropdownOpen && (
                       <div
                         className="absolute right-0 top-full mt-2 rounded-xl overflow-hidden"
-                        style={{ background: "#fff", border: "1px solid var(--border)", boxShadow: "0 8px 32px rgba(0,51,102,0.1)", minWidth: "180px", zIndex: 60 }}
+                        style={{ background: "#fff", border: "1px solid var(--border)", boxShadow: "0 8px 32px rgba(0,51,102,0.1)", minWidth: "200px", zIndex: 60 }}
                       >
                         <div className="px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
                           <div className="font-semibold text-navy text-[14px]">{displayName ?? "My Account"}</div>
-                          {user.phone && (
-                            <div className="text-mid text-[12px] mt-0.5">•••••{user.phone.slice(-4)}</div>
+                          {isProvider && (
+                            <div className="text-[11px] font-semibold mt-1" style={{ color: "var(--teal)" }}>Provider + Member</div>
                           )}
                         </div>
                         <Link
                           href="/dashboard"
                           onClick={() => setDropdownOpen(false)}
-                          className="block px-4 py-3 text-[14px] text-dark hover:bg-warm-gray transition-colors"
+                          className="flex items-center justify-between px-4 py-3 text-[14px] text-dark hover:bg-warm-gray transition-colors"
                         >
                           My Recovery
+                          {pathname.startsWith("/dashboard") && <span className="text-[10px] font-bold text-teal">●</span>}
                         </Link>
+                        {isProvider && (
+                          <Link
+                            href="/providers/dashboard"
+                            onClick={() => setDropdownOpen(false)}
+                            className="flex items-center justify-between px-4 py-3 text-[14px] text-dark hover:bg-warm-gray transition-colors"
+                            style={{ borderTop: "1px solid var(--border)" }}
+                          >
+                            Provider Dashboard
+                            {pathname.startsWith("/providers") && <span className="text-[10px] font-bold text-teal">●</span>}
+                          </Link>
+                        )}
                         <button
                           onClick={handleSignOut}
                           className="block w-full text-left px-4 py-3 text-[14px] text-mid hover:bg-warm-gray transition-colors"
@@ -197,6 +209,16 @@ export default function Nav() {
                   >
                     My Recovery
                   </Link>
+                  {isProvider && (
+                    <Link
+                      href="/providers/dashboard"
+                      onClick={() => setMobileOpen(false)}
+                      className="block py-3.5 text-base font-semibold border-b border-[var(--border)]"
+                      style={{ color: "var(--navy)" }}
+                    >
+                      Provider Dashboard
+                    </Link>
+                  )}
                   <button
                     onClick={handleSignOut}
                     className="block py-3.5 text-base text-mid w-full text-left"

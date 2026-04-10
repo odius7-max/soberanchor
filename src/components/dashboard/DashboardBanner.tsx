@@ -1,5 +1,9 @@
 'use client'
 
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+
 const QUOTES = [
   { text: "One day at a time. That's all anyone can do.", attr: "The Program" },
   { text: "You don't have to see the whole staircase, just take the first step.", attr: "Martin Luther King Jr." },
@@ -26,19 +30,47 @@ function getGreeting() {
   return 'Good evening'
 }
 
+function computeDaysClean(dateStr: string | null): number | null {
+  if (!dateStr) return null
+  return Math.floor((Date.now() - new Date(dateStr + 'T00:00:00').getTime()) / 86400000)
+}
+
 interface Props {
+  userId: string
   displayName: string
   sobrietyDate: string | null
   currentStep: number
-  daysClean: number | null
 }
 
-export default function DashboardBanner({ displayName, sobrietyDate, currentStep, daysClean }: Props) {
+export default function DashboardBanner({ userId, displayName, sobrietyDate, currentStep }: Props) {
+  const router = useRouter()
+  const [localDate, setLocalDate] = useState(sobrietyDate)
+  const [editing, setEditing] = useState(false)
+  const [editValue, setEditValue] = useState(sobrietyDate ?? '')
+  const [saving, setSaving] = useState(false)
+
   const greeting = getGreeting()
+  const daysClean = computeDaysClean(localDate)
   const nextMilestone = daysClean !== null ? (MILESTONES.find(m => m > daysClean) ?? null) : null
   const daysToNext = nextMilestone !== null && daysClean !== null ? nextMilestone - daysClean : null
   const isMilestone = daysClean !== null && MILESTONES.includes(daysClean)
   const quote = QUOTES[(daysClean ?? 0) % QUOTES.length]
+
+  async function saveDate() {
+    if (!editValue) return
+    setSaving(true)
+    const supabase = createClient()
+    await supabase.from('user_profiles').update({ sobriety_date: editValue }).eq('id', userId)
+    setLocalDate(editValue)
+    setSaving(false)
+    setEditing(false)
+    router.refresh()
+  }
+
+  function cancelEdit() {
+    setEditValue(localDate ?? '')
+    setEditing(false)
+  }
 
   return (
     <div
@@ -55,10 +87,62 @@ export default function DashboardBanner({ displayName, sobrietyDate, currentStep
         <div className="font-semibold text-white" style={{ fontFamily: 'var(--font-display)', fontSize: '28px', letterSpacing: '-0.5px' }}>
           {greeting}, {displayName} 👋
         </div>
-        <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px', marginTop: '2px', marginBottom: '20px' }}>
-          {sobrietyDate
-            ? <>Sober since <span style={{ color: 'rgba(255,255,255,0.75)', fontWeight: 600 }}>{new Date(sobrietyDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span></>
-            : 'Add your sobriety date in settings to track your journey.'}
+
+        {/* Sobriety date line — editable */}
+        <div style={{ marginTop: '2px', marginBottom: '20px', minHeight: '22px' }}>
+          {editing ? (
+            <div className="flex items-center gap-2" style={{ marginTop: '6px' }}>
+              <input
+                type="date"
+                value={editValue}
+                onChange={e => setEditValue(e.target.value)}
+                max={new Date().toISOString().slice(0, 10)}
+                autoFocus
+                style={{
+                  background: 'rgba(255,255,255,0.15)', border: '1.5px solid rgba(255,255,255,0.4)',
+                  borderRadius: '8px', padding: '5px 10px', fontSize: '13px', color: '#fff',
+                  fontFamily: 'var(--font-body)', outline: 'none', colorScheme: 'dark',
+                }}
+                onKeyDown={e => { if (e.key === 'Enter') saveDate(); if (e.key === 'Escape') cancelEdit() }}
+              />
+              <button onClick={saveDate} disabled={saving}
+                style={{ fontSize: '12px', padding: '5px 14px', borderRadius: '7px', background: 'var(--teal)', border: 'none', color: '#fff', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-body)', opacity: saving ? 0.7 : 1 }}>
+                {saving ? '…' : 'Save'}
+              </button>
+              <button onClick={cancelEdit}
+                style={{ fontSize: '12px', padding: '5px 10px', borderRadius: '7px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.7)', fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 group" style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px' }}>
+              {localDate ? (
+                <>
+                  Sober since{' '}
+                  <span style={{ color: 'rgba(255,255,255,0.75)', fontWeight: 600 }}>
+                    {new Date(localDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                  </span>
+                </>
+              ) : (
+                <span>Add your sobriety date to track your journey.</span>
+              )}
+              <button
+                onClick={() => { setEditValue(localDate ?? ''); setEditing(true) }}
+                title="Edit sobriety date"
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px',
+                  borderRadius: '5px', color: 'rgba(255,255,255,0.35)',
+                  opacity: 0, transition: 'opacity 0.15s',
+                }}
+                className="group-hover:!opacity-100"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="flex items-end justify-between flex-wrap gap-4 mb-5">
@@ -74,7 +158,10 @@ export default function DashboardBanner({ displayName, sobrietyDate, currentStep
                 )}
               </div>
             ) : (
-              <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '14px' }}>No sobriety date set</div>
+              <button onClick={() => setEditing(true)}
+                style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', padding: '10px 18px', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
+                + Set sobriety date
+              </button>
             )}
           </div>
           <div className="flex gap-3 flex-wrap">

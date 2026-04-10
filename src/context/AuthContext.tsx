@@ -23,6 +23,7 @@ export interface UserProfile {
 interface AuthContextType {
   user: User | null
   profile: UserProfile | null
+  isProvider: boolean
   loading: boolean
   isAuthModalOpen: boolean
   openAuthModal: () => void
@@ -37,19 +38,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const supabase = createClient()
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [isProvider, setIsProvider] = useState(false)
   const [loading, setLoading] = useState(true)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const mounted = useRef(true)
 
   const fetchProfile = useCallback(
     async (userId: string) => {
-      const { data } = await supabase
-        .from('user_profiles')
-        .select('display_name, sobriety_date, primary_fellowship_id, current_step, is_available_sponsor')
-        .eq('id', userId)
-        .single()
-      if (mounted.current) setProfile(data ?? null)
-      return data
+      const [{ data: profileData }, { data: providerData }] = await Promise.all([
+        supabase
+          .from('user_profiles')
+          .select('display_name, sobriety_date, primary_fellowship_id, current_step, is_available_sponsor')
+          .eq('id', userId)
+          .single(),
+        supabase
+          .from('provider_accounts')
+          .select('id')
+          .eq('auth_user_id', userId)
+          .maybeSingle(),
+      ])
+      if (mounted.current) {
+        setProfile(profileData ?? null)
+        setIsProvider(!!providerData)
+      }
+      return profileData
     },
     [supabase]
   )
@@ -77,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         fetchProfile(session.user.id)
       } else {
         setProfile(null)
+        setIsProvider(false)
       }
     })
 
@@ -99,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [fetchProfile, supabase.auth])
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, isAuthModalOpen, openAuthModal, closeAuthModal, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, isProvider, loading, isAuthModalOpen, openAuthModal, closeAuthModal, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   )
