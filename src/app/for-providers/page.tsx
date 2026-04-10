@@ -1,4 +1,6 @@
 import ProviderAuthButton from "./ProviderAuthButton";
+import ClaimScrollButton from "./ClaimScrollButton";
+import ClaimSection from "./ClaimSection";
 
 const stats = [
   { value: "3-5x", label: "higher conversion rate than paid search" },
@@ -108,12 +110,9 @@ export default function ForProvidersPage() {
             professionals with high-intent visitors at the moment they need you most.
           </p>
           <div className="flex gap-3 justify-center flex-wrap mb-4">
-            <a
-              href="#claim"
-              className="bg-navy text-white font-semibold text-base px-8 py-3.5 rounded-xl hover:bg-navy-dark transition-colors"
-            >
+            <ClaimScrollButton className="bg-navy text-white font-semibold text-base px-8 py-3.5 rounded-xl hover:bg-navy-dark transition-colors">
               Claim your listing — free forever
-            </a>
+            </ClaimScrollButton>
             <ProviderAuthButton />
           </div>
           <p className="text-[13px] text-mid">
@@ -191,7 +190,7 @@ export default function ForProvidersPage() {
       </section>
 
       {/* ── What you get ── */}
-      <section id="claim" className="bg-off-white py-[72px] px-6">
+      <section className="bg-off-white py-[72px] px-6">
         <div className="max-w-[1120px] mx-auto">
           <p className="text-xs font-bold tracking-[2px] uppercase text-teal mb-2 text-center">
             What&apos;s Included
@@ -327,6 +326,8 @@ export default function ForProvidersPage() {
         </div>
       </section>
 
+      <ClaimSection />
+
       {/* ── Footer CTA ── */}
       <section
         className="py-[80px] px-6 text-center"
@@ -343,12 +344,9 @@ export default function ForProvidersPage() {
             Claim your free listing today, or reach out to learn about Pro and Premium options.
           </p>
           <div className="flex gap-3 justify-center flex-wrap mb-6">
-            <a
-              href="#claim"
-              className="bg-teal text-white font-semibold text-base px-8 py-3.5 rounded-xl hover:opacity-90 transition-opacity"
-            >
+            <ClaimScrollButton className="bg-teal text-white font-semibold text-base px-8 py-3.5 rounded-xl hover:opacity-90 transition-opacity">
               Claim your listing
-            </a>
+            </ClaimScrollButton>
             <a
               href="mailto:providers@soberanchor.com"
               className="border-2 border-white text-white font-semibold text-base px-8 py-3.5 rounded-xl hover:bg-white/10 transition-colors"
