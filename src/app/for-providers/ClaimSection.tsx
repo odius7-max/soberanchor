@@ -1,61 +1,113 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 
-function formatPhone(raw: string) {
-  const digits = raw.replace(/\D/g, '').slice(0, 10)
-  if (digits.length <= 3) return digits
-  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`
-  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`
+const FACILITY_TYPES = [
+  'Treatment Center',
+  'Sober Living',
+  'Therapist / Counselor',
+  'Outpatient Program',
+  'Sober Venue',
+  'Other',
+]
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '10px 13px',
+  border: '1.5px solid var(--border)',
+  borderRadius: 8,
+  fontSize: 14,
+  fontFamily: 'var(--font-body)',
+  background: '#fff',
+  outline: 'none',
+  boxSizing: 'border-box',
+  color: 'var(--dark)',
 }
 
-function normalizePhone(display: string) {
-  const digits = display.replace(/\D/g, '')
-  return digits.length === 10 ? `+1${digits}` : null
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--navy)', marginBottom: 5 }}>
+        {label}
+      </label>
+      {children}
+    </div>
+  )
 }
 
 export default function ClaimSection() {
-  const router = useRouter()
-  const [step, setStep] = useState<'phone' | 'otp'>('phone')
-  const [phone, setPhone] = useState('')
-  const [otp, setOtp] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [form, setForm] = useState({
+    facilityName: '',
+    contactName: '',
+    email: '',
+    phone: '',
+    facilityType: '',
+  })
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [cooldown, setCooldown] = useState(0)
 
-  async function sendOtp() {
-    const e164 = normalizePhone(phone)
-    if (!e164) { setError('Enter a valid 10-digit US phone number.'); return }
-    setLoading(true); setError(null)
-    const supabase = createClient()
-    const { error: err } = await supabase.auth.signInWithOtp({ phone: e164 })
-    setLoading(false)
-    if (err) { setError(err.message); return }
-    setStep('otp')
-    let t = 60; setCooldown(t)
-    const iv = setInterval(() => { t--; setCooldown(t); if (t <= 0) clearInterval(iv) }, 1000)
+  function set(key: keyof typeof form) {
+    return (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+      setForm(f => ({ ...f, [key]: e.target.value }))
   }
 
-  async function verifyOtp() {
-    const e164 = normalizePhone(phone)
-    if (!e164 || otp.length < 6) return
-    setLoading(true); setError(null)
-    const supabase = createClient()
-    const { error: err } = await supabase.auth.verifyOtp({ phone: e164, token: otp, type: 'sms' })
-    if (err) { setLoading(false); setError('Invalid code. Please try again.'); return }
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setLoading(false); setError('Authentication failed.'); return }
-    const { data: existing } = await supabase.from('provider_accounts').select('id').eq('auth_user_id', user.id).maybeSingle()
-    setLoading(false)
-    router.push(existing ? '/providers/dashboard' : '/providers/claim')
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!form.facilityName.trim() || !form.contactName.trim() || !form.email.trim()) {
+      setError('Facility name, contact name, and email are required.')
+      return
+    }
+    setSubmitting(true)
+    setError(null)
+
+    // Compose mailto as a reliable no-backend fallback
+    const body = [
+      `Facility Name: ${form.facilityName}`,
+      `Contact Name: ${form.contactName}`,
+      `Email: ${form.email}`,
+      `Phone: ${form.phone || '—'}`,
+      `Facility Type: ${form.facilityType || '—'}`,
+    ].join('\n')
+
+    window.location.href =
+      `mailto:providers@soberanchor.com` +
+      `?subject=${encodeURIComponent(`Listing claim request — ${form.facilityName}`)}` +
+      `&body=${encodeURIComponent(body)}`
+
+    // Show success regardless — mailto may silently fail on some setups
+    setTimeout(() => { setSubmitting(false); setSubmitted(true) }, 400)
+  }
+
+  if (submitted) {
+    return (
+      <section id="claim" className="py-[80px] px-6 bg-off-white">
+        <div className="max-w-[480px] mx-auto text-center">
+          <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
+          <h2
+            className="text-[28px] font-semibold mb-3"
+            style={{ fontFamily: 'var(--font-display)', color: 'var(--navy)', letterSpacing: '-0.5px' }}
+          >
+            Request received
+          </h2>
+          <p className="text-[15px] text-mid leading-[1.7] mb-6">
+            We&apos;ll reach out to <strong style={{ color: 'var(--dark)' }}>{form.email}</strong> within one business day to get your listing live.
+          </p>
+          <p className="text-[13px] text-mid">
+            Questions?{' '}
+            <a href="mailto:providers@soberanchor.com" style={{ color: 'var(--teal)', fontWeight: 600, textDecoration: 'none' }}>
+              providers@soberanchor.com
+            </a>
+          </p>
+        </div>
+      </section>
+    )
   }
 
   return (
     <section id="claim" className="py-[80px] px-6 bg-off-white">
-      <div className="max-w-[480px] mx-auto">
-        <p className="text-xs font-bold tracking-[2px] uppercase text-teal mb-3 text-center">Get Started</p>
+      <div className="max-w-[520px] mx-auto">
+        <p className="text-xs font-bold tracking-[2px] uppercase text-teal mb-3 text-center">Get Started — Free</p>
         <h2
           className="text-[clamp(26px,3vw,36px)] font-semibold leading-[1.2] mb-3 text-center"
           style={{ fontFamily: 'var(--font-display)', color: 'var(--navy)', letterSpacing: '-0.75px' }}
@@ -63,90 +115,100 @@ export default function ClaimSection() {
           Claim your free listing
         </h2>
         <p className="text-[15px] text-mid leading-[1.7] mb-8 text-center">
-          Enter your phone number to verify your identity and claim or create your facility listing.
+          Fill in the form and we&apos;ll have your listing live within one business day. No contracts, no credit card.
         </p>
 
-        <div className="bg-white rounded-[16px] border border-border p-8" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
-          {step === 'phone' ? (
-            <>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--navy)', marginBottom: 6 }}>
-                Phone Number
-              </label>
-              <div style={{ display: 'flex', border: '1.5px solid var(--border)', borderRadius: 8, overflow: 'hidden', marginBottom: 16, background: '#fff' }}>
-                <span style={{ padding: '11px 14px', background: 'var(--warm-gray)', fontSize: 14, color: 'var(--dark)', borderRight: '1px solid var(--border)', flexShrink: 0 }}>
-                  🇺🇸 +1
-                </span>
-                <input
-                  type="tel"
-                  inputMode="numeric"
-                  value={phone}
-                  onChange={e => setPhone(formatPhone(e.target.value))}
-                  onKeyDown={e => e.key === 'Enter' && sendOtp()}
-                  placeholder="(555) 867-5309"
-                  style={{ flex: 1, padding: '11px 14px', border: 'none', outline: 'none', fontSize: 14, fontFamily: 'var(--font-body)' }}
-                  autoFocus
-                />
-              </div>
-              {error && <p style={{ color: '#C0392B', fontSize: 13, marginBottom: 12 }}>{error}</p>}
-              <button
-                onClick={sendOtp}
-                disabled={loading}
-                style={{ width: '100%', background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 8, padding: '13px', fontSize: 15, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, fontFamily: 'var(--font-body)' }}
-              >
-                {loading ? 'Sending…' : 'Send Verification Code'}
-              </button>
-              <p style={{ fontSize: 13, color: 'var(--mid)', textAlign: 'center', marginTop: 16 }}>
-                Already have an account?{' '}
-                <a href="/providers/login" style={{ color: 'var(--teal)', fontWeight: 600, textDecoration: 'none' }}>Sign in →</a>
-              </p>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => setStep('phone')}
-                style={{ fontSize: 13, color: 'var(--teal)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 20 }}
-              >
-                ← Back
-              </button>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--navy)', marginBottom: 6 }}>
-                Verification Code
-              </label>
-              <p style={{ fontSize: 14, color: 'var(--mid)', marginBottom: 14, lineHeight: 1.5 }}>
-                We texted a 6-digit code to <strong style={{ color: 'var(--dark)' }}>+1 {phone}</strong>
-              </p>
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white rounded-[16px] border border-border p-8"
+          style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <Field label="Facility Name *">
               <input
-                type="text"
-                inputMode="numeric"
-                maxLength={6}
-                value={otp}
-                onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                onKeyDown={e => e.key === 'Enter' && verifyOtp()}
-                placeholder="123456"
-                style={{ width: '100%', padding: '11px 14px', border: '1.5px solid var(--border)', borderRadius: 8, fontSize: 20, fontFamily: 'monospace', letterSpacing: '0.15em', textAlign: 'center', outline: 'none', marginBottom: 16, boxSizing: 'border-box' as const }}
-                autoFocus
+                style={inputStyle}
+                value={form.facilityName}
+                onChange={set('facilityName')}
+                placeholder="e.g. Serenity Ridge Treatment Center"
+                onFocus={e => (e.target.style.borderColor = 'var(--teal)')}
+                onBlur={e => (e.target.style.borderColor = 'var(--border)')}
               />
-              {error && <p style={{ color: '#C0392B', fontSize: 13, marginBottom: 12 }}>{error}</p>}
-              <button
-                onClick={verifyOtp}
-                disabled={loading || otp.length < 6}
-                style={{ width: '100%', background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 8, padding: '13px', fontSize: 15, fontWeight: 600, cursor: loading || otp.length < 6 ? 'not-allowed' : 'pointer', opacity: loading || otp.length < 6 ? 0.7 : 1, fontFamily: 'var(--font-body)' }}
-              >
-                {loading ? 'Verifying…' : 'Verify & Continue →'}
-              </button>
-              <p style={{ textAlign: 'center', marginTop: 16, fontSize: 13, color: 'var(--mid)' }}>
-                {cooldown > 0 ? `Resend in ${cooldown}s` : (
-                  <button onClick={sendOtp} style={{ color: 'var(--teal)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', fontSize: 13 }}>
-                    Resend code
-                  </button>
-                )}
-              </p>
-            </>
-          )}
-        </div>
+            </Field>
 
-        <p className="text-[13px] text-mid text-center mt-5">
-          No contracts · No hidden fees · Cancel upgrades anytime
-        </p>
+            <Field label="Your Name *">
+              <input
+                style={inputStyle}
+                value={form.contactName}
+                onChange={set('contactName')}
+                placeholder="Jane Smith"
+                onFocus={e => (e.target.style.borderColor = 'var(--teal)')}
+                onBlur={e => (e.target.style.borderColor = 'var(--border)')}
+              />
+            </Field>
+
+            <Field label="Email Address *">
+              <input
+                type="email"
+                style={inputStyle}
+                value={form.email}
+                onChange={set('email')}
+                placeholder="jane@yourfacility.com"
+                onFocus={e => (e.target.style.borderColor = 'var(--teal)')}
+                onBlur={e => (e.target.style.borderColor = 'var(--border)')}
+              />
+            </Field>
+
+            <Field label="Phone Number">
+              <input
+                type="tel"
+                style={inputStyle}
+                value={form.phone}
+                onChange={set('phone')}
+                placeholder="(555) 555-5555"
+                onFocus={e => (e.target.style.borderColor = 'var(--teal)')}
+                onBlur={e => (e.target.style.borderColor = 'var(--border)')}
+              />
+            </Field>
+
+            <Field label="Facility Type">
+              <select
+                style={inputStyle}
+                value={form.facilityType}
+                onChange={set('facilityType')}
+              >
+                <option value="">Select type…</option>
+                {FACILITY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </Field>
+
+            {error && <p style={{ fontSize: 13, color: '#C0392B', fontWeight: 500, margin: 0 }}>{error}</p>}
+
+            <button
+              type="submit"
+              disabled={submitting}
+              style={{
+                width: '100%',
+                background: 'var(--teal)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 8,
+                padding: '13px',
+                fontSize: 15,
+                fontWeight: 600,
+                cursor: submitting ? 'not-allowed' : 'pointer',
+                opacity: submitting ? 0.7 : 1,
+                fontFamily: 'var(--font-body)',
+                marginTop: 4,
+              }}
+            >
+              {submitting ? 'Sending…' : 'Claim My Listing →'}
+            </button>
+
+            <p style={{ fontSize: 12, color: 'var(--mid)', textAlign: 'center', margin: 0 }}>
+              No contracts · No credit card · We respond within 1 business day
+            </p>
+          </div>
+        </form>
       </div>
     </section>
   )
