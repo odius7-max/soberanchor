@@ -1,5 +1,8 @@
 'use client'
 
+import { useState } from 'react'
+import AddSponseeModal from './AddSponseeModal'
+
 const STEPS = ['Powerlessness','Hope','Decision','Inventory','Admission','Readiness','Humility','Amends List','Amends','Daily Inventory','Spiritual Growth','Service']
 const MILESTONES = [7,14,21,30,60,90,120,180,270,365,500,730]
 const MOOD_META: Record<string,{emoji:string;label:string;color:string}> = {
@@ -19,6 +22,7 @@ function relDate(d:string|null):string {
 }
 
 export default function SponsorView({ sponsees }: Props) {
+  const [showAddModal, setShowAddModal] = useState(false)
   const pendingTotal = sponsees.reduce((s,sp)=>s+sp.pendingReviews,0)
   const checkInsToday = sponsees.filter(sp=>sp.lastCheckInDate===new Date().toISOString().slice(0,10)).length
   const needsAttention = sponsees.filter(sp=>sp.lastMood==='struggling'||sp.lastMood==='crisis'||sp.pendingReviews>0)
@@ -62,7 +66,7 @@ export default function SponsorView({ sponsees }: Props) {
 
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-bold text-navy" style={{fontSize:'15px'}}>Your Sponsees</h3>
-        <button className="font-semibold text-white rounded-lg hover:bg-navy-dark transition-colors" style={{fontSize:'13px',padding:'8px 16px',background:'var(--navy)',border:'none',cursor:'pointer'}}>+ Add Sponsee</button>
+        <button onClick={() => setShowAddModal(true)} className="font-semibold text-white rounded-lg hover:bg-navy-dark transition-colors" style={{fontSize:'13px',padding:'8px 16px',background:'var(--navy)',border:'none',cursor:'pointer'}}>+ Add Sponsee</button>
       </div>
 
       {sponsees.length===0?(
@@ -135,6 +139,8 @@ export default function SponsorView({ sponsees }: Props) {
           </div>
         </div>
       )}
+
+      {showAddModal && <AddSponseeModal onClose={() => setShowAddModal(false)} />}
     </div>
   )
 }

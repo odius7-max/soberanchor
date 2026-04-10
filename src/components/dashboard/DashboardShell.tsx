@@ -10,6 +10,8 @@ import PrivacyTab from './tabs/PrivacyTab'
 import SponsorView from './SponsorView'
 import MeetingCheckin from './MeetingCheckin'
 import CheckInModal from './CheckInModal'
+import PendingRequests from './PendingRequests'
+import type { PendingRequest } from './PendingRequests'
 
 type Role = 'my' | 'meetings' | 'sponsor'
 type Tab = 'overview' | 'journal' | 'meetings' | 'tasks' | 'privacy'
@@ -35,6 +37,7 @@ interface Props {
   checkInsTotal: number
   activeSponsor: string | null
   sponsees: Sponsee[]
+  pendingRequests: PendingRequest[]
 }
 
 const TABS: { id: Tab; label: string }[] = [
@@ -45,7 +48,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'privacy',  label: '🔒 Privacy' },
 ]
 
-export default function DashboardShell({ userId, phone, profile, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsor, sponsees }: Props) {
+export default function DashboardShell({ userId, phone, profile, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsor, sponsees, pendingRequests }: Props) {
   const [role, setRole] = useState<Role>('my')
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [checkInOpen, setCheckInOpen] = useState(false)
@@ -78,6 +81,7 @@ export default function DashboardShell({ userId, phone, profile, recentCheckIns,
         {/* ── My Dashboard ── */}
         {role === 'my' && (
           <>
+            <PendingRequests requests={pendingRequests} />
             <DashboardBanner userId={userId} displayName={displayName} sobrietyDate={sobrietyDate} currentStep={currentStep} />
 
             {/* Tabs */}

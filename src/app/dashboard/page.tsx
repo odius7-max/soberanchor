@@ -1,7 +1,9 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import DashboardShell from '@/components/dashboard/DashboardShell'
 import type { CheckIn, JournalEntry, MeetingAttendance, ReadingAssignment, Sponsee } from '@/components/dashboard/DashboardShell'
+import type { PendingRequest } from '@/components/dashboard/PendingRequests'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -23,6 +25,7 @@ export default async function DashboardPage() {
     meetingsTotalRes,
     checkInsTotalRes,
     sponsorRelRes,
+    pendingReqsRes,
   ] = await Promise.all([
     supabase.from('user_profiles').select('display_name,sobriety_date,current_step,is_available_sponsor').eq('id', userId).single(),
     supabase.from('check_ins').select('id,check_in_date,mood,notes,sober_today,meetings_attended').eq('user_id', userId).order('check_in_date', { ascending: false }).limit(4),
@@ -33,6 +36,7 @@ export default async function DashboardPage() {
     supabase.from('meeting_attendance').select('id', { count: 'exact', head: true }).eq('user_id', userId),
     supabase.from('check_ins').select('id', { count: 'exact', head: true }).eq('user_id', userId),
     supabase.from('sponsor_relationships').select('id,sponsor_id,users:sponsor_id(display_name:user_profiles(display_name))').eq('sponsee_id', userId).eq('status', 'active').maybeSingle(),
+    supabase.from('sponsor_relationships').select('id,sponsor_id,created_at').eq('sponsee_id', userId).eq('status', 'pending'),
   ])
 
   const profile = profileRes.data ?? null
@@ -59,6 +63,27 @@ export default async function DashboardPage() {
   lastSunday.setDate(now.getDate() - dayOfWeek)
   lastSunday.setHours(0, 0, 0, 0)
   const meetingsThisWeek = meetingAttendance.filter(m => new Date(m.attended_at) >= lastSunday).length
+
+  // Pending sponsor requests — resolve sponsor names via admin client (RLS blocks user_profiles cross-lookup)
+  let pendingRequests: PendingRequest[] = []
+  const rawPending = pendingReqsRes.data ?? []
+  if (rawPending.length > 0) {
+    const admin = createAdminClient()
+    const sponsorIds = rawPending.map((r: any) => r.sponsor_id)
+    const { data: sponsorProfiles } = await admin
+      .from('user_profiles')
+      .select('id, display_name')
+      .in('id', sponsorIds)
+    const nameMap: Record<string, string | null> = Object.fromEntries(
+      (sponsorProfiles ?? []).map((p: any) => [p.id, p.display_name])
+    )
+    pendingRequests = rawPending.map((r: any) => ({
+      id: r.id,
+      sponsorId: r.sponsor_id,
+      sponsorName: nameMap[r.sponsor_id] ?? 'Anonymous',
+      createdAt: r.created_at,
+    }))
+  }
 
   // Reading assignments (if has sponsor relationship)
   let readingAssignments: ReadingAssignment[] = []
@@ -128,6 +153,7 @@ export default async function DashboardPage() {
       checkInsTotal={checkInsTotal}
       activeSponsor={activeSponsor}
       sponsees={sponsees}
+      pendingRequests={pendingRequests}
     />
   )
 }
