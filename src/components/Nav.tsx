@@ -49,8 +49,8 @@ export default function Nav() {
         <Link href="/" className="flex items-center gap-2.5">
           <Image src="/logo-192.png" alt="SoberAnchor" width={32} height={32} />
           <span
-            className="text-[22px] font-bold tracking-[0.5px]"
-            style={{ fontFamily: "var(--font-display)", color: "var(--navy)" }}
+            className="text-[22px] font-bold"
+            style={{ fontFamily: "var(--font-display)", color: "var(--navy)", letterSpacing: "-0.25px" }}
           >
             SoberAnchor
           </span>

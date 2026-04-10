@@ -43,7 +43,7 @@ export default function LeadForm({ facilityId, facilityName }: Props) {
     return (
       <div className="bg-warm-gray rounded-[14px] p-7">
         <div style={{ fontSize: 40, textAlign: 'center', marginBottom: 12 }}>✅</div>
-        <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 22, textAlign: 'center', marginBottom: 8 }} className="text-navy">Request Sent</h3>
+        <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 22, letterSpacing: '-0.5px', textAlign: 'center', marginBottom: 8 }} className="text-navy">Request Sent</h3>
         <p className="text-mid text-sm text-center leading-relaxed">
           {facilityName} will be in touch shortly. If you need immediate help, call the SAMHSA National Helpline:{' '}
           <a href="tel:18006624357" className="text-teal font-semibold hover:underline">1-800-662-4357</a> (free, 24/7).
@@ -54,7 +54,7 @@ export default function LeadForm({ facilityId, facilityName }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="bg-warm-gray rounded-[14px] p-7">
-      <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 22, marginBottom: 4 }} className="text-navy font-semibold">
+      <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 22, letterSpacing: '-0.5px', marginBottom: 4 }} className="text-navy font-semibold">
         Get in Touch
       </h3>
       <p className="text-sm text-mid mb-5">Request information about this facility. Free and confidential.</p>

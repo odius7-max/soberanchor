@@ -163,7 +163,7 @@ export default function ListingTab({ facility, amenities: initAmenities, insuran
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 600, color: 'var(--navy)', marginBottom: 4 }}>My Listing</h1>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 600, color: 'var(--navy)', marginBottom: 4, letterSpacing: '-0.75px' }}>My Listing</h1>
           <p style={{ color: 'var(--mid)', fontSize: 15 }}>Edit how your facility appears in the SoberAnchor directory.</p>
         </div>
         {!editing ? (
@@ -189,8 +189,8 @@ export default function ListingTab({ facility, amenities: initAmenities, insuran
         {/* Left column */}
         <div>
           {/* Listing preview */}
-          <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: 24, marginBottom: 20 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 14 }}>Listing Preview</div>
+          <div className="card-hover" style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 24, marginBottom: 20 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 14 }}>Listing Preview</div>
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <div style={{ width: 100, height: 100, borderRadius: 12, background: 'rgba(42,138,153,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, flexShrink: 0 }}>🏥</div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -214,8 +214,8 @@ export default function ListingTab({ facility, amenities: initAmenities, insuran
           </div>
 
           {/* Edit form */}
-          <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: 24 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 18 }}>Facility Details</div>
+          <div className="card-hover" style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 24 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 18 }}>Facility Details</div>
             <FieldInput label="Facility Name" value={display.name} disabled={!editing} onChange={v => setForm(f => ({...f, name: v}))} />
             <FieldInput label="Description" value={display.description} disabled={!editing} multiline onChange={v => setForm(f => ({...f, description: v}))} />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -235,8 +235,8 @@ export default function ListingTab({ facility, amenities: initAmenities, insuran
         {/* Right column */}
         <div>
           {/* Plan */}
-          <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: 20, marginBottom: 14 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 12 }}>Your Plan</div>
+          <div className="card-hover" style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 20, marginBottom: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 12 }}>Your Plan</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--navy)', textTransform: 'capitalize' }}>{facility.listing_tier}</div>
@@ -252,8 +252,8 @@ export default function ListingTab({ facility, amenities: initAmenities, insuran
           </div>
 
           {/* Status */}
-          <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: 20, marginBottom: 14 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 12 }}>Listing Status</div>
+          <div className="card-hover" style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 20, marginBottom: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 12 }}>Listing Status</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {[
                 { label: 'Claimed', value: facility.is_claimed, yes: '✓ Yes', no: '✗ No' },
@@ -271,11 +271,11 @@ export default function ListingTab({ facility, amenities: initAmenities, insuran
           </div>
 
           {/* Services & Amenities */}
-          <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: 20, marginBottom: 14 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 12 }}>Services &amp; Amenities</div>
+          <div className="card-hover" style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 20, marginBottom: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 12 }}>Services &amp; Amenities</div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {amenities.map(a => (
-                <span key={a} style={{ background: 'var(--warm-gray)', border: '1px solid var(--border)', borderRadius: 20, padding: '4px 10px', fontSize: 12, fontWeight: 500, color: 'var(--dark)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                <span key={a} style={{ background: 'var(--warm-gray)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 20, padding: '4px 10px', fontSize: 12, fontWeight: 500, color: 'var(--dark)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                   {a}
                   {editing && (
                     <button onClick={() => setAmenities(prev => prev.filter(x => x !== a))}
@@ -300,11 +300,11 @@ export default function ListingTab({ facility, amenities: initAmenities, insuran
           </div>
 
           {/* Insurance */}
-          <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: 20 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 12 }}>Insurance Accepted</div>
+          <div className="card-hover" style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 20 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 12 }}>Insurance Accepted</div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {insurance.map(ins => (
-                <span key={ins} style={{ background: 'var(--warm-gray)', border: '1px solid var(--border)', borderRadius: 20, padding: '4px 10px', fontSize: 12, fontWeight: 500, color: 'var(--dark)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                <span key={ins} style={{ background: 'var(--warm-gray)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 20, padding: '4px 10px', fontSize: 12, fontWeight: 500, color: 'var(--dark)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                   {ins}
                   {editing && (
                     <button onClick={() => setInsurance(prev => prev.filter(x => x !== ins))}

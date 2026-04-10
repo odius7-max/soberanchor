@@ -52,7 +52,7 @@ export default function DashboardBanner({ displayName, sobrietyDate, currentStep
       <div aria-hidden="true" className="absolute pointer-events-none select-none" style={{ right: '-20px', top: '-20px', opacity: 0.03, fontSize: '200px', lineHeight: 1 }}>⚓</div>
 
       <div className="relative">
-        <div className="font-semibold text-white" style={{ fontFamily: 'var(--font-display)', fontSize: '26px' }}>
+        <div className="font-semibold text-white" style={{ fontFamily: 'var(--font-display)', fontSize: '28px', letterSpacing: '-0.5px' }}>
           {greeting}, {displayName} 👋
         </div>
         <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px', marginTop: '2px', marginBottom: '20px' }}>
@@ -65,7 +65,7 @@ export default function DashboardBanner({ displayName, sobrietyDate, currentStep
           <div>
             {daysClean !== null ? (
               <div className="flex items-baseline gap-3">
-                <span className="font-bold text-white" style={{ fontFamily: 'var(--font-display)', fontSize: '56px', lineHeight: 1 }}>{daysClean}</span>
+                <span className="font-bold text-white" style={{ fontFamily: 'var(--font-display)', fontSize: '56px', lineHeight: 1, letterSpacing: '-1.5px' }}>{daysClean}</span>
                 <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '16px' }}>days</span>
                 {isMilestone && (
                   <span className="rounded-full font-bold" style={{ fontSize: '12px', padding: '4px 12px', background: 'rgba(212,165,116,0.2)', border: '1px solid rgba(212,165,116,0.35)', color: '#D4A574' }}>
@@ -93,9 +93,9 @@ export default function DashboardBanner({ displayName, sobrietyDate, currentStep
           </div>
         </div>
 
-        <div className="rounded-xl" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)', padding: '16px 20px', marginBottom: '20px' }}>
-          <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '14px', fontStyle: 'italic', lineHeight: 1.65 }}>&ldquo;{quote.text}&rdquo;</div>
-          <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px', marginTop: '4px' }}>— {quote.attr}</div>
+        <div className="rounded-xl" style={{ background: 'rgba(255,255,255,0.05)', borderLeft: '3px solid rgba(212,165,116,0.4)', padding: '14px 18px', marginBottom: '20px' }}>
+          <div style={{ fontFamily: 'var(--font-display)', color: 'rgba(255,255,255,0.85)', fontSize: '17px', fontStyle: 'italic', lineHeight: 1.55, fontWeight: 500 }}>&ldquo;{quote.text}&rdquo;</div>
+          <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: '12px', marginTop: '6px', fontFamily: 'var(--font-body)' }}>— {quote.attr}</div>
         </div>
 
         <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>

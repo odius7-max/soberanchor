@@ -15,11 +15,18 @@
   --gold-10: rgba(212,165,116,0.1);
   --off-white: #FAFAF8;
   --warm-gray: #F5F3F0;
-  --border: #E8E4DF;
+  --border: rgba(0,0,0,0.08);
+  --border-warm: #E8E4DF;
   --mid: #888;
   --dark: #2C2C2C;
   --font-display: 'Cormorant Garamond', Georgia, serif;
   --font-body: 'Outfit', sans-serif;
+  /* Shadow tokens */
+  --shadow-card: 0 4px 18px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.027), 0 0.8px 3px rgba(0,0,0,0.02);
+  --shadow-feature: 0 8px 30px rgba(0,51,102,0.08);
+  --shadow-hero: 0 24px 80px rgba(0,51,102,0.15);
+  --shadow-button: 0 4px 12px rgba(0,51,102,0.2);
+  --shadow-gold: 0 4px 12px rgba(212,165,116,0.3);
 }
 
 @theme inline {
@@ -31,7 +38,7 @@
   --color-gold-light: #E8C9A8;
   --color-off-white: #FAFAF8;
   --color-warm-gray: #F5F3F0;
-  --color-border: #E8E4DF;
+  --color-border: rgba(0,0,0,0.08);
   --color-mid: #888888;
   --color-dark: #2C2C2C;
   --color-green: #27AE60;
@@ -51,6 +58,52 @@ body {
   background: rgba(42,138,153,0.2);
   color: var(--navy);
 }
+
+/* ── Card hover — multi-layer shadow stack ── */
+.card-hover {
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+.card-hover:hover {
+  box-shadow: var(--shadow-card);
+  transform: translateY(-2px);
+}
+
+/* ── Button hover lift ── */
+.btn-lift {
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.btn-lift:hover {
+  transform: translateY(-1px);
+}
+
+/* ── Section label — signature pattern ── */
+.section-label {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--teal);
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* ── Form inputs ── */
+.sa-input {
+  border: 1.5px solid rgba(0,0,0,0.08);
+  border-radius: 8px;
+  padding: 11px 14px;
+  font-size: 14px;
+  font-family: var(--font-body);
+  background: #fff;
+  color: var(--dark);
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.sa-input::placeholder { color: #a39e98; }
+.sa-input:focus { border-color: var(--teal); }
+.sa-input:disabled { background: var(--warm-gray); cursor: default; }
 
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(12px); }

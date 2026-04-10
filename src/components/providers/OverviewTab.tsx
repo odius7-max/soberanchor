@@ -20,11 +20,11 @@ function StatCard({ label, value, prev, icon }: { label:string; value:number; pr
   const pct = prev && prev > 0 ? Math.round(((value - prev) / prev) * 100) : null
   const up = pct !== null && pct >= 0
   return (
-    <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: '24px 20px', flex: '1 1 200px', minWidth: 180 }}>
+    <div className="card-hover" style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '24px 20px', flex: '1 1 200px', minWidth: 180 }}>
       <div style={{ fontSize: 13, color: 'var(--mid)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
         <span style={{ fontSize: 18 }}>{icon}</span> {label}
       </div>
-      <div style={{ fontSize: 36, fontWeight: 700, color: 'var(--navy)', fontFamily: 'var(--font-display)', lineHeight: 1 }}>{value}</div>
+      <div style={{ fontSize: 36, fontWeight: 700, color: 'var(--navy)', fontFamily: 'var(--font-display)', lineHeight: 1, letterSpacing: '-0.75px' }}>{value}</div>
       {pct !== null && (
         <div style={{ fontSize: 12, color: up ? '#27AE60' : '#E53935', marginTop: 6, fontWeight: 500 }}>
           {up ? '↑' : '↓'} {Math.abs(pct)}% vs last month
@@ -58,7 +58,7 @@ function StatusBadge({ status }: { status: string }) {
 export default function OverviewTab({ tier, facilityName, leadsThisMonth, leadsLastMonth, viewsThisMonth, viewsLastMonth, contactClicks, contactClicksLast, recentLeads, onGoToLeads, onGoToPlan }: Props) {
   return (
     <div>
-      <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 600, color: 'var(--navy)', marginBottom: 4 }}>Welcome back</h1>
+      <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 600, color: 'var(--navy)', marginBottom: 4, letterSpacing: '-0.75px' }}>Welcome back</h1>
       <p style={{ color: 'var(--mid)', fontSize: 15, marginBottom: 28 }}>Here&apos;s how <strong style={{ color: 'var(--dark)' }}>{facilityName}</strong> is performing this month.</p>
 
       {/* Stats */}
@@ -67,7 +67,7 @@ export default function OverviewTab({ tier, facilityName, leadsThisMonth, leadsL
         {tier !== 'basic' ? (
           <StatCard icon="📩" label="New Leads" value={leadsThisMonth} prev={leadsLastMonth} />
         ) : (
-          <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: '24px 20px', flex: '1 1 200px', minWidth: 180, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: 6 }}>
+          <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '24px 20px', flex: '1 1 200px', minWidth: 180, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: 6 }}>
             <div style={{ fontSize: 13, color: 'var(--mid)' }}>📩 Lead Capture</div>
             <button onClick={onGoToPlan} style={{ fontSize: 14, fontWeight: 600, color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>Upgrade to unlock →</button>
           </div>
@@ -94,17 +94,17 @@ export default function OverviewTab({ tier, facilityName, leadsThisMonth, leadsL
       {tier !== 'basic' ? (
         <>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--navy)', fontWeight: 600 }}>Recent Leads</h2>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--navy)', fontWeight: 600, letterSpacing: '-0.5px' }}>Recent Leads</h2>
             <button onClick={onGoToLeads} style={{ color: 'var(--teal)', fontWeight: 600, fontSize: 14, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>View all →</button>
           </div>
           {recentLeads.length === 0 ? (
-            <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: '32px', textAlign: 'center', color: 'var(--mid)', fontSize: 14 }}>
+            <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '32px', textAlign: 'center', color: 'var(--mid)', fontSize: 14 }}>
               No leads yet — your listing is live and ready to receive inquiries.
             </div>
           ) : (
-            <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden' }}>
+            <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, overflow: 'hidden' }}>
               {recentLeads.slice(0, 3).map((lead, i) => (
-                <div key={lead.id} style={{ padding: '16px 20px', borderBottom: i < Math.min(recentLeads.length, 3) - 1 ? '1px solid var(--border)' : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+                <div key={lead.id} style={{ padding: '16px 20px', borderBottom: i < Math.min(recentLeads.length, 3) - 1 ? '1px solid rgba(0,0,0,0.08)' : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
                   <div>
                     <div style={{ fontWeight: 600, fontSize: 15, color: 'var(--navy)', marginBottom: 2 }}>{lead.first_name ?? 'Anonymous'}</div>
                     <div style={{ fontSize: 13, color: 'var(--mid)' }}>

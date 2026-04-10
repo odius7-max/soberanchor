@@ -41,7 +41,7 @@ export default function Home() {
               </p>
               <h1
                 className="text-[clamp(36px,5vw,52px)] font-semibold leading-[1.1] mb-4"
-                style={{ fontFamily: "var(--font-display)", color: "var(--navy)" }}
+                style={{ fontFamily: "var(--font-display)", color: "var(--navy)", letterSpacing: "-1.5px" }}
               >
                 Find the right help,
                 <br />
@@ -76,7 +76,7 @@ export default function Home() {
                   <Link
                     key={c.title}
                     href={c.href}
-                    className={`bg-white rounded-[14px] p-[18px] hover:shadow-lg hover:-translate-y-0.5 transition-all ${
+                    className={`bg-white rounded-[14px] p-[18px] card-hover ${
                       c.special
                         ? "border-2 border-[var(--teal)]"
                         : "border border-border"
@@ -145,7 +145,7 @@ export default function Home() {
                   </p>
                   <h2
                     className="text-[26px] font-semibold mb-3"
-                    style={{ fontFamily: "var(--font-display)", color: "var(--navy)" }}
+                    style={{ fontFamily: "var(--font-display)", color: "var(--navy)", letterSpacing: "-0.5px" }}
                   >
                     Built from lived experience, not a boardroom.
                   </h2>
@@ -173,7 +173,7 @@ export default function Home() {
               </p>
               <h2
                 className="text-[clamp(28px,3.5vw,40px)] font-semibold leading-[1.15] mb-2.5"
-                style={{ fontFamily: "var(--font-display)", color: "var(--navy)" }}
+                style={{ fontFamily: "var(--font-display)", color: "var(--navy)", letterSpacing: "-1.0px" }}
               >
                 Guides for wherever you are.
               </h2>
@@ -205,14 +205,14 @@ export default function Home() {
                   <Link
                     key={a.title}
                     href="/resources"
-                    className="bg-white border border-border rounded-[14px] p-7 hover:shadow-lg hover:-translate-y-0.5 transition-all"
+                    className="bg-white border border-border rounded-[14px] p-7 card-hover"
                   >
                     <span className="inline-block bg-[var(--teal-10)] border border-[var(--teal-20)] text-teal text-xs font-medium rounded-full px-3 py-1 mb-3">
                       {a.badge}
                     </span>
                     <h3
                       className="text-xl font-semibold mb-1.5"
-                      style={{ fontFamily: "var(--font-display)", color: "var(--navy)" }}
+                      style={{ fontFamily: "var(--font-display)", color: "var(--navy)", letterSpacing: "-0.5px" }}
                     >
                       {a.title}
                     </h3>
@@ -242,7 +242,7 @@ export default function Home() {
               </p>
               <h2
                 className="text-[clamp(28px,3.5vw,40px)] font-semibold leading-[1.15] mb-4"
-                style={{ fontFamily: "var(--font-display)", color: "var(--navy)" }}
+                style={{ fontFamily: "var(--font-display)", color: "var(--navy)", letterSpacing: "-1.0px" }}
               >
                 Recovery isn&apos;t one-size-fits-all.
               </h2>

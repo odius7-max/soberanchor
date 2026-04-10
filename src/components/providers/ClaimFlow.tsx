@@ -155,7 +155,7 @@ export default function ClaimFlow({ userId }: Props) {
 
   return (
     <div style={{ maxWidth: 680, margin: '0 auto', padding: '40px 24px 80px' }}>
-      <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 600, color: 'var(--navy)', marginBottom: 6 }}>Claim Your Listing</h1>
+      <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 600, color: 'var(--navy)', letterSpacing: '-0.75px', marginBottom: 6 }}>Claim Your Listing</h1>
       <p style={{ color: 'var(--mid)', fontSize: 15, marginBottom: 32, lineHeight: 1.6 }}>
         Your facility may already be in our directory. Search below to find and claim it, or add a new listing.
       </p>
@@ -167,8 +167,8 @@ export default function ClaimFlow({ userId }: Props) {
       {step === 'search' && (
         <>
           {/* Search */}
-          <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: 28, marginBottom: 20 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 16 }}>Search Your Facility</div>
+          <div className="card-hover" style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: 28, marginBottom: 20 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 16 }}>Search Your Facility</div>
             <div style={{ position: 'relative', marginBottom: 4 }}>
               <input
                 type="text"
@@ -227,8 +227,8 @@ export default function ClaimFlow({ userId }: Props) {
           <button onClick={() => setStep('search')} style={{ fontSize: 13, color: 'var(--teal)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 24 }}>← Back to Search</button>
 
           {/* Contact info */}
-          <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: 28, marginBottom: 20 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 18 }}>Your Contact Info</div>
+          <div className="card-hover" style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: 28, marginBottom: 20 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 18 }}>Your Contact Info</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div style={{ marginBottom: 0 }}>
                 {label('Your Name *')}
@@ -252,8 +252,8 @@ export default function ClaimFlow({ userId }: Props) {
           </div>
 
           {/* Facility info */}
-          <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: 28, marginBottom: 28 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 18 }}>Facility Information</div>
+          <div className="card-hover" style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: 28, marginBottom: 28 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 18 }}>Facility Information</div>
             <div style={{ marginBottom: 14 }}>
               {label('Facility Name *')}
               <input style={inputStyle()} value={form.facility_name} onChange={e => setForm(f => ({...f, facility_name: e.target.value}))} placeholder="e.g. Serenity Ridge Treatment Center" />

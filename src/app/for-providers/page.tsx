@@ -100,7 +100,7 @@ export default function ForProvidersPage() {
           </p>
           <h1
             className="text-[clamp(34px,5vw,52px)] font-semibold leading-[1.1] mb-5"
-            style={{ fontFamily: "var(--font-display)", color: "var(--navy)" }}
+            style={{ fontFamily: "var(--font-display)", color: "var(--navy)", letterSpacing: "-1.5px" }}
           >
             Families are searching for help. Make sure they find you.
           </h1>
@@ -131,16 +131,16 @@ export default function ForProvidersPage() {
           </p>
           <h2
             className="text-[clamp(26px,3vw,36px)] font-semibold leading-[1.2] mb-10 text-center"
-            style={{ fontFamily: "var(--font-display)", color: "var(--navy)" }}
+            style={{ fontFamily: "var(--font-display)", color: "var(--navy)", letterSpacing: "-0.75px" }}
           >
             Better leads. Less spend. Real results.
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
             {stats.map((s) => (
-              <div key={s.value} className="bg-warm-gray border border-border rounded-[14px] p-8 text-center">
+              <div key={s.value} className="card-hover bg-warm-gray border border-border rounded-[14px] p-8 text-center">
                 <div
                   className="text-[clamp(40px,5vw,56px)] font-semibold leading-none mb-3"
-                  style={{ fontFamily: "var(--font-display)", color: "var(--teal)" }}
+                  style={{ fontFamily: "var(--font-display)", color: "var(--teal)", letterSpacing: "-1.5px" }}
                 >
                   {s.value}
                 </div>
@@ -165,7 +165,7 @@ export default function ForProvidersPage() {
           </p>
           <h2
             className="text-[clamp(26px,3vw,36px)] font-semibold leading-[1.2] mb-12 text-center"
-            style={{ fontFamily: "var(--font-display)", color: "var(--navy)" }}
+            style={{ fontFamily: "var(--font-display)", color: "var(--navy)", letterSpacing: "-0.75px" }}
           >
             Three steps to start receiving leads.
           </h2>
@@ -199,13 +199,13 @@ export default function ForProvidersPage() {
           </p>
           <h2
             className="text-[clamp(26px,3vw,36px)] font-semibold leading-[1.2] mb-10 text-center"
-            style={{ fontFamily: "var(--font-display)", color: "var(--navy)" }}
+            style={{ fontFamily: "var(--font-display)", color: "var(--navy)", letterSpacing: "-0.75px" }}
           >
             Everything you need to connect with families seeking care.
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Free card */}
-            <div className="bg-white rounded-[14px] border border-border overflow-hidden">
+            <div className="card-hover bg-white rounded-[14px] border border-border overflow-hidden">
               <div className="border-l-4 border-teal p-7">
                 <h3
                   className="text-xl font-semibold mb-5"
@@ -228,7 +228,7 @@ export default function ForProvidersPage() {
             </div>
 
             {/* Pro card */}
-            <div className="bg-white rounded-[14px] border border-border overflow-hidden">
+            <div className="card-hover bg-white rounded-[14px] border border-border overflow-hidden">
               <div className="border-l-4 border-gold p-7">
                 <h3
                   className="text-xl font-semibold mb-5"
@@ -261,13 +261,13 @@ export default function ForProvidersPage() {
           </p>
           <h2
             className="text-[clamp(26px,3vw,36px)] font-semibold leading-[1.2] mb-10 text-center"
-            style={{ fontFamily: "var(--font-display)", color: "var(--navy)" }}
+            style={{ fontFamily: "var(--font-display)", color: "var(--navy)", letterSpacing: "-0.75px" }}
           >
             Built for every type of recovery provider.
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
             {providerTypes.map((p) => (
-              <div key={p.title} className="bg-warm-gray border border-border rounded-[14px] p-6">
+              <div key={p.title} className="card-hover bg-warm-gray border border-border rounded-[14px] p-6">
                 <div className="text-[32px] mb-3">{p.icon}</div>
                 <div className="text-base font-semibold text-navy mb-1">{p.title}</div>
                 <div className="text-sm text-mid leading-relaxed">{p.desc}</div>
@@ -282,13 +282,13 @@ export default function ForProvidersPage() {
         <div className="max-w-[1120px] mx-auto">
           <h2
             className="text-[clamp(26px,3vw,36px)] font-semibold leading-[1.2] mb-10 text-center"
-            style={{ fontFamily: "var(--font-display)", color: "var(--navy)" }}
+            style={{ fontFamily: "var(--font-display)", color: "var(--navy)", letterSpacing: "-0.75px" }}
           >
             Why providers choose SoberAnchor.
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-[820px] mx-auto">
             {trustItems.map((t) => (
-              <div key={t.title} className="bg-white border border-border rounded-[14px] p-6 flex gap-4">
+              <div key={t.title} className="card-hover bg-white border border-border rounded-[14px] p-6 flex gap-4">
                 <span className="text-[28px] shrink-0 mt-0.5">{t.icon}</span>
                 <div>
                   <div className="text-base font-semibold text-navy mb-1">{t.title}</div>
@@ -305,7 +305,7 @@ export default function ForProvidersPage() {
         <div className="max-w-[720px] mx-auto">
           <h2
             className="text-[clamp(26px,3vw,36px)] font-semibold leading-[1.2] mb-8 text-center"
-            style={{ fontFamily: "var(--font-display)", color: "var(--navy)" }}
+            style={{ fontFamily: "var(--font-display)", color: "var(--navy)", letterSpacing: "-0.75px" }}
           >
             Common questions
           </h2>
@@ -336,7 +336,7 @@ export default function ForProvidersPage() {
         <div className="max-w-[620px] mx-auto">
           <h2
             className="text-[clamp(28px,3.5vw,42px)] font-semibold leading-[1.15] mb-4 text-white"
-            style={{ fontFamily: "var(--font-display)" }}
+            style={{ fontFamily: "var(--font-display)", letterSpacing: "-1.0px" }}
           >
             Ready to reach families who need you?
           </h2>

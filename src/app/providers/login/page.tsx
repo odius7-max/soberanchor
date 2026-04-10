@@ -85,7 +85,7 @@ export default function ProviderLoginPage() {
       <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 16, padding: '40px 36px', width: '100%', maxWidth: 420 }}>
         {step === 'phone' ? (
           <>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 600, color: 'var(--navy)', marginBottom: 6 }}>Provider Sign In</h1>
+            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 600, color: 'var(--navy)', letterSpacing: '-0.5px', marginBottom: 6 }}>Provider Sign In</h1>
             <p style={{ fontSize: 14, color: 'var(--mid)', marginBottom: 28, lineHeight: 1.5 }}>Enter your phone number to receive a verification code.</p>
 
             <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--navy)', marginBottom: 6 }}>Phone Number</label>
@@ -118,7 +118,7 @@ export default function ProviderLoginPage() {
         ) : (
           <>
             <button onClick={() => setStep('phone')} style={{ fontSize: 13, color: 'var(--teal)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 20 }}>← Back</button>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 600, color: 'var(--navy)', marginBottom: 6 }}>Enter Code</h1>
+            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 600, color: 'var(--navy)', letterSpacing: '-0.5px', marginBottom: 6 }}>Enter Code</h1>
             <p style={{ fontSize: 14, color: 'var(--mid)', marginBottom: 28, lineHeight: 1.5 }}>
               We texted a 6-digit code to{' '}
               <strong style={{ color: 'var(--dark)' }}>+1 {phone}</strong>

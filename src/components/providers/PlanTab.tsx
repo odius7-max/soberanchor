@@ -35,7 +35,7 @@ const FAQS = [
 export default function PlanTab({ tier }: Props) {
   return (
     <div>
-      <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 600, color: 'var(--navy)', marginBottom: 4 }}>Plan & Billing</h1>
+      <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 600, color: 'var(--navy)', marginBottom: 4, letterSpacing: '-0.75px' }}>Plan &amp; Billing</h1>
       <p style={{ color: 'var(--mid)', fontSize: 15, marginBottom: 32 }}>Choose the right plan to grow your visibility and leads.</p>
 
       {/* Tier cards */}
@@ -43,9 +43,9 @@ export default function PlanTab({ tier }: Props) {
         {TIERS.map(t => {
           const isCurrent = tier === t.id
           return (
-            <div key={t.id} style={{
+            <div key={t.id} className="card-hover" style={{
               background: '#fff',
-              border: `${t.recommended ? 2 : 1}px solid ${t.recommended ? 'var(--teal)' : 'var(--border)'}`,
+              border: `${t.recommended ? 2 : 1}px solid ${t.recommended ? 'var(--teal)' : 'rgba(0,0,0,0.08)'}`,
               borderRadius: 14,
               padding: 24,
               flex: '1 1 220px',
@@ -56,11 +56,11 @@ export default function PlanTab({ tier }: Props) {
                 <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: 'var(--teal)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '3px 14px', borderRadius: 20, letterSpacing: '1px', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Recommended</div>
               )}
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 4 }}>{t.label}</div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 40, fontWeight: 700, color: 'var(--navy)', marginBottom: 4, lineHeight: 1 }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 40, fontWeight: 700, color: 'var(--navy)', marginBottom: 4, lineHeight: 1, letterSpacing: '-1.0px' }}>
                 {t.price === 0 ? 'Free' : `$${t.price}`}
                 {t.price > 0 && <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--mid)' }}>/mo</span>}
               </div>
-              <div style={{ borderTop: '1px solid var(--border)', margin: '16px 0', paddingTop: 16 }}>
+              <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', margin: '16px 0', paddingTop: 16 }}>
                 {t.features.map((f, i) => (
                   <div key={i} style={{ fontSize: 14, color: 'var(--dark)', lineHeight: 2.1, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                     <span style={{ color: '#27AE60', flexShrink: 0, fontWeight: 700 }}>✓</span> {f}
@@ -81,15 +81,15 @@ export default function PlanTab({ tier }: Props) {
       </div>
 
       {/* FAQ */}
-      <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: 28 }}>
-        <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--navy)', marginBottom: 16 }}>Frequently Asked Questions</h3>
+      <div className="card-hover" style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: 28 }}>
+        <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--navy)', marginBottom: 16, letterSpacing: '-0.5px' }}>Frequently Asked Questions</h3>
         {FAQS.map(([q, a], i) => (
-          <div key={i} style={{ borderTop: i > 0 ? '1px solid var(--border)' : 'none', padding: '16px 0' }}>
+          <div key={i} style={{ borderTop: i > 0 ? '1px solid rgba(0,0,0,0.08)' : 'none', padding: '16px 0' }}>
             <div style={{ fontWeight: 600, fontSize: 15, color: 'var(--navy)', marginBottom: 6 }}>{q}</div>
             <div style={{ fontSize: 14, color: 'var(--mid)', lineHeight: 1.65 }}>{a}</div>
           </div>
         ))}
-        <div style={{ borderTop: '1px solid var(--border)', marginTop: 8, paddingTop: 20, display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', marginTop: 8, paddingTop: 20, display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ fontSize: 14, color: 'var(--mid)' }}>Questions about your plan?</div>
           <a href="mailto:providers@soberanchor.com"
             style={{ fontSize: 14, fontWeight: 600, color: 'var(--teal)', textDecoration: 'none' }}>

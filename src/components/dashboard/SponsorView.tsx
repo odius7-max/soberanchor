@@ -52,10 +52,10 @@ export default function SponsorView({ sponsees }: Props) {
           {label:'Checked In Today',val:checkInsToday,style:{background:'#fff',border:'1px solid var(--border)'},valStyle:{color:'#2A8A99'}},
         ].map(s=>(
           <div key={s.label} className="rounded-[14px] flex-1" style={{minWidth:'140px',padding:'22px 24px',...s.style}}>
-            <div style={{color:s.style.background==='#fff'?'var(--mid)':'rgba(255,255,255,0.5)',fontSize:'11px',fontWeight:600,letterSpacing:'1.5px',textTransform:'uppercase'}}>
+            <div style={{color:s.style.background==='#fff'?'var(--mid)':'rgba(255,255,255,0.5)',fontSize:'12px',fontWeight:700,letterSpacing:'2px',textTransform:'uppercase'}}>
               {s.label}
             </div>
-            <div className="font-bold" style={{fontFamily:'var(--font-display)',fontSize:'40px',marginTop:'4px',...s.valStyle}}>{s.val}</div>
+            <div className="font-bold" style={{fontFamily:'var(--font-display)',fontSize:'40px',letterSpacing:'-1.0px',marginTop:'4px',...s.valStyle}}>{s.val}</div>
           </div>
         ))}
       </div>
@@ -66,7 +66,7 @@ export default function SponsorView({ sponsees }: Props) {
       </div>
 
       {sponsees.length===0?(
-        <div className="rounded-[16px] p-8 text-center mb-5 bg-white border border-[var(--border)]">
+        <div className="card-hover rounded-[16px] p-8 text-center mb-5 bg-white border border-[var(--border)]">
           <div style={{fontSize:'36px',marginBottom:'10px'}}>👥</div>
           <div className="font-semibold text-navy mb-1" style={{fontSize:'16px'}}>No active sponsees yet</div>
           <div className="text-mid" style={{fontSize:'14px'}}>Click &quot;Add Sponsee&quot; to connect with someone you&apos;re sponsoring.</div>
@@ -78,7 +78,7 @@ export default function SponsorView({ sponsees }: Props) {
             const mood=sp.lastMood?MOOD_META[sp.lastMood]:null
             const pct=((sp.currentStep-1)/11)*100
             return(
-              <div key={sp.id} className="rounded-[16px] p-5 bg-white border border-[var(--border)]">
+              <div key={sp.id} className="card-hover rounded-[16px] p-5 bg-white border border-[var(--border)]">
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="flex items-center gap-3">
                     <div className="flex items-center justify-center rounded-xl font-bold text-white flex-shrink-0" style={{width:'40px',height:'40px',background:'linear-gradient(135deg,#2A8A99,#003366)',fontSize:'16px'}}>

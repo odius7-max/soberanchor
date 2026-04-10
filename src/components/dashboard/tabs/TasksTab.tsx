@@ -48,7 +48,7 @@ export default function TasksTab({ readingAssignments, hasSponsor }: Props) {
       {pending.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
           {pending.map(task => (
-            <div key={task.id} className="rounded-[14px] flex gap-4 items-start px-5 py-4 bg-white border border-[var(--border)]">
+            <div key={task.id} className="card-hover rounded-[14px] flex gap-4 items-start px-5 py-4 bg-white border border-[var(--border)]">
               <button onClick={() => toggleTask(task.id, task.is_completed)} disabled={toggling === task.id}
                 className="flex items-center justify-center flex-shrink-0 rounded-lg transition-colors"
                 style={{ width: '26px', height: '26px', marginTop: '1px', background: '#fff', border: '2px solid #D0CBC4', cursor: 'pointer' }} />
@@ -63,7 +63,7 @@ export default function TasksTab({ readingAssignments, hasSponsor }: Props) {
       )}
       {completed.length > 0 && (
         <>
-          <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--mid)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '8px' }}>Completed</div>
+          <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--mid)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '8px' }}>Completed</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {completed.map(task => (
               <div key={task.id} className="rounded-[14px] flex gap-4 items-start px-5 py-4 border border-[var(--border)]" style={{ background: 'var(--warm-gray)' }}>

@@ -61,7 +61,7 @@ export default function OverviewTab({ currentStep, journalCount, stepWorkCount, 
     return new Date(s.includes('T') ? s : s + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
 
-  const card = "rounded-[16px] p-5 bg-white border border-[var(--border)]"
+  const card = "rounded-[16px] p-5 bg-white border border-border card-hover"
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
@@ -110,7 +110,7 @@ export default function OverviewTab({ currentStep, journalCount, stepWorkCount, 
         ) : recentCheckIns.map((ci, i) => {
           const m = ci.mood ? MOOD_META[ci.mood] : null
           return (
-            <div key={ci.id} className="flex gap-3 py-3" style={{ borderTop: i > 0 ? '1px solid var(--warm-gray)' : 'none' }}>
+            <div key={ci.id} className="flex gap-3 py-3" style={{ borderTop: i > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}>
               <span style={{ fontSize: '22px', flexShrink: 0 }}>{m?.emoji ?? '😶'}</span>
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-center">
@@ -132,18 +132,18 @@ export default function OverviewTab({ currentStep, journalCount, stepWorkCount, 
         </div>
         <div className="flex gap-3 mb-4">
           <div className="flex-1 rounded-xl text-center" style={{ background: 'var(--teal-10)', padding: '14px 16px' }}>
-            <div className="font-bold text-navy" style={{ fontFamily: 'var(--font-display)', fontSize: '28px' }}>{meetingsThisWeek}</div>
+            <div className="font-bold text-navy" style={{ fontFamily: 'var(--font-display)', fontSize: '28px', letterSpacing: '-0.75px' }}>{meetingsThisWeek}</div>
             <div style={{ fontSize: '11px', color: 'var(--mid)', fontWeight: 500 }}>This Week</div>
           </div>
           <div className="flex-1 rounded-xl text-center" style={{ background: 'var(--gold-10)', padding: '14px 16px' }}>
-            <div className="font-bold text-navy" style={{ fontFamily: 'var(--font-display)', fontSize: '28px' }}>{meetingsTotal}</div>
+            <div className="font-bold text-navy" style={{ fontFamily: 'var(--font-display)', fontSize: '28px', letterSpacing: '-0.75px' }}>{meetingsTotal}</div>
             <div style={{ fontSize: '11px', color: 'var(--mid)', fontWeight: 500 }}>Total</div>
           </div>
         </div>
         {recentMeetings.length === 0 ? (
           <div className="text-mid text-center py-2" style={{ fontSize: '13px' }}>No meetings logged yet. Use Meeting Check-in to log attendance.</div>
         ) : recentMeetings.map((m, i) => (
-          <div key={m.id} className="flex justify-between items-center py-2.5" style={{ borderTop: i > 0 ? '1px solid var(--warm-gray)' : 'none' }}>
+          <div key={m.id} className="flex justify-between items-center py-2.5" style={{ borderTop: i > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}>
             <div>
               <div className="font-medium text-dark" style={{ fontSize: '13px' }}>{m.meeting_name}</div>
               {m.fellowship_name && <div style={{ fontSize: '11px', color: 'var(--mid)', marginTop: '1px' }}>{m.fellowship_name}</div>}
@@ -162,7 +162,7 @@ export default function OverviewTab({ currentStep, journalCount, stepWorkCount, 
             No tasks assigned yet.
           </div>
         ) : readingAssignments.slice(0, 4).map((task, i) => (
-          <div key={task.id} className="flex gap-3 items-start py-2.5" style={{ borderTop: i > 0 ? '1px solid var(--warm-gray)' : 'none' }}>
+          <div key={task.id} className="flex gap-3 items-start py-2.5" style={{ borderTop: i > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}>
             <button
               onClick={() => toggleTask(task.id, task.is_completed)}
               disabled={toggling === task.id}

@@ -48,7 +48,7 @@ export default function MeetingsTab({ userId, meetingsThisWeek, meetingsTotal, m
     <div>
       <div className="flex gap-4 mb-5 flex-wrap">
         <div className="rounded-xl text-center" style={{ background: 'var(--teal-10)', padding: '16px 32px' }}>
-          <div className="font-bold text-navy" style={{ fontFamily: 'var(--font-display)', fontSize: '32px' }}>{meetingsThisWeek}</div>
+          <div className="font-bold text-navy" style={{ fontFamily: 'var(--font-display)', fontSize: '32px', letterSpacing: '-0.75px' }}>{meetingsThisWeek}</div>
           <div style={{ fontSize: '12px', color: 'var(--mid)' }}>This Week</div>
         </div>
         <div className="rounded-xl text-center" style={{ background: 'var(--gold-10)', padding: '16px 32px' }}>
@@ -97,7 +97,7 @@ export default function MeetingsTab({ userId, meetingsThisWeek, meetingsTotal, m
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {meetingAttendance.map(m => (
-            <div key={m.id} className="rounded-[14px] flex items-center gap-4 px-4 py-3.5 bg-white border border-[var(--border)]">
+            <div key={m.id} className="card-hover rounded-[14px] flex items-center gap-4 px-4 py-3.5 bg-white border border-[var(--border)]">
               <span style={{ fontSize: '18px' }}>{methodIcon[m.checkin_method] ?? '📍'}</span>
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-dark truncate" style={{ fontSize: '14px' }}>{m.meeting_name}</div>

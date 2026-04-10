@@ -55,7 +55,7 @@ export default function MeetingCheckin({ userId }: Props) {
         </svg>
         <div className="relative">
           <div style={{color:'rgba(255,255,255,0.5)',fontSize:'11px',fontWeight:700,letterSpacing:'2.5px',textTransform:'uppercase',marginBottom:'6px'}}>Meeting Finder</div>
-          <div className="font-semibold text-white" style={{fontFamily:'var(--font-display)',fontSize:'24px',marginBottom:'4px'}}>Find a meeting</div>
+          <div className="font-semibold text-white" style={{fontFamily:'var(--font-display)',fontSize:'24px',letterSpacing:'-0.5px',marginBottom:'4px'}}>Find a meeting</div>
           <div style={{color:'rgba(255,255,255,0.55)',fontSize:'14px'}}>Tap &quot;I Was Here&quot; to auto-log attendance to your dashboard.</div>
         </div>
       </div>
@@ -81,7 +81,7 @@ export default function MeetingCheckin({ userId }: Props) {
             const isLogged=logged.has(m.id)
             const fmtBadge=m.format==='online'?{label:'Online',bg:'rgba(39,174,96,0.08)',color:'#27AE60'}:m.format==='hybrid'?{label:'Hybrid',bg:'rgba(212,165,116,0.1)',color:'#9A7B54'}:{label:'In-Person',bg:'rgba(42,138,153,0.08)',color:'#2A8A99'}
             return(
-              <div key={m.id} className="rounded-[16px] p-5 flex items-start gap-4 bg-white border border-[var(--border)]">
+              <div key={m.id} className="card-hover rounded-[16px] p-5 flex items-start gap-4 bg-white border border-[var(--border)]">
                 <div className="flex-1 min-w-0">
                   <div className="font-bold text-navy mb-1" style={{fontSize:'15px'}}>{m.name}</div>
                   <div className="flex gap-2 flex-wrap mb-2">

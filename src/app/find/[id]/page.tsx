@@ -55,7 +55,7 @@ export default async function FacilityDetail({
 
       <h1
         className="text-[32px] font-semibold mt-2 mb-2"
-        style={{ fontFamily: "var(--font-display)", color: "var(--navy)" }}
+        style={{ fontFamily: "var(--font-display)", color: "var(--navy)", letterSpacing: "-0.75px" }}
       >
         {facility.name}
       </h1>
@@ -91,7 +91,7 @@ export default async function FacilityDetail({
 
           <h2
             className="text-[22px] font-semibold mb-3"
-            style={{ fontFamily: "var(--font-display)", color: "var(--navy)" }}
+            style={{ fontFamily: "var(--font-display)", color: "var(--navy)", letterSpacing: "-0.5px" }}
           >
             About This Facility
           </h2>
@@ -158,7 +158,7 @@ export default async function FacilityDetail({
             <div className="bg-warm-gray rounded-[14px] p-7">
               <h3
                 className="text-[22px] font-semibold mb-4"
-                style={{ fontFamily: "var(--font-display)", color: "var(--navy)" }}
+                style={{ fontFamily: "var(--font-display)", color: "var(--navy)", letterSpacing: "-0.5px" }}
               >
                 Contact this facility
               </h3>

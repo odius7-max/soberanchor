@@ -45,7 +45,7 @@ export default function PrivacyTab({ userId, displayName, phone, journalCount, s
       </div>
 
       {/* Account */}
-      <div className="rounded-[16px] p-6 mb-4 bg-white border border-[var(--border)]">
+      <div className="card-hover rounded-[16px] p-6 mb-4 bg-white border border-[var(--border)]">
         <h4 className="font-bold text-navy mb-3" style={{ fontSize: '14px' }}>Account</h4>
         <div className="flex items-center justify-between py-3" style={{ borderBottom: '1px solid var(--warm-gray)' }}>
           <div>
@@ -106,7 +106,7 @@ export default function PrivacyTab({ userId, displayName, phone, journalCount, s
       </div>
 
       {/* What's stored */}
-      <div className="rounded-[16px] p-6 mb-4 bg-white border border-[var(--border)]">
+      <div className="card-hover rounded-[16px] p-6 mb-4 bg-white border border-[var(--border)]">
         <h4 className="font-bold text-navy mb-3" style={{ fontSize: '14px' }}>What&apos;s on our servers</h4>
         <DataRow label="Step progress (Steps 1–12)" sub="Which steps are complete — no written content" badge="Always synced" />
         <DataRow label="Journal entries" sub={`${journalCount} ${journalCount === 1 ? 'entry' : 'entries'}`}

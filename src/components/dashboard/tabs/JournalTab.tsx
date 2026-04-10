@@ -116,7 +116,7 @@ export default function JournalTab({ userId, entries }: Props) {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {entries.map(entry => (
-            <div key={entry.id} className="rounded-[16px] p-5 cursor-pointer bg-white border border-[var(--border)] hover:shadow-lg hover:-translate-y-0.5 transition-all">
+            <div key={entry.id} className="card-hover rounded-[16px] p-5 cursor-pointer bg-white border border-[var(--border)]">
               <div className="flex justify-between items-start mb-2">
                 <span className="font-semibold text-navy" style={{ fontFamily: 'var(--font-display)', fontSize: '18px' }}>{entry.title ?? 'Untitled Entry'}</span>
                 <span className="text-mid flex-shrink-0 ml-3" style={{ fontSize: '12px', marginTop: '3px' }}>{fmtDate(entry.entry_date)}</span>
