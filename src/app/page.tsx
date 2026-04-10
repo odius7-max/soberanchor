@@ -9,7 +9,7 @@ const categories = [
   { icon: "👥", title: "Meetings", sub: "AA, NA, GA, OA & more", href: "/find#meetings" },
   { icon: "🍹", title: "Sober Venues", sub: "Bars, cafes & events", href: "/find#facilities" },
   { icon: "💆", title: "Therapists", sub: "Counselors & specialists", href: "/find#facilities" },
-  { icon: "❤️", title: "For Loved Ones", sub: "Al-Anon, Nar-Anon & more", href: "/find#meetings" },
+  { icon: "⚓", title: "Track Your Journey", sub: "Check-ins, journal & sponsor tools", href: "/my-recovery", special: true, pills: ["Check-ins", "Journal", "Steps", "Sponsor"] },
 ];
 
 const fellowships = [
@@ -37,7 +37,7 @@ export default function Home() {
           <div className="relative max-w-[1120px] mx-auto flex flex-wrap gap-12 items-center">
             <div className="flex-1 min-w-[400px] max-w-[560px]">
               <p className="text-xs font-bold tracking-[2px] uppercase text-teal mb-2">
-                Your Anchor to Sober Living
+                Your Anchor to Living Sober
               </p>
               <h1
                 className="text-[clamp(36px,5vw,52px)] font-semibold leading-[1.1] mb-4"
@@ -76,13 +76,29 @@ export default function Home() {
                   <Link
                     key={c.title}
                     href={c.href}
-                    className="bg-white border border-border rounded-[14px] p-[18px] hover:shadow-lg hover:-translate-y-0.5 transition-all"
+                    className={`bg-white rounded-[14px] p-[18px] hover:shadow-lg hover:-translate-y-0.5 transition-all ${
+                      c.special
+                        ? "border-2 border-[var(--teal)]"
+                        : "border border-border"
+                    }`}
                   >
                     <div className="text-[28px] mb-1.5">{c.icon}</div>
                     <div className="text-sm font-semibold text-navy">
                       {c.title}
                     </div>
                     <div className="text-xs text-mid mt-0.5">{c.sub}</div>
+                    {c.pills && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {c.pills.map((p) => (
+                          <span
+                            key={p}
+                            className="bg-[var(--teal-10)] text-teal text-[10px] font-medium rounded-full px-2 py-0.5"
+                          >
+                            {p}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </Link>
                 ))}
               </div>
