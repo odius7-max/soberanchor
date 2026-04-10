@@ -1,29 +1,27 @@
-# Auth CTAs, Sponsor Toggle, Conditional Sponsor Tab
+# Gate Lead Form and Phone Behind Facility Claim Status
 
 ## Plan
 
-### Change 1 — /my-recovery CTA buttons
-- The page is a server component. Create a tiny `"use client"` component `src/app/my-recovery/AuthCTAButtons.tsx` that calls `useAuth().openAuthModal()`.
-- Replace the two `<Link>` CTA buttons in `page.tsx` with this client component.
-- The bottom "Get started" CTA also becomes a button that opens the modal.
+### `src/app/find/[id]/page.tsx` — only file that needs changes
 
-### Change 2 — Sponsor toggle in PrivacyTab
-- Add `isAvailableSponsor: boolean` prop to `PrivacyTab`.
-- Add local state for it. On toggle: update `user_profiles.is_available_sponsor` via Supabase client, then call `router.refresh()` so the server component re-fetches.
-- Render the toggle row in the Account section with label, description, and an on/off pill button.
-- Update `DashboardShell.tsx` to pass `isSponsor` down to `PrivacyTab`.
+The facility is already fetched with `select("*")`, so `is_claimed`, `listing_tier`, `is_featured`, `phone`, and `website` are already available.
 
-### Change 3 — Sponsor View tab conditional
-- Already implemented in `DashboardShell.tsx` (line 65 spreads the sponsor role only when `isSponsor === true`).
-- No code change needed — just needs the toggle (Change 2) to trigger `router.refresh()` to take effect.
+Changes:
+1. **Verified badge** — after the existing Featured badge, add a Verified badge when `is_claimed && (listing_tier === 'enhanced' || listing_tier === 'premium')`.
+2. **Phone in details section** — wrap the `📞` line so it only renders when `facility.is_claimed` is true.
+3. **Sidebar** — replace the always-shown lead form with a conditional:
+   - `is_claimed === true` → show existing lead form (no change)
+   - `is_claimed === false/null` → show unclaimed card: website button (if available), SAMHSA helpline, divider, claim CTA linking to `/for-providers`
+
+### `src/app/find/page.tsx` — no changes needed
+Phone numbers are not currently rendered on listing cards, so the "hide phone for unclaimed" requirement is already satisfied.
 
 ## Todo
 
-- [ ] 1. Create `src/app/my-recovery/AuthCTAButtons.tsx` client component
-- [ ] 2. Update `src/app/my-recovery/page.tsx` to use `AuthCTAButtons`
-- [ ] 3. Add sponsor toggle to `PrivacyTab.tsx` (new prop + Supabase update + router.refresh)
-- [ ] 4. Pass `isAvailableSponsor` prop to `PrivacyTab` in `DashboardShell.tsx`
-- [ ] 5. Commit and push
+- [ ] 1. Add Verified badge to detail page header
+- [ ] 2. Gate phone number in details section behind `is_claimed`
+- [ ] 3. Replace sidebar with conditional: lead form (claimed) vs unclaimed card
+- [ ] 4. Commit and push
 
 ## Review
 <!-- filled in after completion -->
