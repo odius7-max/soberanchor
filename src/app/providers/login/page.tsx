@@ -5,71 +5,85 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
-type Step = 'phone' | 'otp'
+type Step = 'login' | 'signup' | 'forgot' | 'forgot_sent'
 
-function formatPhone(raw: string) {
-  const digits = raw.replace(/\D/g, '').slice(0, 10)
-  if (digits.length <= 3) return digits
-  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`
-  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`
+const inputStyle: React.CSSProperties = {
+  width: '100%', padding: '11px 14px',
+  border: '1.5px solid var(--border)', borderRadius: 8,
+  fontSize: 14, fontFamily: 'var(--font-body)',
+  background: '#fff', outline: 'none', boxSizing: 'border-box', color: 'var(--dark)',
 }
-
-function normalizePhone(display: string) {
-  const digits = display.replace(/\D/g, '')
-  return digits.length === 10 ? `+1${digits}` : null
-}
+const focusTeal = (e: React.FocusEvent<HTMLInputElement>) => (e.target.style.borderColor = 'var(--teal)')
+const blurGray  = (e: React.FocusEvent<HTMLInputElement>) => (e.target.style.borderColor = 'var(--border)')
 
 export default function ProviderLoginPage() {
   const router = useRouter()
-  const [step, setStep] = useState<Step>('phone')
-  const [phone, setPhone] = useState('')
-  const [otp, setOtp] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const [step, setStep] = useState<Step>('login')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
-  const [cooldown, setCooldown] = useState(0)
+  const [error, setError] = useState<string | null>(null)
 
-  async function sendOtp() {
-    const e164 = normalizePhone(phone)
-    if (!e164) { setError('Enter a valid 10-digit phone number.'); return }
-    setLoading(true); setError(null)
+  function go(s: Step) { setError(null); setStep(s) }
+
+  async function afterLogin() {
     const supabase = createClient()
-    const { error: err } = await supabase.auth.signInWithOtp({ phone: e164 })
-    setLoading(false)
-    if (err) { setError(err.message); return }
-    setStep('otp')
-    let t = 60
-    setCooldown(t)
-    const iv = setInterval(() => { t--; setCooldown(t); if (t <= 0) clearInterval(iv) }, 1000)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { setError('Authentication failed.'); setLoading(false); return }
+    const { data: existing } = await supabase
+      .from('provider_accounts').select('id').eq('auth_user_id', user.id).maybeSingle()
+    router.push(existing ? '/providers/dashboard' : '/providers/claim')
   }
 
-  async function verifyOtp() {
-    const e164 = normalizePhone(phone)
-    if (!e164 || otp.length < 6) return
+  async function handleLogin() {
+    if (!email.trim() || !password) { setError('Email and password are required.'); return }
     setLoading(true); setError(null)
     const supabase = createClient()
-    const { error: err } = await supabase.auth.verifyOtp({ phone: e164, token: otp, type: 'sms' })
-    if (err) { setLoading(false); setError('Invalid code. Please try again.'); return }
+    const { error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+    if (err) { setError(err.message); setLoading(false); return }
+    await afterLogin()
+  }
 
-    // Check for provider account
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setLoading(false); setError('Authentication failed.'); return }
-
-    const { data: providerAccount } = await supabase
-      .from('provider_accounts')
-      .select('id')
-      .eq('auth_user_id', user.id)
-      .maybeSingle()
-
-    setLoading(false)
-    if (providerAccount) {
-      router.push('/providers/dashboard')
-    } else {
-      router.push('/providers/claim')
+  async function handleSignup() {
+    if (!email.trim() || !password) { setError('Email and password are required.'); return }
+    if (password.length < 8) { setError('Password must be at least 8 characters.'); return }
+    if (password !== confirm) { setError('Passwords do not match.'); return }
+    setLoading(true); setError(null)
+    const supabase = createClient()
+    const { data, error: err } = await supabase.auth.signUp({ email: email.trim(), password })
+    if (err) { setError(err.message); setLoading(false); return }
+    if (data.user && !data.session) {
+      // Email confirmation required
+      setLoading(false)
+      go('login')
+      setError('Account created! Check your email to confirm, then sign in.')
+      return
     }
+    await afterLogin()
+  }
+
+  async function handleForgot() {
+    if (!email.trim()) { setError('Enter your email address.'); return }
+    setLoading(true); setError(null)
+    const supabase = createClient()
+    const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    })
+    setLoading(false)
+    if (err) { setError(err.message); return }
+    setStep('forgot_sent')
+  }
+
+  const TITLES: Record<Step, string> = {
+    login: 'Provider Sign In',
+    signup: 'Create Provider Account',
+    forgot: 'Reset Password',
+    forgot_sent: 'Check Your Inbox',
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--off-white)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--off-white)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       {/* Logo */}
       <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 36, textDecoration: 'none' }}>
         <svg width="28" height="28" viewBox="0 0 64 64" fill="none">
@@ -83,74 +97,122 @@ export default function ProviderLoginPage() {
       </Link>
 
       <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 16, padding: '40px 36px', width: '100%', maxWidth: 420 }}>
-        {step === 'phone' ? (
-          <>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 600, color: 'var(--navy)', letterSpacing: '-0.5px', marginBottom: 6 }}>Provider Sign In</h1>
-            <p style={{ fontSize: 14, color: 'var(--mid)', marginBottom: 28, lineHeight: 1.5 }}>Enter your phone number to receive a verification code.</p>
 
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--navy)', marginBottom: 6 }}>Phone Number</label>
-            <div style={{ display: 'flex', border: '1.5px solid var(--border)', borderRadius: 8, overflow: 'hidden', marginBottom: 16, background: '#fff' }}>
-              <span style={{ padding: '11px 14px', background: 'var(--warm-gray)', fontSize: 14, color: 'var(--dark)', borderRight: '1px solid var(--border)', flexShrink: 0 }}>🇺🇸 +1</span>
-              <input
-                type="tel"
-                inputMode="numeric"
-                value={phone}
-                onChange={e => setPhone(formatPhone(e.target.value))}
-                onKeyDown={e => e.key === 'Enter' && sendOtp()}
-                placeholder="(555) 867-5309"
-                style={{ flex: 1, padding: '11px 14px', border: 'none', outline: 'none', fontSize: 14, fontFamily: 'var(--font-body)' }}
-                autoFocus
-              />
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 600, color: 'var(--navy)', letterSpacing: '-0.5px', marginBottom: 24 }}>
+          {TITLES[step]}
+        </h1>
+
+        {/* ── Login ── */}
+        {step === 'login' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--navy)', marginBottom: 5 }}>Email</label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                placeholder="you@yourfacility.com" autoFocus
+                style={inputStyle} onFocus={focusTeal} onBlur={blurGray} />
             </div>
-
-            {error && <p style={{ color: '#C0392B', fontSize: 13, marginBottom: 12 }}>{error}</p>}
-
-            <button onClick={sendOtp} disabled={loading}
-              style={{ width: '100%', background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 8, padding: '13px', fontSize: 15, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, fontFamily: 'var(--font-body)' }}>
-              {loading ? 'Sending…' : 'Send Verification Code'}
+            <div>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--navy)', marginBottom: 5 }}>Password</label>
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                placeholder="••••••••"
+                style={inputStyle} onFocus={focusTeal} onBlur={blurGray} />
+            </div>
+            {error && <p style={{ color: '#C0392B', fontSize: 13, fontWeight: 500 }}>{error}</p>}
+            <button onClick={handleLogin} disabled={loading}
+              style={{ width: '100%', background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 8, padding: 13, fontSize: 15, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, fontFamily: 'var(--font-body)' }}>
+              {loading ? 'Signing in…' : 'Sign In →'}
             </button>
-
-            <p style={{ fontSize: 13, color: 'var(--mid)', textAlign: 'center', marginTop: 20 }}>
-              Don&apos;t have an account?{' '}
-              <Link href="/providers/claim" style={{ color: 'var(--teal)', fontWeight: 600, textDecoration: 'none' }}>Claim your listing →</Link>
-            </p>
-          </>
-        ) : (
-          <>
-            <button onClick={() => setStep('phone')} style={{ fontSize: 13, color: 'var(--teal)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 20 }}>← Back</button>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 600, color: 'var(--navy)', letterSpacing: '-0.5px', marginBottom: 6 }}>Enter Code</h1>
-            <p style={{ fontSize: 14, color: 'var(--mid)', marginBottom: 28, lineHeight: 1.5 }}>
-              We texted a 6-digit code to{' '}
-              <strong style={{ color: 'var(--dark)' }}>+1 {phone}</strong>
-            </p>
-
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--navy)', marginBottom: 6 }}>Verification Code</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
-              value={otp}
-              onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              onKeyDown={e => e.key === 'Enter' && verifyOtp()}
-              placeholder="123456"
-              style={{ width: '100%', padding: '11px 14px', border: '1.5px solid var(--border)', borderRadius: 8, fontSize: 20, fontFamily: 'monospace', letterSpacing: '0.15em', textAlign: 'center', outline: 'none', marginBottom: 16, boxSizing: 'border-box' }}
-              autoFocus
-            />
-
-            {error && <p style={{ color: '#C0392B', fontSize: 13, marginBottom: 12 }}>{error}</p>}
-
-            <button onClick={verifyOtp} disabled={loading || otp.length < 6}
-              style={{ width: '100%', background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 8, padding: '13px', fontSize: 15, fontWeight: 600, cursor: loading || otp.length < 6 ? 'not-allowed' : 'pointer', opacity: loading || otp.length < 6 ? 0.7 : 1, fontFamily: 'var(--font-body)' }}>
-              {loading ? 'Verifying…' : 'Verify & Sign In'}
-            </button>
-
-            <p style={{ textAlign: 'center', marginTop: 16, fontSize: 13, color: 'var(--mid)' }}>
-              {cooldown > 0 ? `Resend in ${cooldown}s` : (
-                <button onClick={sendOtp} style={{ color: 'var(--teal)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', fontSize: 13 }}>Resend code</button>
-              )}
-            </p>
-          </>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginTop: 2 }}>
+              <button onClick={() => go('signup')}
+                style={{ background: 'none', border: 'none', color: 'var(--teal)', fontWeight: 600, cursor: 'pointer', fontSize: 13, padding: 0 }}>
+                Create account
+              </button>
+              <button onClick={() => go('forgot')}
+                style={{ background: 'none', border: 'none', color: 'var(--mid)', cursor: 'pointer', fontSize: 13, padding: 0 }}>
+                Forgot password?
+              </button>
+            </div>
+          </div>
         )}
+
+        {/* ── Sign up ── */}
+        {step === 'signup' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--navy)', marginBottom: 5 }}>Email</label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                placeholder="you@yourfacility.com" autoFocus
+                style={inputStyle} onFocus={focusTeal} onBlur={blurGray} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--navy)', marginBottom: 5 }}>Password</label>
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+                placeholder="Min. 8 characters"
+                style={inputStyle} onFocus={focusTeal} onBlur={blurGray} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--navy)', marginBottom: 5 }}>Confirm Password</label>
+              <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSignup()}
+                placeholder="••••••••"
+                style={inputStyle} onFocus={focusTeal} onBlur={blurGray} />
+            </div>
+            {error && <p style={{ color: '#C0392B', fontSize: 13, fontWeight: 500 }}>{error}</p>}
+            <button onClick={handleSignup} disabled={loading}
+              style={{ width: '100%', background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 8, padding: 13, fontSize: 15, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, fontFamily: 'var(--font-body)' }}>
+              {loading ? 'Creating account…' : 'Create Account →'}
+            </button>
+            <button onClick={() => go('login')}
+              style={{ background: 'none', border: 'none', color: 'var(--mid)', cursor: 'pointer', fontSize: 13, textAlign: 'center' }}>
+              ← Back to sign in
+            </button>
+          </div>
+        )}
+
+        {/* ── Forgot password ── */}
+        {step === 'forgot' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <p style={{ fontSize: 14, color: 'var(--mid)', marginBottom: 4, lineHeight: 1.5 }}>
+              Enter your email and we&apos;ll send a reset link.
+            </p>
+            <div>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--navy)', marginBottom: 5 }}>Email</label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleForgot()}
+                placeholder="you@yourfacility.com" autoFocus
+                style={inputStyle} onFocus={focusTeal} onBlur={blurGray} />
+            </div>
+            {error && <p style={{ color: '#C0392B', fontSize: 13, fontWeight: 500 }}>{error}</p>}
+            <button onClick={handleForgot} disabled={loading}
+              style={{ width: '100%', background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 8, padding: 13, fontSize: 15, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, fontFamily: 'var(--font-body)' }}>
+              {loading ? 'Sending…' : 'Send Reset Link'}
+            </button>
+            <button onClick={() => go('login')}
+              style={{ background: 'none', border: 'none', color: 'var(--mid)', cursor: 'pointer', fontSize: 13, textAlign: 'center' }}>
+              ← Back to sign in
+            </button>
+          </div>
+        )}
+
+        {/* ── Forgot sent ── */}
+        {step === 'forgot_sent' && (
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>📬</div>
+            <p style={{ fontSize: 15, color: 'var(--dark)', lineHeight: 1.6, marginBottom: 12 }}>
+              If an account exists for <strong>{email}</strong>, a reset link is on its way.
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--mid)', marginBottom: 20 }}>
+              Check your spam folder if you don&apos;t see it within a minute.
+            </p>
+            <button onClick={() => go('login')}
+              style={{ background: 'none', border: 'none', color: 'var(--teal)', fontWeight: 600, cursor: 'pointer', fontSize: 14 }}>
+              ← Back to sign in
+            </button>
+          </div>
+        )}
+
       </div>
     </div>
   )

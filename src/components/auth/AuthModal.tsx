@@ -5,27 +5,13 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/context/AuthContext'
 
-type Step = 'phone' | 'otp' | 'onboarding'
+type Step = 'login' | 'signup' | 'forgot' | 'forgot_sent' | 'onboarding'
 
 interface Fellowship {
   id: string
   name: string
   abbreviation: string | null
   approach: string
-}
-
-function formatPhone(raw: string): string {
-  const d = raw.replace(/\D/g, '').slice(0, 10)
-  if (d.length < 4) return d
-  if (d.length < 7) return `(${d.slice(0, 3)}) ${d.slice(3)}`
-  return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`
-}
-
-function normalizePhone(formatted: string): string {
-  const d = formatted.replace(/\D/g, '')
-  if (d.length === 10) return `+1${d}`
-  if (d.length === 11 && d.startsWith('1')) return `+${d}`
-  return `+${d}`
 }
 
 const APPROACH_LABELS: Record<string, string> = {
@@ -36,124 +22,109 @@ const APPROACH_LABELS: Record<string, string> = {
   harm_reduction: 'Harm Reduction',
 }
 
+const inputCls = "w-full rounded-xl outline-none text-dark"
+const inputStyle = { border: '1.5px solid #E8E4DF', padding: '11px 14px', fontSize: '15px', fontFamily: 'inherit' }
+const focusTeal = (e: React.FocusEvent<HTMLInputElement>) => (e.target.style.borderColor = '#2A8A99')
+const blurGray  = (e: React.FocusEvent<HTMLInputElement>) => (e.target.style.borderColor = '#E8E4DF')
+
 export default function AuthModal() {
   const { isAuthModalOpen, closeAuthModal, refreshProfile } = useAuth()
   const router = useRouter()
   const supabase = createClient()
 
-  const [step, setStep] = useState<Step>('phone')
-  const [phone, setPhone] = useState('')
-  const [normalizedPhone, setNormalizedPhone] = useState('')
-  const [otp, setOtp] = useState('')
+  const [step, setStep] = useState<Step>('login')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [sobrietyDate, setSobrietyDate] = useState('')
   const [fellowshipId, setFellowshipId] = useState('')
   const [fellowships, setFellowships] = useState<Fellowship[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [cooldown, setCooldown] = useState(0)
 
   const nameRef = useRef<HTMLInputElement>(null)
   const backdropRef = useRef<HTMLDivElement>(null)
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Reset on close
+  // Reset state when modal closes
   useEffect(() => {
     if (!isAuthModalOpen) {
       setTimeout(() => {
-        setStep('phone')
-        setPhone('')
-        setNormalizedPhone('')
-        setOtp('')
-        setDisplayName('')
-        setSobrietyDate('')
-        setFellowshipId('')
-        setError(null)
-        setCooldown(0)
-        if (timerRef.current) clearInterval(timerRef.current)
+        setStep('login'); setEmail(''); setPassword(''); setConfirm('')
+        setDisplayName(''); setSobrietyDate(''); setFellowshipId(''); setError(null)
       }, 300)
     }
   }, [isAuthModalOpen])
 
-  // Focus name on onboarding
+  // Load fellowships when reaching onboarding
   useEffect(() => {
     if (step === 'onboarding') {
       setTimeout(() => nameRef.current?.focus(), 100)
-      const supabase2 = createClient()
-      supabase2.from('fellowships').select('id, name, abbreviation, approach').order('approach').order('name').then(({ data }) => {
-        setFellowships((data as Fellowship[]) ?? [])
-      })
+      createClient()
+        .from('fellowships')
+        .select('id, name, abbreviation, approach')
+        .order('approach').order('name')
+        .then(({ data }) => setFellowships((data as Fellowship[]) ?? []))
     }
   }, [step])
 
-  // Cooldown timer
-  function startCooldown() {
-    setCooldown(60)
-    timerRef.current = setInterval(() => {
-      setCooldown(v => {
-        if (v <= 1) { clearInterval(timerRef.current!); return 0 }
-        return v - 1
-      })
-    }, 1000)
-  }
-
-  async function handleSendOtp() {
-    const np = normalizePhone(phone)
-    if (np.replace(/\D/g, '').length < 11) {
-      setError('Please enter a valid 10-digit US phone number.')
-      return
-    }
-    setLoading(true)
-    setError(null)
-    const { error: err } = await supabase.auth.signInWithOtp({ phone: np })
-    setLoading(false)
-    if (err) {
-      setError(err.message)
-      return
-    }
-    setNormalizedPhone(np)
-    setStep('otp')
-    startCooldown()
-  }
-
-  async function handleVerifyOtp() {
-    if (otp.length < 6) { setError('Enter the 6-digit code.'); return }
-    setLoading(true)
-    setError(null)
-    const { data, error: err } = await supabase.auth.verifyOtp({
-      phone: normalizedPhone,
-      token: otp,
-      type: 'sms',
-    })
-    if (err) {
-      setLoading(false)
-      setError(err.message)
-      return
-    }
-    // Check if profile has a name (returning user vs new)
-    if (data.user) {
-      const { data: prof } = await supabase
-        .from('user_profiles')
-        .select('display_name')
-        .eq('id', data.user.id)
-        .single()
-      setLoading(false)
-      if (!prof?.display_name) {
-        setStep('onboarding')
-      } else {
-        closeAuthModal()
-        router.refresh()
-      }
+  async function afterAuth(userId: string) {
+    const { data: prof } = await supabase
+      .from('user_profiles')
+      .select('display_name')
+      .eq('id', userId)
+      .single()
+    if (!prof?.display_name) {
+      setStep('onboarding')
     } else {
-      setLoading(false)
       closeAuthModal()
+      router.refresh()
     }
+  }
+
+  async function handleLogin() {
+    if (!email.trim() || !password) { setError('Email and password are required.'); return }
+    setLoading(true); setError(null)
+    const { data, error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+    setLoading(false)
+    if (err) { setError(err.message); return }
+    if (data.user) await afterAuth(data.user.id)
+  }
+
+  async function handleSignup() {
+    if (!email.trim() || !password) { setError('Email and password are required.'); return }
+    if (password.length < 8) { setError('Password must be at least 8 characters.'); return }
+    if (password !== confirm) { setError('Passwords do not match.'); return }
+    setLoading(true); setError(null)
+    const { data, error: err } = await supabase.auth.signUp({ email: email.trim(), password })
+    setLoading(false)
+    if (err) { setError(err.message); return }
+    // If email confirmation is required, user won't have a session yet
+    if (data.user && !data.session) {
+      setError(null)
+      // Show a friendly message in the login step
+      setStep('login')
+      setPassword('')
+      setError('Account created! Check your email to confirm, then sign in.')
+      return
+    }
+    if (data.user) await afterAuth(data.user.id)
+  }
+
+  async function handleForgot() {
+    if (!email.trim()) { setError('Enter your email address.'); return }
+    setLoading(true); setError(null)
+    const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    })
+    setLoading(false)
+    if (err) { setError(err.message); return }
+    setStep('forgot_sent')
   }
 
   async function handleOnboarding() {
     if (!displayName.trim()) { setError('Please enter a name or alias.'); return }
-    setLoading(true)
-    setError(null)
+    setLoading(true); setError(null)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setError('Session expired. Please sign in again.'); setLoading(false); return }
     const { error: err } = await supabase.from('user_profiles').upsert({
@@ -169,11 +140,9 @@ export default function AuthModal() {
     router.refresh()
   }
 
-  // Group fellowships by approach
   const grouped = fellowships.reduce<Record<string, Fellowship[]>>((acc, f) => {
-    const key = f.approach
-    if (!acc[key]) acc[key] = []
-    acc[key].push(f)
+    if (!acc[f.approach]) acc[f.approach] = []
+    acc[f.approach].push(f)
     return acc
   }, {})
 
@@ -181,164 +150,180 @@ export default function AuthModal() {
 
   if (!isAuthModalOpen) return null
 
+  const HEADER: Record<Step, { title: string; sub: string }> = {
+    login:       { title: 'Sign In',              sub: 'Welcome back to SoberAnchor.' },
+    signup:      { title: 'Create Account',        sub: 'Free forever. No credit card.' },
+    forgot:      { title: 'Reset Password',        sub: 'We\'ll send a link to your email.' },
+    forgot_sent: { title: 'Check Your Inbox',      sub: `Reset link sent to ${email}` },
+    onboarding:  { title: 'Almost There!',         sub: 'Just a few quick things to set up your dashboard.' },
+  }
+
   return (
     <div
       ref={backdropRef}
       className="fixed inset-0 z-50 flex items-center justify-center px-4"
       style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}
-      onMouseDown={e => { if (step === 'phone' && e.target === backdropRef.current) closeAuthModal() }}
-      onKeyDown={e => { if (step === 'phone' && e.key === 'Escape') closeAuthModal() }}
+      onMouseDown={e => { if (step === 'login' && e.target === backdropRef.current) closeAuthModal() }}
+      onKeyDown={e => { if (step === 'login' && e.key === 'Escape') closeAuthModal() }}
     >
       <div
         className="w-full rounded-2xl overflow-hidden"
-        style={{ maxWidth: '420px', background: '#fff', boxShadow: '0 24px 64px rgba(0,51,102,0.18)' }}
+        style={{ maxWidth: 420, background: '#fff', boxShadow: '0 24px 64px rgba(0,51,102,0.18)' }}
       >
         {/* Header */}
         <div
           className="px-7 pt-7 pb-5 text-center"
           style={{ background: 'linear-gradient(135deg,#002244,#1a4a5e)', borderRadius: '16px 16px 0 0' }}
         >
-          <div style={{ fontSize: '32px', marginBottom: '8px' }}>⚓</div>
-          <div className="font-semibold text-white" style={{ fontFamily: 'var(--font-display)', fontSize: '22px' }}>
-            {step === 'phone' && 'Sign In to SoberAnchor'}
-            {step === 'otp' && 'Enter Your Code'}
-            {step === 'onboarding' && 'Almost There!'}
+          <div style={{ fontSize: 32, marginBottom: 8 }}>⚓</div>
+          <div className="font-semibold text-white" style={{ fontFamily: 'var(--font-display)', fontSize: 22 }}>
+            {HEADER[step].title}
           </div>
-          <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '13px', marginTop: '4px' }}>
-            {step === 'phone' && 'Phone number only. No email, no password.'}
-            {step === 'otp' && `Code sent to ${phone}`}
-            {step === 'onboarding' && 'Just a few quick things to personalize your dashboard.'}
+          <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: 13, marginTop: 4 }}>
+            {HEADER[step].sub}
           </div>
         </div>
 
         {/* Body */}
         <div className="px-7 py-6">
 
-          {/* ── Phone step ── */}
-          {step === 'phone' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* ── Login ── */}
+          {step === 'login' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
-                <label className="font-semibold text-navy block mb-1.5" style={{ fontSize: '14px' }}>Phone Number</label>
-                <div className="flex items-center rounded-xl overflow-hidden" style={{ border: '1.5px solid #E8E4DF' }}>
-                  <div className="flex items-center gap-1.5 px-3 py-3 border-r border-[var(--border)] bg-warm-gray flex-shrink-0" style={{ fontSize: '14px' }}>
-                    🇺🇸 <span className="font-medium text-mid">+1</span>
-                  </div>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={e => setPhone(formatPhone(e.target.value))}
-                    onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
-                    placeholder="(555) 867-5309"
-                    autoFocus
-                    className="flex-1 px-3 py-3 outline-none text-dark bg-transparent"
-                    style={{ fontSize: '16px' }}
-                  />
-                </div>
+                <label className="font-semibold text-navy block mb-1.5" style={{ fontSize: 14 }}>Email</label>
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                  placeholder="you@example.com" autoFocus
+                  className={inputCls} style={inputStyle} onFocus={focusTeal} onBlur={blurGray} />
               </div>
-              {error && <p style={{ fontSize: '13px', color: '#C0392B', fontWeight: 500 }}>{error}</p>}
-              <button
-                onClick={handleSendOtp}
-                disabled={loading}
-                className="w-full rounded-xl font-semibold text-white transition-colors"
-                style={{ padding: '13px', fontSize: '15px', background: '#003366', border: 'none', cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1 }}
-              >
-                {loading ? 'Sending…' : 'Send Code →'}
+              <div>
+                <label className="font-semibold text-navy block mb-1.5" style={{ fontSize: 14 }}>Password</label>
+                <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                  placeholder="••••••••"
+                  className={inputCls} style={inputStyle} onFocus={focusTeal} onBlur={blurGray} />
+              </div>
+              {error && <p style={{ fontSize: 13, color: '#C0392B', fontWeight: 500 }}>{error}</p>}
+              <button onClick={handleLogin} disabled={loading}
+                className="w-full rounded-xl font-semibold text-white"
+                style={{ padding: 13, fontSize: 15, background: '#003366', border: 'none', cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1 }}>
+                {loading ? 'Signing in…' : 'Sign In →'}
               </button>
-              <p className="text-center text-mid" style={{ fontSize: '12px' }}>
-                US numbers only · No spam · Your privacy is protected
-              </p>
-            </div>
-          )}
-
-          {/* ── OTP step ── */}
-          {step === 'otp' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'center' }}>
-              <p style={{ fontSize: '14px', color: '#888' }}>
-                Enter the 6-digit code texted to <strong className="text-navy">{phone}</strong>
-              </p>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={otp}
-                onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                onKeyDown={e => e.key === 'Enter' && handleVerifyOtp()}
-                placeholder="000000"
-                autoFocus
-                className="w-full rounded-xl text-center font-bold text-navy outline-none"
-                style={{ border: '2px solid #E8E4DF', padding: '16px', fontSize: '28px', letterSpacing: '8px', fontFamily: 'monospace' }}
-                onFocus={e => (e.target.style.borderColor = '#2A8A99')}
-                onBlur={e => (e.target.style.borderColor = '#E8E4DF')}
-              />
-              {error && <p style={{ fontSize: '13px', color: '#C0392B', fontWeight: 500 }}>{error}</p>}
-              <button
-                onClick={handleVerifyOtp}
-                disabled={loading || otp.length < 6}
-                className="w-full rounded-xl font-semibold text-white transition-colors"
-                style={{ padding: '13px', fontSize: '15px', background: '#2A8A99', border: 'none', cursor: loading || otp.length < 6 ? 'not-allowed' : 'pointer', opacity: loading || otp.length < 6 ? 0.6 : 1 }}
-              >
-                {loading ? 'Verifying…' : 'Verify Code'}
-              </button>
-              <div className="flex items-center justify-between" style={{ fontSize: '13px' }}>
-                <button onClick={() => setStep('phone')} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '13px' }}>
-                  ← Change number
+              <div className="flex justify-between" style={{ fontSize: 13 }}>
+                <button onClick={() => { setError(null); setStep('signup') }}
+                  style={{ background: 'none', border: 'none', color: '#2A8A99', fontWeight: 600, cursor: 'pointer', fontSize: 13, padding: 0 }}>
+                  Create account
                 </button>
-                <button
-                  onClick={() => { setOtp(''); startCooldown(); supabase.auth.signInWithOtp({ phone: normalizedPhone }) }}
-                  disabled={cooldown > 0}
-                  style={{ background: 'none', border: 'none', color: cooldown > 0 ? '#bbb' : '#2A8A99', cursor: cooldown > 0 ? 'default' : 'pointer', fontSize: '13px', fontWeight: 600 }}
-                >
-                  {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend Code'}
+                <button onClick={() => { setError(null); setStep('forgot') }}
+                  style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 13, padding: 0 }}>
+                  Forgot password?
                 </button>
               </div>
             </div>
           )}
 
-          {/* ── Onboarding step ── */}
+          {/* ── Sign up ── */}
+          {step === 'signup' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <label className="font-semibold text-navy block mb-1.5" style={{ fontSize: 14 }}>Email</label>
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                  placeholder="you@example.com" autoFocus
+                  className={inputCls} style={inputStyle} onFocus={focusTeal} onBlur={blurGray} />
+              </div>
+              <div>
+                <label className="font-semibold text-navy block mb-1.5" style={{ fontSize: 14 }}>Password</label>
+                <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+                  placeholder="Min. 8 characters"
+                  className={inputCls} style={inputStyle} onFocus={focusTeal} onBlur={blurGray} />
+              </div>
+              <div>
+                <label className="font-semibold text-navy block mb-1.5" style={{ fontSize: 14 }}>Confirm Password</label>
+                <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleSignup()}
+                  placeholder="••••••••"
+                  className={inputCls} style={inputStyle} onFocus={focusTeal} onBlur={blurGray} />
+              </div>
+              {error && <p style={{ fontSize: 13, color: '#C0392B', fontWeight: 500 }}>{error}</p>}
+              <button onClick={handleSignup} disabled={loading}
+                className="w-full rounded-xl font-semibold text-white"
+                style={{ padding: 13, fontSize: 15, background: '#2A8A99', border: 'none', cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1 }}>
+                {loading ? 'Creating account…' : 'Create Account →'}
+              </button>
+              <button onClick={() => { setError(null); setStep('login') }}
+                style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 13, textAlign: 'center' }}>
+                ← Back to sign in
+              </button>
+            </div>
+          )}
+
+          {/* ── Forgot password ── */}
+          {step === 'forgot' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <label className="font-semibold text-navy block mb-1.5" style={{ fontSize: 14 }}>Email Address</label>
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleForgot()}
+                  placeholder="you@example.com" autoFocus
+                  className={inputCls} style={inputStyle} onFocus={focusTeal} onBlur={blurGray} />
+              </div>
+              {error && <p style={{ fontSize: 13, color: '#C0392B', fontWeight: 500 }}>{error}</p>}
+              <button onClick={handleForgot} disabled={loading}
+                className="w-full rounded-xl font-semibold text-white"
+                style={{ padding: 13, fontSize: 15, background: '#003366', border: 'none', cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1 }}>
+                {loading ? 'Sending…' : 'Send Reset Link'}
+              </button>
+              <button onClick={() => { setError(null); setStep('login') }}
+                style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 13, textAlign: 'center' }}>
+                ← Back to sign in
+              </button>
+            </div>
+          )}
+
+          {/* ── Forgot sent ── */}
+          {step === 'forgot_sent' && (
+            <div style={{ textAlign: 'center', padding: '8px 0' }}>
+              <div style={{ fontSize: 40, marginBottom: 12 }}>📬</div>
+              <p style={{ fontSize: 15, color: 'var(--dark)', lineHeight: 1.6, marginBottom: 16 }}>
+                If an account exists for <strong>{email}</strong>, a reset link is on its way.
+              </p>
+              <p style={{ fontSize: 13, color: '#888', marginBottom: 20 }}>Check your spam folder if you don&apos;t see it within a minute.</p>
+              <button onClick={() => { setError(null); setStep('login') }}
+                style={{ background: 'none', border: 'none', color: '#2A8A99', fontWeight: 600, cursor: 'pointer', fontSize: 14 }}>
+                ← Back to sign in
+              </button>
+            </div>
+          )}
+
+          {/* ── Onboarding ── */}
           {step === 'onboarding' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
-                <label className="font-semibold text-navy block mb-1.5" style={{ fontSize: '14px' }}>
+                <label className="font-semibold text-navy block mb-1.5" style={{ fontSize: 14 }}>
                   What should we call you? <span style={{ color: '#C0392B' }}>*</span>
                 </label>
-                <input
-                  ref={nameRef}
-                  type="text"
-                  value={displayName}
-                  onChange={e => setDisplayName(e.target.value)}
+                <input ref={nameRef} type="text" value={displayName} onChange={e => setDisplayName(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleOnboarding()}
                   placeholder="First name or alias"
-                  className="w-full rounded-xl outline-none text-dark"
-                  style={{ border: '1.5px solid #E8E4DF', padding: '11px 14px', fontSize: '15px', fontFamily: 'inherit' }}
-                  onFocus={e => (e.target.style.borderColor = '#2A8A99')}
-                  onBlur={e => (e.target.style.borderColor = '#E8E4DF')}
-                />
-                <p style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>Only visible to you and your sponsor.</p>
+                  className={inputCls} style={inputStyle} onFocus={focusTeal} onBlur={blurGray} />
+                <p style={{ fontSize: 12, color: '#888', marginTop: 4 }}>Only visible to you and your sponsor.</p>
               </div>
               <div>
-                <label className="font-semibold text-navy block mb-1.5" style={{ fontSize: '14px' }}>
+                <label className="font-semibold text-navy block mb-1.5" style={{ fontSize: 14 }}>
                   Sobriety Date <span className="font-normal text-mid">(optional)</span>
                 </label>
-                <input
-                  type="date"
-                  value={sobrietyDate}
-                  onChange={e => setSobrietyDate(e.target.value)}
+                <input type="date" value={sobrietyDate} onChange={e => setSobrietyDate(e.target.value)}
                   max={today}
-                  className="w-full rounded-xl outline-none text-dark"
-                  style={{ border: '1.5px solid #E8E4DF', padding: '11px 14px', fontSize: '14px', fontFamily: 'inherit' }}
-                  onFocus={e => (e.target.style.borderColor = '#2A8A99')}
-                  onBlur={e => (e.target.style.borderColor = '#E8E4DF')}
-                />
+                  className={inputCls} style={inputStyle} onFocus={focusTeal} onBlur={blurGray} />
               </div>
               <div>
-                <label className="font-semibold text-navy block mb-1.5" style={{ fontSize: '14px' }}>
+                <label className="font-semibold text-navy block mb-1.5" style={{ fontSize: 14 }}>
                   Primary Fellowship <span className="font-normal text-mid">(optional)</span>
                 </label>
-                <select
-                  value={fellowshipId}
-                  onChange={e => setFellowshipId(e.target.value)}
+                <select value={fellowshipId} onChange={e => setFellowshipId(e.target.value)}
                   className="w-full rounded-xl outline-none text-dark"
-                  style={{ border: '1.5px solid #E8E4DF', padding: '11px 14px', fontSize: '14px', fontFamily: 'inherit', background: '#fff' }}
-                >
+                  style={{ ...inputStyle, background: '#fff' }}>
                   <option value="">Select a fellowship…</option>
                   {Object.entries(grouped).map(([approach, list]) => (
                     <optgroup key={approach} label={APPROACH_LABELS[approach] ?? approach}>
@@ -351,13 +336,10 @@ export default function AuthModal() {
                   ))}
                 </select>
               </div>
-              {error && <p style={{ fontSize: '13px', color: '#C0392B', fontWeight: 500 }}>{error}</p>}
-              <button
-                onClick={handleOnboarding}
-                disabled={loading}
-                className="w-full rounded-xl font-semibold text-white transition-colors"
-                style={{ padding: '13px', fontSize: '15px', background: '#003366', border: 'none', cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1, marginTop: '2px' }}
-              >
+              {error && <p style={{ fontSize: 13, color: '#C0392B', fontWeight: 500 }}>{error}</p>}
+              <button onClick={handleOnboarding} disabled={loading}
+                className="w-full rounded-xl font-semibold text-white"
+                style={{ padding: 13, fontSize: 15, background: '#003366', border: 'none', cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1, marginTop: 2 }}>
                 {loading ? 'Saving…' : 'Go to My Dashboard →'}
               </button>
             </div>
