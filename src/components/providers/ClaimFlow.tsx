@@ -54,10 +54,36 @@ export default function ClaimFlow({ userId }: Props) {
     return () => clearTimeout(t)
   }, [query])
 
+  function extractDomain(url: string | null): string {
+    if (!url) return ''
+    try {
+      const hostname = new URL(url.startsWith('http') ? url : 'https://' + url).hostname
+      return hostname.replace(/^www\./, '').toLowerCase()
+    } catch {
+      return ''
+    }
+  }
+
   async function claimFacility(facility: SearchResult) {
     if (facility.is_claimed) { setError('This facility has already been claimed. Contact us if this is your facility.'); return }
     setSubmitting(true); setError(null)
     const supabase = createClient()
+
+    // Get user email for domain matching
+    const { data: { user } } = await supabase.auth.getUser()
+    const userEmail = user?.email ?? ''
+    const emailDomain = userEmail.split('@')[1]?.toLowerCase() ?? ''
+
+    // Fetch facility website for domain comparison
+    const { data: facilityDetail } = await supabase
+      .from('facilities')
+      .select('website')
+      .eq('id', facility.id)
+      .maybeSingle()
+    const websiteDomain = extractDomain(facilityDetail?.website ?? null)
+
+    // Hybrid auto-verify: domain match → auto-verify; no match → queue for admin review
+    const autoVerify = !!(emailDomain && websiteDomain && emailDomain === websiteDomain)
 
     // Get/create provider account
     let { data: existing } = await supabase
@@ -69,7 +95,7 @@ export default function ClaimFlow({ userId }: Props) {
     if (!existing) {
       const { data: created } = await supabase
         .from('provider_accounts')
-        .insert({ auth_user_id: userId, contact_name: facility.name, contact_email: '' })
+        .insert({ auth_user_id: userId, contact_name: facility.name, contact_email: userEmail })
         .select('id')
         .single()
       existing = created
@@ -77,10 +103,11 @@ export default function ClaimFlow({ userId }: Props) {
 
     if (!existing) { setSubmitting(false); setError('Failed to create provider account.'); return }
 
-    // Link facility
+    // Link facility — auto-verify if email domain matches website domain
     await supabase.from('facilities').update({
       provider_account_id: existing.id,
       is_claimed: true,
+      is_verified: autoVerify,
       updated_at: new Date().toISOString(),
     }).eq('id', facility.id)
 
