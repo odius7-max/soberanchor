@@ -27,9 +27,15 @@ export async function middleware(request: NextRequest) {
   await supabase.auth.getSession()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Auth-gate /dashboard
+  // Auth-gate /dashboard (consumer)
   if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
     return NextResponse.redirect(new URL('/?auth=required', request.url))
+  }
+
+  // Auth-gate /providers/dashboard and /providers/claim
+  const providerAuthRoutes = ['/providers/dashboard', '/providers/claim']
+  if (!user && providerAuthRoutes.some(r => request.nextUrl.pathname.startsWith(r))) {
+    return NextResponse.redirect(new URL('/providers/login', request.url))
   }
 
   return response

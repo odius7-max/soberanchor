@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import LeadForm from "@/components/find/LeadForm";
 
 export const revalidate = 3600;
 
@@ -27,6 +28,9 @@ export default async function FacilityDetail({
 
   const insurances = insuranceRows?.map((r) => r.insurance_name) || [];
 
+  const showLeadForm =
+    facility.listing_tier === "enhanced" || facility.listing_tier === "premium";
+
   return (
     <div className="max-w-[900px] mx-auto px-6 py-6 pb-16">
       <Link
@@ -39,10 +43,10 @@ export default async function FacilityDetail({
       <div className="flex gap-2 flex-wrap mt-4">
         {facility.is_featured && (
           <span className="inline-block bg-[var(--gold-10)] border border-[rgba(212,165,116,0.2)] text-[#9A7B54] text-xs font-medium rounded-full px-3 py-1">
-            Featured
+            ⭐ Featured
           </span>
         )}
-        {facility.is_claimed && (facility.listing_tier === "enhanced" || facility.listing_tier === "premium") && (
+        {facility.is_verified && (
           <span className="inline-block bg-[var(--teal-10)] border border-[var(--teal-20)] text-teal text-xs font-medium rounded-full px-3 py-1">
             ✓ Verified
           </span>
@@ -98,17 +102,28 @@ export default async function FacilityDetail({
 
           <h3 className="text-base font-semibold text-navy mb-2.5">Details</h3>
           <div className="text-sm text-dark leading-[2.2] mb-6">
-            📍 {facility.address || `${facility.city}, ${facility.state}`}
+            📍 {facility.address_line1 || `${facility.city}, ${facility.state}`}
             <br />
-            {facility.is_claimed && facility.phone && (
+            {facility.phone && (
               <>
-                📞 {facility.phone}
+                📞{" "}
+                <a href={`tel:${facility.phone}`} className="hover:underline text-teal">
+                  {facility.phone}
+                </a>
                 <br />
               </>
             )}
             {facility.website && (
               <>
-                🌐 {facility.website}
+                🌐{" "}
+                <a
+                  href={facility.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-teal hover:underline"
+                >
+                  {facility.website.replace(/^https?:\/\//, "")}
+                </a>
                 <br />
               </>
             )}
@@ -133,75 +148,13 @@ export default async function FacilityDetail({
           )}
         </div>
 
-        {/* Right: Sidebar — lead form (claimed) or contact card (unclaimed) */}
+        {/* Right: Sidebar */}
         <div className="lg:sticky lg:top-[84px]">
-          {facility.is_claimed ? (
-            /* ── Claimed: full lead form ── */
-            <div className="bg-warm-gray rounded-[14px] p-7">
-              <h3
-                className="text-[22px] font-semibold mb-1"
-                style={{ fontFamily: "var(--font-display)", color: "var(--navy)" }}
-              >
-                Get in Touch
-              </h3>
-              <p className="text-sm text-mid mb-5">
-                Request information about this facility. Free and confidential.
-              </p>
-
-              <label className="block text-[13px] font-semibold text-navy mb-1.5">
-                First Name
-              </label>
-              <input
-                type="text"
-                placeholder="Your first name"
-                className="w-full py-2.5 px-3.5 border-[1.5px] border-border rounded-lg text-sm bg-white outline-none focus:border-teal mb-4"
-              />
-
-              <label className="block text-[13px] font-semibold text-navy mb-1.5">
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                placeholder="(555) 555-5555"
-                className="w-full py-2.5 px-3.5 border-[1.5px] border-border rounded-lg text-sm bg-white outline-none focus:border-teal mb-4"
-              />
-
-              <label className="block text-[13px] font-semibold text-navy mb-1.5">
-                Insurance Provider
-              </label>
-              <select className="w-full py-2.5 px-3.5 border-[1.5px] border-border rounded-lg text-sm bg-white outline-none focus:border-teal mb-4">
-                <option value="">Select your insurance</option>
-                <option>Blue Cross / Blue Shield</option>
-                <option>Aetna</option>
-                <option>Cigna</option>
-                <option>United Healthcare</option>
-                <option>Kaiser</option>
-                <option>Medi-Cal / Medicaid</option>
-                <option>Medicare</option>
-                <option>No Insurance / Self-Pay</option>
-                <option>Other</option>
-              </select>
-
-              <label className="block text-[13px] font-semibold text-navy mb-1.5">
-                Who is this for?
-              </label>
-              <select className="w-full py-2.5 px-3.5 border-[1.5px] border-border rounded-lg text-sm bg-white outline-none focus:border-teal mb-4">
-                <option>Myself</option>
-                <option>A family member</option>
-                <option>A friend</option>
-                <option>A client / patient</option>
-              </select>
-
-              <button className="w-full bg-teal text-white font-semibold text-base py-3.5 rounded-xl hover:bg-teal-light transition-colors mt-1">
-                Request Information →
-              </button>
-              <p className="text-xs text-mid text-center mt-2">
-                🔒 Your information is confidential and will only be shared with
-                this facility.
-              </p>
-            </div>
+          {showLeadForm ? (
+            /* Enhanced/Premium: lead capture form */
+            <LeadForm facilityId={facility.id} facilityName={facility.name} />
           ) : (
-            /* ── Unclaimed: contact card ── */
+            /* Basic / unclaimed: direct contact card */
             <div className="bg-warm-gray rounded-[14px] p-7">
               <h3
                 className="text-[22px] font-semibold mb-4"
@@ -209,6 +162,19 @@ export default async function FacilityDetail({
               >
                 Contact this facility
               </h3>
+
+              {facility.phone && (
+                <a
+                  href={`tel:${facility.phone}`}
+                  className="flex items-center gap-3 bg-white border border-border rounded-xl px-5 py-3.5 mb-3 hover:border-teal transition-colors"
+                >
+                  <span className="text-xl">📞</span>
+                  <div>
+                    <div className="text-xs text-mid font-medium">Call directly</div>
+                    <div className="text-base font-semibold text-navy">{facility.phone}</div>
+                  </div>
+                </a>
+              )}
 
               {facility.website && (
                 <a
@@ -221,8 +187,14 @@ export default async function FacilityDetail({
                 </a>
               )}
 
+              {!facility.phone && !facility.website && (
+                <p className="text-sm text-mid leading-relaxed mb-4">
+                  Contact information not listed. Try the SAMHSA helpline below.
+                </p>
+              )}
+
               <p className="text-sm text-mid leading-relaxed">
-                Or call the{" "}
+                Need immediate help?{" "}
                 <strong className="text-dark">SAMHSA National Helpline:</strong>{" "}
                 <a href="tel:18006624357" className="text-teal font-semibold hover:underline">
                   1-800-662-4357
@@ -230,20 +202,23 @@ export default async function FacilityDetail({
                 (free, confidential, 24/7)
               </p>
 
-              <div className="border-t border-border my-5" />
-
-              <p className="text-[13px] text-mid mb-2">
-                Are you the owner of this facility?
-              </p>
-              <Link
-                href="/for-providers"
-                className="inline-block text-teal font-semibold text-sm hover:underline mb-1"
-              >
-                Claim this listing →
-              </Link>
-              <p className="text-[12px] text-mid">
-                Receive leads, add photos, and manage your profile
-              </p>
+              {!facility.is_claimed && (
+                <>
+                  <div className="border-t border-border my-5" />
+                  <p className="text-[13px] text-mid mb-2">
+                    Are you the owner of this facility?
+                  </p>
+                  <Link
+                    href="/providers/claim"
+                    className="inline-block text-teal font-semibold text-sm hover:underline mb-1"
+                  >
+                    Claim this listing →
+                  </Link>
+                  <p className="text-[12px] text-mid">
+                    Receive leads, add photos, and manage your profile
+                  </p>
+                </>
+              )}
             </div>
           )}
         </div>
