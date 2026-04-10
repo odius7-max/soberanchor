@@ -29,7 +29,7 @@ export default function OurStoryPage() {
                 color: "var(--navy)",
               }}
             >
-              Angel Johnson
+              Angel
             </div>
             <div className="text-sm text-mid">
               Co-Founder · Recovery Advocate · 5+ Years Sober

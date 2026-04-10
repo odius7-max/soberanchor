@@ -3,7 +3,7 @@ const articles = [
     badge: "Early Recovery",
     title: "The First 30 Days: What to Expect",
     desc: "An honest, personal guide to the hardest and most rewarding month of your life. No sugarcoating, no clinical jargon.",
-    author: "Angel Johnson",
+    author: "Angel",
     time: "6 min",
   },
   {

@@ -116,7 +116,7 @@ export default function Home() {
                       className="text-gold text-xl font-semibold"
                       style={{ fontFamily: "var(--font-display)" }}
                     >
-                      Angel Johnson
+                      Angel
                     </div>
                     <div className="text-white/60 text-[13px] mt-1">
                       Co-Founder · 5+ Years Sober
@@ -171,7 +171,7 @@ export default function Home() {
                     badge: "Early Recovery",
                     title: "The First 30 Days: What to Expect",
                     desc: "An honest guide to the hardest and most rewarding month of your life.",
-                    author: "Angel Johnson · 6 min",
+                    author: "Angel · 6 min",
                   },
                   {
                     badge: "Supporting Someone",

@@ -263,7 +263,7 @@ export default function GuidedDiscovery({ onClose }: { onClose: () => void }) {
                 The First 30 Days: What to Expect
               </div>
               <div className="text-[13px] text-mid">
-                By Angel Johnson · 6 min read
+                By Angel · 6 min read
               </div>
             </Link>
 
