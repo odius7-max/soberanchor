@@ -4,12 +4,12 @@ import Link from "next/link";
 import GuidedDiscovery from "@/components/GuidedDiscovery";
 
 const categories = [
-  { icon: "🏥", title: "Treatment Centers", sub: "Find professional help" },
-  { icon: "🏠", title: "Sober Living", sub: "Homes & residences" },
-  { icon: "👥", title: "Meetings", sub: "AA, NA, GA, OA & more" },
-  { icon: "🍹", title: "Sober Venues", sub: "Bars, cafes & events" },
-  { icon: "💆", title: "Therapists", sub: "Counselors & specialists" },
-  { icon: "❤️", title: "For Loved Ones", sub: "Al-Anon, Nar-Anon & more" },
+  { icon: "🏥", title: "Treatment Centers", sub: "Find professional help", href: "/find#facilities" },
+  { icon: "🏠", title: "Sober Living", sub: "Homes & residences", href: "/find#facilities" },
+  { icon: "👥", title: "Meetings", sub: "AA, NA, GA, OA & more", href: "/find#meetings" },
+  { icon: "🍹", title: "Sober Venues", sub: "Bars, cafes & events", href: "/find#facilities" },
+  { icon: "💆", title: "Therapists", sub: "Counselors & specialists", href: "/find#facilities" },
+  { icon: "❤️", title: "For Loved Ones", sub: "Al-Anon, Nar-Anon & more", href: "/find#meetings" },
 ];
 
 const fellowships = [
@@ -75,7 +75,7 @@ export default function Home() {
                 {categories.map((c) => (
                   <Link
                     key={c.title}
-                    href="/find"
+                    href={c.href}
                     className="bg-white border border-border rounded-[14px] p-[18px] hover:shadow-lg hover:-translate-y-0.5 transition-all"
                   >
                     <div className="text-[28px] mb-1.5">{c.icon}</div>

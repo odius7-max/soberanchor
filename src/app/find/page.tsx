@@ -111,7 +111,8 @@ export default async function FindPage() {
           {facilities && facilities.length > 0 && (
             <>
               <h2
-                className="text-lg font-semibold mt-6 mb-3"
+                id="facilities"
+                className="text-lg font-semibold mt-6 mb-3 scroll-mt-24"
                 style={{ fontFamily: "var(--font-display)", color: "var(--navy)" }}
               >
                 Treatment &amp; Recovery Facilities
@@ -175,7 +176,8 @@ export default async function FindPage() {
           {meetings && meetings.length > 0 && (
             <>
               <h2
-                className="text-lg font-semibold mt-10 mb-3"
+                id="meetings"
+                className="text-lg font-semibold mt-10 mb-3 scroll-mt-24"
                 style={{ fontFamily: "var(--font-display)", color: "var(--navy)" }}
               >
                 Meetings &amp; Support Groups
