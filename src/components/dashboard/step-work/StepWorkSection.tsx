@@ -1,8 +1,9 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { saveStepWorkEntry, submitStepWork, saveSponsorFeedback } from '@/app/dashboard/step-work/actions'
+import PrintButton from './PrintButton'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -347,9 +348,12 @@ export default function StepWorkSection({ workbook, entry, userId, sponsorRelati
               <p style={{ fontSize: 14, color: 'var(--mid)', marginTop: 8, lineHeight: 1.6, maxWidth: 600 }}>{workbook.description}</p>
             )}
           </div>
-          {/* Status badge */}
-          <div style={{ padding: '6px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: statusMeta.bg, color: statusMeta.color, border: `1px solid ${statusMeta.border}`, whiteSpace: 'nowrap', flexShrink: 0 }}>
-            {statusMeta.icon} {statusMeta.label}
+          {/* Status badge + print */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <PrintButton workbook={workbook} />
+            <div style={{ padding: '6px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: statusMeta.bg, color: statusMeta.color, border: `1px solid ${statusMeta.border}`, whiteSpace: 'nowrap' }}>
+              {statusMeta.icon} {statusMeta.label}
+            </div>
           </div>
         </div>
 
