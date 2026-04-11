@@ -80,12 +80,9 @@ interface Facility {
   longitude: number | null
   phone: string | null
   website: string | null
-  gender_type: string | null
-  treatment_type: string | null
-  therapy_specialty: string | null
-  license_type: string | null
-  offers_telehealth: boolean | null
-  venue_type: string | null
+  accepts_insurance: boolean | null
+  avg_rating: number | null
+  review_count: number | null
   _distance?: number
 }
 
@@ -133,9 +130,10 @@ export default function FacilitiesDirectory({ facilityType, savedIds = {} }: Pro
     const supabase = createClient()
     supabase
       .from('facilities')
-      .select('id, name, city, state, facility_type, description, is_featured, is_verified, listing_tier, latitude, longitude, phone, website, gender_type, treatment_type, therapy_specialty, license_type, offers_telehealth, venue_type')
+      .select('id, name, city, state, facility_type, description, is_featured, is_verified, listing_tier, latitude, longitude, phone, website, accepts_insurance, avg_rating, review_count')
       .eq('facility_type', facilityType)
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) console.error('FacilitiesDirectory fetch error:', error.message)
         setAllFacilities((data ?? []) as unknown as Facility[])
         setLoading(false)
       })
@@ -170,13 +168,9 @@ export default function FacilitiesDirectory({ facilityType, savedIds = {} }: Pro
         const dist = haversineMiles(locationLat!, locationLng!, f.latitude, f.longitude)
         if (dist > radiusMiles) return false
       }
-      // Type-specific
-      if (treatmentType && f.treatment_type && f.treatment_type !== treatmentType) return false
-      if (gender && f.gender_type && f.gender_type !== gender) return false
-      if (therapySpecialty && f.therapy_specialty && f.therapy_specialty !== therapySpecialty) return false
-      if (licenseType && f.license_type && f.license_type !== licenseType) return false
-      if (telehealthOnly && !f.offers_telehealth) return false
-      if (venueType && f.venue_type && f.venue_type !== venueType) return false
+      // Type-specific filters (treatment type, gender, specialty, etc.) will filter
+      // here once those columns are added to the facilities schema.
+      // For now the dropdowns are visible but don't reduce results.
       return true
     })
     .map(f => ({

@@ -79,7 +79,8 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
       .select('id, name, slug, day_of_week, start_time, duration_minutes, format, location_name, city, state, latitude, longitude, meeting_url, types, is_verified, fellowships(name, abbreviation, slug, approach)')
       .order('day_of_week')
       .order('start_time')
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) console.error('MeetingsDirectory fetch error:', error.message)
         setAllMeetings((data ?? []) as unknown as Meeting[])
         setLoading(false)
       })
