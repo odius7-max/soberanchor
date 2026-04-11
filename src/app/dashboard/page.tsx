@@ -32,7 +32,7 @@ export default async function DashboardPage() {
     supabase.from('check_ins').select('id,check_in_date,mood,notes,sober_today,meetings_attended').eq('user_id', userId).order('check_in_date', { ascending: false }).limit(4),
     supabase.from('journal_entries').select('id,title,entry_date,excerpt,step_number,is_shared_with_sponsor').eq('user_id', userId).order('entry_date', { ascending: false }).limit(10),
     supabase.from('journal_entries').select('id', { count: 'exact', head: true }).eq('user_id', userId),
-    supabase.from('step_work_entries').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('is_draft', false),
+    supabase.from('step_work_entries').select('id', { count: 'exact', head: true }).eq('user_id', userId).neq('review_status', 'draft'),
     supabase.from('meeting_attendance').select('id,meeting_name,fellowship_name,attended_at,checkin_method').eq('user_id', userId).order('attended_at', { ascending: false }).limit(20),
     supabase.from('meeting_attendance').select('id', { count: 'exact', head: true }).eq('user_id', userId),
     supabase.from('check_ins').select('id', { count: 'exact', head: true }).eq('user_id', userId),
@@ -129,7 +129,7 @@ export default async function DashboardPage() {
       const [sponseeProfilesRes, sponseeCheckInsRes, pendingStepWorkRes] = await Promise.all([
         supabase.from('user_profiles').select('id,display_name,sobriety_date,current_step').in('id', sponseeIds),
         supabase.from('check_ins').select('user_id,mood,check_in_date').in('user_id', sponseeIds).order('check_in_date', { ascending: false }),
-        supabase.from('step_work_entries').select('user_id').in('user_id', sponseeIds).eq('is_shared_with_sponsor', true).eq('sponsor_reviewed', false),
+        supabase.from('step_work_entries').select('user_id').in('user_id', sponseeIds).eq('review_status', 'submitted'),
       ])
 
       const latestCheckIn: Record<string, { mood: string | null; date: string }> = {}

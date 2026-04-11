@@ -8,6 +8,7 @@ import MeetingsTab from './tabs/MeetingsTab'
 import TasksTab from './tabs/TasksTab'
 import PrivacyTab from './tabs/PrivacyTab'
 import SavedTab from './tabs/SavedTab'
+import StepWorkTab from './tabs/StepWorkTab'
 import SponsorView from './SponsorView'
 import MeetingCheckin from './MeetingCheckin'
 import CheckInModal from './CheckInModal'
@@ -15,7 +16,7 @@ import PendingRequests from './PendingRequests'
 import type { PendingRequest } from './PendingRequests'
 
 type Role = 'my' | 'meetings' | 'sponsor'
-type Tab = 'overview' | 'journal' | 'meetings' | 'tasks' | 'saved' | 'privacy'
+type Tab = 'overview' | 'stepwork' | 'journal' | 'meetings' | 'tasks' | 'saved' | 'privacy'
 
 export interface CheckIn { id:string; check_in_date:string; mood:string|null; notes:string|null; sober_today:boolean; meetings_attended:number }
 export interface JournalEntry { id:string; title:string|null; entry_date:string; excerpt:string|null; step_number:number|null; is_shared_with_sponsor:boolean }
@@ -43,12 +44,13 @@ interface Props {
 }
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'overview', label: '⚓ Overview' },
-  { id: 'journal',  label: '✏️ Journal' },
-  { id: 'meetings', label: '👥 Meetings' },
-  { id: 'tasks',    label: '📋 Tasks' },
-  { id: 'saved',    label: '❤️ Saved' },
-  { id: 'privacy',  label: '🔒 Privacy' },
+  { id: 'overview',  label: '⚓ Overview' },
+  { id: 'stepwork',  label: '📖 Step Work' },
+  { id: 'journal',   label: '✏️ Journal' },
+  { id: 'meetings',  label: '👥 Meetings' },
+  { id: 'tasks',     label: '📋 Tasks' },
+  { id: 'saved',     label: '❤️ Saved' },
+  { id: 'privacy',   label: '🔒 Privacy' },
 ]
 
 export default function DashboardShell({ userId, phone, profile, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsor, sponsees, pendingRequests, sponsorPendingRequests }: Props) {
@@ -100,6 +102,7 @@ export default function DashboardShell({ userId, phone, profile, recentCheckIns,
             {activeTab === 'overview' && (
               <OverviewTab userId={userId} currentStep={currentStep} journalCount={journalCount} stepWorkCount={stepWorkCount} recentCheckIns={recentCheckIns} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} recentMeetings={meetingAttendance.slice(0,3)} readingAssignments={readingAssignments} activeSponsor={activeSponsor} isAvailableSponsor={isSponsor} onCheckIn={() => setCheckInOpen(true)} onJournal={() => setActiveTab('journal')} />
             )}
+            {activeTab === 'stepwork' && <StepWorkTab userId={userId} />}
             {activeTab === 'journal' && <JournalTab userId={userId} entries={journalEntries} />}
             {activeTab === 'meetings' && <MeetingsTab userId={userId} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} meetingAttendance={meetingAttendance} />}
             {activeTab === 'tasks' && <TasksTab readingAssignments={readingAssignments} hasSponsor={activeSponsor !== null} />}

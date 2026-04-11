@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import AddSponseeModal from './AddSponseeModal'
 import PendingRequests from './PendingRequests'
 import type { PendingRequest } from './PendingRequests'
@@ -24,6 +25,7 @@ function relDate(d:string|null):string {
 }
 
 export default function SponsorView({ sponsees, pendingRequests }: Props) {
+  const router = useRouter()
   const [showAddModal, setShowAddModal] = useState(false)
   const pendingTotal = sponsees.reduce((s,sp)=>s+sp.pendingReviews,0)
   const checkInsToday = sponsees.filter(sp=>sp.lastCheckInDate===new Date().toISOString().slice(0,10)).length
@@ -116,7 +118,7 @@ export default function SponsorView({ sponsees, pendingRequests }: Props) {
                   <div style={{fontSize:'12px',color:'var(--mid)'}}>Last check-in: <span className="font-semibold text-dark">{relDate(sp.lastCheckInDate)}</span></div>
                   <div className="flex gap-2">
                     {sp.pendingReviews>0&&(
-                      <button className="font-semibold text-white rounded-lg" style={{fontSize:'12px',padding:'6px 12px',background:'#2A8A99',border:'none',cursor:'pointer'}}>Review Work ({sp.pendingReviews})</button>
+                      <button onClick={() => router.push(`/dashboard/step-work/pending?sponsee=${sp.id}`)} className="font-semibold text-white rounded-lg" style={{fontSize:'12px',padding:'6px 12px',background:'#2A8A99',border:'none',cursor:'pointer'}}>Review Work ({sp.pendingReviews})</button>
                     )}
                     <button className="font-semibold rounded-lg hover:bg-[var(--navy-10)] transition-colors" style={{fontSize:'12px',padding:'6px 12px',background:'none',border:'1.5px solid var(--navy)',color:'var(--navy)',cursor:'pointer'}}>View Profile</button>
                   </div>
