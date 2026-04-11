@@ -207,6 +207,12 @@ export default function SmartSearchBar() {
   const [focused, setFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  function getCsrfToken(): string {
+    if (typeof document === "undefined") return "";
+    const match = document.cookie.match(/(?:^|;\s*)__sa_csrf=([^;]+)/);
+    return match?.[1] ?? "";
+  }
+
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     const q = query.trim();
@@ -214,7 +220,40 @@ export default function SmartSearchBar() {
     setLoading(true);
     setResult(null);
     try {
-      const res = await fetch(`/api/smart-search?q=${encodeURIComponent(q)}`);
+      const csrf = getCsrfToken();
+      const headers: HeadersInit = csrf ? { "X-CSRF-Token": csrf } : {};
+      const res = await fetch(`/api/smart-search?q=${encodeURIComponent(q)}`, {
+        headers,
+      });
+
+      if (res.status === 429) {
+        const data = await res.json();
+        setResult({
+          query: q,
+          intent: null,
+          meetings: [],
+          facilities: [],
+          articles: [],
+          crisis: false,
+          ai_powered: false,
+          error: data.error ?? "Too many requests. Please wait before searching again.",
+        });
+        return;
+      }
+      if (res.status === 403) {
+        setResult({
+          query: q,
+          intent: null,
+          meetings: [],
+          facilities: [],
+          articles: [],
+          crisis: false,
+          ai_powered: false,
+          error: "Search unavailable. Please reload the page and try again.",
+        });
+        return;
+      }
+
       const data: SmartSearchResponse = await res.json();
       setResult(data);
     } catch {
@@ -340,7 +379,17 @@ export default function SmartSearchBar() {
             </p>
           )}
 
-          {!hasResults ? (
+          {result.error ? (
+            <div className="text-center py-8">
+              <p className="text-[15px] text-dark mb-1">{result.error}</p>
+              <button
+                onClick={clearSearch}
+                className="text-sm text-teal font-medium hover:underline mt-2"
+              >
+                Clear search
+              </button>
+            </div>
+          ) : !hasResults ? (
             <div className="text-center py-8 text-mid text-base">
               No results found for &ldquo;{result.query}&rdquo;.{" "}
               <button

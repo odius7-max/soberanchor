@@ -4,6 +4,20 @@ import { NextResponse, type NextRequest } from 'next/server'
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request })
 
+  // Set a JS-readable CSRF cookie for the smart-search API (double-submit pattern).
+  // SameSite=Strict prevents cross-origin reads; the API validates header === cookie.
+  // Uses globalThis.crypto.randomUUID() — available in Edge Runtime (Web Crypto API).
+  if (!request.cookies.get('__sa_csrf')) {
+    const token = globalThis.crypto.randomUUID()
+    response.cookies.set('__sa_csrf', token, {
+      path: '/',
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24, // 24 hours
+      httpOnly: false,       // must be JS-readable
+    })
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

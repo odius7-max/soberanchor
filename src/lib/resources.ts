@@ -149,4 +149,5 @@ export type SmartSearchResponse = {
   crisis: boolean;
   ai_powered: boolean;
   cached?: boolean;
+  error?: string;
 };
