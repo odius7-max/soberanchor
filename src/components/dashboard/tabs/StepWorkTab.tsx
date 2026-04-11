@@ -4,9 +4,10 @@ import StepWorkOverview from '@/components/dashboard/step-work/StepWorkOverview'
 
 interface Props {
   userId: string
+  fellowshipId?: string | null
 }
 
-export default function StepWorkTab({ userId }: Props) {
+export default function StepWorkTab({ userId, fellowshipId }: Props) {
   return (
     <div>
       <div style={{ marginBottom: 20 }}>
@@ -14,7 +15,7 @@ export default function StepWorkTab({ userId }: Props) {
           Step Work
         </h2>
       </div>
-      <StepWorkOverview userId={userId} />
+      <StepWorkOverview userId={userId} fellowshipId={fellowshipId} />
     </div>
   )
 }

@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import DashboardShell from '@/components/dashboard/DashboardShell'
-import type { CheckIn, JournalEntry, MeetingAttendance, ReadingAssignment, Sponsee, ActivityItem } from '@/components/dashboard/DashboardShell'
+import type { CheckIn, JournalEntry, MeetingAttendance, ReadingAssignment, Sponsee, ActivityItem, SobrietyMilestone, Fellowship } from '@/components/dashboard/DashboardShell'
 import type { PendingRequest } from '@/components/dashboard/PendingRequests'
 
 export default async function DashboardPage() {
@@ -29,8 +29,10 @@ export default async function DashboardPage() {
     pendingAsSponsorRes,
     stepCompletionsRes,
     activityFeedRes,
+    milestonesRes,
+    fellowshipsRes,
   ] = await Promise.all([
-    supabase.from('user_profiles').select('display_name,sobriety_date,current_step,is_available_sponsor,onboarding_completed').eq('id', userId).single(),
+    supabase.from('user_profiles').select('display_name,sobriety_date,primary_fellowship_id,current_step,is_available_sponsor,onboarding_completed').eq('id', userId).single(),
     supabase.from('check_ins').select('id,check_in_date,mood,notes,sober_today,meetings_attended').eq('user_id', userId).order('check_in_date', { ascending: false }).limit(4),
     supabase.from('journal_entries').select('id,title,entry_date,excerpt,step_number,is_shared_with_sponsor').eq('user_id', userId).order('entry_date', { ascending: false }).limit(10),
     supabase.from('journal_entries').select('id', { count: 'exact', head: true }).eq('user_id', userId),
@@ -47,12 +49,33 @@ export default async function DashboardPage() {
     supabase.from('step_completions').select('step_number').eq('user_id', userId).eq('is_completed', true),
     // Activity feed
     supabase.from('activity_feed').select('id,event_type,title,description,is_read,created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(10),
+    // Sobriety milestones
+    supabase.from('sobriety_milestones').select('id,label,sobriety_date,fellowship_id,is_primary,notes').eq('user_id', userId).order('is_primary', { ascending: false }).order('sobriety_date'),
+    // Fellowships for the add-milestone form
+    supabase.from('fellowships').select('id,name,abbreviation').order('name'),
   ])
 
   // Count distinct completed step numbers across any fellowship
   const completedSteps = new Set((stepCompletionsRes.data ?? []).map(r => r.step_number)).size
 
   const profile = profileRes.data ?? null
+  const fellowships: Fellowship[] = (fellowshipsRes.data ?? []) as Fellowship[]
+
+  // Migrate user_profiles.sobriety_date → sobriety_milestones on first dashboard load
+  let initialMilestones: SobrietyMilestone[] = (milestonesRes.data ?? []) as SobrietyMilestone[]
+  if (initialMilestones.length === 0 && profile?.sobriety_date) {
+    const pf = fellowships.find(f => f.id === (profile as { primary_fellowship_id?: string | null }).primary_fellowship_id)
+    const label = pf?.abbreviation ?? pf?.name ?? 'Sobriety'
+    const { data: newM } = await supabase.from('sobriety_milestones').insert({
+      user_id: userId,
+      label,
+      sobriety_date: profile.sobriety_date,
+      fellowship_id: (profile as { primary_fellowship_id?: string | null }).primary_fellowship_id ?? null,
+      is_primary: true,
+    }).select('id,label,sobriety_date,fellowship_id,is_primary,notes').single()
+    if (newM) initialMilestones = [newM as SobrietyMilestone]
+  }
+
   const recentCheckIns: CheckIn[] = (recentCheckInsRes.data ?? []) as CheckIn[]
   const journalEntries: JournalEntry[] = (journalEntriesRes.data ?? []) as JournalEntry[]
   const journalCount = journalCountRes.count ?? 0
@@ -199,6 +222,8 @@ export default async function DashboardPage() {
       pendingRequests={pendingRequests}
       sponsorPendingRequests={sponsorPendingRequests}
       activityItems={activityItems}
+      initialMilestones={initialMilestones}
+      fellowships={fellowships}
     />
   )
 }

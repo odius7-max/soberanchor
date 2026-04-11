@@ -77,7 +77,7 @@ function stepProgress(
   return { total, done, pct: Math.round((done / total) * 100) }
 }
 
-export default function StepWorkOverview({ userId }: { userId: string }) {
+export default function StepWorkOverview({ userId, fellowshipId: fellowshipIdProp }: { userId: string; fellowshipId?: string | null }) {
   const router = useRouter()
   const [workbooks, setWorkbooks] = useState<Workbook[]>([])
   const [entries, setEntries] = useState<Entry[]>([])
@@ -87,53 +87,68 @@ export default function StepWorkOverview({ userId }: { userId: string }) {
   const [expandedStep, setExpandedStep] = useState<number | null>(1)
 
   useEffect(() => {
-    const supabase = createClient()
+    let cancelled = false
+    setLoading(true)
 
-    // First resolve the user's active fellowship from their sponsor relationship
-    supabase
-      .from('sponsor_relationships')
-      .select('fellowship_id, fellowships(name, abbreviation)')
-      .eq('sponsee_id', userId)
-      .eq('status', 'active')
-      .maybeSingle()
-      .then(({ data: rel }) => {
-        const fellowshipId = (rel as { fellowship_id?: string } | null)?.fellowship_id ?? null
+    async function load() {
+      const supabase = createClient()
+      let fellowshipInfo: FellowshipInfo | null = null
+
+      if (fellowshipIdProp !== undefined) {
+        // Milestone-driven: fellowship provided directly from the active milestone tab
+        if (fellowshipIdProp) {
+          const { data: fw } = await supabase
+            .from('fellowships').select('name, abbreviation').eq('id', fellowshipIdProp).single()
+          if (fw) fellowshipInfo = { id: fellowshipIdProp, name: fw.name, abbreviation: fw.abbreviation }
+        }
+        // fellowshipIdProp === null means milestone has no fellowship linked → fellowshipInfo stays null
+      } else {
+        // Legacy fallback: derive fellowship from the user's active sponsor relationship
+        const { data: rel } = await supabase
+          .from('sponsor_relationships')
+          .select('fellowship_id, fellowships(name, abbreviation)')
+          .eq('sponsee_id', userId)
+          .eq('status', 'active')
+          .maybeSingle()
+        const fid = (rel as { fellowship_id?: string } | null)?.fellowship_id ?? null
         const fw = (rel as { fellowships?: { name: string; abbreviation: string | null } } | null)?.fellowships ?? null
-        const fellowshipInfo: FellowshipInfo | null = fellowshipId && fw
-          ? { id: fellowshipId, name: fw.name, abbreviation: fw.abbreviation }
-          : null
-        setFellowship(fellowshipInfo)
+        if (fid && fw) fellowshipInfo = { id: fid, name: fw.name, abbreviation: fw.abbreviation }
+      }
 
-        return Promise.all([
-          fellowshipId
-            ? supabase
-                .from('program_workbooks')
-                .select('id, title, slug, step_number, description, sort_order, prompts')
-                .eq('is_active', true)
-                .eq('fellowship_id', fellowshipId)
-                .order('sort_order')
-            : Promise.resolve({ data: [] as Workbook[] }),
-          supabase
-            .from('step_work_entries')
-            .select('workbook_id, review_status, responses')
-            .eq('user_id', userId),
-          fellowshipId
-            ? supabase
-                .from('step_completions')
-                .select('step_number')
-                .eq('user_id', userId)
-                .eq('fellowship_id', fellowshipId)
-                .eq('is_completed', true)
-            : Promise.resolve({ data: [] as { step_number: number }[] }),
-        ])
-      })
-      .then(([wb, en, sc]) => {
-        setWorkbooks((wb.data ?? []) as unknown as Workbook[])
-        setEntries((en.data ?? []) as unknown as Entry[])
-        setCompletedStepNums(new Set((sc.data ?? []).map(r => r.step_number)))
-        setLoading(false)
-      })
-  }, [userId])
+      if (cancelled) return
+      setFellowship(fellowshipInfo)
+
+      const fid = fellowshipInfo?.id ?? null
+      const [wb, en, sc] = await Promise.all([
+        fid
+          ? supabase
+              .from('program_workbooks')
+              .select('id, title, slug, step_number, description, sort_order, prompts')
+              .eq('is_active', true)
+              .eq('fellowship_id', fid)
+              .order('sort_order')
+          : Promise.resolve({ data: [] as Workbook[] }),
+        supabase.from('step_work_entries').select('workbook_id, review_status, responses').eq('user_id', userId),
+        fid
+          ? supabase
+              .from('step_completions')
+              .select('step_number')
+              .eq('user_id', userId)
+              .eq('fellowship_id', fid)
+              .eq('is_completed', true)
+          : Promise.resolve({ data: [] as { step_number: number }[] }),
+      ])
+
+      if (cancelled) return
+      setWorkbooks((wb.data ?? []) as unknown as Workbook[])
+      setEntries((en.data ?? []) as unknown as Entry[])
+      setCompletedStepNums(new Set((sc.data ?? []).map(r => r.step_number)))
+      setLoading(false)
+    }
+
+    load()
+    return () => { cancelled = true }
+  }, [userId, fellowshipIdProp])
 
   const steps = Array.from({ length: 12 }, (_, i) => i + 1)
   const totalSections = workbooks.length
@@ -155,8 +170,19 @@ export default function StepWorkOverview({ userId }: { userId: string }) {
     return (
       <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 16, padding: '48px 24px', textAlign: 'center', color: 'var(--mid)' }}>
         <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
-        <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--dark)', marginBottom: 6 }}>No active sponsor relationship</div>
-        <div style={{ fontSize: 14 }}>Ask your sponsor to connect with you on SoberAnchor to unlock step work.</div>
+        {fellowshipIdProp !== undefined ? (
+          // Milestone-driven but no fellowship linked to this milestone
+          <>
+            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--dark)', marginBottom: 6 }}>No fellowship linked to this milestone</div>
+            <div style={{ fontSize: 14 }}>Edit this milestone in Privacy → Sobriety Dates to link a fellowship and unlock step work for it.</div>
+          </>
+        ) : (
+          // No active sponsor relationship (legacy path)
+          <>
+            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--dark)', marginBottom: 6 }}>No active sponsor relationship</div>
+            <div style={{ fontSize: 14 }}>Ask your sponsor to connect with you on SoberAnchor to unlock step work.</div>
+          </>
+        )}
       </div>
     )
   }

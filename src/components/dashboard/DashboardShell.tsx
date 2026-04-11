@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import DashboardBanner from './DashboardBanner'
+import { useState, useCallback } from 'react'
+import DashboardBanner, { type SobrietyMilestone, type Fellowship } from './DashboardBanner'
 import OverviewTab from './tabs/OverviewTab'
 import JournalTab from './tabs/JournalTab'
 import MeetingsTab from './tabs/MeetingsTab'
@@ -25,12 +25,15 @@ export interface MeetingAttendance { id:string; meeting_name:string; fellowship_
 export interface ReadingAssignment { id:string; title:string; source:string|null; is_completed:boolean; due_date:string|null; created_at:string }
 export interface Sponsee { id:string; name:string; sobrietyDate:string|null; currentStep:number; completedSteps:number; lastMood:string|null; lastCheckInDate:string|null; pendingReviews:number }
 export interface ActivityItem { id:string; event_type:string; title:string; description:string|null; is_read:boolean; created_at:string }
+export type { SobrietyMilestone, Fellowship }
 
 interface Props {
   userId: string
   phone: string | null
   onboardingCompleted: boolean
-  profile: { display_name:string|null; sobriety_date:string|null; current_step:number; is_available_sponsor:boolean } | null
+  profile: { display_name:string|null; sobriety_date:string|null; primary_fellowship_id:string|null; current_step:number; is_available_sponsor:boolean } | null
+  initialMilestones: SobrietyMilestone[]
+  fellowships: Fellowship[]
   completedSteps: number
   recentCheckIns: CheckIn[]
   journalEntries: JournalEntry[]
@@ -58,7 +61,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'privacy',   label: '🔒 Privacy' },
 ]
 
-export default function DashboardShell({ userId, phone, onboardingCompleted, profile, completedSteps, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsor, sponsees, pendingRequests, sponsorPendingRequests, activityItems }: Props) {
+export default function DashboardShell({ userId, phone, onboardingCompleted, profile, completedSteps, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsor, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships }: Props) {
   const [role, setRole] = useState<Role>('my')
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [checkInOpen, setCheckInOpen] = useState(false)
@@ -67,8 +70,17 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
   const allStepsDone = completedSteps >= 12
   // Derive current step from actual completions, not the stale profile field
   const currentStep = allStepsDone ? 12 : Math.max(1, completedSteps + 1)
-  const sobrietyDate = profile?.sobriety_date ?? null
   const isSponsor = profile?.is_available_sponsor ?? false
+
+  // Active fellowship driven by which milestone tab the user is viewing.
+  // undefined = no milestones → fall back to sponsor_relationships in step work.
+  // null    = milestone exists but has no fellowship linked.
+  const hasMilestones = initialMilestones.length > 0
+  const primaryMilestone = initialMilestones.find(m => m.is_primary) ?? initialMilestones[0] ?? null
+  const [activeFellowshipId, setActiveFellowshipId] = useState<string | null | undefined>(
+    hasMilestones ? (primaryMilestone?.fellowship_id ?? null) : undefined
+  )
+  const handleActiveFellowshipChange = useCallback((fid: string | null) => setActiveFellowshipId(fid), [])
 
   const roles = [
     { id: 'my' as Role, label: '⚓ My Dashboard' },
@@ -95,7 +107,14 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
           <>
             {!onboardingCompleted && <OnboardingCard userId={userId} />}
             <PendingRequests requests={pendingRequests} perspective="as_sponsee" />
-            <DashboardBanner userId={userId} displayName={displayName} sobrietyDate={sobrietyDate} currentStep={currentStep} />
+            <DashboardBanner
+              userId={userId}
+              displayName={displayName}
+              currentStep={currentStep}
+              initialMilestones={initialMilestones}
+              fellowships={fellowships}
+              onActiveFellowshipChange={handleActiveFellowshipChange}
+            />
 
             {/* Tabs */}
             <div className="flex mb-5 overflow-x-auto" style={{ borderBottom: '2px solid var(--border)', scrollbarWidth: 'none', gap: '0' }}>
@@ -110,7 +129,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
             {activeTab === 'overview' && (
               <OverviewTab userId={userId} currentStep={currentStep} completedSteps={completedSteps} allStepsDone={allStepsDone} journalCount={journalCount} stepWorkCount={stepWorkCount} recentCheckIns={recentCheckIns} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} recentMeetings={meetingAttendance.slice(0,3)} readingAssignments={readingAssignments} activeSponsor={activeSponsor} isAvailableSponsor={isSponsor} activityItems={activityItems} onCheckIn={() => setCheckInOpen(true)} onJournal={() => setActiveTab('journal')} />
             )}
-            {activeTab === 'stepwork' && <StepWorkTab userId={userId} />}
+            {activeTab === 'stepwork' && <StepWorkTab userId={userId} fellowshipId={activeFellowshipId} />}
             {activeTab === 'journal' && <JournalTab userId={userId} entries={journalEntries} />}
             {activeTab === 'meetings' && <MeetingsTab userId={userId} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} meetingAttendance={meetingAttendance} />}
             {activeTab === 'tasks' && <TasksTab readingAssignments={readingAssignments} hasSponsor={activeSponsor !== null} />}
