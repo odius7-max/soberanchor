@@ -12,24 +12,18 @@ import type {
 
 // ─── In-memory stores (best-effort; reset on cold start) ─────────────────────
 
-/** Cached AI results: normalised query → { data, timestamp } */
 const queryCache = new Map<string, { data: SmartSearchResponse; ts: number }>();
-const CACHE_TTL_MS        = 10 * 60 * 1000; // 10 min standard
-const CACHE_TTL_COMMON_MS = 60 * 60 * 1000; // 1 hr for common queries
+const CACHE_TTL_MS        = 10 * 60 * 1000;
+const CACHE_TTL_COMMON_MS = 60 * 60 * 1000;
 const MAX_CACHE_SIZE = 200;
 
-/** Per-identifier: timestamp of last AI call (1/3 s throttle) */
 const lastAiRequest = new Map<string, number>();
+const dailyCounts   = new Map<string, number>();
 
-/** Per-identifier-day: number of AI calls made today */
-const dailyCounts = new Map<string, number>();
+const AI_THROTTLE_MS = 3_000;
+const MAX_DAILY_AUTH = 50;
+const MAX_DAILY_ANON = 10;
 
-const AI_THROTTLE_MS   = 3_000; // 1 request per 3 seconds
-const MAX_DAILY_AUTH   = 50;
-const MAX_DAILY_ANON   = 10;
-
-// ─── Common-query normalisation → extended cache ──────────────────────────────
-// Queries that match these patterns get a 1-hour TTL instead of 10 min.
 const COMMON_PATTERNS = [
   /\baa\s+meetings?\b/i,
   /\bna\s+meetings?\b/i,
@@ -46,15 +40,34 @@ function isCommonQuery(q: string): boolean {
   return COMMON_PATTERNS.some((p) => p.test(q));
 }
 
+// ─── Issue → fellowship defaults (used when Haiku doesn't classify slugs) ────
+
+const ISSUE_FELLOWSHIP_MAP: Record<string, string[]> = {
+  alcohol:         ["aa", "al-anon"],
+  opioids:         ["na", "nar-anon"],
+  gambling:        ["ga", "gam-anon"],
+  eating_disorder: ["oa", "fa"],
+  meth:            ["na", "cma"],
+  cocaine:         ["na", "ca"],
+  marijuana:       ["na", "ma"],
+  nicotine:        ["nicotine-anonymous"],
+  sex_addiction:   ["saa", "sa"],
+  debt:            ["da"],
+  internet_gaming: ["itaa", "cgaa"],
+  work:            ["aa"],
+  family_support:  ["al-anon", "nar-anon", "gam-anon"],
+  general:         ["aa", "na"],
+};
+
 // ─── Input sanitisation ───────────────────────────────────────────────────────
 
 function sanitize(raw: string): string {
   return raw
-    .slice(0, 200)                   // hard length cap
-    .replace(/<[^>]*>/g, " ")        // strip HTML tags
-    .replace(/[<>]/g, "")            // remove stray angle brackets
-    .replace(/javascript\s*:/gi, "") // strip JS protocol
-    .replace(/on\w+\s*=/gi, "")      // strip inline event handlers
+    .slice(0, 200)
+    .replace(/<[^>]*>/g, " ")
+    .replace(/[<>]/g, "")
+    .replace(/javascript\s*:/gi, "")
+    .replace(/on\w+\s*=/gi, "")
     .trim();
 }
 
@@ -64,34 +77,19 @@ function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function checkRateLimit(
-  identifier: string,
-  isAuth: boolean
-): { ok: boolean; message: string; retryAfter?: number } {
-  // 1. Per-identifier throttle: 1 AI call per 3 seconds
+function checkRateLimit(identifier: string, isAuth: boolean): { ok: boolean; message: string; retryAfter?: number } {
   const last = lastAiRequest.get(identifier) ?? 0;
   const sinceLast = Date.now() - last;
   if (sinceLast < AI_THROTTLE_MS) {
     const wait = Math.ceil((AI_THROTTLE_MS - sinceLast) / 1000);
-    return {
-      ok: false,
-      message: "Please wait a moment before searching again.",
-      retryAfter: wait,
-    };
+    return { ok: false, message: "Please wait a moment before searching again.", retryAfter: wait };
   }
-
-  // 2. Per-day quota
   const dayKey = `${today()}:${identifier}`;
-  const count = dailyCounts.get(dayKey) ?? 0;
-  const limit = isAuth ? MAX_DAILY_AUTH : MAX_DAILY_ANON;
+  const count  = dailyCounts.get(dayKey) ?? 0;
+  const limit  = isAuth ? MAX_DAILY_AUTH : MAX_DAILY_ANON;
   if (count >= limit) {
-    return {
-      ok: false,
-      message: `Daily search limit reached (${limit}/day). Try again tomorrow.`,
-      retryAfter: 86400,
-    };
+    return { ok: false, message: `Daily search limit reached (${limit}/day). Try again tomorrow.`, retryAfter: 86400 };
   }
-
   return { ok: true, message: "" };
 }
 
@@ -99,15 +97,11 @@ function recordRequest(identifier: string): void {
   lastAiRequest.set(identifier, Date.now());
   const dayKey = `${today()}:${identifier}`;
   dailyCounts.set(dayKey, (dailyCounts.get(dayKey) ?? 0) + 1);
-
-  // Prune stale daily entries (keep memory bounded)
   const todayStr = today();
   for (const key of dailyCounts.keys()) {
     if (!key.startsWith(todayStr)) dailyCounts.delete(key);
   }
 }
-
-// ─── IP extraction ────────────────────────────────────────────────────────────
 
 function getIp(request: Request): string {
   const xff = request.headers.get("x-forwarded-for");
@@ -146,8 +140,12 @@ Inference rules:
 - Sober house/halfway/sober living → facility_types includes "sober_living"
 - Counselor/therapist/therapy → facility_types includes "therapist"
 - Crisis language (want to die, can't go on, overdose, emergency, suicide) → urgency="high", include_crisis=true
+- Any query mentioning "meeting" or a fellowship by name → always populate fellowship_slugs
+- Any query mentioning treatment, rehab, detox, facility, center, sober living → always populate facility_types
 - For general recovery queries with no specific issue → aa and na as fellowship_slugs
 - Return ONLY the JSON object, no explanation or markdown`;
+
+type SearchContext = "home" | "resources" | "directory" | "member";
 
 const CONTEXT_HINTS: Record<SearchContext, string> = {
   home:      "General search from the homepage.",
@@ -156,10 +154,7 @@ const CONTEXT_HINTS: Record<SearchContext, string> = {
   member:    "User is in their personal recovery dashboard — they may be asking about step work, sponsor relationships, or daily recovery practices.",
 };
 
-async function classifyIntent(
-  query: string,
-  context: SearchContext
-): Promise<SearchIntent | null> {
+async function classifyIntent(query: string, context: SearchContext): Promise<SearchIntent | null> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return null;
 
@@ -169,14 +164,10 @@ async function classifyIntent(
       model: "claude-haiku-4-5-20251001",
       max_tokens: 400,
       system: SYSTEM_PROMPT,
-      messages: [{
-        role: "user",
-        content: `[Context: ${CONTEXT_HINTS[context]}]\n\nQuery: ${query}`,
-      }],
+      messages: [{ role: "user", content: `[Context: ${CONTEXT_HINTS[context]}]\n\nQuery: ${query}` }],
     });
 
-    const text =
-      msg.content[0].type === "text" ? msg.content[0].text.trim() : "";
+    const text  = msg.content[0].type === "text" ? msg.content[0].text.trim() : "";
     const clean = text.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
     return JSON.parse(clean) as SearchIntent;
   } catch {
@@ -184,126 +175,114 @@ async function classifyIntent(
   }
 }
 
-// ─── DB fetchers ──────────────────────────────────────────────────────────────
+// ─── Context limits ───────────────────────────────────────────────────────────
 
-async function fetchMeetings(intent: SearchIntent): Promise<MeetingResult[]> {
-  const slugs =
-    intent.fellowship_slugs.length > 0 ? intent.fellowship_slugs : ["aa", "na"];
+const CONTEXT_LIMITS: Record<SearchContext, { meetings: number; facilities: number; articles: number; skipMeetings: boolean; skipFacilities: boolean }> = {
+  home:      { meetings: 6, facilities: 5, articles: 4, skipMeetings: false, skipFacilities: false },
+  resources: { meetings: 0, facilities: 0, articles: 8, skipMeetings: true,  skipFacilities: true  },
+  directory: { meetings: 8, facilities: 6, articles: 2, skipMeetings: false, skipFacilities: false },
+  member:    { meetings: 4, facilities: 2, articles: 5, skipMeetings: false, skipFacilities: false },
+};
 
+// ─── Shared helpers ───────────────────────────────────────────────────────────
+
+function toMeeting(m: Record<string, unknown>, idToFellowship: Record<string, { name: string; slug: string }>): MeetingResult {
+  const fid = m.fellowship_id as string;
+  return {
+    id:             m.id as string,
+    name:           m.name as string,
+    fellowship_name: idToFellowship[fid]?.name ?? "",
+    fellowship_slug: idToFellowship[fid]?.slug ?? "",
+    city:       (m.city as string)       ?? null,
+    state:      (m.state as string)      ?? null,
+    format:     (m.format as string)     ?? null,
+    day_of_week:(m.day_of_week as string)?? null,
+    start_time: (m.start_time as string) ?? null,
+    meeting_url:(m.meeting_url as string)?? null,
+    slug:       (m.slug as string)       ?? null,
+  };
+}
+
+async function queryMeetings(slugs: string[], location: string | null, limit: number): Promise<MeetingResult[]> {
   const { data: fellowships } = await supabase
-    .from("fellowships")
-    .select("id, name, slug")
-    .in("slug", slugs);
+    .from("fellowships").select("id, name, slug").in("slug", slugs);
 
   if (!fellowships?.length) return [];
 
   const idToFellowship = Object.fromEntries(
-    fellowships.map((f) => [
-      f.id,
-      { name: f.name as string, slug: f.slug as string },
-    ])
+    fellowships.map((f) => [f.id, { name: f.name as string, slug: f.slug as string }])
   );
-  const fellowshipIds = fellowships.map((f) => f.id as string);
+  const fids = fellowships.map((f) => f.id as string);
 
-  let q = supabase
-    .from("meetings")
-    .select(
-      "id, name, fellowship_id, city, state, format, day_of_week, start_time, meeting_url, slug"
-    )
-    .in("fellowship_id", fellowshipIds)
-    .limit(6);
+  const MEETING_SELECT = "id, name, fellowship_id, city, state, format, day_of_week, start_time, meeting_url, slug";
 
-  if (intent.location) q = q.ilike("city", `%${intent.location}%`);
+  let q = supabase.from("meetings").select(MEETING_SELECT).in("fellowship_id", fids).limit(limit);
+  if (location) q = q.ilike("city", `%${location}%`);
 
   const { data } = await q;
 
-  // Retry without location if location filter returned nothing
-  if (!data?.length && intent.location) {
-    const { data: fallback } = await supabase
-      .from("meetings")
-      .select(
-        "id, name, fellowship_id, city, state, format, day_of_week, start_time, meeting_url, slug"
-      )
-      .in("fellowship_id", fellowshipIds)
-      .limit(6);
-
+  // Retry without location filter if no results
+  if (!data?.length && location) {
+    const { data: fallback } = await supabase.from("meetings").select(MEETING_SELECT).in("fellowship_id", fids).limit(limit);
     return (fallback ?? []).map((m) => toMeeting(m, idToFellowship));
   }
 
   return (data ?? []).map((m) => toMeeting(m, idToFellowship));
 }
 
-function toMeeting(
-  m: Record<string, unknown>,
-  idToFellowship: Record<string, { name: string; slug: string }>
-): MeetingResult {
-  const fid = m.fellowship_id as string;
-  return {
-    id: m.id as string,
-    name: m.name as string,
-    fellowship_name: idToFellowship[fid]?.name ?? "",
-    fellowship_slug: idToFellowship[fid]?.slug ?? "",
-    city: (m.city as string) ?? null,
-    state: (m.state as string) ?? null,
-    format: (m.format as string) ?? null,
-    day_of_week: (m.day_of_week as string) ?? null,
-    start_time: (m.start_time as string) ?? null,
-    meeting_url: (m.meeting_url as string) ?? null,
-    slug: (m.slug as string) ?? null,
-  };
-}
-
-async function fetchFacilities(
-  intent: SearchIntent
-): Promise<FacilityResult[]> {
-  const types = intent.facility_types;
+async function queryFacilities(types: string[], location: string | null, limit: number): Promise<FacilityResult[]> {
   if (!types.length) return [];
 
-  let q = supabase
-    .from("facilities")
-    .select(
-      "id, name, facility_type, city, state, phone, website, accepts_insurance, slug, is_verified, is_featured"
-    )
+  const FACILITY_SELECT = "id, name, facility_type, city, state, phone, website, accepts_insurance, slug, is_verified, is_featured";
+
+  let q = supabase.from("facilities").select(FACILITY_SELECT)
     .in("facility_type", types)
     .order("is_featured", { ascending: false })
-    .order("is_verified", { ascending: false })
-    .limit(5);
+    .order("is_verified",  { ascending: false })
+    .limit(limit);
 
-  if (intent.location) q = q.ilike("city", `%${intent.location}%`);
+  if (location) q = q.ilike("city", `%${location}%`);
 
   const { data } = await q;
 
-  if (!data?.length && intent.location) {
-    const { data: fallback } = await supabase
-      .from("facilities")
-      .select(
-        "id, name, facility_type, city, state, phone, website, accepts_insurance, slug, is_verified, is_featured"
-      )
+  if (!data?.length && location) {
+    const { data: fallback } = await supabase.from("facilities").select(FACILITY_SELECT)
       .in("facility_type", types)
       .order("is_featured", { ascending: false })
-      .limit(5);
+      .limit(limit);
     return (fallback ?? []) as FacilityResult[];
   }
 
   return (data ?? []) as FacilityResult[];
 }
 
-type SearchContext = "home" | "resources" | "directory" | "member";
+// ─── AI-path DB fetchers ──────────────────────────────────────────────────────
 
-const CONTEXT_LIMITS: Record<
-  SearchContext,
-  { meetings: number; facilities: number; articles: number; skipMeetings: boolean; skipFacilities: boolean }
-> = {
-  home:      { meetings: 6, facilities: 5, articles: 4, skipMeetings: false, skipFacilities: false },
-  resources: { meetings: 0, facilities: 0, articles: 8, skipMeetings: true,  skipFacilities: true  },
-  directory: { meetings: 6, facilities: 5, articles: 2, skipMeetings: false, skipFacilities: false },
-  member:    { meetings: 4, facilities: 0, articles: 5, skipMeetings: false, skipFacilities: true  },
-};
+async function fetchMeetings(intent: SearchIntent, limit: number): Promise<MeetingResult[]> {
+  // Use classified slugs; fall back to issue-based defaults; then aa+na as last resort
+  const slugs =
+    intent.fellowship_slugs.length > 0
+      ? intent.fellowship_slugs
+      : (ISSUE_FELLOWSHIP_MAP[intent.issue] ?? ["aa", "na"]);
 
-async function fetchArticles(
-  intent: SearchIntent,
-  context: SearchContext
-): Promise<ArticleResult[]> {
+  return queryMeetings(slugs, intent.location, limit);
+}
+
+async function fetchFacilities(intent: SearchIntent, limit: number): Promise<FacilityResult[]> {
+  // Use classified types; fall back to help_type-inferred types
+  let types = intent.facility_types;
+  if (!types.length) {
+    const inferred: string[] = [];
+    if (intent.help_type.includes("treatment"))   inferred.push("treatment");
+    if (intent.help_type.includes("sober_living")) inferred.push("sober_living");
+    if (intent.help_type.includes("therapist"))    inferred.push("therapist");
+    types = inferred;
+  }
+
+  return queryFacilities(types, intent.location, limit);
+}
+
+async function fetchArticles(intent: SearchIntent, context: SearchContext): Promise<ArticleResult[]> {
   const pillarsByIssue: Record<string, string[]> = {
     alcohol:          ["getting_help", "understanding", "supporting", "sober_lifestyle"],
     opioids:          ["understanding", "getting_help"],
@@ -323,11 +302,7 @@ async function fetchArticles(
 
   const base = pillarsByIssue[intent.issue] ?? ["getting_help", "understanding"];
 
-  // member context: surface lifestyle/recovery-focused content first
-  const memberPillars = ["sober_lifestyle", "supporting", ...base.filter(
-    (p) => p !== "sober_lifestyle" && p !== "supporting"
-  )];
-
+  const memberPillars = ["sober_lifestyle", "supporting", ...base.filter((p) => p !== "sober_lifestyle" && p !== "supporting")];
   const ordered =
     context === "member"
       ? memberPillars
@@ -347,65 +322,102 @@ async function fetchArticles(
   return (data ?? []) as ArticleResult[];
 }
 
-// ─── Keyword fallback ─────────────────────────────────────────────────────────
+// ─── Keyword fallback (no AI key or classification failure) ───────────────────
+// Searches meetings, facilities, and articles using simple term matching.
 
-async function keywordSearch(q: string): Promise<SmartSearchResponse> {
-  const terms = q
-    .toLowerCase()
-    .split(/\s+/)
-    .filter((t) => t.length > 2);
+// Fellowship name → slug mapping for keyword detection
+const FELLOWSHIP_KEYWORD_MAP: [RegExp, string[]][] = [
+  [/\baa\b|alcoholics\s+anonymous/i,      ["aa"]],
+  [/\bna\b|narcotics\s+anonymous/i,        ["na"]],
+  [/\bal.?anon\b/i,                        ["al-anon"]],
+  [/\bnar.?anon\b/i,                       ["nar-anon"]],
+  [/\bgamblers?\s+anonymous\b|\bga\b/i,    ["ga"]],
+  [/\bgam.?anon\b/i,                       ["gam-anon"]],
+  [/\bsmart\s+recovery\b/i,               ["smart-recovery"]],
+  [/\bovereaters?\s+anonymous\b|\boa\b/i, ["oa"]],
+  [/\bcelebrate\s+recovery\b/i,           ["celebrate-recovery"]],
+  [/\baca\b|adult\s+children/i,            ["aca"]],
+  [/\bsaa\b|sex\s+addict/i,               ["saa"]],
+  [/\bsa\b|sexaholics/i,                  ["sa"]],
+  [/\bda\b|debtors?\s+anonymous/i,        ["da"]],
+  [/\bcma\b|crystal\s+meth/i,             ["cma", "na"]],
+  [/\bca\b|cocaine\s+anonymous/i,         ["ca", "na"]],
+  [/\blifering\b/i,                       ["lifering"]],
+  [/\brefuge\s+recovery\b/i,              ["refuge-recovery"]],
+];
 
-  if (!terms.length) return emptyResponse(q);
+const FACILITY_KEYWORD_MAP: [RegExp, string[]][] = [
+  [/\btreatment\b|\brehab\b|\brehabilitation\b|\binpatient\b|\bdetox\b/i, ["treatment"]],
+  [/\bsober\s+living\b|\bhalfway\s+house\b|\bsober\s+house\b/i,          ["sober_living"]],
+  [/\btherapist\b|\bcounselor\b|\btherapy\b|\bcounseling\b/i,            ["therapist"]],
+  [/\boutpatient\b|\biop\b|\bintensive\s+outpatient\b/i,                 ["outpatient"]],
+  [/\bsober\s+bar\b|\balcohol.free\s+bar\b|\bsober\s+venue\b/i,          ["venue"]],
+];
 
-  const { data } = await supabase
-    .from("articles")
-    .select("id, title, slug, excerpt, author, body, pillar")
-    .eq("is_published", true);
+function detectLocation(q: string): string | null {
+  // Match "in [Location]" or "near [Location]" patterns
+  const m = q.match(/\b(?:in|near)\s+([A-Za-z][A-Za-z\s]{1,30?)(?=\s*(?:$|[,\.?!]|\s+(?:and|or|for|that|with|where)))/i);
+  return m?.[1]?.trim() ?? null;
+}
 
-  const articles = (data ?? [])
-    .map((a) => ({
-      a,
-      score: terms.filter((t) =>
-        [a.title, a.excerpt, a.pillar, a.author]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase()
-          .includes(t)
-      ).length,
-    }))
-    .filter(({ score }) => score > 0)
-    .sort((x, y) => y.score - x.score)
-    .slice(0, 8)
-    .map(({ a }) => a as ArticleResult);
+async function keywordSearch(q: string, context: SearchContext): Promise<SmartSearchResponse> {
+  const limits = CONTEXT_LIMITS[context];
 
-  return {
-    query: q,
-    intent: null,
-    meetings: [],
-    facilities: [],
-    articles,
-    crisis: false,
-    ai_powered: false,
-  };
+  // Detect which fellowships, facility types, and location are in the query
+  const mentionedSlugs: string[] = [];
+  for (const [pattern, slugs] of FELLOWSHIP_KEYWORD_MAP) {
+    if (pattern.test(q)) mentionedSlugs.push(...slugs);
+  }
+
+  const mentionedTypes: string[] = [];
+  for (const [pattern, types] of FACILITY_KEYWORD_MAP) {
+    if (pattern.test(q)) mentionedTypes.push(...types);
+  }
+
+  const wantsMeetings = !limits.skipMeetings && (mentionedSlugs.length > 0 || /\bmeeting/i.test(q));
+  const wantsFacilities = !limits.skipFacilities && mentionedTypes.length > 0;
+  const slugsToQuery = mentionedSlugs.length > 0 ? [...new Set(mentionedSlugs)] : ["aa", "na"];
+  const typesUniq    = [...new Set(mentionedTypes)];
+
+  const location = detectLocation(q);
+
+  // Keyword scoring for articles
+  const terms = q.toLowerCase().split(/\s+/).filter((t) => t.length > 2);
+
+  const [meetings, facilities, articleData] = await Promise.all([
+    wantsMeetings  ? queryMeetings(slugsToQuery, location, limits.meetings || 6)  : Promise.resolve([] as MeetingResult[]),
+    wantsFacilities ? queryFacilities(typesUniq, location, limits.facilities || 5) : Promise.resolve([] as FacilityResult[]),
+    terms.length > 0
+      ? supabase.from("articles").select("id, title, slug, excerpt, author, body, pillar").eq("is_published", true)
+      : Promise.resolve({ data: null }),
+  ]);
+
+  const articles = terms.length > 0
+    ? ((articleData as { data: unknown[] | null }).data ?? [])
+        .map((a) => {
+          const row = a as Record<string, unknown>;
+          return {
+            a: row,
+            score: terms.filter((t) =>
+              [row.title, row.excerpt, row.pillar, row.author].filter(Boolean).join(" ").toLowerCase().includes(t)
+            ).length,
+          };
+        })
+        .filter(({ score }) => score > 0)
+        .sort((x, y) => y.score - x.score)
+        .slice(0, limits.articles || 8)
+        .map(({ a }) => a as ArticleResult)
+    : [];
+
+  return { query: q, intent: null, meetings, facilities, articles, crisis: false, ai_powered: false };
 }
 
 function emptyResponse(query: string): SmartSearchResponse {
-  return {
-    query,
-    intent: null,
-    meetings: [],
-    facilities: [],
-    articles: [],
-    crisis: false,
-    ai_powered: false,
-  };
+  return { query, intent: null, meetings: [], facilities: [], articles: [], crisis: false, ai_powered: false };
 }
 
 function err429(message: string, retryAfter: number) {
-  return Response.json(
-    { error: message },
-    { status: 429, headers: { "Retry-After": String(retryAfter) } }
-  );
+  return Response.json({ error: message }, { status: 429, headers: { "Retry-After": String(retryAfter) } });
 }
 
 // ─── Route handler ────────────────────────────────────────────────────────────
@@ -413,14 +425,14 @@ function err429(message: string, retryAfter: number) {
 function errorResponse(query: string, message = "Search unavailable. Please try again."): Response {
   return Response.json(
     { query, intent: null, meetings: [], facilities: [], articles: [], crisis: false, ai_powered: false, error: message },
-    { status: 200 } // 200 so the client renders the error message rather than hitting the !res.ok branch
+    { status: 200 }
   );
 }
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const rawQuery = searchParams.get("q") ?? "";
-  const context = (searchParams.get("context") ?? "home") as SearchContext;
+  const context  = (searchParams.get("context") ?? "home") as SearchContext;
 
   try {
     return await handleSearch(request, rawQuery, context);
@@ -431,81 +443,72 @@ export async function GET(request: Request) {
 }
 
 async function handleSearch(request: Request, rawQuery: string, context: SearchContext): Promise<Response> {
-
-  // 1. Input validation & sanitisation (always, before anything else)
+  // 1. Sanitise
   const q = sanitize(rawQuery);
-  if (q.length < 2) {
-    return Response.json(emptyResponse(q));
-  }
+  if (q.length < 2) return Response.json(emptyResponse(q));
 
-  // 2. Cache check — context is part of the key so different contexts get distinct results.
-  //    Return before auth/rate-limit: cached hits don't call the AI.
+  // 2. Cache (before auth/rate-limit — cached results don't hit the AI)
   const cacheKey = `${context}:${q.toLowerCase().slice(0, 150)}`;
-  const cached = queryCache.get(cacheKey);
-  const ttl = isCommonQuery(q) ? CACHE_TTL_COMMON_MS : CACHE_TTL_MS;
+  const cached   = queryCache.get(cacheKey);
+  const ttl      = isCommonQuery(q) ? CACHE_TTL_COMMON_MS : CACHE_TTL_MS;
   if (cached && Date.now() - cached.ts < ttl) {
     return Response.json({ ...cached.data, cached: true });
   }
 
-  // 3. Auth check — determine caller identity
+  // 3. Auth
   const supabaseServer = await createClient();
-  const {
-    data: { user },
-  } = await supabaseServer.auth.getUser();
+  const { data: { user } } = await supabaseServer.auth.getUser();
 
-  // 4. CSRF validation for unauthenticated callers
-  //    Authenticated users: valid Supabase session is sufficient proof of origin.
-  //    Unauthenticated users: must present the double-submit CSRF token.
+  // 4. CSRF (anon only — authenticated session is sufficient proof of origin)
   if (!user) {
     const csrfHeader = request.headers.get("x-csrf-token") ?? "";
     const cookieStore = await cookies();
-    const csrfCookie = cookieStore.get("__sa_csrf")?.value ?? "";
-
-    if (
-      !csrfHeader ||
-      !csrfCookie ||
-      csrfHeader.length < 10 ||
-      csrfHeader !== csrfCookie
-    ) {
+    const csrfCookie  = cookieStore.get("__sa_csrf")?.value ?? "";
+    if (!csrfHeader || !csrfCookie || csrfHeader.length < 10 || csrfHeader !== csrfCookie) {
       return Response.json({ error: "Invalid request" }, { status: 403 });
     }
   }
 
-  // 5. Rate limiting
-  //    Auth users are identified by user.id; anon users by IP.
-  //    Both are subject to the per-3-second throttle and per-day cap.
+  // 5. Rate limit
   const identifier = user ? user.id : getIp(request);
-  const isAuth = !!user;
-  const rateCheck = checkRateLimit(identifier, isAuth);
-  if (!rateCheck.ok) {
-    return err429(rateCheck.message, rateCheck.retryAfter ?? 3);
-  }
+  const rateCheck  = checkRateLimit(identifier, !!user);
+  if (!rateCheck.ok) return err429(rateCheck.message, rateCheck.retryAfter ?? 3);
 
-  // 6. Record before calling AI (prevents races from concurrent requests)
+  // 6. Record usage
   recordRequest(identifier);
 
-  // 7. Keyword fallback if no API key configured
+  // 7. Keyword fallback when no API key
   if (!process.env.ANTHROPIC_API_KEY) {
-    const result = await keywordSearch(q);
+    const result = await keywordSearch(q, context);
     return Response.json(result);
   }
 
   // 8. AI classification
   const intent = await classifyIntent(q, context);
   if (!intent) {
-    const result = await keywordSearch(q);
+    // Classification failed — fall back to keyword search across all tables
+    const result = await keywordSearch(q, context);
     return Response.json(result);
   }
 
-  // 9. Parallel DB queries driven by intent + context limits
+  // 9. Decide which tables to query
+  //    Use fellowship_slugs/facility_types from intent; fall back to help_type signals.
   const limits = CONTEXT_LIMITS[context];
+
+  const wantsMeetings = !limits.skipMeetings && (
+    intent.fellowship_slugs.length > 0 ||
+    intent.help_type.some((h) => ["meetings", "family_meetings"].includes(h))
+  );
+
+  const wantsFacilities = !limits.skipFacilities && (
+    intent.facility_types.length > 0 ||
+    intent.help_type.some((h) => ["treatment", "sober_living", "therapist"].includes(h))
+  );
+
+  // 10. Parallel DB queries
   const [meetings, facilities, articles] = await Promise.all([
-    !limits.skipMeetings && intent.fellowship_slugs.length > 0
-      ? fetchMeetings(intent)
-      : Promise.resolve([] as MeetingResult[]),
-    !limits.skipFacilities && intent.facility_types.length > 0
-      ? fetchFacilities(intent)
-      : Promise.resolve([] as FacilityResult[]),
+    wantsMeetings   ? fetchMeetings(intent, limits.meetings)   : Promise.resolve([] as MeetingResult[]),
+    wantsFacilities ? fetchFacilities(intent, limits.facilities) : Promise.resolve([] as FacilityResult[]),
     fetchArticles(intent, context),
   ]);
 
@@ -519,7 +522,7 @@ async function handleSearch(request: Request, rawQuery: string, context: SearchC
     ai_powered: true,
   };
 
-  // 10. Write to cache with appropriate TTL
+  // 11. Cache
   if (queryCache.size >= MAX_CACHE_SIZE) {
     queryCache.delete(queryCache.keys().next().value!);
   }
