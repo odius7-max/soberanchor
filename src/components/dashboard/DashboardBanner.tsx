@@ -622,11 +622,13 @@ export default function DashboardBanner({
                     <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, marginTop: 2 }}>{daysToNext} day{daysToNext !== 1 ? 's' : ''} away</div>
                   </div>
                 )}
-                <div style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.11)', borderRadius: 12, padding: '12px 16px' }}>
-                  <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10, fontWeight: 600, letterSpacing: '1.5px', textTransform: 'uppercase' as const }}>Currently On</div>
-                  <div style={{ color: '#fff', fontSize: 18, fontWeight: 700, marginTop: 3 }}>Step {currentStep}</div>
-                  <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, marginTop: 2 }}>{STEPS[currentStep - 1]?.s}</div>
-                </div>
+                {activeMilestone?.fellowship_id && (
+                  <div style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.11)', borderRadius: 12, padding: '12px 16px' }}>
+                    <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10, fontWeight: 600, letterSpacing: '1.5px', textTransform: 'uppercase' as const }}>Currently On</div>
+                    <div style={{ color: '#fff', fontSize: 18, fontWeight: 700, marginTop: 3 }}>Step {currentStep}</div>
+                    <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, marginTop: 2 }}>{STEPS[currentStep - 1]?.s}</div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -636,30 +638,32 @@ export default function DashboardBanner({
               <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, marginTop: 6 }}>— {quote.attr}</div>
             </div>
 
-            {/* Step progress strip */}
-            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2, scrollbarWidth: 'none' as const }}>
-              {STEPS.map(({ n, s }) => {
-                const isDone = n < currentStep
-                const isActive = n === currentStep
-                return (
-                  <div key={n} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flexShrink: 0, minWidth: 46 }}>
-                    <div style={{
-                      width: 38, height: 38, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 13, fontWeight: 700,
-                      background: isDone ? '#2A8A99' : isActive ? '#D4A574' : 'rgba(255,255,255,0.1)',
-                      border: isDone ? '2px solid rgba(255,255,255,0.3)' : isActive ? '2.5px solid rgba(255,255,255,0.9)' : '1.5px solid rgba(255,255,255,0.15)',
-                      color: isDone || isActive ? '#fff' : 'rgba(255,255,255,0.3)',
-                      boxShadow: isActive ? '0 0 18px rgba(212,165,116,0.5)' : 'none',
-                    }}>
-                      {isDone ? '✓' : n}
+            {/* Step progress strip — hidden for tracking-only milestones */}
+            {activeMilestone?.fellowship_id && (
+              <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2, scrollbarWidth: 'none' as const }}>
+                {STEPS.map(({ n, s }) => {
+                  const isDone = n < currentStep
+                  const isActive = n === currentStep
+                  return (
+                    <div key={n} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flexShrink: 0, minWidth: 46 }}>
+                      <div style={{
+                        width: 38, height: 38, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 13, fontWeight: 700,
+                        background: isDone ? '#2A8A99' : isActive ? '#D4A574' : 'rgba(255,255,255,0.1)',
+                        border: isDone ? '2px solid rgba(255,255,255,0.3)' : isActive ? '2.5px solid rgba(255,255,255,0.9)' : '1.5px solid rgba(255,255,255,0.15)',
+                        color: isDone || isActive ? '#fff' : 'rgba(255,255,255,0.3)',
+                        boxShadow: isActive ? '0 0 18px rgba(212,165,116,0.5)' : 'none',
+                      }}>
+                        {isDone ? '✓' : n}
+                      </div>
+                      <span style={{ fontSize: 9, fontWeight: 600, maxWidth: 50, textAlign: 'center', lineHeight: 1.3, color: isDone ? 'rgba(255,255,255,0.6)' : isActive ? '#D4A574' : 'rgba(255,255,255,0.25)' }}>
+                        {s}
+                      </span>
                     </div>
-                    <span style={{ fontSize: 9, fontWeight: 600, maxWidth: 50, textAlign: 'center', lineHeight: 1.3, color: isDone ? 'rgba(255,255,255,0.6)' : isActive ? '#D4A574' : 'rgba(255,255,255,0.25)' }}>
-                      {s}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
+            )}
           </>
         )}
       </div>

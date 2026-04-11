@@ -45,8 +45,8 @@ export default async function DashboardPage() {
     supabase.from('sponsor_relationships').select('id,sponsor_id,created_at').eq('sponsee_id', userId).eq('status', 'pending'),
     // Pending where I'm the sponsor (sponsee initiated)
     supabase.from('sponsor_relationships').select('id,sponsee_id,created_at').eq('sponsor_id', userId).eq('status', 'pending'),
-    // Step completions — used to derive real progress (not user_profiles.current_step)
-    supabase.from('step_completions').select('step_number').eq('user_id', userId).eq('is_completed', true),
+    // Step completions — used to derive real progress per fellowship
+    supabase.from('step_completions').select('step_number,fellowship_id').eq('user_id', userId).eq('is_completed', true),
     // Activity feed
     supabase.from('activity_feed').select('id,event_type,title,description,is_read,created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(10),
     // Sobriety milestones
@@ -55,8 +55,7 @@ export default async function DashboardPage() {
     supabase.from('fellowships').select('id,name,abbreviation').order('name'),
   ])
 
-  // Count distinct completed step numbers across any fellowship
-  const completedSteps = new Set((stepCompletionsRes.data ?? []).map(r => r.step_number)).size
+  const stepCompletions = (stepCompletionsRes.data ?? []) as { step_number: number; fellowship_id: string | null }[]
 
   const profile = profileRes.data ?? null
   const fellowships: Fellowship[] = (fellowshipsRes.data ?? []) as Fellowship[]
@@ -206,7 +205,7 @@ export default async function DashboardPage() {
       userId={userId}
       phone={phone}
       profile={profile}
-      completedSteps={completedSteps}
+      stepCompletions={stepCompletions}
       onboardingCompleted={profile?.onboarding_completed ?? false}
       recentCheckIns={recentCheckIns}
       journalEntries={journalEntries}

@@ -36,6 +36,7 @@ interface ActivityItem { id: string; event_type: string; title: string; descript
 
 interface Props {
   userId: string
+  activeFellowshipId?: string | null
   currentStep: number
   completedSteps: number
   allStepsDone: boolean
@@ -53,7 +54,7 @@ interface Props {
   onJournal: () => void
 }
 
-export default function OverviewTab({ userId, currentStep, completedSteps, allStepsDone, journalCount, stepWorkCount, recentCheckIns, meetingsThisWeek, meetingsTotal, recentMeetings, readingAssignments, activeSponsor, isAvailableSponsor, activityItems, onCheckIn, onJournal }: Props) {
+export default function OverviewTab({ userId, activeFellowshipId, currentStep, completedSteps, allStepsDone, journalCount, stepWorkCount, recentCheckIns, meetingsThisWeek, meetingsTotal, recentMeetings, readingAssignments, activeSponsor, isAvailableSponsor, activityItems, onCheckIn, onJournal }: Props) {
   const router = useRouter()
   const step = STEPS[currentStep - 1]
   const [toggling, setToggling] = useState<string | null>(null)
@@ -92,8 +93,10 @@ export default function OverviewTab({ userId, currentStep, completedSteps, allSt
     setNavigating(true)
     try {
       const supabase = createClient()
+      let wbQuery = supabase.from('program_workbooks').select('id, slug').eq('is_active', true).order('step_number').order('sort_order')
+      if (activeFellowshipId) wbQuery = wbQuery.eq('fellowship_id', activeFellowshipId)
       const [{ data: workbooks }, { data: entries }] = await Promise.all([
-        supabase.from('program_workbooks').select('id, slug').eq('is_active', true).order('step_number').order('sort_order'),
+        wbQuery,
         supabase.from('step_work_entries').select('workbook_id, review_status').eq('user_id', userId),
       ])
       const entryMap = new Map((entries ?? []).map(e => [e.workbook_id, e.review_status]))
@@ -157,7 +160,19 @@ export default function OverviewTab({ userId, currentStep, completedSteps, allSt
             : <span className="rounded-full font-semibold" style={{ fontSize: '11px', padding: '3px 10px', background: 'rgba(212,165,116,0.12)', border: '1px solid rgba(212,165,116,0.2)', color: '#9A7B54' }}>In Progress</span>
           }
         </div>
-        {allStepsDone ? (
+        {activeFellowshipId === null ? (
+          /* Tracking-only milestone — no program selected */
+          <div className="text-center" style={{ padding: '20px 8px' }}>
+            <div style={{ fontSize: '36px', marginBottom: '10px' }}>🌱</div>
+            <div className="font-semibold text-navy" style={{ fontSize: '15px', marginBottom: '6px' }}>Just tracking days</div>
+            <div className="text-mid" style={{ fontSize: '13px', lineHeight: 1.6, marginBottom: '16px' }}>
+              No program selected for this milestone. Edit it to link a fellowship and unlock step work.
+            </div>
+            <button onClick={onJournal} className="font-semibold rounded-lg transition-colors hover:bg-[var(--navy-10)]" style={{ fontSize: '13px', padding: '8px 16px', background: 'none', border: '1.5px solid var(--navy)', color: 'var(--navy)', cursor: 'pointer' }}>
+              Journal
+            </button>
+          </div>
+        ) : allStepsDone ? (
           <>
             <div className="flex items-center gap-3 mb-3">
               <div className="flex items-center justify-center rounded-xl font-bold text-white flex-shrink-0" style={{ width: '48px', height: '48px', background: 'linear-gradient(135deg,#27AE60,#1e8a4a)', fontSize: '22px' }}>✓</div>

@@ -27,6 +27,8 @@ export interface Sponsee { id:string; name:string; sobrietyDate:string|null; cur
 export interface ActivityItem { id:string; event_type:string; title:string; description:string|null; is_read:boolean; created_at:string }
 export type { SobrietyMilestone, Fellowship }
 
+interface StepCompletion { step_number: number; fellowship_id: string | null }
+
 interface Props {
   userId: string
   phone: string | null
@@ -34,7 +36,7 @@ interface Props {
   profile: { display_name:string|null; sobriety_date:string|null; primary_fellowship_id:string|null; current_step:number; is_available_sponsor:boolean } | null
   initialMilestones: SobrietyMilestone[]
   fellowships: Fellowship[]
-  completedSteps: number
+  stepCompletions: StepCompletion[]
   recentCheckIns: CheckIn[]
   journalEntries: JournalEntry[]
   journalCount: number
@@ -61,26 +63,37 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'privacy',   label: '🔒 Privacy' },
 ]
 
-export default function DashboardShell({ userId, phone, onboardingCompleted, profile, completedSteps, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsor, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships }: Props) {
+export default function DashboardShell({ userId, phone, onboardingCompleted, profile, stepCompletions, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsor, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships }: Props) {
   const [role, setRole] = useState<Role>('my')
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [checkInOpen, setCheckInOpen] = useState(false)
 
   const displayName = profile?.display_name ?? 'Friend'
-  const allStepsDone = completedSteps >= 12
-  // Derive current step from actual completions, not the stale profile field
-  const currentStep = allStepsDone ? 12 : Math.max(1, completedSteps + 1)
   const isSponsor = profile?.is_available_sponsor ?? false
 
   // Active fellowship driven by which milestone tab the user is viewing.
   // undefined = no milestones → fall back to sponsor_relationships in step work.
-  // null    = milestone exists but has no fellowship linked.
+  // null    = milestone exists but has no fellowship linked (tracking only).
+  // string  = specific fellowship ID.
   const hasMilestones = initialMilestones.length > 0
   const primaryMilestone = initialMilestones.find(m => m.is_primary) ?? initialMilestones[0] ?? null
   const [activeFellowshipId, setActiveFellowshipId] = useState<string | null | undefined>(
     hasMilestones ? (primaryMilestone?.fellowship_id ?? null) : undefined
   )
   const handleActiveFellowshipChange = useCallback((fid: string | null) => setActiveFellowshipId(fid), [])
+
+  // Reactively derive step progress for the active fellowship.
+  // undefined → all completions (no milestones, legacy cross-fellowship)
+  // null      → none (tracking only)
+  // string    → filter to that fellowship
+  const filteredCompletions = activeFellowshipId === undefined
+    ? stepCompletions
+    : activeFellowshipId === null
+      ? []
+      : stepCompletions.filter(sc => sc.fellowship_id === activeFellowshipId)
+  const completedSteps = new Set(filteredCompletions.map(r => r.step_number)).size
+  const allStepsDone = completedSteps >= 12
+  const currentStep = allStepsDone ? 12 : Math.max(1, completedSteps + 1)
 
   const roles = [
     { id: 'my' as Role, label: '⚓ My Dashboard' },
@@ -127,7 +140,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
             </div>
 
             {activeTab === 'overview' && (
-              <OverviewTab userId={userId} currentStep={currentStep} completedSteps={completedSteps} allStepsDone={allStepsDone} journalCount={journalCount} stepWorkCount={stepWorkCount} recentCheckIns={recentCheckIns} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} recentMeetings={meetingAttendance.slice(0,3)} readingAssignments={readingAssignments} activeSponsor={activeSponsor} isAvailableSponsor={isSponsor} activityItems={activityItems} onCheckIn={() => setCheckInOpen(true)} onJournal={() => setActiveTab('journal')} />
+              <OverviewTab userId={userId} activeFellowshipId={activeFellowshipId} currentStep={currentStep} completedSteps={completedSteps} allStepsDone={allStepsDone} journalCount={journalCount} stepWorkCount={stepWorkCount} recentCheckIns={recentCheckIns} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} recentMeetings={meetingAttendance.slice(0,3)} readingAssignments={readingAssignments} activeSponsor={activeSponsor} isAvailableSponsor={isSponsor} activityItems={activityItems} onCheckIn={() => setCheckInOpen(true)} onJournal={() => setActiveTab('journal')} />
             )}
             {activeTab === 'stepwork' && <StepWorkTab userId={userId} fellowshipId={activeFellowshipId} />}
             {activeTab === 'journal' && <JournalTab userId={userId} entries={journalEntries} />}
