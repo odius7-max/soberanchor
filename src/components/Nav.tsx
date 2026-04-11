@@ -5,6 +5,14 @@ import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
+import GlobalSearch, { type SearchContext } from '@/components/GlobalSearch'
+
+function getSearchContext(pathname: string): SearchContext {
+  if (pathname.startsWith('/resources')) return 'resources'
+  if (pathname.startsWith('/dashboard') || pathname.startsWith('/my-recovery')) return 'member'
+  if (pathname.startsWith('/find')) return 'directory'
+  return 'home'
+}
 
 export default function Nav() {
   const pathname = usePathname()
@@ -12,6 +20,7 @@ export default function Nav() {
   const { user, profile, isProvider, loading, openAuthModal, signOut } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -25,6 +34,19 @@ export default function Nav() {
   }, [])
 
   useEffect(() => { setMobileOpen(false) }, [pathname])
+
+  // Global Cmd+K / Ctrl+K opens search
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setMobileOpen(false)
+        setSearchOpen(true)
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [])
 
   const displayName = profile?.display_name
   // Build initials: up to 2 chars from display name words, fallback to email initial
@@ -100,6 +122,22 @@ export default function Nav() {
               Our Story
             </Link>
           )}
+
+          {/* Search button */}
+          <button
+            onClick={() => setSearchOpen(true)}
+            aria-label="Search"
+            title="Search (⌘K)"
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', borderRadius: 8, background: 'none', border: '1px solid var(--border)', cursor: 'pointer', color: 'var(--mid)', transition: 'all 0.15s', marginLeft: 4 }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--warm-gray)'; e.currentTarget.style.color = 'var(--dark)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--mid)' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
+              <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.2px' }}>⌘K</span>
+          </button>
 
           {/* Separator */}
           <span className="w-px h-5 bg-[var(--border)] mx-2" />
@@ -222,15 +260,27 @@ export default function Nav() {
           )}
         </div>
 
-        {/* ── Mobile toggle ── */}
-        <button
-          className="md:hidden text-2xl text-navy"
-          aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-          onClick={() => setMobileOpen(o => !o)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 1 }}
-        >
-          {mobileOpen ? '✕' : '☰'}
-        </button>
+        {/* ── Mobile: search icon + hamburger ── */}
+        <div className="md:hidden flex items-center gap-2">
+          <button
+            onClick={() => { setMobileOpen(false); setSearchOpen(true) }}
+            aria-label="Search"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: 'var(--navy)', lineHeight: 1 }}
+          >
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden>
+              <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+          <button
+            className="text-2xl text-navy"
+            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            onClick={() => setMobileOpen(o => !o)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 1 }}
+          >
+            {mobileOpen ? '✕' : '☰'}
+          </button>
+        </div>
       </div>
 
       {/* ── Mobile menu ── */}
@@ -315,6 +365,11 @@ export default function Nav() {
           )}
         </div>
       )}
+      <GlobalSearch
+        open={searchOpen}
+        context={getSearchContext(pathname)}
+        onClose={() => setSearchOpen(false)}
+      />
     </nav>
   )
 }

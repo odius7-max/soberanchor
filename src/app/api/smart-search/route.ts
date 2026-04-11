@@ -149,7 +149,17 @@ Inference rules:
 - For general recovery queries with no specific issue → aa and na as fellowship_slugs
 - Return ONLY the JSON object, no explanation or markdown`;
 
-async function classifyIntent(query: string): Promise<SearchIntent | null> {
+const CONTEXT_HINTS: Record<SearchContext, string> = {
+  home:      "General search from the homepage.",
+  resources: "User is browsing articles and guides — prioritise information over directories.",
+  directory: "User is in the Find directory — prioritise meetings and facilities.",
+  member:    "User is in their personal recovery dashboard — they may be asking about step work, sponsor relationships, or daily recovery practices.",
+};
+
+async function classifyIntent(
+  query: string,
+  context: SearchContext
+): Promise<SearchIntent | null> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return null;
 
@@ -159,7 +169,10 @@ async function classifyIntent(query: string): Promise<SearchIntent | null> {
       model: "claude-haiku-4-5-20251001",
       max_tokens: 400,
       system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: query }],
+      messages: [{
+        role: "user",
+        content: `[Context: ${CONTEXT_HINTS[context]}]\n\nQuery: ${query}`,
+      }],
     });
 
     const text =
@@ -275,7 +288,22 @@ async function fetchFacilities(
   return (data ?? []) as FacilityResult[];
 }
 
-async function fetchArticles(intent: SearchIntent): Promise<ArticleResult[]> {
+type SearchContext = "home" | "resources" | "directory" | "member";
+
+const CONTEXT_LIMITS: Record<
+  SearchContext,
+  { meetings: number; facilities: number; articles: number; skipMeetings: boolean; skipFacilities: boolean }
+> = {
+  home:      { meetings: 6, facilities: 5, articles: 4, skipMeetings: false, skipFacilities: false },
+  resources: { meetings: 0, facilities: 0, articles: 8, skipMeetings: true,  skipFacilities: true  },
+  directory: { meetings: 6, facilities: 5, articles: 2, skipMeetings: false, skipFacilities: false },
+  member:    { meetings: 4, facilities: 0, articles: 5, skipMeetings: false, skipFacilities: true  },
+};
+
+async function fetchArticles(
+  intent: SearchIntent,
+  context: SearchContext
+): Promise<ArticleResult[]> {
   const pillarsByIssue: Record<string, string[]> = {
     alcohol:          ["getting_help", "understanding", "supporting", "sober_lifestyle"],
     opioids:          ["understanding", "getting_help"],
@@ -294,17 +322,27 @@ async function fetchArticles(intent: SearchIntent): Promise<ArticleResult[]> {
   };
 
   const base = pillarsByIssue[intent.issue] ?? ["getting_help", "understanding"];
-  const pillars =
-    intent.who === "loved_one"
+
+  // member context: surface lifestyle/recovery-focused content first
+  const memberPillars = ["sober_lifestyle", "supporting", ...base.filter(
+    (p) => p !== "sober_lifestyle" && p !== "supporting"
+  )];
+
+  const ordered =
+    context === "member"
+      ? memberPillars
+      : intent.who === "loved_one"
       ? ["supporting", ...base.filter((p) => p !== "supporting")]
       : base;
+
+  const limit = CONTEXT_LIMITS[context].articles;
 
   const { data } = await supabase
     .from("articles")
     .select("id, title, slug, excerpt, author, body, pillar")
     .eq("is_published", true)
-    .in("pillar", pillars)
-    .limit(4);
+    .in("pillar", ordered)
+    .limit(limit);
 
   return (data ?? []) as ArticleResult[];
 }
@@ -375,6 +413,7 @@ function err429(message: string, retryAfter: number) {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const rawQuery = searchParams.get("q") ?? "";
+  const context = (searchParams.get("context") ?? "home") as SearchContext;
 
   // 1. Input validation & sanitisation (always, before anything else)
   const q = sanitize(rawQuery);
@@ -382,9 +421,9 @@ export async function GET(request: Request) {
     return Response.json(emptyResponse(q));
   }
 
-  // 2. Cache check — return before auth/rate-limit if result is warm.
-  //    Cached hits don't consume quota (they don't call the AI).
-  const cacheKey = q.toLowerCase().slice(0, 150);
+  // 2. Cache check — context is part of the key so different contexts get distinct results.
+  //    Return before auth/rate-limit: cached hits don't call the AI.
+  const cacheKey = `${context}:${q.toLowerCase().slice(0, 150)}`;
   const cached = queryCache.get(cacheKey);
   const ttl = isCommonQuery(q) ? CACHE_TTL_COMMON_MS : CACHE_TTL_MS;
   if (cached && Date.now() - cached.ts < ttl) {
@@ -435,21 +474,22 @@ export async function GET(request: Request) {
   }
 
   // 8. AI classification
-  const intent = await classifyIntent(q);
+  const intent = await classifyIntent(q, context);
   if (!intent) {
     const result = await keywordSearch(q);
     return Response.json(result);
   }
 
-  // 9. Parallel DB queries driven by intent
+  // 9. Parallel DB queries driven by intent + context limits
+  const limits = CONTEXT_LIMITS[context];
   const [meetings, facilities, articles] = await Promise.all([
-    intent.fellowship_slugs.length > 0
+    !limits.skipMeetings && intent.fellowship_slugs.length > 0
       ? fetchMeetings(intent)
       : Promise.resolve([] as MeetingResult[]),
-    intent.facility_types.length > 0
+    !limits.skipFacilities && intent.facility_types.length > 0
       ? fetchFacilities(intent)
       : Promise.resolve([] as FacilityResult[]),
-    fetchArticles(intent),
+    fetchArticles(intent, context),
   ]);
 
   const result: SmartSearchResponse = {
