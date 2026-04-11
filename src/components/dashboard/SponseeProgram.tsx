@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { syncSponseeCurrentStep } from '@/app/dashboard/step-work/actions'
 import { writeStepActivityEvent } from '@/app/dashboard/activity/actions'
@@ -54,6 +54,7 @@ export default function SponseeProgram({
 
   const [fellowshipId, setFellowshipId] = useState<string | null>(initialFellowshipId)
   const [completions, setCompletions] = useState<StepCompletion[]>(initialCompletions)
+  const [hasContent, setHasContent] = useState(false)
   // selectedStep = incomplete step clicked → opens mark-complete modal
   const [selectedStep, setSelectedStep] = useState<number | null>(null)
   // uncheckStep = completed step clicked → opens uncheck confirm
@@ -64,8 +65,18 @@ export default function SponseeProgram({
   const [updatingFellowship, setUpdatingFellowship] = useState(false)
 
   const currentFellowship = fellowships.find(f => f.id === fellowshipId) ?? null
-  const hasContent = currentFellowship?.slug === 'aa' || currentFellowship?.slug === 'na'
   const completionMap = new Map(completions.map(c => [c.step_number, c]))
+
+  // Check whether the active fellowship has any seeded workbooks
+  useEffect(() => {
+    if (!initialFellowshipId) { setHasContent(false); return }
+    supabase
+      .from('program_workbooks')
+      .select('id', { count: 'exact', head: true })
+      .eq('fellowship_id', initialFellowshipId)
+      .eq('is_active', true)
+      .then(({ count }) => setHasContent((count ?? 0) > 0))
+  }, [initialFellowshipId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleFellowshipChange(newId: string) {
     setUpdatingFellowship(true)
@@ -75,14 +86,23 @@ export default function SponseeProgram({
       .update({ fellowship_id: newId || null })
       .eq('id', relationshipId)
     if (newId) {
-      const { data } = await supabase
-        .from('step_completions')
-        .select('step_number, is_completed, completed_method, sponsor_note, completed_at')
-        .eq('user_id', sponseeId)
-        .eq('fellowship_id', newId)
-      setCompletions(data ?? [])
+      const [completionsRes, workbooksRes] = await Promise.all([
+        supabase
+          .from('step_completions')
+          .select('step_number, is_completed, completed_method, sponsor_note, completed_at')
+          .eq('user_id', sponseeId)
+          .eq('fellowship_id', newId),
+        supabase
+          .from('program_workbooks')
+          .select('id', { count: 'exact', head: true })
+          .eq('fellowship_id', newId)
+          .eq('is_active', true),
+      ])
+      setCompletions(completionsRes.data ?? [])
+      setHasContent((workbooksRes.count ?? 0) > 0)
     } else {
       setCompletions([])
+      setHasContent(false)
     }
     setUpdatingFellowship(false)
   }
