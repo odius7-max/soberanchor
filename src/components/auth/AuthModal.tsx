@@ -251,6 +251,13 @@ export default function AuthModal() {
                 style={{ padding: 13, fontSize: 15, background: '#2A8A99', border: 'none', cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1 }}>
                 {loading ? 'Creating account…' : 'Create Account →'}
               </button>
+              {/* Trust message — signup only */}
+              <div style={{ borderTop: '1px solid #F0EDE8', paddingTop: 14, marginTop: 2 }}>
+                <p style={{ fontSize: 12, color: '#888', lineHeight: 1.7, fontStyle: 'italic' }}>
+                  "I built SoberAnchor because I&apos;ve walked this path myself. Recovery work is deeply personal — your journal entries, step work, and check-ins are yours alone. My commitment to you: your sponsor only sees what you explicitly share, we will never sell your data or share your personal recovery information with anyone, and if you ever want to leave, everything you&apos;ve written can be deleted completely — no retention period, no backups kept."
+                </p>
+                <p style={{ fontSize: 12, fontWeight: 600, color: '#888', marginTop: 6 }}>— Angel, co-founder</p>
+              </div>
               <button onClick={() => { setError(null); setStep('login') }}
                 style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 13, textAlign: 'center' }}>
                 ← Back to sign in
