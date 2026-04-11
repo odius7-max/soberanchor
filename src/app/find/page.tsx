@@ -57,12 +57,11 @@ export default async function FindPage() {
     return acc
   }, {})
 
-  // Meetings
-  const { data: meetings } = await supabase
-    .from('meetings')
-    .select('*, fellowships(name, abbreviation)')
-    .order('day_of_week')
-    .limit(10)
+  // Meetings — count separately so the card shows the real total
+  const [{ count: meetingsCount }, { data: meetings }] = await Promise.all([
+    supabase.from('meetings').select('*', { count: 'exact', head: true }),
+    supabase.from('meetings').select('*, fellowships(name, abbreviation)').order('day_of_week').limit(10),
+  ])
 
   return (
     <>
@@ -124,8 +123,8 @@ export default async function FindPage() {
                 <div className="min-w-0">
                   <div className="font-semibold text-navy text-[15px] leading-snug">Meetings & Support Groups</div>
                   <div className="text-mid text-[13px] mt-0.5 leading-snug">AA, NA, SMART Recovery, and more.</div>
-                  {meetings && meetings.length > 0 && (
-                    <div className="text-teal text-[12px] font-semibold mt-1">{meetings.length} meetings listed</div>
+                  {!!meetingsCount && (
+                    <div className="text-teal text-[12px] font-semibold mt-1">{meetingsCount.toLocaleString()} meetings listed</div>
                   )}
                 </div>
               </div>
@@ -144,7 +143,7 @@ export default async function FindPage() {
             >
               Meetings &amp; Support Groups
             </h2>
-            <p className="text-sm text-mid mb-5">{meetings.length} meetings found</p>
+            <p className="text-sm text-mid mb-5">{(meetingsCount ?? meetings!.length).toLocaleString()} meetings found</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {meetings.map((m: any) => {
