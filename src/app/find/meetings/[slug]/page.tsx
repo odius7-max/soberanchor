@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import { supabase } from '@/lib/supabase'
 import MeetingActions from './MeetingActions'
 import HeartButton from '@/components/find/HeartButton'
+import BackButton from '@/components/find/BackButton'
 import { getUserSavedIds } from '../../actions'
 
 export const revalidate = 3600
@@ -109,9 +110,7 @@ export default async function MeetingDetailPage({
     <div className="max-w-[900px] mx-auto px-6 py-6 pb-20">
 
       {/* Breadcrumb */}
-      <Link href="/find" className="text-teal text-sm font-medium hover:underline">
-        ← Find Meetings
-      </Link>
+      <BackButton fallback="/find/meetings" label="← Find Meetings" />
 
       {/* Badges */}
       <div className="mt-4 mb-2 flex flex-wrap gap-2 items-center">

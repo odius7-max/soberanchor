@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import LeadForm from "@/components/find/LeadForm";
 import HeartButton from "@/components/find/HeartButton";
+import BackButton from "@/components/find/BackButton";
 import { getUserSavedIds } from "../actions";
 
 export const revalidate = 3600;
@@ -37,12 +38,7 @@ export default async function FacilityDetail({
 
   return (
     <div className="max-w-[900px] mx-auto px-6 py-6 pb-16">
-      <Link
-        href="/find"
-        className="text-teal text-sm font-medium hover:underline"
-      >
-        ← Back to Results
-      </Link>
+      <BackButton fallback="/find" label="← Back to Results" />
 
       <div className="flex gap-2 flex-wrap items-center mt-4">
         {facility.is_featured && (
