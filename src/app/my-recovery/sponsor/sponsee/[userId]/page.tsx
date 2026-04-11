@@ -90,6 +90,10 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
   const submittedEntries = stepEntries.filter(e => e.review_status === 'submitted')
   const otherEntries = stepEntries.filter(e => e.review_status !== 'submitted')
 
+  const completedSteps = Math.min(initialCompletions.filter(c => c.is_completed).length, 12)
+  const allStepsDone = completedSteps >= 12
+  const nextStep = allStepsDone ? null : completedSteps + 1
+
   const card = { background: '#fff', border: '1px solid var(--border)', borderRadius: 16, padding: '20px 24px', marginBottom: 16 } as const
 
   return (
@@ -107,7 +111,12 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
             {sobrietyDays !== null
               ? <span><strong style={{ color: 'var(--navy)' }}>{sobrietyDays}</strong> days sober · since {fmtDate(profile.sobriety_date!)}</span>
               : <span>No sobriety date set</span>}
-            <span>Step <strong style={{ color: 'var(--navy)' }}>{profile.current_step ?? 1}</strong> of 12</span>
+            {rel.fellowship_id
+              ? allStepsDone
+                ? <span style={{ color: '#27AE60', fontWeight: 600 }}>All 12 steps complete</span>
+                : <span>Step <strong style={{ color: 'var(--navy)' }}>{nextStep}</strong> of 12 · {completedSteps} completed</span>
+              : <span>Step <strong style={{ color: 'var(--navy)' }}>{profile.current_step ?? 1}</strong> of 12</span>
+            }
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>

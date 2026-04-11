@@ -14,7 +14,7 @@ const MOOD_META: Record<string,{emoji:string;label:string;color:string}> = {
   crisis:{emoji:'😰',label:'crisis',color:'#C0392B'},
 }
 
-interface Sponsee { id:string; name:string; sobrietyDate:string|null; currentStep:number; lastMood:string|null; lastCheckInDate:string|null; pendingReviews:number }
+interface Sponsee { id:string; name:string; sobrietyDate:string|null; currentStep:number; completedSteps:number; lastMood:string|null; lastCheckInDate:string|null; pendingReviews:number }
 interface Props { sponsees: Sponsee[]; pendingRequests: PendingRequest[] }
 
 function calcDays(d:string|null):number|null { if(!d)return null; return Math.floor((Date.now()-new Date(d+'T00:00:00').getTime())/(86400000)) }
@@ -86,7 +86,9 @@ export default function SponsorView({ sponsees, pendingRequests }: Props) {
           {sponsees.map(sp=>{
             const days=calcDays(sp.sobrietyDate)
             const mood=sp.lastMood?MOOD_META[sp.lastMood]:null
-            const pct=((sp.currentStep-1)/11)*100
+            const pct=Math.round((sp.completedSteps/12)*100)
+            const allDone=sp.completedSteps>=12
+            const nextStep=allDone?null:sp.completedSteps+1
             return(
               <div key={sp.id} className="card-hover rounded-[16px] p-5 bg-white border border-[var(--border)]">
                 <div className="flex items-start justify-between gap-3 mb-3">
@@ -96,7 +98,9 @@ export default function SponsorView({ sponsees, pendingRequests }: Props) {
                     </div>
                     <div>
                       <div className="font-bold text-navy" style={{fontSize:'15px'}}>{sp.name}</div>
-                      <div className="text-mid" style={{fontSize:'12px',marginTop:'1px'}}>{days!==null?`${days} days sober`:'No sobriety date'} · Step {sp.currentStep}: {STEPS[sp.currentStep-1]}</div>
+                      <div className="text-mid" style={{fontSize:'12px',marginTop:'1px'}}>
+                        {days!==null?`${days} days sober`:'No sobriety date'} · {allDone?'All steps complete':`Step ${nextStep}: ${STEPS[(nextStep??1)-1]}`}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
@@ -108,7 +112,7 @@ export default function SponsorView({ sponsees, pendingRequests }: Props) {
                 </div>
                 <div className="mb-3">
                   <div className="flex justify-between mb-1.5" style={{fontSize:'11px',color:'var(--mid)'}}>
-                    <span>Step {sp.currentStep} of 12</span><span>{Math.round(pct)}% complete</span>
+                    <span>{allDone?'All 12 steps complete':`Step ${nextStep} of 12`}</span><span>{pct}% complete</span>
                   </div>
                   <div className="rounded-full overflow-hidden" style={{height:'6px',background:'var(--warm-gray)'}}>
                     <div className="rounded-full h-full" style={{width:`${pct}%`,background:'linear-gradient(90deg,#2A8A99,#003366)',transition:'width 0.4s'}} />

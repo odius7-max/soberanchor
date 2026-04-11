@@ -22,7 +22,7 @@ export interface CheckIn { id:string; check_in_date:string; mood:string|null; no
 export interface JournalEntry { id:string; title:string|null; entry_date:string; excerpt:string|null; step_number:number|null; is_shared_with_sponsor:boolean }
 export interface MeetingAttendance { id:string; meeting_name:string; fellowship_name:string|null; attended_at:string; checkin_method:string }
 export interface ReadingAssignment { id:string; title:string; source:string|null; is_completed:boolean; due_date:string|null; created_at:string }
-export interface Sponsee { id:string; name:string; sobrietyDate:string|null; currentStep:number; lastMood:string|null; lastCheckInDate:string|null; pendingReviews:number }
+export interface Sponsee { id:string; name:string; sobrietyDate:string|null; currentStep:number; completedSteps:number; lastMood:string|null; lastCheckInDate:string|null; pendingReviews:number }
 
 interface Props {
   userId: string

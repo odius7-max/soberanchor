@@ -118,18 +118,19 @@ export default async function DashboardPage() {
   if (profile?.is_available_sponsor) {
     const { data: relData } = await supabase
       .from('sponsor_relationships')
-      .select('id,sponsee_id')
+      .select('id,sponsee_id,fellowship_id')
       .eq('sponsor_id', userId)
       .eq('status', 'active')
 
     if (relData && relData.length > 0) {
       const sponseeIds = relData.map(r => r.sponsee_id)
-      const relMap = Object.fromEntries(relData.map(r => [r.sponsee_id, r.id]))
+      const relMap = Object.fromEntries(relData.map(r => [r.sponsee_id, { id: r.id, fellowshipId: r.fellowship_id as string | null }]))
 
-      const [sponseeProfilesRes, sponseeCheckInsRes, pendingStepWorkRes] = await Promise.all([
+      const [sponseeProfilesRes, sponseeCheckInsRes, pendingStepWorkRes, stepCompletionsRes] = await Promise.all([
         supabase.from('user_profiles').select('id,display_name,sobriety_date,current_step').in('id', sponseeIds),
         supabase.from('check_ins').select('user_id,mood,check_in_date').in('user_id', sponseeIds).order('check_in_date', { ascending: false }),
         supabase.from('step_work_entries').select('user_id').in('user_id', sponseeIds).eq('review_status', 'submitted'),
+        supabase.from('step_completions').select('user_id,fellowship_id').in('user_id', sponseeIds).eq('is_completed', true),
       ])
 
       const latestCheckIn: Record<string, { mood: string | null; date: string }> = {}
@@ -142,15 +143,28 @@ export default async function DashboardPage() {
         pendingBySponsee[sw.user_id] = (pendingBySponsee[sw.user_id] ?? 0) + 1
       }
 
-      sponsees = (sponseeProfilesRes.data ?? []).map(sp => ({
-        id: sp.id,
-        name: sp.display_name ?? 'Anonymous',
-        sobrietyDate: sp.sobriety_date ?? null,
-        currentStep: sp.current_step ?? 1,
-        lastMood: latestCheckIn[sp.id]?.mood ?? null,
-        lastCheckInDate: latestCheckIn[sp.id]?.date ?? null,
-        pendingReviews: pendingBySponsee[sp.id] ?? 0,
-      }))
+      // Count completed steps per sponsee, filtered to their relationship's fellowship
+      const completedBySponsee: Record<string, number> = {}
+      for (const sc of (stepCompletionsRes.data ?? [])) {
+        const fellowship = relMap[sc.user_id]?.fellowshipId
+        if (!fellowship || sc.fellowship_id === fellowship) {
+          completedBySponsee[sc.user_id] = (completedBySponsee[sc.user_id] ?? 0) + 1
+        }
+      }
+
+      sponsees = (sponseeProfilesRes.data ?? []).map(sp => {
+        const completedSteps = Math.min(completedBySponsee[sp.id] ?? 0, 12)
+        return {
+          id: sp.id,
+          name: sp.display_name ?? 'Anonymous',
+          sobrietyDate: sp.sobriety_date ?? null,
+          currentStep: sp.current_step ?? 1,
+          completedSteps,
+          lastMood: latestCheckIn[sp.id]?.mood ?? null,
+          lastCheckInDate: latestCheckIn[sp.id]?.date ?? null,
+          pendingReviews: pendingBySponsee[sp.id] ?? 0,
+        }
+      })
     }
   }
 
