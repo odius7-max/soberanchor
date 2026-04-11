@@ -173,7 +173,6 @@ export default function GlobalSearch({ open, context, onClose }: Props) {
   const [loading, setLoading] = useState(false)
   const [inputFocused, setInputFocused] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const abortRef = useRef<AbortController | null>(null)
 
   // Focus input on open, reset on close
@@ -253,9 +252,19 @@ export default function GlobalSearch({ open, context, onClose }: Props) {
 
   function handleChange(val: string) {
     setQuery(val)
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    if (val.trim().length < 2) { setResult(null); return }
-    debounceRef.current = setTimeout(() => search(val.trim()), 350)
+    if (val.trim().length < 2) setResult(null)
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') {
+      const q = query.trim()
+      if (q.length >= 2) search(q)
+    }
+  }
+
+  function handleSubmit() {
+    const q = query.trim()
+    if (q.length >= 2) search(q)
   }
 
   if (!open) return null
@@ -310,6 +319,7 @@ export default function GlobalSearch({ open, context, onClose }: Props) {
               type="text"
               value={query}
               onChange={e => handleChange(e.target.value)}
+              onKeyDown={handleKeyDown}
               onFocus={() => setInputFocused(true)}
               onBlur={() => setInputFocused(false)}
               placeholder={PLACEHOLDERS[context]}
@@ -322,6 +332,15 @@ export default function GlobalSearch({ open, context, onClose }: Props) {
               <button onClick={() => { setQuery(''); setResult(null); inputRef.current?.focus() }}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--mid)', padding: '0 2px', lineHeight: 1, flexShrink: 0 }}>
                 ✕
+              </button>
+            )}
+            {!loading && (
+              <button
+                onClick={handleSubmit}
+                disabled={query.trim().length < 2}
+                style={{ background: query.trim().length >= 2 ? 'var(--teal)' : 'var(--border)', color: query.trim().length >= 2 ? '#fff' : 'var(--mid)', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 13, fontWeight: 600, cursor: query.trim().length >= 2 ? 'pointer' : 'default', fontFamily: 'var(--font-body)', flexShrink: 0, transition: 'all 0.15s' }}
+              >
+                Search
               </button>
             )}
           </div>
