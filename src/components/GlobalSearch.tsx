@@ -206,11 +206,35 @@ export default function GlobalSearch({ open, context, onClose }: Props) {
         `/api/smart-search?q=${encodeURIComponent(q)}&context=${context}`,
         { headers, signal: controller.signal }
       )
-      if (!res.ok && res.status !== 429 && res.status !== 403) return
+
+      const empty: SmartSearchResponse = { query: q, intent: null, meetings: [], facilities: [], articles: [], crisis: false, ai_powered: false }
+
+      if (res.status === 429) {
+        const body = await res.json().catch(() => ({}))
+        setResult({ ...empty, error: body.error ?? 'Too many requests. Please wait before searching again.' })
+        return
+      }
+      if (res.status === 403) {
+        setResult({ ...empty, error: 'Search unavailable. Please reload the page and try again.' })
+        return
+      }
+      if (!res.ok) {
+        setResult({ ...empty, error: 'Search unavailable. Please try again.' })
+        return
+      }
+
       const data: SmartSearchResponse = await res.json()
-      setResult(data)
+      // Guard against malformed responses — ensure arrays are always present
+      setResult({
+        ...data,
+        meetings: Array.isArray(data.meetings) ? data.meetings : [],
+        facilities: Array.isArray(data.facilities) ? data.facilities : [],
+        articles: Array.isArray(data.articles) ? data.articles : [],
+      })
     } catch (e) {
-      if ((e as Error).name !== 'AbortError') setResult(null)
+      if ((e as Error).name !== 'AbortError') {
+        setResult({ query: q, intent: null, meetings: [], facilities: [], articles: [], crisis: false, ai_powered: false, error: 'Search unavailable. Please try again.' })
+      }
     } finally {
       setLoading(false)
     }
@@ -227,9 +251,9 @@ export default function GlobalSearch({ open, context, onClose }: Props) {
 
   const hasResults = result && (
     result.crisis ||
-    result.meetings.length > 0 ||
-    result.facilities.length > 0 ||
-    result.articles.length > 0
+    (result.meetings?.length ?? 0) > 0 ||
+    (result.facilities?.length ?? 0) > 0 ||
+    (result.articles?.length ?? 0) > 0
   )
 
   const showEmpty = result && !hasResults && !result.error && !loading

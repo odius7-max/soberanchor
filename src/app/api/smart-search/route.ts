@@ -410,10 +410,27 @@ function err429(message: string, retryAfter: number) {
 
 // ─── Route handler ────────────────────────────────────────────────────────────
 
+function errorResponse(query: string, message = "Search unavailable. Please try again."): Response {
+  return Response.json(
+    { query, intent: null, meetings: [], facilities: [], articles: [], crisis: false, ai_powered: false, error: message },
+    { status: 200 } // 200 so the client renders the error message rather than hitting the !res.ok branch
+  );
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const rawQuery = searchParams.get("q") ?? "";
   const context = (searchParams.get("context") ?? "home") as SearchContext;
+
+  try {
+    return await handleSearch(request, rawQuery, context);
+  } catch (err) {
+    console.error("[smart-search] Unhandled error:", err);
+    return errorResponse(sanitize(rawQuery));
+  }
+}
+
+async function handleSearch(request: Request, rawQuery: string, context: SearchContext): Promise<Response> {
 
   // 1. Input validation & sanitisation (always, before anything else)
   const q = sanitize(rawQuery);
