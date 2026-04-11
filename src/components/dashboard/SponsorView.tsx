@@ -120,7 +120,7 @@ export default function SponsorView({ sponsees, pendingRequests }: Props) {
                     {sp.pendingReviews>0&&(
                       <button onClick={() => router.push(`/dashboard/step-work/pending?sponsee=${sp.id}`)} className="font-semibold text-white rounded-lg" style={{fontSize:'12px',padding:'6px 12px',background:'#2A8A99',border:'none',cursor:'pointer'}}>Review Work ({sp.pendingReviews})</button>
                     )}
-                    <button className="font-semibold rounded-lg hover:bg-[var(--navy-10)] transition-colors" style={{fontSize:'12px',padding:'6px 12px',background:'none',border:'1.5px solid var(--navy)',color:'var(--navy)',cursor:'pointer'}}>View Profile</button>
+                    <button onClick={() => router.push(`/my-recovery/sponsor/sponsee/${sp.id}`)} className="font-semibold rounded-lg hover:bg-[var(--navy-10)] transition-colors" style={{fontSize:'12px',padding:'6px 12px',background:'none',border:'1.5px solid var(--navy)',color:'var(--navy)',cursor:'pointer'}}>View Profile</button>
                   </div>
                 </div>
               </div>
