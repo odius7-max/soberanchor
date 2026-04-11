@@ -55,6 +55,7 @@ export default function OverviewTab({ userId, currentStep, journalCount, stepWor
   const [sponsorAvailable, setSponsorAvailable] = useState(isAvailableSponsor)
   const [togglingRole, setTogglingRole] = useState(false)
   const [showFindSponsor, setShowFindSponsor] = useState(false)
+  const [navigating, setNavigating] = useState(false)
 
   async function toggleSponsorAvailability() {
     const next = !sponsorAvailable
@@ -72,6 +73,27 @@ export default function OverviewTab({ userId, currentStep, journalCount, stepWor
     await supabase.from('reading_assignments').update({ is_completed: !current, completed_at: !current ? new Date().toISOString() : null }).eq('id', id)
     router.refresh()
     setToggling(null)
+  }
+
+  async function continueStepWork() {
+    setNavigating(true)
+    try {
+      const supabase = createClient()
+      const [{ data: workbooks }, { data: entries }] = await Promise.all([
+        supabase.from('program_workbooks').select('id, slug').eq('is_active', true).order('step_number').order('sort_order'),
+        supabase.from('step_work_entries').select('workbook_id, review_status').eq('user_id', userId),
+      ])
+      const entryMap = new Map((entries ?? []).map(e => [e.workbook_id, e.review_status]))
+      const first = (workbooks ?? []).find(w => {
+        const status = entryMap.get(w.id)
+        return !status || status === 'draft' || status === 'needs_revision'
+      })
+      router.push('/dashboard/step-work/' + (first?.slug ?? 'aa-step-1-reading'))
+    } catch {
+      router.push('/dashboard/step-work/aa-step-1-reading')
+    } finally {
+      setNavigating(false)
+    }
   }
 
   function fmtDate(s: string) {
@@ -100,8 +122,8 @@ export default function OverviewTab({ userId, currentStep, journalCount, stepWor
           You have <strong className="text-navy">{journalCount} journal {journalCount === 1 ? 'entry' : 'entries'}</strong> and <strong className="text-navy">{stepWorkCount} submitted step work {stepWorkCount === 1 ? 'entry' : 'entries'}</strong>.
         </div>
         <div className="flex gap-2">
-          <button className="flex-1 font-semibold text-white rounded-lg transition-colors hover:bg-navy-dark" style={{ fontSize: '13px', padding: '8px 14px', background: 'var(--navy)', border: 'none', cursor: 'pointer' }}>
-            Continue Step Work →
+          <button onClick={continueStepWork} disabled={navigating} className="flex-1 font-semibold text-white rounded-lg transition-colors hover:bg-navy-dark" style={{ fontSize: '13px', padding: '8px 14px', background: 'var(--navy)', border: 'none', cursor: navigating ? 'wait' : 'pointer', opacity: navigating ? 0.7 : 1 }}>
+            {navigating ? 'Loading…' : 'Continue Step Work →'}
           </button>
           <button onClick={onJournal} className="font-semibold rounded-lg transition-colors hover:bg-[var(--navy-10)]" style={{ fontSize: '13px', padding: '8px 14px', background: 'none', border: '1.5px solid var(--navy)', color: 'var(--navy)', cursor: 'pointer' }}>
             Journal
