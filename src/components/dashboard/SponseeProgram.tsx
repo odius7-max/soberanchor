@@ -64,7 +64,7 @@ export default function SponseeProgram({
   const [updatingFellowship, setUpdatingFellowship] = useState(false)
 
   const currentFellowship = fellowships.find(f => f.id === fellowshipId) ?? null
-  const hasContent = currentFellowship?.slug === 'aa'
+  const hasContent = currentFellowship?.slug === 'aa' || currentFellowship?.slug === 'na'
   const completionMap = new Map(completions.map(c => [c.step_number, c]))
 
   async function handleFellowshipChange(newId: string) {

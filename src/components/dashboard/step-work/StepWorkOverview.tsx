@@ -20,6 +20,12 @@ interface Entry {
   responses: Record<string, unknown> | null
 }
 
+interface FellowshipInfo {
+  id: string
+  name: string
+  abbreviation: string | null
+}
+
 const STEP_NAMES = [
   '', // 0-index placeholder
   'Powerlessness', 'Hope', 'Decision', 'Inventory',
@@ -76,21 +82,57 @@ export default function StepWorkOverview({ userId }: { userId: string }) {
   const [workbooks, setWorkbooks] = useState<Workbook[]>([])
   const [entries, setEntries] = useState<Entry[]>([])
   const [completedStepNums, setCompletedStepNums] = useState<Set<number>>(new Set())
+  const [fellowship, setFellowship] = useState<FellowshipInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [expandedStep, setExpandedStep] = useState<number | null>(1)
 
   useEffect(() => {
     const supabase = createClient()
-    Promise.all([
-      supabase.from('program_workbooks').select('id, title, slug, step_number, description, sort_order, prompts').eq('is_active', true).order('sort_order'),
-      supabase.from('step_work_entries').select('workbook_id, review_status, responses').eq('user_id', userId),
-      supabase.from('step_completions').select('step_number').eq('user_id', userId).eq('is_completed', true),
-    ]).then(([wb, en, sc]) => {
-      setWorkbooks((wb.data ?? []) as unknown as Workbook[])
-      setEntries((en.data ?? []) as unknown as Entry[])
-      setCompletedStepNums(new Set((sc.data ?? []).map(r => r.step_number)))
-      setLoading(false)
-    })
+
+    // First resolve the user's active fellowship from their sponsor relationship
+    supabase
+      .from('sponsor_relationships')
+      .select('fellowship_id, fellowships(name, abbreviation)')
+      .eq('sponsee_id', userId)
+      .eq('status', 'active')
+      .maybeSingle()
+      .then(({ data: rel }) => {
+        const fellowshipId = (rel as { fellowship_id?: string } | null)?.fellowship_id ?? null
+        const fw = (rel as { fellowships?: { name: string; abbreviation: string | null } } | null)?.fellowships ?? null
+        const fellowshipInfo: FellowshipInfo | null = fellowshipId && fw
+          ? { id: fellowshipId, name: fw.name, abbreviation: fw.abbreviation }
+          : null
+        setFellowship(fellowshipInfo)
+
+        return Promise.all([
+          fellowshipId
+            ? supabase
+                .from('program_workbooks')
+                .select('id, title, slug, step_number, description, sort_order, prompts')
+                .eq('is_active', true)
+                .eq('fellowship_id', fellowshipId)
+                .order('sort_order')
+            : Promise.resolve({ data: [] as Workbook[] }),
+          supabase
+            .from('step_work_entries')
+            .select('workbook_id, review_status, responses')
+            .eq('user_id', userId),
+          fellowshipId
+            ? supabase
+                .from('step_completions')
+                .select('step_number')
+                .eq('user_id', userId)
+                .eq('fellowship_id', fellowshipId)
+                .eq('is_completed', true)
+            : Promise.resolve({ data: [] as { step_number: number }[] }),
+        ])
+      })
+      .then(([wb, en, sc]) => {
+        setWorkbooks((wb.data ?? []) as unknown as Workbook[])
+        setEntries((en.data ?? []) as unknown as Entry[])
+        setCompletedStepNums(new Set((sc.data ?? []).map(r => r.step_number)))
+        setLoading(false)
+      })
   }, [userId])
 
   const steps = Array.from({ length: 12 }, (_, i) => i + 1)
@@ -109,16 +151,24 @@ export default function StepWorkOverview({ userId }: { userId: string }) {
     return wb && !completedStepNums.has(wb.step_number)
   }).length
 
-  if (loading) {
+  if (!fellowship) {
     return (
-      <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--mid)', fontSize: 14 }}>
-        Loading step work…
+      <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 16, padding: '48px 24px', textAlign: 'center', color: 'var(--mid)' }}>
+        <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
+        <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--dark)', marginBottom: 6 }}>No active sponsor relationship</div>
+        <div style={{ fontSize: 14 }}>Ask your sponsor to connect with you on SoberAnchor to unlock step work.</div>
       </div>
     )
   }
 
+  const totalPrompts = workbooks.reduce((sum, w) => sum + (w.prompts?.length ?? 0), 0)
+
   return (
     <div>
+      {/* Fellowship subtitle */}
+      <p style={{ fontSize: 13, color: 'var(--mid)', marginBottom: 16, marginTop: 0 }}>
+        {fellowship.abbreviation ?? fellowship.name} — {workbooks.length} sections, {totalPrompts} prompts. Click any section to begin or continue.
+      </p>
       {/* Summary bar */}
       <div className="flex gap-4 mb-6 flex-wrap">
         {[
