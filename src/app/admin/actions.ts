@@ -23,11 +23,28 @@ export async function approveClaim(facilityId: string) {
 export async function rejectClaim(facilityId: string) {
   await assertAdmin()
   const admin = createAdminClient()
+
+  // Capture the provider_account_id before clearing it
+  const { data: facility } = await admin
+    .from('facilities')
+    .select('provider_account_id')
+    .eq('id', facilityId)
+    .single()
+
   await admin.from('facilities').update({
     is_claimed: false,
     is_verified: false,
     provider_account_id: null,
   }).eq('id', facilityId)
+
+  // Deactivate the provider account so 'Provider Dashboard' no longer appears in nav
+  if (facility?.provider_account_id) {
+    await admin
+      .from('provider_accounts')
+      .update({ is_active: false })
+      .eq('id', facility.provider_account_id)
+  }
+
   revalidatePath('/admin/claims')
 }
 

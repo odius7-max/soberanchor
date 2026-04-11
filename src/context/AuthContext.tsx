@@ -55,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from('provider_accounts')
           .select('id')
           .eq('auth_user_id', userId)
+          .eq('is_active', true)
           .maybeSingle(),
       ])
       if (mounted.current) {
