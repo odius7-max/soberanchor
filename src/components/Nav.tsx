@@ -59,7 +59,7 @@ export default function Nav() {
 
   // Core nav links — Our Story only shown when logged out
   const coreLinks = [
-    { href: '/find', label: 'Find' },
+    { href: '/find', label: 'Find Help' },
     { href: '/find/meetings', label: 'Meetings' },
     { href: '/resources', label: 'Resources' },
   ]
