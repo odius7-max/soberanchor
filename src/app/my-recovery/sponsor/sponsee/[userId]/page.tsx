@@ -2,6 +2,7 @@ import { redirect, notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import BackButton from '@/components/find/BackButton'
+import SponseeProgram from '@/components/dashboard/SponseeProgram'
 
 const MOOD_META: Record<string, { emoji: string; label: string; color: string }> = {
   great:      { emoji: '😊', label: 'great',      color: '#27AE60' },
@@ -44,7 +45,7 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
   // Verify current user is an active sponsor of this sponsee
   const { data: rel } = await supabase
     .from('sponsor_relationships')
-    .select('id')
+    .select('id, fellowship_id')
     .eq('sponsor_id', user.id)
     .eq('sponsee_id', sponseeId)
     .eq('status', 'active')
@@ -54,12 +55,14 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
 
   const admin = createAdminClient()
 
-  // Parallel fetch all sponsee data
+  // Parallel fetch all sponsee data + program data
   const [
     profileRes,
     checkInsRes,
     journalRes,
     stepWorkRes,
+    fellowshipsRes,
+    completionsRes,
   ] = await Promise.all([
     admin.from('user_profiles').select('display_name, sobriety_date, current_step').eq('id', sponseeId).single(),
     admin.from('check_ins').select('id, check_in_date, mood, notes, sober_today, meetings_attended').eq('user_id', sponseeId).order('check_in_date', { ascending: false }).limit(5),
@@ -68,6 +71,10 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
       .select('id, workbook_id, review_status, submitted_at, reviewed_at, program_workbooks(title, step_number, slug)')
       .eq('user_id', sponseeId)
       .order('submitted_at', { ascending: false }),
+    admin.from('fellowships').select('id, name, abbreviation, slug').order('name'),
+    rel.fellowship_id
+      ? admin.from('step_completions').select('step_number, is_completed, completed_method, sponsor_note, completed_at').eq('user_id', sponseeId).eq('fellowship_id', rel.fellowship_id)
+      : Promise.resolve({ data: [] as { step_number: number; is_completed: boolean | null; completed_method: string | null; sponsor_note: string | null; completed_at: string | null }[], error: null }),
   ])
 
   if (!profileRes.data) notFound()
@@ -76,6 +83,8 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
   const checkIns = checkInsRes.data ?? []
   const journalEntries = journalRes.data ?? []
   const stepEntries = stepWorkRes.data ?? []
+  const fellowships = (fellowshipsRes.data ?? []) as { id: string; name: string; abbreviation: string | null; slug: string }[]
+  const initialCompletions = (completionsRes.data ?? []) as { step_number: number; is_completed: boolean | null; completed_method: string | null; sponsor_note: string | null; completed_at: string | null }[]
 
   const sobrietyDays = calcDays(profile.sobriety_date)
   const submittedEntries = stepEntries.filter(e => e.review_status === 'submitted')
@@ -109,6 +118,17 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
           )}
         </div>
       </div>
+
+      {/* Program selector + step grid */}
+      <SponseeProgram
+        fellowships={fellowships}
+        initialFellowshipId={rel.fellowship_id ?? null}
+        relationshipId={rel.id}
+        sponseeId={sponseeId}
+        sponseeName={profile.display_name ?? 'your sponsee'}
+        currentStep={profile.current_step ?? 1}
+        initialCompletions={initialCompletions}
+      />
 
       {/* Submitted step work — needs review */}
       {submittedEntries.length > 0 && (
