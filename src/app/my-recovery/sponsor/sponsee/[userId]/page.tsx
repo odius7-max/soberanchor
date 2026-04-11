@@ -116,7 +116,7 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
           <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--navy)', marginBottom: 14 }}>📬 Pending Your Review</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {submittedEntries.map(e => {
-              const wb = e.program_workbooks as { title: string; step_number: number | null; slug: string } | null
+              const wb = e.program_workbooks as unknown as { title: string; step_number: number | null; slug: string } | null
               return (
                 <a key={e.id} href={`/dashboard/step-work/review/${e.id}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderRadius: 10, background: 'rgba(212,165,116,0.06)', border: '1px solid rgba(212,165,116,0.2)', textDecoration: 'none', gap: 12 }}>
                   <div>
@@ -137,7 +137,7 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
           <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--navy)', marginBottom: 14 }}>📖 Step Work History</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {otherEntries.map(e => {
-              const wb = e.program_workbooks as { title: string; step_number: number | null; slug: string } | null
+              const wb = e.program_workbooks as unknown as { title: string; step_number: number | null; slug: string } | null
               const meta = STATUS_META[e.review_status] ?? STATUS_META.draft
               return (
                 <div key={e.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', gap: 12 }}>
