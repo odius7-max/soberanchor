@@ -166,21 +166,20 @@ export default function Nav() {
                         <div className="text-[11px] font-semibold mt-0.5" style={{ color: 'var(--teal)' }}>Provider + Member</div>
                       )}
                     </div>
-                    <Link
-                      href="/dashboard"
-                      onClick={() => setDropdownOpen(false)}
-                      className="flex items-center justify-between px-4 py-3 text-[14px] text-dark hover:bg-warm-gray transition-colors"
-                    >
+                    <Link href="/my-recovery/profile" onClick={() => setDropdownOpen(false)} className="flex items-center justify-between px-4 py-3 text-[14px] text-dark hover:bg-warm-gray transition-colors">
+                      My Profile
+                      {pathname === '/my-recovery/profile' && <span className="text-[10px] font-bold text-teal">●</span>}
+                    </Link>
+                    <Link href="/dashboard" onClick={() => setDropdownOpen(false)} className="flex items-center justify-between px-4 py-3 text-[14px] text-dark hover:bg-warm-gray transition-colors">
                       My Recovery
                       {pathname.startsWith('/dashboard') && <span className="text-[10px] font-bold text-teal">●</span>}
                     </Link>
+                    <Link href="/my-recovery/settings" onClick={() => setDropdownOpen(false)} className="flex items-center justify-between px-4 py-3 text-[14px] text-dark hover:bg-warm-gray transition-colors">
+                      Settings
+                      {pathname === '/my-recovery/settings' && <span className="text-[10px] font-bold text-teal">●</span>}
+                    </Link>
                     {isProvider && (
-                      <Link
-                        href="/providers/dashboard"
-                        onClick={() => setDropdownOpen(false)}
-                        className="flex items-center justify-between px-4 py-3 text-[14px] text-dark hover:bg-warm-gray transition-colors"
-                        style={{ borderTop: '1px solid var(--border)' }}
-                      >
+                      <Link href="/providers/dashboard" onClick={() => setDropdownOpen(false)} className="flex items-center justify-between px-4 py-3 text-[14px] text-dark hover:bg-warm-gray transition-colors">
                         Provider Dashboard
                         {pathname.startsWith('/providers') && <span className="text-[10px] font-bold text-teal">●</span>}
                       </Link>
@@ -275,21 +274,17 @@ export default function Nav() {
           {!loading && (
             user ? (
               <>
-                <Link
-                  href="/dashboard"
-                  onClick={() => setMobileOpen(false)}
-                  className="block py-3.5 text-[15px] font-semibold border-b border-[var(--border)]"
-                  style={{ color: 'var(--navy)' }}
-                >
+                <Link href="/my-recovery/profile" onClick={() => setMobileOpen(false)} className="block py-3.5 text-[15px] font-medium border-b border-[var(--border)]" style={{ color: 'var(--navy)' }}>
+                  My Profile
+                </Link>
+                <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="block py-3.5 text-[15px] font-semibold border-b border-[var(--border)]" style={{ color: 'var(--navy)' }}>
                   ⚓ My Recovery
                 </Link>
+                <Link href="/my-recovery/settings" onClick={() => setMobileOpen(false)} className="block py-3.5 text-[15px] font-medium border-b border-[var(--border)]" style={{ color: 'var(--navy)' }}>
+                  Settings
+                </Link>
                 {isProvider && (
-                  <Link
-                    href="/providers/dashboard"
-                    onClick={() => setMobileOpen(false)}
-                    className="block py-3.5 text-[15px] font-medium border-b border-[var(--border)]"
-                    style={{ color: 'var(--navy)' }}
-                  >
+                  <Link href="/providers/dashboard" onClick={() => setMobileOpen(false)} className="block py-3.5 text-[15px] font-medium border-b border-[var(--border)]" style={{ color: 'var(--navy)' }}>
                     Provider Dashboard
                   </Link>
                 )}
