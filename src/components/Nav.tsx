@@ -49,10 +49,6 @@ export default function Nav() {
   }, [])
 
   const displayName = profile?.display_name
-  // Build initials: up to 2 chars from display name words, fallback to email initial
-  const initials = displayName
-    ? displayName.split(' ').filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('')
-    : user?.email?.[0]?.toUpperCase() ?? '?'
 
   async function handleSignOut() {
     setDropdownOpen(false)
@@ -181,26 +177,14 @@ export default function Nav() {
                     display: 'flex', alignItems: 'center', gap: 0,
                     background: 'rgba(0,51,102,0.07)',
                     border: '1px solid rgba(0,51,102,0.12)',
-                    borderRadius: 999, padding: '5px 5px 5px 14px',
+                    borderRadius: 999, padding: '7px 14px',
                     cursor: 'pointer', transition: 'background 0.15s',
                   }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,51,102,0.11)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,51,102,0.07)')}
                 >
-                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)', marginRight: 10, whiteSpace: 'nowrap' }}>
-                    My Recovery
-                  </span>
-                  {/* Initials avatar */}
-                  <span
-                    style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      width: 28, height: 28, borderRadius: '50%',
-                      background: 'linear-gradient(135deg, #2A8A99, #003366)',
-                      color: '#fff', fontSize: 11, fontWeight: 700, letterSpacing: '0.3px',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {initials}
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)', whiteSpace: 'nowrap' }}>
+                    My Recovery{displayName ? ` | ${displayName}` : ''} ▾
                   </span>
                 </button>
 
@@ -210,19 +194,17 @@ export default function Nav() {
                     className="absolute right-0 top-full mt-2 rounded-xl overflow-hidden"
                     style={{ background: '#fff', border: '1px solid var(--border)', boxShadow: '0 8px 32px rgba(0,51,102,0.1)', minWidth: 210, zIndex: 60 }}
                   >
-                    <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
-                      <div className="font-semibold text-navy text-[14px]">{displayName ?? 'My Account'}</div>
-                      {isProvider && (
-                        <div className="text-[11px] font-semibold mt-0.5" style={{ color: 'var(--teal)' }}>Provider + Member</div>
-                      )}
-                    </div>
-                    <Link href="/my-recovery/profile" onClick={() => setDropdownOpen(false)} className="flex items-center justify-between px-4 py-3 text-[14px] text-dark hover:bg-warm-gray transition-colors">
-                      My Profile
-                      {pathname === '/my-recovery/profile' && <span className="text-[10px] font-bold text-teal">●</span>}
-                    </Link>
                     <Link href="/dashboard" onClick={() => setDropdownOpen(false)} className="flex items-center justify-between px-4 py-3 text-[14px] text-dark hover:bg-warm-gray transition-colors">
+                      Dashboard
+                      {pathname === '/dashboard' && <span className="text-[10px] font-bold text-teal">●</span>}
+                    </Link>
+                    <Link href="/my-recovery" onClick={() => setDropdownOpen(false)} className="flex items-center justify-between px-4 py-3 text-[14px] text-dark hover:bg-warm-gray transition-colors">
                       My Recovery
-                      {pathname.startsWith('/dashboard') && <span className="text-[10px] font-bold text-teal">●</span>}
+                      {pathname.startsWith('/my-recovery') && !pathname.startsWith('/my-recovery/profile') && !pathname.startsWith('/my-recovery/settings') && <span className="text-[10px] font-bold text-teal">●</span>}
+                    </Link>
+                    <Link href="/my-recovery/profile" onClick={() => setDropdownOpen(false)} className="flex items-center justify-between px-4 py-3 text-[14px] text-dark hover:bg-warm-gray transition-colors">
+                      Profile
+                      {pathname === '/my-recovery/profile' && <span className="text-[10px] font-bold text-teal">●</span>}
                     </Link>
                     <Link href="/my-recovery/settings" onClick={() => setDropdownOpen(false)} className="flex items-center justify-between px-4 py-3 text-[14px] text-dark hover:bg-warm-gray transition-colors">
                       Settings
@@ -337,11 +319,14 @@ export default function Nav() {
           {!loading && (
             user ? (
               <>
-                <Link href="/my-recovery/profile" onClick={() => setMobileOpen(false)} className="block py-3.5 text-[15px] font-medium border-b border-[var(--border)]" style={{ color: 'var(--navy)' }}>
-                  My Profile
+                <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="block py-3.5 text-[15px] font-medium border-b border-[var(--border)]" style={{ color: 'var(--navy)' }}>
+                  Dashboard
                 </Link>
-                <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="block py-3.5 text-[15px] font-semibold border-b border-[var(--border)]" style={{ color: 'var(--navy)' }}>
-                  ⚓ My Recovery
+                <Link href="/my-recovery" onClick={() => setMobileOpen(false)} className="block py-3.5 text-[15px] font-semibold border-b border-[var(--border)]" style={{ color: 'var(--navy)' }}>
+                  My Recovery
+                </Link>
+                <Link href="/my-recovery/profile" onClick={() => setMobileOpen(false)} className="block py-3.5 text-[15px] font-medium border-b border-[var(--border)]" style={{ color: 'var(--navy)' }}>
+                  Profile
                 </Link>
                 <Link href="/my-recovery/settings" onClick={() => setMobileOpen(false)} className="block py-3.5 text-[15px] font-medium border-b border-[var(--border)]" style={{ color: 'var(--navy)' }}>
                   Settings
