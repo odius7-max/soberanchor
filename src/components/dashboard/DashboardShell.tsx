@@ -7,6 +7,7 @@ import JournalTab from './tabs/JournalTab'
 import MeetingsTab from './tabs/MeetingsTab'
 import TasksTab from './tabs/TasksTab'
 import PrivacyTab from './tabs/PrivacyTab'
+import SavedTab from './tabs/SavedTab'
 import SponsorView from './SponsorView'
 import MeetingCheckin from './MeetingCheckin'
 import CheckInModal from './CheckInModal'
@@ -14,7 +15,7 @@ import PendingRequests from './PendingRequests'
 import type { PendingRequest } from './PendingRequests'
 
 type Role = 'my' | 'meetings' | 'sponsor'
-type Tab = 'overview' | 'journal' | 'meetings' | 'tasks' | 'privacy'
+type Tab = 'overview' | 'journal' | 'meetings' | 'tasks' | 'saved' | 'privacy'
 
 export interface CheckIn { id:string; check_in_date:string; mood:string|null; notes:string|null; sober_today:boolean; meetings_attended:number }
 export interface JournalEntry { id:string; title:string|null; entry_date:string; excerpt:string|null; step_number:number|null; is_shared_with_sponsor:boolean }
@@ -38,6 +39,7 @@ interface Props {
   activeSponsor: string | null
   sponsees: Sponsee[]
   pendingRequests: PendingRequest[]
+  sponsorPendingRequests: PendingRequest[]
 }
 
 const TABS: { id: Tab; label: string }[] = [
@@ -45,10 +47,11 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'journal',  label: '✏️ Journal' },
   { id: 'meetings', label: '👥 Meetings' },
   { id: 'tasks',    label: '📋 Tasks' },
+  { id: 'saved',    label: '❤️ Saved' },
   { id: 'privacy',  label: '🔒 Privacy' },
 ]
 
-export default function DashboardShell({ userId, phone, profile, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsor, sponsees, pendingRequests }: Props) {
+export default function DashboardShell({ userId, phone, profile, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsor, sponsees, pendingRequests, sponsorPendingRequests }: Props) {
   const [role, setRole] = useState<Role>('my')
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [checkInOpen, setCheckInOpen] = useState(false)
@@ -81,7 +84,7 @@ export default function DashboardShell({ userId, phone, profile, recentCheckIns,
         {/* ── My Dashboard ── */}
         {role === 'my' && (
           <>
-            <PendingRequests requests={pendingRequests} />
+            <PendingRequests requests={pendingRequests} perspective="as_sponsee" />
             <DashboardBanner userId={userId} displayName={displayName} sobrietyDate={sobrietyDate} currentStep={currentStep} />
 
             {/* Tabs */}
@@ -100,12 +103,13 @@ export default function DashboardShell({ userId, phone, profile, recentCheckIns,
             {activeTab === 'journal' && <JournalTab userId={userId} entries={journalEntries} />}
             {activeTab === 'meetings' && <MeetingsTab userId={userId} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} meetingAttendance={meetingAttendance} />}
             {activeTab === 'tasks' && <TasksTab readingAssignments={readingAssignments} hasSponsor={activeSponsor !== null} />}
+            {activeTab === 'saved' && <SavedTab userId={userId} />}
             {activeTab === 'privacy' && <PrivacyTab userId={userId} displayName={profile?.display_name ?? null} phone={phone} journalCount={journalCount} stepWorkCount={stepWorkCount} checkInsTotal={checkInsTotal} meetingsTotal={meetingsTotal} isAvailableSponsor={isSponsor} />}
           </>
         )}
 
         {role === 'meetings' && <MeetingCheckin userId={userId} />}
-        {role === 'sponsor' && isSponsor && <SponsorView sponsees={sponsees} />}
+        {role === 'sponsor' && isSponsor && <SponsorView sponsees={sponsees} pendingRequests={sponsorPendingRequests} />}
       </div>
 
       {checkInOpen && <CheckInModal userId={userId} onClose={() => setCheckInOpen(false)} />}

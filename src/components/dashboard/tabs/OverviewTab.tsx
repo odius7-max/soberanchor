@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import AddSponseeModal from '@/components/dashboard/AddSponseeModal'
 
 const STEPS = [
   { n: 1, s: 'Powerlessness', desc: 'We admitted we were powerless over our addiction' },
@@ -53,6 +54,7 @@ export default function OverviewTab({ userId, currentStep, journalCount, stepWor
   const [toggling, setToggling] = useState<string | null>(null)
   const [sponsorAvailable, setSponsorAvailable] = useState(isAvailableSponsor)
   const [togglingRole, setTogglingRole] = useState(false)
+  const [showFindSponsor, setShowFindSponsor] = useState(false)
 
   async function toggleSponsorAvailability() {
     const next = !sponsorAvailable
@@ -223,11 +225,19 @@ export default function OverviewTab({ userId, currentStep, journalCount, stepWor
         </div>
 
         {!activeSponsor && (
-          <div className="rounded-lg mt-2" style={{ background: 'var(--warm-gray)', padding: '10px 12px', fontSize: '12px', color: 'var(--mid)', lineHeight: 1.5 }}>
-            Don&apos;t have a sponsor yet? Ask in your home group or use the meeting check-in feature to connect.
+          <div className="mt-3">
+            <button
+              onClick={() => setShowFindSponsor(true)}
+              className="font-semibold text-white rounded-lg transition-colors hover:bg-navy-dark"
+              style={{ fontSize: '13px', padding: '8px 16px', background: 'var(--navy)', border: 'none', cursor: 'pointer', width: '100%' }}
+            >
+              🔍 Find a Sponsor
+            </button>
           </div>
         )}
       </div>
+
+      {showFindSponsor && <AddSponseeModal mode="find_sponsor" onClose={() => setShowFindSponsor(false)} />}
 
       {/* Tasks from Sponsor */}
       <div className={card}>

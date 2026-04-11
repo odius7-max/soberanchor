@@ -2,6 +2,8 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import LeadForm from "@/components/find/LeadForm";
+import HeartButton from "@/components/find/HeartButton";
+import { getUserSavedIds } from "../actions";
 
 export const revalidate = 3600;
 
@@ -12,13 +14,15 @@ export default async function FacilityDetail({
 }) {
   const { id } = await params;
 
-  const { data: facility } = await supabase
-    .from("facilities")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const [{ data: facility }, savedList] = await Promise.all([
+    supabase.from("facilities").select("*").eq("id", id).single(),
+    getUserSavedIds(),
+  ]);
 
   if (!facility) notFound();
+
+  const savedEntry = savedList.find(s => s.facility_id === id)
+  const savedId = savedEntry?.id ?? null
 
   // Get insurance accepted
   const { data: insuranceRows } = await supabase
@@ -40,7 +44,7 @@ export default async function FacilityDetail({
         ← Back to Results
       </Link>
 
-      <div className="flex gap-2 flex-wrap mt-4">
+      <div className="flex gap-2 flex-wrap items-center mt-4">
         {facility.is_featured && (
           <span className="inline-block bg-[var(--gold-10)] border border-[rgba(212,165,116,0.2)] text-[#9A7B54] text-xs font-medium rounded-full px-3 py-1">
             ⭐ Featured
@@ -51,6 +55,9 @@ export default async function FacilityDetail({
             ✓ Verified
           </span>
         )}
+        <div className="ml-auto">
+          <HeartButton facilityId={facility.id} initialSavedId={savedId} size={22} />
+        </div>
       </div>
 
       <h1
@@ -209,7 +216,7 @@ export default async function FacilityDetail({
                     Are you the owner of this facility?
                   </p>
                   <Link
-                    href="/providers/claim"
+                    href={`/providers/claim?facility=${facility.id}`}
                     className="inline-block text-teal font-semibold text-sm hover:underline mb-1"
                   >
                     Claim this listing →

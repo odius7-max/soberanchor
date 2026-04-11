@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import AddSponseeModal from './AddSponseeModal'
+import PendingRequests from './PendingRequests'
+import type { PendingRequest } from './PendingRequests'
 
 const STEPS = ['Powerlessness','Hope','Decision','Inventory','Admission','Readiness','Humility','Amends List','Amends','Daily Inventory','Spiritual Growth','Service']
 const MILESTONES = [7,14,21,30,60,90,120,180,270,365,500,730]
@@ -12,7 +14,7 @@ const MOOD_META: Record<string,{emoji:string;label:string;color:string}> = {
 }
 
 interface Sponsee { id:string; name:string; sobrietyDate:string|null; currentStep:number; lastMood:string|null; lastCheckInDate:string|null; pendingReviews:number }
-interface Props { sponsees: Sponsee[] }
+interface Props { sponsees: Sponsee[]; pendingRequests: PendingRequest[] }
 
 function calcDays(d:string|null):number|null { if(!d)return null; return Math.floor((Date.now()-new Date(d+'T00:00:00').getTime())/(86400000)) }
 function relDate(d:string|null):string {
@@ -21,7 +23,7 @@ function relDate(d:string|null):string {
   if(days===0)return 'Today'; if(days===1)return 'Yesterday'; return `${days} days ago`
 }
 
-export default function SponsorView({ sponsees }: Props) {
+export default function SponsorView({ sponsees, pendingRequests }: Props) {
   const [showAddModal, setShowAddModal] = useState(false)
   const pendingTotal = sponsees.reduce((s,sp)=>s+sp.pendingReviews,0)
   const checkInsToday = sponsees.filter(sp=>sp.lastCheckInDate===new Date().toISOString().slice(0,10)).length
@@ -35,6 +37,8 @@ export default function SponsorView({ sponsees }: Props) {
 
   return (
     <div>
+      <PendingRequests requests={pendingRequests} perspective="as_sponsor" />
+
       {upcoming.length>0&&(
         <div className="rounded-[16px] p-5 mb-5" style={{background:'rgba(212,165,116,0.08)',border:'1px solid rgba(212,165,116,0.25)'}}>
           <div className="font-bold text-navy mb-3" style={{fontSize:'15px'}}>🎉 Upcoming Milestones</div>

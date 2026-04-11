@@ -111,7 +111,7 @@ export default async function FindPage() {
 
             {/* Meetings card */}
             <Link
-              href="#meetings"
+              href="/find/meetings"
               className="card-hover block bg-white border border-border rounded-[16px] overflow-hidden"
             >
               <div className="flex items-center gap-4 p-5">
@@ -149,30 +149,37 @@ export default async function FindPage() {
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {meetings.map((m: any) => {
                 const fellowship = m.fellowships
-                return (
-                  <div key={m.id} className="card-hover bg-white border border-border rounded-[14px] overflow-hidden">
-                    <div className="flex flex-wrap">
-                      <div
-                        className="shrink-0 flex items-center justify-center text-[36px]"
-                        style={{ width: 120, minHeight: 100, background: 'var(--gold-10)' }}
-                      >
-                        👥
-                      </div>
-                      <div className="flex-1 p-4 px-5 min-w-0">
-                        <h3 className="text-[15px] text-navy font-semibold">{m.name}</h3>
-                        <div className="text-[13px] text-mid mt-1">
-                          📍 {m.location_name || 'Online'}
-                          {m.day_of_week && <> · {m.day_of_week}</>}
-                          {m.start_time && <> {m.start_time}</>}
-                          {m.format && <> · {m.format}</>}
-                        </div>
-                        {fellowship && (
-                          <span className="inline-block mt-2 bg-warm-gray border border-border rounded-full px-3 py-0.5 text-xs font-medium text-dark">
-                            {fellowship.abbreviation || fellowship.name}
-                          </span>
-                        )}
-                      </div>
+                const inner = (
+                  <div className="flex flex-wrap">
+                    <div
+                      className="shrink-0 flex items-center justify-center text-[36px]"
+                      style={{ width: 120, minHeight: 100, background: 'var(--gold-10)' }}
+                    >
+                      👥
                     </div>
+                    <div className="flex-1 p-4 px-5 min-w-0">
+                      <h3 className="text-[15px] text-navy font-semibold">{m.name}</h3>
+                      <div className="text-[13px] text-mid mt-1">
+                        📍 {m.location_name || 'Online'}
+                        {m.day_of_week && <> · {m.day_of_week}</>}
+                        {m.start_time && <> {m.start_time}</>}
+                        {m.format && <> · {m.format}</>}
+                      </div>
+                      {fellowship && (
+                        <span className="inline-block mt-2 bg-warm-gray border border-border rounded-full px-3 py-0.5 text-xs font-medium text-dark">
+                          {fellowship.abbreviation || fellowship.name}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )
+                return m.slug ? (
+                  <Link key={m.id} href={`/find/meetings/${m.slug}`} className="card-hover bg-white border border-border rounded-[14px] overflow-hidden block" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    {inner}
+                  </Link>
+                ) : (
+                  <div key={m.id} className="card-hover bg-white border border-border rounded-[14px] overflow-hidden">
+                    {inner}
                   </div>
                 )
               })}

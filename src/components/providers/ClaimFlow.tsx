@@ -19,17 +19,21 @@ const FACILITY_TYPES = [
 
 const TYPE_LABELS: Record<string,string> = Object.fromEntries(FACILITY_TYPES.map(t => [t.value, t.label]))
 
-interface Props { userId: string }
+interface Props {
+  userId: string
+  preselectedFacility?: SearchResult | null
+}
 
-export default function ClaimFlow({ userId }: Props) {
+export default function ClaimFlow({ userId, preselectedFacility = null }: Props) {
   const router = useRouter()
   const [step, setStep] = useState<Step>('search')
-  const [query, setQuery] = useState('')
-  const [results, setResults] = useState<SearchResult[]>([])
+  const [query, setQuery] = useState(preselectedFacility?.name ?? '')
+  const [results, setResults] = useState<SearchResult[]>(preselectedFacility ? [preselectedFacility] : [])
   const [searching, setSearching] = useState(false)
-  const [selected, setSelected] = useState<SearchResult | null>(null)
+  const [selected, setSelected] = useState<SearchResult | null>(preselectedFacility ?? null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const isPreselected = preselectedFacility !== null
 
   // Create new form
   const [form, setForm] = useState({
@@ -38,7 +42,12 @@ export default function ClaimFlow({ userId }: Props) {
     address_line1: '', city: '', state: '', zip: '', description: '',
   })
 
+  // Track whether results are "live" (from user typing) vs seeded from preselection
+  const [resultsFromSearch, setResultsFromSearch] = useState(!isPreselected)
+
   useEffect(() => {
+    // Don't re-run Supabase search while showing the preselected result
+    if (!resultsFromSearch) return
     if (!query.trim() || query.length < 2) { setResults([]); return }
     const t = setTimeout(async () => {
       setSearching(true)
@@ -52,7 +61,7 @@ export default function ClaimFlow({ userId }: Props) {
       setSearching(false)
     }, 300)
     return () => clearTimeout(t)
-  }, [query])
+  }, [query, resultsFromSearch])
 
   function extractDomain(url: string | null): string {
     if (!url) return ''
@@ -194,16 +203,38 @@ export default function ClaimFlow({ userId }: Props) {
       {step === 'search' && (
         <>
           {/* Search */}
+          {isPreselected && selected && (
+            <div style={{ background: 'rgba(42,138,153,0.07)', border: '1px solid rgba(42,138,153,0.2)', borderRadius: 12, padding: '14px 18px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--teal)' }}>📍 Pre-selected from directory</div>
+                <div style={{ fontSize: 13, color: 'var(--navy)', fontWeight: 600, marginTop: 2 }}>{selected.name}</div>
+                {(selected.city || selected.state) && (
+                  <div style={{ fontSize: 12, color: 'var(--mid)' }}>{[selected.city, selected.state].filter(Boolean).join(', ')} · {TYPE_LABELS[selected.facility_type] ?? selected.facility_type}</div>
+                )}
+              </div>
+              <button
+                onClick={() => { setQuery(''); setSelected(null); setResults([]); setResultsFromSearch(true) }}
+                style={{ fontSize: 12, color: 'var(--mid)', background: 'none', border: '1px solid var(--border)', borderRadius: 6, padding: '5px 10px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'var(--font-body)', flexShrink: 0 }}
+              >
+                Search different →
+              </button>
+            </div>
+          )}
+
           <div className="card-hover" style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: 28, marginBottom: 20 }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 16 }}>Search Your Facility</div>
             <div style={{ position: 'relative', marginBottom: 4 }}>
               <input
                 type="text"
                 value={query}
-                onChange={e => { setQuery(e.target.value); setSelected(null) }}
+                onChange={e => {
+                  setQuery(e.target.value)
+                  setSelected(null)
+                  setResultsFromSearch(true)
+                }}
                 placeholder="e.g. Serenity Ridge Treatment Center"
                 style={inputStyle()}
-                autoFocus
+                autoFocus={!isPreselected}
               />
               {searching && (
                 <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--mid)', fontSize: 12 }}>Searching…</div>

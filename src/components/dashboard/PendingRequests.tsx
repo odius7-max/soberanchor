@@ -5,8 +5,8 @@ import { respondToSponsorRequest } from '@/app/dashboard/actions'
 
 export interface PendingRequest {
   id: string
-  sponsorId: string
-  sponsorName: string
+  otherId: string
+  otherName: string
   createdAt: string
 }
 
@@ -19,7 +19,13 @@ function timeAgo(dateStr: string) {
   return `${Math.floor(hrs / 24)}d ago`
 }
 
-export default function PendingRequests({ requests }: { requests: PendingRequest[] }) {
+interface Props {
+  requests: PendingRequest[]
+  /** as_sponsee = sponsor is asking me; as_sponsor = sponsee is asking me */
+  perspective: 'as_sponsee' | 'as_sponsor'
+}
+
+export default function PendingRequests({ requests, perspective }: Props) {
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
   const [isPending, startTransition] = useTransition()
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -40,6 +46,10 @@ export default function PendingRequests({ requests }: { requests: PendingRequest
     <div style={{ marginBottom: 20 }}>
       {visible.map(req => {
         const loading = activeId === req.id && isPending
+        const label = perspective === 'as_sponsee'
+          ? <><span style={{ color: 'var(--teal)' }}>{req.otherName}</span> wants to be your sponsor</>
+          : <><span style={{ color: 'var(--teal)' }}>{req.otherName}</span> is requesting you as their sponsor</>
+
         return (
           <div
             key={req.id}
@@ -57,18 +67,17 @@ export default function PendingRequests({ requests }: { requests: PendingRequest
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              {/* Avatar */}
               <div style={{
                 width: 40, height: 40, borderRadius: 10, flexShrink: 0,
                 background: 'linear-gradient(135deg,#2A8A99,#003366)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 color: '#fff', fontSize: 16, fontWeight: 700,
               }}>
-                {req.sponsorName[0]?.toUpperCase() ?? '?'}
+                {req.otherName[0]?.toUpperCase() ?? '?'}
               </div>
               <div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--navy)' }}>
-                  <span style={{ color: 'var(--teal)' }}>{req.sponsorName}</span> wants to be your sponsor
+                  {label}
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 2 }}>
                   Sent {timeAgo(req.createdAt)}

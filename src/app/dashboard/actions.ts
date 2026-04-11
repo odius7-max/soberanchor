@@ -68,6 +68,34 @@ export async function sendSponsorRequest(sponseeUserId: string): Promise<void> {
   revalidatePath('/dashboard')
 }
 
+// Sponsee-initiated: current user wants this person as their sponsor.
+// INSERT RLS requires sponsor_id = auth.uid(), so we use the admin client here.
+export async function requestSponsor(sponsorUserId: string): Promise<void> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const admin = createAdminClient()
+
+  // Check for an existing relationship in either direction
+  const { data: existing } = await admin
+    .from('sponsor_relationships')
+    .select('id, status')
+    .eq('sponsor_id', sponsorUserId)
+    .eq('sponsee_id', user.id)
+    .maybeSingle()
+
+  if (existing?.status === 'active') throw new Error('You already have this person as your sponsor.')
+  if (existing?.status === 'pending') throw new Error('A request is already pending.')
+
+  const { error } = await admin
+    .from('sponsor_relationships')
+    .insert({ sponsor_id: sponsorUserId, sponsee_id: user.id, status: 'pending' })
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/dashboard')
+}
+
 export async function respondToSponsorRequest(
   relationshipId: string,
   accept: boolean
@@ -76,6 +104,7 @@ export async function respondToSponsorRequest(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
+  // Either party can accept or decline — both sponsor and sponsee can respond
   const { error } = await supabase
     .from('sponsor_relationships')
     .update({
@@ -83,7 +112,7 @@ export async function respondToSponsorRequest(
       ...(accept ? { started_at: new Date().toISOString() } : {}),
     })
     .eq('id', relationshipId)
-    .eq('sponsee_id', user.id) // only the sponsee can respond
+    .or(`sponsee_id.eq.${user.id},sponsor_id.eq.${user.id}`)
 
   if (error) throw new Error(error.message)
   revalidatePath('/dashboard')

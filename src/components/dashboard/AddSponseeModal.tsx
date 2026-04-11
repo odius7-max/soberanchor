@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useTransition, useRef, useEffect } from 'react'
-import { searchUserByEmail, sendSponsorRequest } from '@/app/dashboard/actions'
+import { searchUserByEmail, sendSponsorRequest, requestSponsor } from '@/app/dashboard/actions'
 import type { SearchResult } from '@/app/dashboard/actions'
 
 interface Props {
   onClose: () => void
+  mode?: 'add_sponsee' | 'find_sponsor'
 }
 
 const inputStyle: React.CSSProperties = {
@@ -14,7 +15,8 @@ const inputStyle: React.CSSProperties = {
   boxSizing: 'border-box', color: 'var(--dark)',
 }
 
-export default function AddSponseeModal({ onClose }: Props) {
+export default function AddSponseeModal({ onClose, mode = 'add_sponsee' }: Props) {
+  const isFindSponsor = mode === 'find_sponsor'
   const [email, setEmail] = useState('')
   const [result, setResult] = useState<SearchResult | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -47,7 +49,11 @@ export default function AddSponseeModal({ onClose }: Props) {
     setError(null)
     startTransition(async () => {
       try {
-        await sendSponsorRequest(result.userId)
+        if (isFindSponsor) {
+          await requestSponsor(result.userId)
+        } else {
+          await sendSponsorRequest(result.userId)
+        }
         setSent(true)
       } catch (e: any) {
         setError(e.message)
@@ -66,10 +72,12 @@ export default function AddSponseeModal({ onClose }: Props) {
         {/* Close */}
         <button onClick={onClose} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--mid)', fontSize: 20, lineHeight: 1, padding: 4 }}>✕</button>
 
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 8 }}>Sponsor View</div>
-        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 600, color: 'var(--navy)', letterSpacing: '-0.5px', marginBottom: 6 }}>Add a Sponsee</h2>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 8 }}>{isFindSponsor ? 'My Recovery' : 'Sponsor View'}</div>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 600, color: 'var(--navy)', letterSpacing: '-0.5px', marginBottom: 6 }}>{isFindSponsor ? 'Find a Sponsor' : 'Add a Sponsee'}</h2>
         <p style={{ fontSize: 14, color: 'var(--mid)', lineHeight: 1.6, marginBottom: 24 }}>
-          Search by their SoberAnchor account email. They&apos;ll receive a request to accept.
+          {isFindSponsor
+            ? "Search by their SoberAnchor account email. They'll receive a request to accept as your sponsor."
+            : "Search by their SoberAnchor account email. They'll receive a request to accept."}
         </p>
 
         {/* Search row */}
@@ -120,7 +128,7 @@ export default function AddSponseeModal({ onClose }: Props) {
               onClick={handleSend}
               disabled={isPending}
               style={{ width: '100%', background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 8, padding: '12px', fontSize: 14, fontWeight: 600, cursor: isPending ? 'not-allowed' : 'pointer', opacity: isPending ? 0.7 : 1, fontFamily: 'var(--font-body)' }}>
-              {isPending ? 'Sending…' : 'Send Sponsorship Request →'}
+              {isPending ? 'Sending…' : isFindSponsor ? 'Send Sponsor Request →' : 'Send Sponsorship Request →'}
             </button>
           </div>
         )}
@@ -154,7 +162,7 @@ export default function AddSponseeModal({ onClose }: Props) {
                 <p style={{ fontSize: 13, color: 'var(--mid)', lineHeight: 1.6, marginBottom: 14 }}>
                   They may not have signed up yet. Share the link below so they can create an account — once they do, search for them here.
                 </p>
-                <CopyInviteLink email={email} />
+                <CopyInviteLink email={email} mode={mode} />
               </>
             )}
           </div>
@@ -164,14 +172,16 @@ export default function AddSponseeModal({ onClose }: Props) {
   )
 }
 
-function CopyInviteLink({ email }: { email: string }) {
+function CopyInviteLink({ email, mode }: { email: string; mode: 'add_sponsee' | 'find_sponsor' }) {
   const [copied, setCopied] = useState(false)
   const url = typeof window !== 'undefined'
     ? `${window.location.origin}/my-recovery`
     : 'https://soberanchor.com/my-recovery'
 
   function copy() {
-    const text = `Hey, I'd like to sponsor you on SoberAnchor. Create your free account here: ${url} — then search for my email to connect.`
+    const text = mode === 'find_sponsor'
+      ? `Hey, I'm looking for a sponsor on SoberAnchor. Create your free account here: ${url} — then search for my email to connect.`
+      : `Hey, I'd like to sponsor you on SoberAnchor. Create your free account here: ${url} — then search for my email to connect.`
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2500)

@@ -1,10 +1,23 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
-import FacilityTypeListings from '@/components/find/FacilityTypeListings'
+import { createClient } from '@/lib/supabase/server'
+import FacilitiesDirectory from '@/components/find/FacilitiesDirectory'
+import { getUserSavedIds } from '../actions'
 
-export const revalidate = 3600
-export const metadata = { title: 'Outpatient Programs — SoberAnchor' }
+export const metadata: Metadata = { title: 'Outpatient Programs — SoberAnchor' }
 
-export default function OutpatientPage() {
+export default async function OutpatientPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  let savedIds: Record<string, string> = {}
+  if (user) {
+    const saved = await getUserSavedIds()
+    for (const s of saved) {
+      if (s.facility_id) savedIds[s.facility_id] = s.id
+    }
+  }
+
   return (
     <div className="max-w-[1120px] mx-auto px-6 py-8 pb-20">
       <Link href="/find" className="text-teal text-sm font-semibold hover:underline">
@@ -24,7 +37,7 @@ export default function OutpatientPage() {
         </p>
       </div>
 
-      <FacilityTypeListings facilityType="outpatient" />
+      <FacilitiesDirectory facilityType="outpatient" savedIds={savedIds} />
     </div>
   )
 }
