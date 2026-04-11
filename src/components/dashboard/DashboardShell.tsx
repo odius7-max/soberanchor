@@ -30,6 +30,7 @@ interface Props {
   phone: string | null
   onboardingCompleted: boolean
   profile: { display_name:string|null; sobriety_date:string|null; current_step:number; is_available_sponsor:boolean } | null
+  completedSteps: number
   recentCheckIns: CheckIn[]
   journalEntries: JournalEntry[]
   journalCount: number
@@ -55,13 +56,15 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'privacy',   label: '🔒 Privacy' },
 ]
 
-export default function DashboardShell({ userId, phone, onboardingCompleted, profile, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsor, sponsees, pendingRequests, sponsorPendingRequests }: Props) {
+export default function DashboardShell({ userId, phone, onboardingCompleted, profile, completedSteps, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsor, sponsees, pendingRequests, sponsorPendingRequests }: Props) {
   const [role, setRole] = useState<Role>('my')
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [checkInOpen, setCheckInOpen] = useState(false)
 
   const displayName = profile?.display_name ?? 'Friend'
-  const currentStep = profile?.current_step ?? 1
+  const allStepsDone = completedSteps >= 12
+  // Derive current step from actual completions, not the stale profile field
+  const currentStep = allStepsDone ? 12 : Math.max(1, completedSteps + 1)
   const sobrietyDate = profile?.sobriety_date ?? null
   const isSponsor = profile?.is_available_sponsor ?? false
 
@@ -103,7 +106,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
             </div>
 
             {activeTab === 'overview' && (
-              <OverviewTab userId={userId} currentStep={currentStep} journalCount={journalCount} stepWorkCount={stepWorkCount} recentCheckIns={recentCheckIns} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} recentMeetings={meetingAttendance.slice(0,3)} readingAssignments={readingAssignments} activeSponsor={activeSponsor} isAvailableSponsor={isSponsor} onCheckIn={() => setCheckInOpen(true)} onJournal={() => setActiveTab('journal')} />
+              <OverviewTab userId={userId} currentStep={currentStep} completedSteps={completedSteps} allStepsDone={allStepsDone} journalCount={journalCount} stepWorkCount={stepWorkCount} recentCheckIns={recentCheckIns} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} recentMeetings={meetingAttendance.slice(0,3)} readingAssignments={readingAssignments} activeSponsor={activeSponsor} isAvailableSponsor={isSponsor} onCheckIn={() => setCheckInOpen(true)} onJournal={() => setActiveTab('journal')} />
             )}
             {activeTab === 'stepwork' && <StepWorkTab userId={userId} />}
             {activeTab === 'journal' && <JournalTab userId={userId} entries={journalEntries} />}

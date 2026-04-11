@@ -27,6 +27,7 @@ export default async function DashboardPage() {
     sponsorRelRes,
     pendingReqsRes,
     pendingAsSponsorRes,
+    stepCompletionsRes,
   ] = await Promise.all([
     supabase.from('user_profiles').select('display_name,sobriety_date,current_step,is_available_sponsor,onboarding_completed').eq('id', userId).single(),
     supabase.from('check_ins').select('id,check_in_date,mood,notes,sober_today,meetings_attended').eq('user_id', userId).order('check_in_date', { ascending: false }).limit(4),
@@ -41,7 +42,12 @@ export default async function DashboardPage() {
     supabase.from('sponsor_relationships').select('id,sponsor_id,created_at').eq('sponsee_id', userId).eq('status', 'pending'),
     // Pending where I'm the sponsor (sponsee initiated)
     supabase.from('sponsor_relationships').select('id,sponsee_id,created_at').eq('sponsor_id', userId).eq('status', 'pending'),
+    // Step completions — used to derive real progress (not user_profiles.current_step)
+    supabase.from('step_completions').select('step_number').eq('user_id', userId).eq('is_completed', true),
   ])
+
+  // Count distinct completed step numbers across any fellowship
+  const completedSteps = new Set((stepCompletionsRes.data ?? []).map(r => r.step_number)).size
 
   const profile = profileRes.data ?? null
   const recentCheckIns: CheckIn[] = (recentCheckInsRes.data ?? []) as CheckIn[]
@@ -173,6 +179,7 @@ export default async function DashboardPage() {
       userId={userId}
       phone={phone}
       profile={profile}
+      completedSteps={completedSteps}
       onboardingCompleted={profile?.onboarding_completed ?? false}
       recentCheckIns={recentCheckIns}
       journalEntries={journalEntries}

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { syncSponseeCurrentStep } from '@/app/dashboard/step-work/actions'
 
 const STEPS = [
   { n: 1,  s: 'Powerlessness'   },
@@ -101,10 +102,15 @@ export default function SponseeProgram({
       },
       { onConflict: 'user_id,fellowship_id,step_number' }
     )
-    setCompletions(prev => [
-      ...prev.filter(c => c.step_number !== selectedStep),
+    const updatedCompletions = [
+      ...completions.filter(c => c.step_number !== selectedStep),
       { step_number: selectedStep, is_completed: true, completed_method: method, sponsor_note: note.trim() || null, completed_at: now },
-    ])
+    ]
+    setCompletions(updatedCompletions)
+
+    // Sync user_profiles.current_step to the next incomplete step
+    await syncSponseeCurrentStep(sponseeId, fellowshipId)
+
     setSelectedStep(null)
     setNote('')
     setMethod('discussion')

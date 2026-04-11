@@ -35,6 +35,8 @@ interface ReadingAssignment { id: string; title: string; source: string | null; 
 interface Props {
   userId: string
   currentStep: number
+  completedSteps: number
+  allStepsDone: boolean
   journalCount: number
   stepWorkCount: number
   recentCheckIns: CheckIn[]
@@ -48,7 +50,7 @@ interface Props {
   onJournal: () => void
 }
 
-export default function OverviewTab({ userId, currentStep, journalCount, stepWorkCount, recentCheckIns, meetingsThisWeek, meetingsTotal, recentMeetings, readingAssignments, activeSponsor, isAvailableSponsor, onCheckIn, onJournal }: Props) {
+export default function OverviewTab({ userId, currentStep, completedSteps, allStepsDone, journalCount, stepWorkCount, recentCheckIns, meetingsThisWeek, meetingsTotal, recentMeetings, readingAssignments, activeSponsor, isAvailableSponsor, onCheckIn, onJournal }: Props) {
   const router = useRouter()
   const step = STEPS[currentStep - 1]
   const [toggling, setToggling] = useState<string | null>(null)
@@ -109,30 +111,58 @@ export default function OverviewTab({ userId, currentStep, journalCount, stepWor
       <div className={card}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-navy" style={{ fontSize: '15px' }}>📖 Current Focus</h3>
-          <span className="rounded-full font-semibold" style={{ fontSize: '11px', padding: '3px 10px', background: 'rgba(212,165,116,0.12)', border: '1px solid rgba(212,165,116,0.2)', color: '#9A7B54' }}>In Progress</span>
+          {allStepsDone
+            ? <span className="rounded-full font-semibold" style={{ fontSize: '11px', padding: '3px 10px', background: 'rgba(39,174,96,0.1)', border: '1px solid rgba(39,174,96,0.25)', color: '#1e8a4a' }}>Completed</span>
+            : <span className="rounded-full font-semibold" style={{ fontSize: '11px', padding: '3px 10px', background: 'rgba(212,165,116,0.12)', border: '1px solid rgba(212,165,116,0.2)', color: '#9A7B54' }}>In Progress</span>
+          }
         </div>
-        <div className="flex items-center gap-3 mb-3">
-          <div className="flex items-center justify-center rounded-xl font-bold text-white flex-shrink-0" style={{ width: '48px', height: '48px', background: 'linear-gradient(135deg,#D4A574,#c49564)', fontSize: '20px' }}>{currentStep}</div>
-          <div>
-            <div className="font-bold text-navy" style={{ fontSize: '16px' }}>Step {currentStep}: {step?.s}</div>
-            <div className="text-mid" style={{ fontSize: '13px', marginTop: '2px' }}>{step?.desc}</div>
-          </div>
-        </div>
-        <div className="text-mid mb-4" style={{ fontSize: '13px', lineHeight: 1.6 }}>
-          You have <strong className="text-navy">{journalCount} journal {journalCount === 1 ? 'entry' : 'entries'}</strong> and <strong className="text-navy">{stepWorkCount} submitted step work {stepWorkCount === 1 ? 'entry' : 'entries'}</strong>.
-        </div>
-        <div className="flex gap-2">
-          <button onClick={continueStepWork} disabled={navigating} className="flex-1 font-semibold text-white rounded-lg transition-colors hover:bg-navy-dark" style={{ fontSize: '13px', padding: '8px 14px', background: 'var(--navy)', border: 'none', cursor: navigating ? 'wait' : 'pointer', opacity: navigating ? 0.7 : 1 }}>
-            {navigating ? 'Loading…' : 'Continue Step Work →'}
-          </button>
-          <button onClick={onJournal} className="font-semibold rounded-lg transition-colors hover:bg-[var(--navy-10)]" style={{ fontSize: '13px', padding: '8px 14px', background: 'none', border: '1.5px solid var(--navy)', color: 'var(--navy)', cursor: 'pointer' }}>
-            Journal
-          </button>
-        </div>
-        <div className="flex justify-between mt-3" style={{ fontSize: '12px', color: 'var(--mid)' }}>
-          <span>✓ Steps 1–{currentStep - 1} complete</span>
-          <span>Steps {currentStep + 1}–12 ahead</span>
-        </div>
+        {allStepsDone ? (
+          <>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center justify-center rounded-xl font-bold text-white flex-shrink-0" style={{ width: '48px', height: '48px', background: 'linear-gradient(135deg,#27AE60,#1e8a4a)', fontSize: '22px' }}>✓</div>
+              <div>
+                <div className="font-bold text-navy" style={{ fontSize: '16px' }}>All 12 Steps Complete</div>
+                <div className="text-mid" style={{ fontSize: '13px', marginTop: '2px' }}>Having had a spiritual awakening as a result of these steps</div>
+              </div>
+            </div>
+            <div className="text-mid mb-4" style={{ fontSize: '13px', lineHeight: 1.6 }}>
+              You have <strong className="text-navy">{journalCount} journal {journalCount === 1 ? 'entry' : 'entries'}</strong> and <strong className="text-navy">{stepWorkCount} submitted step work {stepWorkCount === 1 ? 'entry' : 'entries'}</strong>.
+            </div>
+            <div className="flex gap-2">
+              <button onClick={onJournal} className="flex-1 font-semibold rounded-lg transition-colors hover:bg-[var(--navy-10)]" style={{ fontSize: '13px', padding: '8px 14px', background: 'none', border: '1.5px solid var(--navy)', color: 'var(--navy)', cursor: 'pointer' }}>
+                Journal
+              </button>
+            </div>
+            <div className="mt-3 text-center" style={{ fontSize: '12px', color: '#1e8a4a', fontWeight: 600 }}>
+              ✓ All 12 of 12 steps complete
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center justify-center rounded-xl font-bold text-white flex-shrink-0" style={{ width: '48px', height: '48px', background: 'linear-gradient(135deg,#D4A574,#c49564)', fontSize: '20px' }}>{currentStep}</div>
+              <div>
+                <div className="font-bold text-navy" style={{ fontSize: '16px' }}>Step {currentStep}: {step?.s}</div>
+                <div className="text-mid" style={{ fontSize: '13px', marginTop: '2px' }}>{step?.desc}</div>
+              </div>
+            </div>
+            <div className="text-mid mb-4" style={{ fontSize: '13px', lineHeight: 1.6 }}>
+              You have <strong className="text-navy">{journalCount} journal {journalCount === 1 ? 'entry' : 'entries'}</strong> and <strong className="text-navy">{stepWorkCount} submitted step work {stepWorkCount === 1 ? 'entry' : 'entries'}</strong>.
+            </div>
+            <div className="flex gap-2">
+              <button onClick={continueStepWork} disabled={navigating} className="flex-1 font-semibold text-white rounded-lg transition-colors hover:bg-navy-dark" style={{ fontSize: '13px', padding: '8px 14px', background: 'var(--navy)', border: 'none', cursor: navigating ? 'wait' : 'pointer', opacity: navigating ? 0.7 : 1 }}>
+                {navigating ? 'Loading…' : 'Continue Step Work →'}
+              </button>
+              <button onClick={onJournal} className="font-semibold rounded-lg transition-colors hover:bg-[var(--navy-10)]" style={{ fontSize: '13px', padding: '8px 14px', background: 'none', border: '1.5px solid var(--navy)', color: 'var(--navy)', cursor: 'pointer' }}>
+                Journal
+              </button>
+            </div>
+            <div className="flex justify-between mt-3" style={{ fontSize: '12px', color: 'var(--mid)' }}>
+              <span>✓ {completedSteps} of 12 steps complete</span>
+              <span>{12 - completedSteps} ahead</span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Recent Check-ins */}

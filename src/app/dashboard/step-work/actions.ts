@@ -1,7 +1,50 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+
+/**
+ * After a sponsor marks a step complete in step_completions, re-read all
+ * completions for that fellowship and write the next incomplete step number
+ * back to user_profiles.current_step. Uses the admin client because RLS
+ * only allows users to update their own profile row.
+ */
+export async function syncSponseeCurrentStep(sponseeId: string, fellowshipId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  // Verify caller is an active sponsor of the sponsee
+  const { data: rel } = await supabase
+    .from('sponsor_relationships')
+    .select('id')
+    .eq('sponsor_id', user.id)
+    .eq('sponsee_id', sponseeId)
+    .eq('status', 'active')
+    .maybeSingle()
+
+  if (!rel) return { error: 'Not authorized' }
+
+  const admin = createAdminClient()
+  const { data: completions } = await admin
+    .from('step_completions')
+    .select('step_number')
+    .eq('user_id', sponseeId)
+    .eq('fellowship_id', fellowshipId)
+    .eq('is_completed', true)
+
+  const done = new Set((completions ?? []).map(c => c.step_number))
+  const nextStep = [1,2,3,4,5,6,7,8,9,10,11,12].find(n => !done.has(n)) ?? 12
+
+  await admin
+    .from('user_profiles')
+    .update({ current_step: nextStep, updated_at: new Date().toISOString() })
+    .eq('id', sponseeId)
+
+  revalidatePath('/dashboard')
+  return { ok: true }
+}
 
 export async function saveStepWorkEntry({
   workbookId,
