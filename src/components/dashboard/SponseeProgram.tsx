@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { syncSponseeCurrentStep } from '@/app/dashboard/step-work/actions'
+import { writeStepActivityEvent } from '@/app/dashboard/activity/actions'
 
 const STEPS = [
   { n: 1,  s: 'Powerlessness'   },
@@ -110,6 +111,7 @@ export default function SponseeProgram({
       { step_number: selectedStep, is_completed: true, completed_method: method, sponsor_note: note.trim() || null, completed_at: now },
     ])
     await syncSponseeCurrentStep(sponseeId, fellowshipId)
+    writeStepActivityEvent({ sponseeId, stepNumber: selectedStep, isCompleted: true })
     setSelectedStep(null)
     setNote('')
     setMethod('discussion')
@@ -139,6 +141,7 @@ export default function SponseeProgram({
       { step_number: uncheckStep, is_completed: false, completed_method: null, sponsor_note: null, completed_at: null },
     ])
     await syncSponseeCurrentStep(sponseeId, fellowshipId)
+    writeStepActivityEvent({ sponseeId, stepNumber: uncheckStep, isCompleted: false })
     setUncheckStep(null)
     setSaving(false)
   }

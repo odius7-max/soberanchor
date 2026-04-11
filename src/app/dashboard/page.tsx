@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import DashboardShell from '@/components/dashboard/DashboardShell'
-import type { CheckIn, JournalEntry, MeetingAttendance, ReadingAssignment, Sponsee } from '@/components/dashboard/DashboardShell'
+import type { CheckIn, JournalEntry, MeetingAttendance, ReadingAssignment, Sponsee, ActivityItem } from '@/components/dashboard/DashboardShell'
 import type { PendingRequest } from '@/components/dashboard/PendingRequests'
 
 export default async function DashboardPage() {
@@ -28,6 +28,7 @@ export default async function DashboardPage() {
     pendingReqsRes,
     pendingAsSponsorRes,
     stepCompletionsRes,
+    activityFeedRes,
   ] = await Promise.all([
     supabase.from('user_profiles').select('display_name,sobriety_date,current_step,is_available_sponsor,onboarding_completed').eq('id', userId).single(),
     supabase.from('check_ins').select('id,check_in_date,mood,notes,sober_today,meetings_attended').eq('user_id', userId).order('check_in_date', { ascending: false }).limit(4),
@@ -44,6 +45,8 @@ export default async function DashboardPage() {
     supabase.from('sponsor_relationships').select('id,sponsee_id,created_at').eq('sponsor_id', userId).eq('status', 'pending'),
     // Step completions — used to derive real progress (not user_profiles.current_step)
     supabase.from('step_completions').select('step_number').eq('user_id', userId).eq('is_completed', true),
+    // Activity feed
+    supabase.from('activity_feed').select('id,event_type,title,description,is_read,created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(10),
   ])
 
   // Count distinct completed step numbers across any fellowship
@@ -57,6 +60,7 @@ export default async function DashboardPage() {
   const meetingAttendance: MeetingAttendance[] = (meetingAttendanceRes.data ?? []) as MeetingAttendance[]
   const meetingsTotal = meetingsTotalRes.count ?? 0
   const checkInsTotal = checkInsTotalRes.count ?? 0
+  const activityItems: ActivityItem[] = (activityFeedRes.data ?? []) as ActivityItem[]
 
   // Sponsor name from relationship
   const activeSponsorRel = sponsorRelRes.data
@@ -194,6 +198,7 @@ export default async function DashboardPage() {
       sponsees={sponsees}
       pendingRequests={pendingRequests}
       sponsorPendingRequests={sponsorPendingRequests}
+      activityItems={activityItems}
     />
   )
 }

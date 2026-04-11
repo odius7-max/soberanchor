@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { logCheckInActivity } from '@/app/dashboard/activity/actions'
 
 type Mood = 'great' | 'good' | 'okay' | 'struggling' | 'crisis'
 
@@ -44,6 +45,7 @@ export default function CheckInModal({ userId, onClose }: Props) {
       called_sponsor: calledSponsor,
     })
     if (err) { setError('Failed to save. Please try again.'); setSubmitting(false); return }
+    logCheckInActivity({ userId, mood }) // fire-and-forget
     router.refresh()
     onClose()
   }

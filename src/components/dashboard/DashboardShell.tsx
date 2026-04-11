@@ -24,6 +24,7 @@ export interface JournalEntry { id:string; title:string|null; entry_date:string;
 export interface MeetingAttendance { id:string; meeting_name:string; fellowship_name:string|null; attended_at:string; checkin_method:string }
 export interface ReadingAssignment { id:string; title:string; source:string|null; is_completed:boolean; due_date:string|null; created_at:string }
 export interface Sponsee { id:string; name:string; sobrietyDate:string|null; currentStep:number; completedSteps:number; lastMood:string|null; lastCheckInDate:string|null; pendingReviews:number }
+export interface ActivityItem { id:string; event_type:string; title:string; description:string|null; is_read:boolean; created_at:string }
 
 interface Props {
   userId: string
@@ -44,6 +45,7 @@ interface Props {
   sponsees: Sponsee[]
   pendingRequests: PendingRequest[]
   sponsorPendingRequests: PendingRequest[]
+  activityItems: ActivityItem[]
 }
 
 const TABS: { id: Tab; label: string }[] = [
@@ -56,7 +58,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'privacy',   label: '🔒 Privacy' },
 ]
 
-export default function DashboardShell({ userId, phone, onboardingCompleted, profile, completedSteps, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsor, sponsees, pendingRequests, sponsorPendingRequests }: Props) {
+export default function DashboardShell({ userId, phone, onboardingCompleted, profile, completedSteps, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsor, sponsees, pendingRequests, sponsorPendingRequests, activityItems }: Props) {
   const [role, setRole] = useState<Role>('my')
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [checkInOpen, setCheckInOpen] = useState(false)
@@ -106,7 +108,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
             </div>
 
             {activeTab === 'overview' && (
-              <OverviewTab userId={userId} currentStep={currentStep} completedSteps={completedSteps} allStepsDone={allStepsDone} journalCount={journalCount} stepWorkCount={stepWorkCount} recentCheckIns={recentCheckIns} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} recentMeetings={meetingAttendance.slice(0,3)} readingAssignments={readingAssignments} activeSponsor={activeSponsor} isAvailableSponsor={isSponsor} onCheckIn={() => setCheckInOpen(true)} onJournal={() => setActiveTab('journal')} />
+              <OverviewTab userId={userId} currentStep={currentStep} completedSteps={completedSteps} allStepsDone={allStepsDone} journalCount={journalCount} stepWorkCount={stepWorkCount} recentCheckIns={recentCheckIns} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} recentMeetings={meetingAttendance.slice(0,3)} readingAssignments={readingAssignments} activeSponsor={activeSponsor} isAvailableSponsor={isSponsor} activityItems={activityItems} onCheckIn={() => setCheckInOpen(true)} onJournal={() => setActiveTab('journal')} />
             )}
             {activeTab === 'stepwork' && <StepWorkTab userId={userId} />}
             {activeTab === 'journal' && <JournalTab userId={userId} entries={journalEntries} />}

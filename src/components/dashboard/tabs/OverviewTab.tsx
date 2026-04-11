@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import AddSponseeModal from '@/components/dashboard/AddSponseeModal'
+import { markActivityRead } from '@/app/dashboard/activity/actions'
 
 const STEPS = [
   { n: 1, s: 'Powerlessness', desc: 'We admitted we were powerless over our addiction' },
@@ -31,6 +32,7 @@ const MOOD_META: Record<string, { emoji: string; label: string; color: string }>
 interface CheckIn { id: string; check_in_date: string; mood: string | null; notes: string | null; sober_today: boolean; meetings_attended: number }
 interface MeetingAttendance { id: string; meeting_name: string; fellowship_name: string | null; attended_at: string }
 interface ReadingAssignment { id: string; title: string; source: string | null; is_completed: boolean; due_date: string | null; created_at: string }
+interface ActivityItem { id: string; event_type: string; title: string; description: string | null; is_read: boolean; created_at: string }
 
 interface Props {
   userId: string
@@ -46,11 +48,12 @@ interface Props {
   readingAssignments: ReadingAssignment[]
   activeSponsor: string | null
   isAvailableSponsor: boolean
+  activityItems: ActivityItem[]
   onCheckIn: () => void
   onJournal: () => void
 }
 
-export default function OverviewTab({ userId, currentStep, completedSteps, allStepsDone, journalCount, stepWorkCount, recentCheckIns, meetingsThisWeek, meetingsTotal, recentMeetings, readingAssignments, activeSponsor, isAvailableSponsor, onCheckIn, onJournal }: Props) {
+export default function OverviewTab({ userId, currentStep, completedSteps, allStepsDone, journalCount, stepWorkCount, recentCheckIns, meetingsThisWeek, meetingsTotal, recentMeetings, readingAssignments, activeSponsor, isAvailableSponsor, activityItems, onCheckIn, onJournal }: Props) {
   const router = useRouter()
   const step = STEPS[currentStep - 1]
   const [toggling, setToggling] = useState<string | null>(null)
@@ -58,6 +61,14 @@ export default function OverviewTab({ userId, currentStep, completedSteps, allSt
   const [togglingRole, setTogglingRole] = useState(false)
   const [showFindSponsor, setShowFindSponsor] = useState(false)
   const [navigating, setNavigating] = useState(false)
+
+  const unreadCount = activityItems.filter(i => !i.is_read).length
+
+  // Mark all unread as read after rendering
+  useEffect(() => {
+    if (unreadCount > 0) markActivityRead(userId)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function toggleSponsorAvailability() {
     const next = !sponsorAvailable
@@ -100,6 +111,36 @@ export default function OverviewTab({ userId, currentStep, completedSteps, allSt
 
   function fmtDate(s: string) {
     return new Date(s.includes('T') ? s : s + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }
+
+  function relTime(iso: string) {
+    const diff = Date.now() - new Date(iso).getTime()
+    const mins = Math.floor(diff / 60000)
+    if (mins < 1) return 'just now'
+    if (mins < 60) return `${mins}m ago`
+    const hrs = Math.floor(mins / 60)
+    if (hrs < 24) return `${hrs}h ago`
+    const days = Math.floor(hrs / 24)
+    if (days < 7) return `${days}d ago`
+    return fmtDate(iso)
+  }
+
+  const ACTIVITY_DOT: Record<string, string> = {
+    step_completed:     '#27AE60',
+    step_uncompleted:   '#D4A574',
+    step_work_reviewed: '#D4A574',
+    task_assigned:      '#2980B9',
+    check_in:           '#2A8A99',
+    account_created:    '#888',
+  }
+
+  const ACTIVITY_ICON: Record<string, string> = {
+    step_completed:     '✓',
+    step_uncompleted:   '↩',
+    step_work_reviewed: '📬',
+    task_assigned:      '📋',
+    check_in:           '💬',
+    account_created:    '🎉',
   }
 
   const card = "rounded-[16px] p-5 bg-white border border-border card-hover"
@@ -291,30 +332,56 @@ export default function OverviewTab({ userId, currentStep, completedSteps, allSt
 
       {showFindSponsor && <AddSponseeModal mode="find_sponsor" onClose={() => setShowFindSponsor(false)} />}
 
-      {/* Tasks from Sponsor */}
-      <div className={card}>
-        <h3 className="font-bold text-navy mb-4" style={{ fontSize: '15px' }}>📋 Tasks from Sponsor</h3>
-        {readingAssignments.length === 0 ? (
+      {/* Recent Activity */}
+      <div className={card} style={{ position: 'relative' }}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold text-navy" style={{ fontSize: '15px' }}>🔔 Recent Activity</h3>
+          {unreadCount > 0 && (
+            <span style={{ fontSize: '11px', fontWeight: 700, padding: '3px 9px', borderRadius: '20px', background: 'rgba(212,165,116,0.15)', border: '1px solid rgba(212,165,116,0.35)', color: '#9A7B54' }}>
+              {unreadCount} new
+            </span>
+          )}
+        </div>
+        {activityItems.length === 0 ? (
           <div className="text-mid text-center py-6" style={{ fontSize: '14px' }}>
-            <div style={{ fontSize: '28px', marginBottom: '8px' }}>📋</div>
-            No tasks assigned yet.
+            <div style={{ fontSize: '28px', marginBottom: '8px' }}>🔔</div>
+            No activity yet — your feed will fill up as you use the app.
           </div>
-        ) : readingAssignments.slice(0, 4).map((task, i) => (
-          <div key={task.id} className="flex gap-3 items-start py-2.5" style={{ borderTop: i > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}>
-            <button
-              onClick={() => toggleTask(task.id, task.is_completed)}
-              disabled={toggling === task.id}
-              className="flex items-center justify-center flex-shrink-0 rounded-md transition-colors"
-              style={{ width: '22px', height: '22px', marginTop: '1px', background: task.is_completed ? '#27AE60' : '#fff', border: task.is_completed ? '2px solid #27AE60' : '2px solid #D0CBC4', color: '#fff', fontSize: '12px', cursor: 'pointer' }}
+        ) : activityItems.slice(0, 5).map((item, i) => {
+          const dot = ACTIVITY_DOT[item.event_type] ?? '#888'
+          const icon = ACTIVITY_ICON[item.event_type] ?? '•'
+          const unread = !item.is_read
+          return (
+            <div
+              key={item.id}
+              className="flex gap-3 py-3"
+              style={{
+                borderTop: i > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none',
+                borderLeft: unread ? `3px solid #D4A574` : '3px solid transparent',
+                paddingLeft: unread ? '10px' : '0',
+                marginLeft: unread ? '-3px' : '0',
+                transition: 'border-left-color 0.3s',
+              }}
             >
-              {task.is_completed ? '✓' : ''}
-            </button>
-            <div className="flex-1">
-              <div style={{ fontSize: '14px', fontWeight: 500, color: task.is_completed ? 'var(--mid)' : 'var(--dark)', textDecoration: task.is_completed ? 'line-through' : 'none' }}>{task.title}</div>
-              <div style={{ fontSize: '12px', color: '#bbb', marginTop: '1px' }}>{task.due_date ? `Due ${fmtDate(task.due_date)}` : `Assigned ${fmtDate(task.created_at)}`}</div>
+              <div className="flex items-center justify-center flex-shrink-0 rounded-full" style={{ width: '28px', height: '28px', background: `${dot}18`, border: `1.5px solid ${dot}40`, color: dot, fontSize: '11px', fontWeight: 700 }}>
+                {icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold" style={{ fontSize: '13px', color: unread ? 'var(--navy)' : 'var(--dark)' }}>{item.title}</div>
+                {item.description && (
+                  <div className="truncate" style={{ fontSize: '12px', color: 'var(--mid)', marginTop: '2px' }}>{item.description}</div>
+                )}
+              </div>
+              <div style={{ fontSize: '11px', color: '#bbb', flexShrink: 0, marginLeft: '4px', paddingTop: '1px' }}>{relTime(item.created_at)}</div>
             </div>
-          </div>
-        ))}
+          )
+        })}
+        <a
+          href="/dashboard/activity"
+          style={{ display: 'block', textAlign: 'center', fontSize: '13px', fontWeight: 600, color: 'var(--teal)', marginTop: '14px', paddingTop: '12px', borderTop: '1px solid rgba(0,0,0,0.06)', textDecoration: 'none' }}
+        >
+          View all activity →
+        </a>
       </div>
 
     </div>

@@ -129,7 +129,7 @@ export async function saveSponsorFeedback({
   // Verify current user is the sponsor for this entry
   const { data: entry } = await supabase
     .from('step_work_entries')
-    .select('id, sponsor_relationship_id')
+    .select('id, user_id, workbook_id, sponsor_relationship_id')
     .eq('id', entryId)
     .single()
 
@@ -155,6 +155,27 @@ export async function saveSponsorFeedback({
     .eq('id', entryId)
 
   if (error) return { error: error.message }
+
+  // Write activity event for the sponsee (non-blocking)
+  try {
+    const admin = createAdminClient()
+    const [{ data: sponsorProfile }, { data: workbook }] = await Promise.all([
+      admin.from('user_profiles').select('display_name').eq('id', user.id).single(),
+      entry.workbook_id
+        ? admin.from('program_workbooks').select('title').eq('id', entry.workbook_id).single()
+        : Promise.resolve({ data: null }),
+    ])
+    const sponsorName = (sponsorProfile as { display_name: string | null } | null)?.display_name ?? 'Your sponsor'
+    const workbookTitle = (workbook as { title: string } | null)?.title ?? 'Step Work'
+    await admin.from('activity_feed').insert({
+      user_id: entry.user_id,
+      event_type: 'step_work_reviewed',
+      title: `${workbookTitle} reviewed`,
+      description: `${sponsorName} reviewed your step work and left feedback`,
+      metadata: { entry_id: entryId, workbook_title: workbookTitle },
+    })
+  } catch { /* activity write is best-effort */ }
+
   revalidatePath('/dashboard')
   return { success: true }
 }
