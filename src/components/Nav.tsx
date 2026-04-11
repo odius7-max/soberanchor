@@ -57,7 +57,7 @@ export default function Nav() {
 
         {/* ── Logo ── */}
         <Link
-          href={user ? '/dashboard' : '/'}
+          href="/"
           className="flex items-center flex-shrink-0"
           aria-label="SoberAnchor home"
         >
