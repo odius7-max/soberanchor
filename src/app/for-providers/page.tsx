@@ -2,6 +2,8 @@ import ProviderAuthButton from "./ProviderAuthButton";
 import ClaimScrollButton from "./ClaimScrollButton";
 import ClaimSection from "./ClaimSection";
 
+const angelYears = Math.floor((Date.now() - new Date('2021-12-04').getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+
 const stats = [
   { value: "3-5x", label: "higher conversion rate than paid search" },
   { value: "$40-80", label: "average cost per click for rehab keywords on Google" },
@@ -59,7 +61,7 @@ const providerTypes = [
 const trustItems = [
   { icon: "🔒", title: "No contracts", desc: "Month-to-month on all upgrades. Cancel anytime, keep your free listing." },
   { icon: "🎯", title: "Qualified leads", desc: "Every inquiry comes from a real person or family actively seeking treatment — not bots, not purchased lists." },
-  { icon: "❤️", title: "Built by people in recovery", desc: "We understand the space because we've lived it. SoberAnchor was founded by Angel, 5+ years sober." },
+  { icon: "❤️", title: "Built by people in recovery", desc: `We understand the space because we've lived it. SoberAnchor was founded by Angel J., ${angelYears}+ years sober.` },
   { icon: "📊", title: "Full transparency", desc: "See exactly what your listing is doing. No black boxes, no mystery metrics." },
 ];
 

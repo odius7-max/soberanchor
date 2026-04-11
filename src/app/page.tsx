@@ -3,6 +3,8 @@ import { useState } from "react";
 import Link from "next/link";
 import GuidedDiscovery from "@/components/GuidedDiscovery";
 
+const angelYears = Math.floor((Date.now() - new Date('2021-12-04').getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+
 const categories = [
   { icon: "🏥", title: "Treatment Centers", sub: "Find professional help", href: "/find#facilities" },
   { icon: "🏠", title: "Sober Living", sub: "Homes & residences", href: "/find#facilities" },
@@ -132,10 +134,10 @@ export default function Home() {
                       className="text-gold text-xl font-semibold"
                       style={{ fontFamily: "var(--font-display)" }}
                     >
-                      Angel
+                      Angel J.
                     </div>
                     <div className="text-white/60 text-[13px] mt-1">
-                      Co-Founder · 5+ Years Sober
+                      Co-Founder · {angelYears}+ Years Sober
                     </div>
                   </div>
                 </div>

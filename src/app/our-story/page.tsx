@@ -1,3 +1,5 @@
+const angelYears = Math.floor((Date.now() - new Date('2021-12-04').getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+
 export default function OurStoryPage() {
   return (
     <section className="py-16 px-6">
@@ -29,10 +31,10 @@ export default function OurStoryPage() {
                 color: "var(--navy)",
               }}
             >
-              Angel
+              Angel J.
             </div>
             <div className="text-sm text-mid">
-              Co-Founder · Recovery Advocate · 5+ Years Sober
+              Co-Founder · Recovery Advocate · {angelYears}+ Years Sober
             </div>
           </div>
         </div>
