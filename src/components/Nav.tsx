@@ -123,20 +123,32 @@ export default function Nav() {
             </Link>
           )}
 
-          {/* Search button */}
+          {/* AI Search pill */}
           <button
             onClick={() => setSearchOpen(true)}
-            aria-label="Search"
-            title="Search (⌘K)"
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', borderRadius: 8, background: 'none', border: '1px solid var(--border)', cursor: 'pointer', color: 'var(--mid)', transition: 'all 0.15s', marginLeft: 4 }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--warm-gray)'; e.currentTarget.style.color = 'var(--dark)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--mid)' }}
+            aria-label="AI Search (⌘K)"
+            title="AI Search (⌘K)"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 7,
+              background: 'var(--warm-gray)', border: '1.5px solid var(--border)',
+              borderRadius: 999, padding: '6px 10px 6px 10px',
+              cursor: 'pointer', fontFamily: 'var(--font-body)',
+              transition: 'all 0.15s', marginLeft: 6, width: 210,
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--teal)'; e.currentTarget.style.background = '#fff' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--warm-gray)' }}
           >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
-              <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5"/>
-              <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            {/* Sparkle icon */}
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden style={{ flexShrink: 0 }}>
+              <path d="M8 1 L8.8 5.5 L13 6 L8.8 6.5 L8 11 L7.2 6.5 L3 6 L7.2 5.5 Z" fill="#2A8A99"/>
+              <path d="M13 1 L13.5 3 L15 3.5 L13.5 4 L13 6 L12.5 4 L11 3.5 L12.5 3 Z" fill="#2A8A99" opacity="0.55"/>
             </svg>
-            <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.2px' }}>⌘K</span>
+            <span style={{ flex: 1, textAlign: 'left', fontSize: 13, color: 'var(--mid)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Ask anything…
+            </span>
+            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--mid)', background: '#fff', border: '1px solid var(--border)', borderRadius: 4, padding: '1px 5px', flexShrink: 0, letterSpacing: '0.2px' }}>
+              ⌘K
+            </span>
           </button>
 
           {/* Separator */}
@@ -264,13 +276,14 @@ export default function Nav() {
         <div className="md:hidden flex items-center gap-2">
           <button
             onClick={() => { setMobileOpen(false); setSearchOpen(true) }}
-            aria-label="Search"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: 'var(--navy)', lineHeight: 1 }}
+            aria-label="AI Search"
+            style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'var(--warm-gray)', border: '1.5px solid var(--border)', borderRadius: 999, cursor: 'pointer', padding: '5px 10px', lineHeight: 1 }}
           >
-            <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden>
-              <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5"/>
-              <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden>
+              <path d="M8 1 L8.8 5.5 L13 6 L8.8 6.5 L8 11 L7.2 6.5 L3 6 L7.2 5.5 Z" fill="#2A8A99"/>
+              <path d="M13 1 L13.5 3 L15 3.5 L13.5 4 L13 6 L12.5 4 L11 3.5 L12.5 3 Z" fill="#2A8A99" opacity="0.55"/>
             </svg>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--teal)', fontFamily: 'var(--font-body)' }}>Ask AI</span>
           </button>
           <button
             className="text-2xl text-navy"

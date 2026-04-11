@@ -8,10 +8,10 @@ import { pillarToCategory, readTime } from '@/lib/resources'
 export type SearchContext = 'home' | 'resources' | 'directory' | 'member'
 
 const PLACEHOLDERS: Record<SearchContext, string> = {
-  home:      'Search for meetings, treatment, articles…',
-  resources: 'Search articles and guides…',
-  directory: 'Search meetings, treatment centers, sober living…',
-  member:    'Ask about step work, meetings, recovery…',
+  home:      'Ask me anything — try "help for my son who\'s gambling" or "AA meetings tonight"',
+  resources: 'Ask me anything — try "what is step work" or "how to support a loved one"',
+  directory: 'Ask me anything — try "detox near Phoenix" or "sober living for women"',
+  member:    'Ask me anything — try "how to find a sponsor" or "what to expect at first meeting"',
 }
 
 const FACILITY_LABELS: Record<string, string> = {
@@ -35,11 +35,11 @@ function formatTime(t: string | null): string {
   return `${hour % 12 || 12}:${m} ${hour >= 12 ? 'PM' : 'AM'}`
 }
 
-// ─── Compact result cards ─────────────────────────────────────────────────────
+// ─── Compact result rows ──────────────────────────────────────────────────────
 
 function CrisisBanner({ onClose }: { onClose: () => void }) {
   return (
-    <div style={{ background: '#fff4f4', border: '1.5px solid #e74c3c', borderRadius: 12, padding: '14px 16px', marginBottom: 16 }}>
+    <div style={{ background: '#fff4f4', border: '1.5px solid #e74c3c', borderRadius: 12, padding: '14px 16px', marginBottom: 8 }}>
       <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#c0392b', marginBottom: 6 }}>
         Crisis Resources — 24/7
       </div>
@@ -148,6 +148,17 @@ function ResultSection({ icon, label, count, children }: {
   )
 }
 
+// ─── Suggestion chips ─────────────────────────────────────────────────────────
+
+const SUGGESTIONS = [
+  'AA meetings near me',
+  'help for my son who drinks',
+  'sober living in my city',
+  'how to support someone in recovery',
+  'gambling addiction help',
+  'what happens at a first AA meeting',
+]
+
 // ─── Main modal ───────────────────────────────────────────────────────────────
 
 interface Props {
@@ -160,6 +171,7 @@ export default function GlobalSearch({ open, context, onClose }: Props) {
   const [query, setQuery] = useState('')
   const [result, setResult] = useState<SmartSearchResponse | null>(null)
   const [loading, setLoading] = useState(false)
+  const [inputFocused, setInputFocused] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const abortRef = useRef<AbortController | null>(null)
@@ -224,7 +236,6 @@ export default function GlobalSearch({ open, context, onClose }: Props) {
       }
 
       const data: SmartSearchResponse = await res.json()
-      // Guard against malformed responses — ensure arrays are always present
       setResult({
         ...data,
         meetings: Array.isArray(data.meetings) ? data.meetings : [],
@@ -261,55 +272,91 @@ export default function GlobalSearch({ open, context, onClose }: Props) {
   return (
     /* Backdrop */
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.48)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '10vh 16px 24px' }}
+      style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.52)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '8vh 16px 24px' }}
       onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}
     >
       {/* Modal panel */}
       <div
-        style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 640, boxShadow: '0 20px 60px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: '80vh' }}
+        style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 660, boxShadow: '0 24px 80px rgba(0,0,0,0.22)', display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: '82vh' }}
         onMouseDown={e => e.stopPropagation()}
       >
-        {/* Search input row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
-          <span style={{ fontSize: 18, opacity: 0.5 }}>🔍</span>
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={e => handleChange(e.target.value)}
-            placeholder={PLACEHOLDERS[context]}
-            style={{ flex: 1, fontSize: 16, border: 'none', outline: 'none', background: 'transparent', color: 'var(--dark)', fontFamily: 'var(--font-body)' }}
-          />
-          {loading && (
-            <div style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid var(--teal)', borderTopColor: 'transparent', animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />
-          )}
-          {query && !loading && (
-            <button onClick={() => { setQuery(''); setResult(null); inputRef.current?.focus() }}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--mid)', padding: 4, lineHeight: 1 }}>
-              ✕
-            </button>
-          )}
+        {/* ── Header: AI label + Esc ── */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px 0', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {/* Sparkle icon */}
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+              <path d="M8 1 L8.8 5.5 L13 6 L8.8 6.5 L8 11 L7.2 6.5 L3 6 L7.2 5.5 Z" fill="#2A8A99"/>
+              <path d="M13 1 L13.5 3 L15 3.5 L13.5 4 L13 6 L12.5 4 L11 3.5 L12.5 3 Z" fill="#2A8A99" opacity="0.6"/>
+            </svg>
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', letterSpacing: '0.3px' }}>AI Search</span>
+          </div>
           <button onClick={onClose}
-            style={{ background: 'var(--warm-gray)', border: '1px solid var(--border)', borderRadius: 6, padding: '3px 8px', fontSize: 12, color: 'var(--mid)', cursor: 'pointer', fontFamily: 'var(--font-body)', flexShrink: 0 }}>
+            style={{ background: 'var(--warm-gray)', border: '1px solid var(--border)', borderRadius: 6, padding: '3px 9px', fontSize: 12, color: 'var(--mid)', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
             Esc
           </button>
         </div>
 
-        {/* Results area */}
+        {/* ── Large input ── */}
+        <div style={{ padding: '12px 20px 0', flexShrink: 0 }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            background: inputFocused ? '#fff' : 'var(--warm-gray)',
+            border: `2px solid ${inputFocused ? 'var(--teal)' : 'var(--border)'}`,
+            borderRadius: 14, padding: '14px 16px',
+            transition: 'border-color 0.15s, background 0.15s',
+          }}>
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={e => handleChange(e.target.value)}
+              onFocus={() => setInputFocused(true)}
+              onBlur={() => setInputFocused(false)}
+              placeholder={PLACEHOLDERS[context]}
+              style={{ flex: 1, fontSize: 16, border: 'none', outline: 'none', background: 'transparent', color: 'var(--dark)', fontFamily: 'var(--font-body)', lineHeight: 1.4 }}
+            />
+            {loading && (
+              <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2.5px solid var(--teal)', borderTopColor: 'transparent', animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />
+            )}
+            {query && !loading && (
+              <button onClick={() => { setQuery(''); setResult(null); inputRef.current?.focus() }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--mid)', padding: '0 2px', lineHeight: 1, flexShrink: 0 }}>
+                ✕
+              </button>
+            )}
+          </div>
+
+          {/* Powered by AI badge */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 2px 12px' }}>
+            <span style={{ fontSize: 11, color: 'var(--mid)' }}>
+              Understands natural language — describe what you need
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--teal)', fontWeight: 600 }}>
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden>
+                <path d="M8 1 L8.8 5.5 L13 6 L8.8 6.5 L8 11 L7.2 6.5 L3 6 L7.2 5.5 Z" fill="currentColor"/>
+              </svg>
+              Powered by AI
+            </span>
+          </div>
+        </div>
+
+        <div style={{ height: 1, background: 'var(--border)', flexShrink: 0 }} />
+
+        {/* ── Results area ── */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '8px 6px' }}>
+
           {/* Idle state */}
           {!query && !result && (
-            <div style={{ padding: '32px 16px', textAlign: 'center' }}>
-              <div style={{ fontSize: 32, marginBottom: 12 }}>⚓</div>
-              <div style={{ fontSize: 14, color: 'var(--mid)', lineHeight: 1.6 }}>
-                Search across meetings, treatment centers, articles, and guides.<br />
-                Try &ldquo;AA meetings near me&rdquo; or &ldquo;how to help a loved one&rdquo;.
+            <div style={{ padding: '24px 14px 20px' }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--mid)', letterSpacing: '0.5px', marginBottom: 10, paddingLeft: 2 }}>
+                Try asking…
               </div>
-              <div style={{ marginTop: 16, display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
-                {['AA meetings', 'sober living', 'how to help someone who relapsed', 'gambling addiction'].map(ex => (
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {SUGGESTIONS.map(ex => (
                   <button key={ex} onClick={() => { setQuery(ex); search(ex) }}
-                    style={{ fontSize: 12, color: 'var(--mid)', background: 'var(--warm-gray)', border: '1px solid var(--border)', borderRadius: 20, padding: '5px 12px', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
-                    className="hover:border-teal hover:text-teal transition-colors"
+                    style={{ fontSize: 12, color: 'var(--dark)', background: 'var(--warm-gray)', border: '1px solid var(--border)', borderRadius: 20, padding: '6px 14px', cursor: 'pointer', fontFamily: 'var(--font-body)', transition: 'all 0.15s' }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--teal)'; e.currentTarget.style.color = 'var(--teal)'; e.currentTarget.style.background = 'var(--teal-10)' }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--dark)'; e.currentTarget.style.background = 'var(--warm-gray)' }}
                   >
                     {ex}
                   </button>
@@ -320,37 +367,40 @@ export default function GlobalSearch({ open, context, onClose }: Props) {
 
           {/* Error */}
           {result?.error && (
-            <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--mid)', fontSize: 14 }}>
+            <div style={{ padding: '28px 16px', textAlign: 'center', color: 'var(--mid)', fontSize: 14 }}>
               {result.error}
             </div>
           )}
 
           {/* No results */}
           {showEmpty && (
-            <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--mid)', fontSize: 14 }}>
+            <div style={{ padding: '28px 16px', textAlign: 'center', color: 'var(--mid)', fontSize: 14 }}>
               No results for &ldquo;{result?.query}&rdquo;.<br />
-              <span style={{ fontSize: 13 }}>Try different keywords or browse the directory.</span>
+              <span style={{ fontSize: 13 }}>Try different phrasing or browse the directory.</span>
             </div>
           )}
 
           {/* Results */}
           {hasResults && result && (
             <>
-              {/* AI badge + query */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 14px 8px' }}>
+              {/* Query + AI tag */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 14px 6px' }}>
                 <span style={{ fontSize: 12, color: 'var(--mid)' }}>
                   Results for &ldquo;{result.query}&rdquo;
                 </span>
                 {result.ai_powered && (
-                  <span style={{ fontSize: 11, background: 'var(--teal-10)', border: '1px solid var(--teal-20)', color: 'var(--teal)', borderRadius: 20, padding: '2px 8px', fontWeight: 600 }}>
-                    ✨ AI
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, background: 'var(--teal-10)', border: '1px solid var(--teal-20)', color: 'var(--teal)', borderRadius: 20, padding: '2px 8px', fontWeight: 600 }}>
+                    <svg width="9" height="9" viewBox="0 0 16 16" fill="none" aria-hidden>
+                      <path d="M8 1 L8.8 5.5 L13 6 L8.8 6.5 L8 11 L7.2 6.5 L3 6 L7.2 5.5 Z" fill="currentColor"/>
+                    </svg>
+                    AI-matched
                   </span>
                 )}
               </div>
 
               {result.crisis && <div style={{ padding: '0 8px 4px' }}><CrisisBanner onClose={onClose} /></div>}
 
-              {result.meetings.length > 0 && (
+              {(result.meetings?.length ?? 0) > 0 && (
                 <ResultSection icon="🤝" label="Meetings" count={result.meetings.length}>
                   {result.meetings.map(m => <MeetingRow key={m.id} m={m} onClose={onClose} />)}
                   <Link href="/find#meetings" onClick={onClose}
@@ -360,7 +410,7 @@ export default function GlobalSearch({ open, context, onClose }: Props) {
                 </ResultSection>
               )}
 
-              {result.facilities.length > 0 && (
+              {(result.facilities?.length ?? 0) > 0 && (
                 <ResultSection icon="🏥" label="Treatment & Support" count={result.facilities.length}>
                   {result.facilities.map(f => <FacilityRow key={f.id} f={f} onClose={onClose} />)}
                   <Link href="/find#facilities" onClick={onClose}
@@ -370,7 +420,7 @@ export default function GlobalSearch({ open, context, onClose }: Props) {
                 </ResultSection>
               )}
 
-              {result.articles.length > 0 && (
+              {(result.articles?.length ?? 0) > 0 && (
                 <ResultSection icon="📖" label="Articles & Guides" count={result.articles.length}>
                   {result.articles.map(a => <ArticleRow key={a.id} a={a} onClose={onClose} />)}
                   <Link href="/resources" onClick={onClose}
@@ -384,7 +434,6 @@ export default function GlobalSearch({ open, context, onClose }: Props) {
         </div>
       </div>
 
-      {/* Spin keyframe */}
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   )
