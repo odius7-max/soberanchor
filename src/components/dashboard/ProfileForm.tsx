@@ -4,23 +4,18 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
-interface Fellowship { id: string; name: string; abbreviation: string | null }
-
 interface Props {
   userId: string
   initialDisplayName: string | null
   initialBio: string | null
-  initialFellowshipId: string | null
-  fellowships: Fellowship[]
 }
 
-export default function ProfileForm({ userId, initialDisplayName, initialBio, initialFellowshipId, fellowships }: Props) {
+export default function ProfileForm({ userId, initialDisplayName, initialBio }: Props) {
   const router = useRouter()
   const supabase = createClient()
 
   const [displayName, setDisplayName] = useState(initialDisplayName ?? '')
   const [bio, setBio] = useState(initialBio ?? '')
-  const [fellowshipId, setFellowshipId] = useState(initialFellowshipId ?? '')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
@@ -31,7 +26,6 @@ export default function ProfileForm({ userId, initialDisplayName, initialBio, in
     await supabase.from('user_profiles').update({
       display_name: displayName.trim(),
       bio: bio.trim() || null,
-      primary_fellowship_id: fellowshipId || null,
       updated_at: new Date().toISOString(),
     }).eq('id', userId)
     setSaving(false)
@@ -70,27 +64,6 @@ export default function ProfileForm({ userId, initialDisplayName, initialBio, in
           style={{ width: '100%', fontSize: 14, padding: '10px 14px', borderRadius: 10, border: '1.5px solid var(--border)', background: '#fff', fontFamily: 'var(--font-body)', color: 'var(--dark)', boxSizing: 'border-box' as const }}
         />
         <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 5 }}>Visible only to your sponsor and people you connect with — not public.</div>
-      </div>
-
-      {/* Primary fellowship */}
-      <div>
-        <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--mid)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
-          Primary Fellowship
-        </label>
-        <div style={{ position: 'relative', maxWidth: 420 }}>
-          <select
-            value={fellowshipId}
-            onChange={e => setFellowshipId(e.target.value)}
-            style={{ width: '100%', fontSize: 14, fontWeight: 500, color: fellowshipId ? 'var(--navy)' : 'var(--mid)', padding: '10px 36px 10px 14px', borderRadius: 10, border: '1.5px solid var(--border)', background: '#fff', appearance: 'none', fontFamily: 'var(--font-body)', cursor: 'pointer' }}
-          >
-            <option value="">— Not set —</option>
-            {fellowships.map(f => (
-              <option key={f.id} value={f.id}>{f.abbreviation ? `${f.abbreviation} — ${f.name}` : f.name}</option>
-            ))}
-          </select>
-          <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: 12, color: 'var(--mid)' }}>▾</span>
-        </div>
-        <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 5 }}>Determines which step work program is shown on your dashboard.</div>
       </div>
 
       {/* Bio */}

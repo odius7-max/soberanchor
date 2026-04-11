@@ -1,9 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
 import BackButton from '@/components/find/BackButton'
 import ProfileForm from '@/components/dashboard/ProfileForm'
-import SobrietyMilestonesSection from '@/components/dashboard/SobrietyMilestonesSection'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -11,15 +9,11 @@ export default async function ProfilePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/?auth=required')
 
-  const admin = createAdminClient()
-
-  const [profileRes, fellowshipsRes] = await Promise.all([
-    supabase.from('user_profiles').select('display_name, bio, primary_fellowship_id').eq('id', user.id).single(),
-    admin.from('fellowships').select('id, name, abbreviation').order('name'),
-  ])
-
-  const profile = profileRes.data
-  const fellowships = (fellowshipsRes.data ?? []) as { id: string; name: string; abbreviation: string | null }[]
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('display_name, bio')
+    .eq('id', user.id)
+    .single()
 
   const card: React.CSSProperties = {
     background: '#fff',
@@ -48,12 +42,8 @@ export default async function ProfilePage() {
           userId={user.id}
           initialDisplayName={profile?.display_name ?? null}
           initialBio={profile?.bio ?? null}
-          initialFellowshipId={profile?.primary_fellowship_id ?? null}
-          fellowships={fellowships}
         />
       </div>
-
-      <SobrietyMilestonesSection userId={user.id} />
     </div>
   )
 }
