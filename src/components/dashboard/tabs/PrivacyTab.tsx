@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import SobrietyMilestonesSection from '@/components/dashboard/SobrietyMilestonesSection'
 
 interface Props { userId: string; displayName: string | null; phone: string | null; journalCount: number; stepWorkCount: number; checkInsTotal: number; meetingsTotal: number; isAvailableSponsor: boolean }
 
@@ -43,6 +44,8 @@ export default function PrivacyTab({ userId, displayName, phone, journalCount, s
           <p className="text-mid" style={{ fontSize: '14px' }}>You control what lives on our servers and what doesn&apos;t.</p>
         </div>
       </div>
+
+      <SobrietyMilestonesSection userId={userId} />
 
       {/* Account */}
       <div className="card-hover rounded-[16px] p-6 mb-4 bg-white border border-[var(--border)]">

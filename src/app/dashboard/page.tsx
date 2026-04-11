@@ -28,7 +28,7 @@ export default async function DashboardPage() {
     pendingReqsRes,
     pendingAsSponsorRes,
   ] = await Promise.all([
-    supabase.from('user_profiles').select('display_name,sobriety_date,current_step,is_available_sponsor').eq('id', userId).single(),
+    supabase.from('user_profiles').select('display_name,sobriety_date,current_step,is_available_sponsor,onboarding_completed').eq('id', userId).single(),
     supabase.from('check_ins').select('id,check_in_date,mood,notes,sober_today,meetings_attended').eq('user_id', userId).order('check_in_date', { ascending: false }).limit(4),
     supabase.from('journal_entries').select('id,title,entry_date,excerpt,step_number,is_shared_with_sponsor').eq('user_id', userId).order('entry_date', { ascending: false }).limit(10),
     supabase.from('journal_entries').select('id', { count: 'exact', head: true }).eq('user_id', userId),
@@ -173,6 +173,7 @@ export default async function DashboardPage() {
       userId={userId}
       phone={phone}
       profile={profile}
+      onboardingCompleted={profile?.onboarding_completed ?? false}
       recentCheckIns={recentCheckIns}
       journalEntries={journalEntries}
       journalCount={journalCount}

@@ -10,6 +10,7 @@ import PrivacyTab from './tabs/PrivacyTab'
 import SavedTab from './tabs/SavedTab'
 import StepWorkTab from './tabs/StepWorkTab'
 import SponsorView from './SponsorView'
+import OnboardingCard from './OnboardingCard'
 import MeetingCheckin from './MeetingCheckin'
 import CheckInModal from './CheckInModal'
 import PendingRequests from './PendingRequests'
@@ -27,6 +28,7 @@ export interface Sponsee { id:string; name:string; sobrietyDate:string|null; cur
 interface Props {
   userId: string
   phone: string | null
+  onboardingCompleted: boolean
   profile: { display_name:string|null; sobriety_date:string|null; current_step:number; is_available_sponsor:boolean } | null
   recentCheckIns: CheckIn[]
   journalEntries: JournalEntry[]
@@ -53,7 +55,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'privacy',   label: '🔒 Privacy' },
 ]
 
-export default function DashboardShell({ userId, phone, profile, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsor, sponsees, pendingRequests, sponsorPendingRequests }: Props) {
+export default function DashboardShell({ userId, phone, onboardingCompleted, profile, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsor, sponsees, pendingRequests, sponsorPendingRequests }: Props) {
   const [role, setRole] = useState<Role>('my')
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [checkInOpen, setCheckInOpen] = useState(false)
@@ -86,6 +88,7 @@ export default function DashboardShell({ userId, phone, profile, recentCheckIns,
         {/* ── My Dashboard ── */}
         {role === 'my' && (
           <>
+            {!onboardingCompleted && <OnboardingCard userId={userId} />}
             <PendingRequests requests={pendingRequests} perspective="as_sponsee" />
             <DashboardBanner userId={userId} displayName={displayName} sobrietyDate={sobrietyDate} currentStep={currentStep} />
 
