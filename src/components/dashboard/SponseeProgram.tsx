@@ -53,7 +53,10 @@ export default function SponseeProgram({
 
   const [fellowshipId, setFellowshipId] = useState<string | null>(initialFellowshipId)
   const [completions, setCompletions] = useState<StepCompletion[]>(initialCompletions)
+  // selectedStep = incomplete step clicked → opens mark-complete modal
   const [selectedStep, setSelectedStep] = useState<number | null>(null)
+  // uncheckStep = completed step clicked → opens uncheck confirm
+  const [uncheckStep, setUncheckStep] = useState<number | null>(null)
   const [method, setMethod] = useState<Method>('discussion')
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
@@ -102,23 +105,47 @@ export default function SponseeProgram({
       },
       { onConflict: 'user_id,fellowship_id,step_number' }
     )
-    const updatedCompletions = [
-      ...completions.filter(c => c.step_number !== selectedStep),
+    setCompletions(prev => [
+      ...prev.filter(c => c.step_number !== selectedStep),
       { step_number: selectedStep, is_completed: true, completed_method: method, sponsor_note: note.trim() || null, completed_at: now },
-    ]
-    setCompletions(updatedCompletions)
-
-    // Sync user_profiles.current_step to the next incomplete step
+    ])
     await syncSponseeCurrentStep(sponseeId, fellowshipId)
-
     setSelectedStep(null)
     setNote('')
     setMethod('discussion')
     setSaving(false)
   }
 
+  async function saveUncompletion() {
+    if (uncheckStep === null || !fellowshipId) return
+    setSaving(true)
+    await supabase.from('step_completions').upsert(
+      {
+        user_id: sponseeId,
+        sponsor_relationship_id: relationshipId,
+        fellowship_id: fellowshipId,
+        step_number: uncheckStep,
+        is_completed: false,
+        completed_at: null,
+        completed_method: null,
+        sponsor_note: null,
+        sponsor_approved: false,
+        sponsor_approved_at: null,
+      },
+      { onConflict: 'user_id,fellowship_id,step_number' }
+    )
+    setCompletions(prev => [
+      ...prev.filter(c => c.step_number !== uncheckStep),
+      { step_number: uncheckStep, is_completed: false, completed_method: null, sponsor_note: null, completed_at: null },
+    ])
+    await syncSponseeCurrentStep(sponseeId, fellowshipId)
+    setUncheckStep(null)
+    setSaving(false)
+  }
+
   function closeModal() {
     setSelectedStep(null)
+    setUncheckStep(null)
     setNote('')
     setMethod('discussion')
   }
@@ -170,7 +197,7 @@ export default function SponseeProgram({
           <div style={{ marginBottom: 16 }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--navy)', marginBottom: 3 }}>Step Progress</div>
             <div style={{ fontSize: 13, color: 'var(--mid)' }}>
-              Click a step to mark it complete. Use this to catch up if {sponseeName} is already past earlier steps.
+              Click any step to mark it complete or incomplete.
             </div>
           </div>
 
@@ -192,9 +219,9 @@ export default function SponseeProgram({
               return (
                 <button
                   key={step.n}
-                  onClick={() => setSelectedStep(step.n)}
+                  onClick={() => isComplete ? setUncheckStep(step.n) : setSelectedStep(step.n)}
                   title={isComplete
-                    ? `Step ${step.n} complete${completion?.completed_method ? ` · ${completion.completed_method}` : ''}`
+                    ? `Step ${step.n} complete — click to mark incomplete`
                     : `Mark Step ${step.n} complete`}
                   style={{
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
@@ -224,6 +251,42 @@ export default function SponseeProgram({
             <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <span style={{ width: 10, height: 10, borderRadius: 3, background: 'var(--warm-gray)', border: '1px solid var(--border)', display: 'inline-block' }} /> Not started
             </span>
+          </div>
+        </div>
+      )}
+
+      {/* ── Uncheck confirmation modal ── */}
+      {uncheckStep !== null && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          onClick={closeModal}
+        >
+          <div
+            style={{ background: '#fff', borderRadius: 16, padding: '28px 28px 24px', maxWidth: 400, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.18)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--navy)', margin: '0 0 8px' }}>
+              Mark Step {uncheckStep} as incomplete?
+            </h3>
+            <p style={{ fontSize: 13, color: 'var(--mid)', marginBottom: 24, lineHeight: 1.6 }}>
+              {STEPS[uncheckStep - 1]?.s} · {sponseeName}<br />
+              This will clear the completion record and update their current step.
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={closeModal}
+                style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1.5px solid var(--border)', background: '#fff', fontSize: 13, fontWeight: 600, color: 'var(--mid)', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveUncompletion}
+                disabled={saving}
+                style={{ flex: 2, padding: '10px', borderRadius: 8, border: '1.5px solid rgba(192,57,43,0.4)', background: 'rgba(192,57,43,0.06)', fontSize: 13, fontWeight: 700, color: '#C0392B', cursor: saving ? 'wait' : 'pointer', opacity: saving ? 0.7 : 1 }}
+              >
+                {saving ? 'Saving…' : `Mark Incomplete`}
+              </button>
+            </div>
           </div>
         </div>
       )}
