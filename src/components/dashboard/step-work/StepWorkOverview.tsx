@@ -21,29 +21,49 @@ interface Entry {
 }
 
 const STEP_NAMES = [
-  '', // 0 index placeholder
+  '', // 0-index placeholder
   'Powerlessness', 'Hope', 'Decision', 'Inventory',
   'Admission', 'Readiness', 'Humility', 'Amends List',
   'Amends', 'Daily Inventory', 'Spiritual Growth', 'Service',
 ]
 
 const STATUS_META: Record<string, { label: string; bg: string; color: string; border: string }> = {
-  not_started: { label: 'Not started',     bg: 'var(--warm-gray)',        color: 'var(--mid)',    border: 'var(--border)' },
-  draft:       { label: 'In progress',     bg: 'rgba(42,138,153,0.07)',   color: 'var(--teal)',   border: 'rgba(42,138,153,0.2)' },
-  submitted:   { label: 'Awaiting review', bg: 'rgba(212,165,116,0.1)',   color: '#9A7B54',       border: 'rgba(212,165,116,0.3)' },
-  reviewed:    { label: 'Reviewed ✓',      bg: 'rgba(39,174,96,0.08)',    color: '#27AE60',       border: 'rgba(39,174,96,0.2)' },
-  needs_revision: { label: 'Needs revision', bg: 'rgba(231,76,60,0.07)', color: '#C0392B',       border: 'rgba(231,76,60,0.2)' },
+  not_started:       { label: 'Not started',           bg: 'var(--warm-gray)',          color: 'var(--mid)',    border: 'var(--border)' },
+  draft:             { label: 'In progress',            bg: 'rgba(42,138,153,0.07)',     color: 'var(--teal)',   border: 'rgba(42,138,153,0.2)' },
+  submitted:         { label: 'Awaiting review',        bg: 'rgba(212,165,116,0.1)',     color: '#9A7B54',       border: 'rgba(212,165,116,0.3)' },
+  reviewed:          { label: 'Reviewed ✓',             bg: 'rgba(39,174,96,0.08)',      color: '#27AE60',       border: 'rgba(39,174,96,0.2)' },
+  needs_revision:    { label: 'Needs revision',         bg: 'rgba(231,76,60,0.07)',      color: '#C0392B',       border: 'rgba(231,76,60,0.2)' },
+  sponsor_completed: { label: 'Completed via sponsor',  bg: 'rgba(39,174,96,0.06)',      color: '#27AE60',       border: 'rgba(39,174,96,0.12)' },
 }
 
-function entryStatus(entry: Entry | undefined): string {
-  if (!entry) return 'not_started'
+/**
+ * Returns the effective display status for a workbook section.
+ *
+ * If the parent step is sponsor-completed and the user has no digital entry
+ * (or only a draft), we show 'sponsor_completed' so the section doesn't appear
+ * as "Not started" when the step was actually worked through with a sponsor
+ * outside the app. Submitted / reviewed digital entries take priority because
+ * they carry more specific information.
+ */
+function effectiveStatus(entry: Entry | undefined, stepCompleted: boolean): string {
+  if (!entry) return stepCompleted ? 'sponsor_completed' : 'not_started'
+  if (entry.review_status === 'draft' && stepCompleted) return 'sponsor_completed'
   return entry.review_status ?? 'draft'
 }
 
-function stepProgress(workbooks: Workbook[], entries: Entry[], stepNum: number) {
+function stepProgress(
+  workbooks: Workbook[],
+  entries: Entry[],
+  stepNum: number,
+  completedStepNums: Set<number>,
+) {
   const sections = workbooks.filter(w => w.step_number === stepNum)
   const total = sections.length
   if (total === 0) return { total: 0, done: 0, pct: 0 }
+
+  // If the step is marked complete via sponsor, all sections count as done
+  if (completedStepNums.has(stepNum)) return { total, done: total, pct: 100 }
+
   const done = sections.filter(w => {
     const e = entries.find(e => e.workbook_id === w.id)
     return e && (e.review_status === 'reviewed' || e.review_status === 'submitted')
@@ -55,6 +75,7 @@ export default function StepWorkOverview({ userId }: { userId: string }) {
   const router = useRouter()
   const [workbooks, setWorkbooks] = useState<Workbook[]>([])
   const [entries, setEntries] = useState<Entry[]>([])
+  const [completedStepNums, setCompletedStepNums] = useState<Set<number>>(new Set())
   const [loading, setLoading] = useState(true)
   const [expandedStep, setExpandedStep] = useState<number | null>(1)
 
@@ -63,17 +84,30 @@ export default function StepWorkOverview({ userId }: { userId: string }) {
     Promise.all([
       supabase.from('program_workbooks').select('id, title, slug, step_number, description, sort_order, prompts').eq('is_active', true).order('sort_order'),
       supabase.from('step_work_entries').select('workbook_id, review_status, responses').eq('user_id', userId),
-    ]).then(([wb, en]) => {
+      supabase.from('step_completions').select('step_number').eq('user_id', userId).eq('is_completed', true),
+    ]).then(([wb, en, sc]) => {
       setWorkbooks((wb.data ?? []) as unknown as Workbook[])
       setEntries((en.data ?? []) as unknown as Entry[])
+      setCompletedStepNums(new Set((sc.data ?? []).map(r => r.step_number)))
       setLoading(false)
     })
   }, [userId])
 
   const steps = Array.from({ length: 12 }, (_, i) => i + 1)
   const totalSections = workbooks.length
-  const reviewedCount = entries.filter(e => e.review_status === 'reviewed').length
-  const inProgressCount = entries.filter(e => e.review_status === 'draft').length
+
+  // Sections Reviewed = digitally reviewed OR under a sponsor-completed step
+  const reviewedCount = workbooks.filter(w => {
+    const entry = entries.find(e => e.workbook_id === w.id)
+    return entry?.review_status === 'reviewed' || completedStepNums.has(w.step_number)
+  }).length
+
+  // In-progress = draft entries for steps NOT sponsor-completed
+  const inProgressCount = entries.filter(e => {
+    if (e.review_status !== 'draft') return false
+    const wb = workbooks.find(w => w.id === e.workbook_id)
+    return wb && !completedStepNums.has(wb.step_number)
+  }).length
 
   if (loading) {
     return (
@@ -89,8 +123,8 @@ export default function StepWorkOverview({ userId }: { userId: string }) {
       <div className="flex gap-4 mb-6 flex-wrap">
         {[
           { label: 'Sections Reviewed', val: reviewedCount, of: totalSections, color: '#27AE60' },
-          { label: 'In Progress', val: inProgressCount, of: null, color: 'var(--teal)' },
-          { label: 'Total Sections', val: totalSections, of: null, color: 'var(--navy)' },
+          { label: 'In Progress',       val: inProgressCount, of: null, color: 'var(--teal)' },
+          { label: 'Total Sections',    val: totalSections,   of: null, color: 'var(--navy)' },
         ].map(s => (
           <div key={s.label} className="rounded-[14px] bg-white border border-border flex-1" style={{ minWidth: 130, padding: '18px 20px' }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.8px', textTransform: 'uppercase', color: 'var(--mid)', marginBottom: 4 }}>{s.label}</div>
@@ -104,11 +138,12 @@ export default function StepWorkOverview({ userId }: { userId: string }) {
       {/* Steps accordion */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {steps.map(stepNum => {
-          const sections = workbooks.filter(w => w.step_number === stepNum)
-          const { done, pct } = stepProgress(workbooks, entries, stepNum)
-          const isOpen = expandedStep === stepNum
-          const stepDone = done === sections.length && sections.length > 0
-          const hasAny = entries.some(e => sections.some(w => w.id === e.workbook_id))
+          const sections   = workbooks.filter(w => w.step_number === stepNum)
+          const { done, pct } = stepProgress(workbooks, entries, stepNum, completedStepNums)
+          const isOpen     = expandedStep === stepNum
+          const stepDone   = done === sections.length && sections.length > 0
+          const sponsorDone = completedStepNums.has(stepNum)
+          const hasAny     = entries.some(e => sections.some(w => w.id === e.workbook_id))
 
           return (
             <div key={stepNum} className="bg-white border border-border rounded-[14px] overflow-hidden">
@@ -119,13 +154,27 @@ export default function StepWorkOverview({ userId }: { userId: string }) {
                 style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'none', border: 'none', cursor: 'pointer' }}
               >
                 {/* Step badge */}
-                <div className="flex items-center justify-center rounded-xl font-bold flex-shrink-0"
-                  style={{ width: 40, height: 40, fontSize: 15, background: stepDone ? 'rgba(39,174,96,0.1)' : hasAny ? 'rgba(42,138,153,0.09)' : 'var(--warm-gray)', color: stepDone ? '#27AE60' : hasAny ? 'var(--teal)' : 'var(--mid)' }}>
+                <div
+                  className="flex items-center justify-center rounded-xl font-bold flex-shrink-0"
+                  style={{
+                    width: 40, height: 40, fontSize: 15,
+                    background: stepDone ? 'rgba(39,174,96,0.1)' : hasAny ? 'rgba(42,138,153,0.09)' : 'var(--warm-gray)',
+                    color: stepDone ? '#27AE60' : hasAny ? 'var(--teal)' : 'var(--mid)',
+                  }}
+                >
                   {stepDone ? '✓' : stepNum}
                 </div>
+
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--navy)' }}>Step {stepNum}: {STEP_NAMES[stepNum]}</span>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--navy)' }}>
+                      Step {stepNum}: {STEP_NAMES[stepNum]}
+                    </span>
+                    {sponsorDone && !hasAny && (
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: 'rgba(39,174,96,0.06)', color: '#27AE60', border: '1px solid rgba(39,174,96,0.12)' }}>
+                        via sponsor
+                      </span>
+                    )}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
                     <div className="rounded-full overflow-hidden" style={{ flex: 1, maxWidth: 160, height: 5, background: 'var(--warm-gray)' }}>
@@ -134,6 +183,7 @@ export default function StepWorkOverview({ userId }: { userId: string }) {
                     <span style={{ fontSize: 11, color: 'var(--mid)', whiteSpace: 'nowrap' }}>{done}/{sections.length} sections</span>
                   </div>
                 </div>
+
                 <span style={{ fontSize: 13, color: 'var(--mid)', transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'none', flexShrink: 0 }}>▼</span>
               </button>
 
@@ -141,9 +191,10 @@ export default function StepWorkOverview({ userId }: { userId: string }) {
               {isOpen && sections.length > 0 && (
                 <div style={{ borderTop: '1px solid var(--border)' }}>
                   {sections.map((w, idx) => {
-                    const entry = entries.find(e => e.workbook_id === w.id)
-                    const status = entryStatus(entry)
-                    const meta = STATUS_META[status]
+                    const entry   = entries.find(e => e.workbook_id === w.id)
+                    const status  = effectiveStatus(entry, completedStepNums.has(stepNum))
+                    const meta    = STATUS_META[status] ?? STATUS_META.not_started
+                    const isSponsorCompleted = status === 'sponsor_completed'
                     const promptCount = w.prompts?.length ?? 0
 
                     return (
@@ -157,9 +208,13 @@ export default function StepWorkOverview({ userId }: { userId: string }) {
                       >
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)', marginBottom: 2 }}>{w.title}</div>
-                          {w.description && (
+                          {isSponsorCompleted ? (
+                            <div style={{ fontSize: 11, color: '#27AE60', fontStyle: 'italic' }}>
+                              Completed outside app — click to fill in prompts retroactively
+                            </div>
+                          ) : w.description ? (
                             <div style={{ fontSize: 12, color: 'var(--mid)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.description}</div>
-                          )}
+                          ) : null}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                           <span style={{ fontSize: 11, color: 'var(--mid)' }}>{promptCount} prompts</span>

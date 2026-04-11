@@ -44,15 +44,17 @@ interface Props {
   sponsorRelationshipId: string | null
   isSponsorView?: boolean   // true when sponsor is reviewing
   sponseeName?: string
+  stepCompleted?: boolean   // true when step is marked complete in step_completions
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const STATUS_META: Record<string, { label: string; icon: string; bg: string; color: string; border: string }> = {
-  draft:          { label: 'Draft — auto-saving',   icon: '✏️', bg: 'rgba(42,138,153,0.07)',   color: 'var(--teal)',  border: 'rgba(42,138,153,0.2)' },
-  submitted:      { label: 'Submitted for review',  icon: '📤', bg: 'rgba(212,165,116,0.1)',   color: '#9A7B54',      border: 'rgba(212,165,116,0.3)' },
-  reviewed:       { label: 'Reviewed by sponsor',   icon: '✅', bg: 'rgba(39,174,96,0.08)',    color: '#27AE60',      border: 'rgba(39,174,96,0.2)' },
-  needs_revision: { label: 'Needs revision',        icon: '🔁', bg: 'rgba(231,76,60,0.07)',    color: '#C0392B',      border: 'rgba(231,76,60,0.2)' },
+  draft:             { label: 'Draft — auto-saving',    icon: '✏️', bg: 'rgba(42,138,153,0.07)',  color: 'var(--teal)', border: 'rgba(42,138,153,0.2)' },
+  submitted:         { label: 'Submitted for review',   icon: '📤', bg: 'rgba(212,165,116,0.1)',  color: '#9A7B54',     border: 'rgba(212,165,116,0.3)' },
+  reviewed:          { label: 'Reviewed by sponsor',    icon: '✅', bg: 'rgba(39,174,96,0.08)',   color: '#27AE60',     border: 'rgba(39,174,96,0.2)' },
+  needs_revision:    { label: 'Needs revision',         icon: '🔁', bg: 'rgba(231,76,60,0.07)',   color: '#C0392B',     border: 'rgba(231,76,60,0.2)' },
+  sponsor_completed: { label: 'Completed via sponsor',  icon: '✓',  bg: 'rgba(39,174,96,0.06)',   color: '#27AE60',     border: 'rgba(39,174,96,0.12)' },
 }
 
 const ta: React.CSSProperties = {
@@ -209,9 +211,13 @@ function TablePrompt({ prompt, value, onChange, readonly }: {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function StepWorkSection({ workbook, entry, userId, sponsorRelationshipId, isSponsorView = false, sponseeName }: Props) {
+export default function StepWorkSection({ workbook, entry, userId, sponsorRelationshipId, isSponsorView = false, sponseeName, stepCompleted = false }: Props) {
   const router = useRouter()
   const readonly = isSponsorView || entry?.review_status === 'submitted' || entry?.review_status === 'reviewed'
+
+  // Effective status: sponsor-completed step with no/draft digital entry shows 'sponsor_completed'
+  const isSponsorCompletedSection =
+    stepCompleted && (!entry || entry.review_status === 'draft')
 
   // Initialise responses from DB or empty
   function initResponses(): Record<string, unknown> {
@@ -229,7 +235,9 @@ export default function StepWorkSection({ workbook, entry, userId, sponsorRelati
 
   const [responses, setResponses] = useState<Record<string, unknown>>(initResponses)
   const [entryId, setEntryId] = useState<string | null>(entry?.id ?? null)
-  const [status, setStatus] = useState<string>(entry?.review_status ?? 'draft')
+  const [status, setStatus] = useState<string>(
+    isSponsorCompletedSection ? 'sponsor_completed' : (entry?.review_status ?? 'draft')
+  )
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [submitLoading, setSubmitLoading] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -334,6 +342,21 @@ export default function StepWorkSection({ workbook, entry, userId, sponsorRelati
             </div>
           </div>
         </div>
+
+        {/* Sponsor-completed notice */}
+        {isSponsorCompletedSection && !isSponsorView && (
+          <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 10, background: 'rgba(39,174,96,0.07)', border: '1px solid rgba(39,174,96,0.18)', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+            <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>✓</span>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#27AE60', marginBottom: 2 }}>
+                This step was marked complete by your sponsor
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--mid)', lineHeight: 1.5 }}>
+                You can still fill in the prompts below to build your personal record — your answers save automatically.
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Auto-save indicator */}
         {!readonly && !isSponsorView && (

@@ -38,13 +38,24 @@ export default async function StepWorkSectionPage({ params }: { params: Promise<
     .eq('workbook_id', workbook.id)
     .maybeSingle()
 
-  // Fetch active sponsor relationship id
-  const { data: sponsorRel } = await supabase
-    .from('sponsor_relationships')
-    .select('id')
-    .eq('sponsee_id', user.id)
-    .eq('status', 'active')
-    .maybeSingle()
+  // Fetch active sponsor relationship + whether this step is sponsor-completed
+  const [{ data: sponsorRel }, { data: stepCompletion }] = await Promise.all([
+    supabase
+      .from('sponsor_relationships')
+      .select('id')
+      .eq('sponsee_id', user.id)
+      .eq('status', 'active')
+      .maybeSingle(),
+    workbook.step_number
+      ? supabase
+          .from('step_completions')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('step_number', workbook.step_number)
+          .eq('is_completed', true)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ])
 
   return (
     <StepWorkSection
@@ -52,6 +63,7 @@ export default async function StepWorkSectionPage({ params }: { params: Promise<
       entry={entry ?? null}
       userId={user.id}
       sponsorRelationshipId={sponsorRel?.id ?? null}
+      stepCompleted={!!stepCompletion}
     />
   )
 }
