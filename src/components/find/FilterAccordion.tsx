@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, type ReactNode } from 'react'
-import { geocodeLocation, buildLocationSummary, RADIUS_OPTIONS } from './findUtils'
+import { geocodeLocation, buildLocationSummary } from './findUtils'
 
 export interface ActiveFilter {
   key: string
@@ -222,25 +222,19 @@ export default function FilterAccordion({
                 <div style={{ fontSize: 12, color: '#c0392b', marginBottom: 8 }}>{geoError}</div>
               )}
 
-              {/* Radius pills */}
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 12, color: 'var(--mid)', fontWeight: 600, marginRight: 2, lineHeight: '28px' }}>Radius:</span>
-                {RADIUS_OPTIONS.map(opt => (
-                  <button
-                    key={opt.value}
-                    onClick={() => onLocationChange({ text: locationText, displayName: locationDisplayName, lat: locationLat, lng: locationLng, radius: opt.value })}
-                    style={{
-                      padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600,
-                      border: '1.5px solid',
-                      borderColor: radiusMiles === opt.value ? 'var(--teal)' : 'var(--border)',
-                      background: radiusMiles === opt.value ? 'rgba(42,138,153,0.08)' : '#fff',
-                      color: radiusMiles === opt.value ? 'var(--teal)' : 'var(--mid)',
-                      cursor: 'pointer', fontFamily: 'var(--font-body)',
-                    }}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+              {/* Radius slider */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 12, color: 'var(--mid)', fontWeight: 600, whiteSpace: 'nowrap' }}>Radius:</span>
+                <input
+                  type="range"
+                  min={5}
+                  max={50}
+                  step={5}
+                  value={radiusMiles}
+                  onChange={e => onLocationChange({ text: locationText, displayName: locationDisplayName, lat: locationLat, lng: locationLng, radius: Number(e.target.value) })}
+                  style={{ flex: 1, accentColor: 'var(--teal)', cursor: 'pointer' }}
+                />
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', whiteSpace: 'nowrap', minWidth: 38, textAlign: 'right' }}>{radiusMiles} mi</span>
               </div>
             </div>
           )}

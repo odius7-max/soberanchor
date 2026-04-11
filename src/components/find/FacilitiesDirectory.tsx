@@ -48,6 +48,22 @@ const LICENSE_OPTS = [
   { value: 'CADC', label: 'CADC' },
 ]
 
+const SUBSTANCE_OPTS = [
+  { value: '', label: 'Any Substance' },
+  { value: 'alcohol', label: 'Alcohol' },
+  { value: 'opioids', label: 'Opioids' },
+  { value: 'stimulants', label: 'Stimulants' },
+  { value: 'cannabis', label: 'Cannabis' },
+  { value: 'polysubstance', label: 'Polysubstance' },
+]
+
+const PRICE_RANGE_OPTS = [
+  { value: '', label: 'Any Price' },
+  { value: 'low', label: '$ Low' },
+  { value: 'mid', label: '$$ Mid' },
+  { value: 'high', label: '$$$ High' },
+]
+
 const VENUE_TYPE_OPTS = [
   { value: '', label: 'Any Type' },
   { value: 'bar', label: 'Alcohol-Free Bar' },
@@ -119,9 +135,15 @@ export default function FacilitiesDirectory({ facilityType, savedIds = {} }: Pro
 
   // Type-specific filter state
   const [treatmentType, setTreatmentType] = useState('')
+  const [substanceType, setSubstanceType] = useState('')
+  const [insuranceOnly, setInsuranceOnly] = useState(false)
   const [gender, setGender] = useState('')
+  const [priceRange, setPriceRange] = useState('')
+  const [twelveStepOnly, setTwelveStepOnly] = useState(false)
+  const [petFriendly, setPetFriendly] = useState(false)
   const [therapySpecialty, setTherapySpecialty] = useState('')
   const [licenseType, setLicenseType] = useState('')
+  const [insuranceOnlyTherapist, setInsuranceOnlyTherapist] = useState(false)
   const [telehealthOnly, setTelehealthOnly] = useState(false)
   const [venueType, setVenueType] = useState('')
   const [sort, setSort] = useState('featured')
@@ -150,9 +172,15 @@ export default function FacilitiesDirectory({ facilityType, savedIds = {} }: Pro
 
   function removeFilter(key: string) {
     if (key === 'treatmentType') setTreatmentType('')
+    else if (key === 'substanceType') setSubstanceType('')
+    else if (key === 'insurance') setInsuranceOnly(false)
     else if (key === 'gender') setGender('')
+    else if (key === 'priceRange') setPriceRange('')
+    else if (key === 'twelveStep') setTwelveStepOnly(false)
+    else if (key === 'petFriendly') setPetFriendly(false)
     else if (key === 'therapySpecialty') setTherapySpecialty('')
     else if (key === 'licenseType') setLicenseType('')
+    else if (key === 'insuranceTherapist') setInsuranceOnlyTherapist(false)
     else if (key === 'telehealth') setTelehealthOnly(false)
     else if (key === 'venueType') setVenueType('')
     setPage(1)
@@ -168,9 +196,11 @@ export default function FacilitiesDirectory({ facilityType, savedIds = {} }: Pro
         const dist = haversineMiles(locationLat!, locationLng!, f.latitude, f.longitude)
         if (dist > radiusMiles) return false
       }
-      // Type-specific filters (treatment type, gender, specialty, etc.) will filter
-      // here once those columns are added to the facilities schema.
-      // For now the dropdowns are visible but don't reduce results.
+      // Insurance filter (accepts_insurance is a real column)
+      if (insuranceOnly && !f.accepts_insurance) return false
+      if (insuranceOnlyTherapist && !f.accepts_insurance) return false
+      // Other type-specific filters (substance, gender, price, etc.) will filter here
+      // once those columns are added to the facilities schema.
       return true
     })
     .map(f => ({
@@ -198,35 +228,36 @@ export default function FacilitiesDirectory({ facilityType, savedIds = {} }: Pro
 
   // Build active filters + filter summary
   const activeFilters: ActiveFilter[] = []
-  const filterMap: Record<string, string> = {}
 
   if (treatmentType) {
     const opt = TREATMENT_TYPE_OPTS.find(o => o.value === treatmentType)
     activeFilters.push({ key: 'treatmentType', label: opt?.label ?? treatmentType })
-    filterMap.treatmentType = treatmentType
   }
+  if (substanceType) {
+    const opt = SUBSTANCE_OPTS.find(o => o.value === substanceType)
+    activeFilters.push({ key: 'substanceType', label: opt?.label ?? substanceType })
+  }
+  if (insuranceOnly) activeFilters.push({ key: 'insurance', label: 'Accepts Insurance' })
   if (gender) {
     const opt = GENDER_OPTS.find(o => o.value === gender)
     activeFilters.push({ key: 'gender', label: opt?.label ?? gender })
-    filterMap.gender = gender
   }
+  if (priceRange) {
+    const opt = PRICE_RANGE_OPTS.find(o => o.value === priceRange)
+    activeFilters.push({ key: 'priceRange', label: opt?.label ?? priceRange })
+  }
+  if (twelveStepOnly) activeFilters.push({ key: 'twelveStep', label: '12-Step' })
+  if (petFriendly) activeFilters.push({ key: 'petFriendly', label: 'Pet-Friendly' })
   if (therapySpecialty) {
     const opt = THERAPY_SPECIALTY_OPTS.find(o => o.value === therapySpecialty)
     activeFilters.push({ key: 'therapySpecialty', label: opt?.label ?? therapySpecialty })
-    filterMap.therapySpecialty = therapySpecialty
   }
-  if (licenseType) {
-    activeFilters.push({ key: 'licenseType', label: licenseType })
-    filterMap.licenseType = licenseType
-  }
-  if (telehealthOnly) {
-    activeFilters.push({ key: 'telehealth', label: 'Telehealth' })
-    filterMap.telehealth = 'telehealth'
-  }
+  if (licenseType) activeFilters.push({ key: 'licenseType', label: licenseType })
+  if (insuranceOnlyTherapist) activeFilters.push({ key: 'insuranceTherapist', label: 'Accepts Insurance' })
+  if (telehealthOnly) activeFilters.push({ key: 'telehealth', label: 'Telehealth' })
   if (venueType) {
     const opt = VENUE_TYPE_OPTS.find(o => o.value === venueType)
     activeFilters.push({ key: 'venueType', label: opt?.label ?? venueType })
-    filterMap.venueType = venueType
   }
 
   const filterSummary = activeFilters.length > 0
@@ -239,17 +270,47 @@ export default function FacilitiesDirectory({ facilityType, savedIds = {} }: Pro
 
   // Build the type-specific filter slot
   let filterSlot: React.ReactNode = null
-  if (facilityType === 'treatment' || facilityType === 'outpatient') {
+  if (facilityType === 'treatment') {
     filterSlot = (
-      <select value={treatmentType} onChange={e => { setTreatmentType(e.target.value); setPage(1) }} style={selStyle}>
-        {TREATMENT_TYPE_OPTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-      </select>
+      <>
+        <select value={treatmentType} onChange={e => { setTreatmentType(e.target.value); setPage(1) }} style={selStyle}>
+          {TREATMENT_TYPE_OPTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        <select value={substanceType} onChange={e => { setSubstanceType(e.target.value); setPage(1) }} style={selStyle}>
+          {SUBSTANCE_OPTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        <ToggleButton active={insuranceOnly} onClick={() => { setInsuranceOnly(v => !v); setPage(1) }}>
+          🛡️ Accepts Insurance
+        </ToggleButton>
+      </>
+    )
+  } else if (facilityType === 'outpatient') {
+    filterSlot = (
+      <>
+        <select value={treatmentType} onChange={e => { setTreatmentType(e.target.value); setPage(1) }} style={selStyle}>
+          {TREATMENT_TYPE_OPTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        <ToggleButton active={insuranceOnly} onClick={() => { setInsuranceOnly(v => !v); setPage(1) }}>
+          🛡️ Accepts Insurance
+        </ToggleButton>
+      </>
     )
   } else if (facilityType === 'sober_living') {
     filterSlot = (
-      <select value={gender} onChange={e => { setGender(e.target.value); setPage(1) }} style={selStyle}>
-        {GENDER_OPTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-      </select>
+      <>
+        <select value={gender} onChange={e => { setGender(e.target.value); setPage(1) }} style={selStyle}>
+          {GENDER_OPTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        <select value={priceRange} onChange={e => { setPriceRange(e.target.value); setPage(1) }} style={selStyle}>
+          {PRICE_RANGE_OPTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        <ToggleButton active={twelveStepOnly} onClick={() => { setTwelveStepOnly(v => !v); setPage(1) }}>
+          🔵 12-Step
+        </ToggleButton>
+        <ToggleButton active={petFriendly} onClick={() => { setPetFriendly(v => !v); setPage(1) }}>
+          🐾 Pet-Friendly
+        </ToggleButton>
+      </>
     )
   } else if (facilityType === 'therapist') {
     filterSlot = (
@@ -260,18 +321,12 @@ export default function FacilitiesDirectory({ facilityType, savedIds = {} }: Pro
         <select value={licenseType} onChange={e => { setLicenseType(e.target.value); setPage(1) }} style={selStyle}>
           {LICENSE_OPTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
-        <button
-          onClick={() => { setTelehealthOnly(t => !t); setPage(1) }}
-          style={{
-            padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600,
-            border: `1.5px solid ${telehealthOnly ? 'var(--teal)' : 'var(--border)'}`,
-            background: telehealthOnly ? 'rgba(42,138,153,0.08)' : '#fff',
-            color: telehealthOnly ? 'var(--teal)' : 'var(--mid)',
-            cursor: 'pointer', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap',
-          }}
-        >
-          💻 Telehealth only
-        </button>
+        <ToggleButton active={insuranceOnlyTherapist} onClick={() => { setInsuranceOnlyTherapist(v => !v); setPage(1) }}>
+          🛡️ Accepts Insurance
+        </ToggleButton>
+        <ToggleButton active={telehealthOnly} onClick={() => { setTelehealthOnly(v => !v); setPage(1) }}>
+          💻 Telehealth
+        </ToggleButton>
       </>
     )
   } else if (facilityType === 'venue') {
@@ -317,7 +372,12 @@ export default function FacilitiesDirectory({ facilityType, savedIds = {} }: Pro
           </p>
           {activeFilters.length > 0 && (
             <button
-              onClick={() => { setTreatmentType(''); setGender(''); setTherapySpecialty(''); setLicenseType(''); setTelehealthOnly(false); setVenueType(''); setPage(1) }}
+              onClick={() => {
+                setTreatmentType(''); setSubstanceType(''); setInsuranceOnly(false)
+                setGender(''); setPriceRange(''); setTwelveStepOnly(false); setPetFriendly(false)
+                setTherapySpecialty(''); setLicenseType(''); setInsuranceOnlyTherapist(false); setTelehealthOnly(false)
+                setVenueType(''); setPage(1)
+              }}
               style={{ marginTop: 12, fontSize: 13, color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: 'var(--font-body)' }}
             >
               Clear filters
@@ -350,6 +410,23 @@ export default function FacilitiesDirectory({ facilityType, savedIds = {} }: Pro
         </>
       )}
     </div>
+  )
+}
+
+function ToggleButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+        border: `1.5px solid ${active ? 'var(--teal)' : 'var(--border)'}`,
+        background: active ? 'rgba(42,138,153,0.08)' : '#fff',
+        color: active ? 'var(--teal)' : 'var(--mid)',
+        cursor: 'pointer', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap',
+      }}
+    >
+      {children}
+    </button>
   )
 }
 
