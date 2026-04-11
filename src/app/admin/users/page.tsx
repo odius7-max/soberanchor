@@ -19,7 +19,6 @@ interface Member {
   id: string
   display_name: string | null
   created_at: string
-  auth_user_id: string | null
 }
 
 function timeAgo(dateStr: string) {
@@ -56,16 +55,14 @@ export default function AdminUsersPage() {
   useEffect(() => {
     async function load() {
       const supabase = createClient()
-      const [{ data: prov }, { data: mem }] = await Promise.all([
+      const [{ data: prov }, membersRes] = await Promise.all([
         supabase.from('provider_accounts')
           .select('id, contact_name, contact_email, organization_name, subscription_tier, is_active, created_at, facilities(name)')
           .order('created_at', { ascending: false }),
-        supabase.from('user_profiles')
-          .select('id, display_name, created_at, auth_user_id')
-          .order('created_at', { ascending: false }),
+        fetch('/api/admin/members').then(r => r.json()),
       ])
       setProviders((prov ?? []) as unknown as Provider[])
-      setMembers((mem ?? []) as Member[])
+      setMembers((Array.isArray(membersRes) ? membersRes : []) as Member[])
       setLoading(false)
     }
     load()
@@ -187,7 +184,7 @@ export default function AdminUsersPage() {
             }}>
               <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--navy)' }}>{m.display_name ?? '—'}</div>
               <div style={{ fontSize: 12, color: 'var(--mid)' }}>{timeAgo(m.created_at)}</div>
-              <div style={{ fontSize: 11, color: 'var(--mid)', fontFamily: 'monospace' }}>{m.auth_user_id?.slice(0, 16)}…</div>
+              <div style={{ fontSize: 11, color: 'var(--mid)', fontFamily: 'monospace' }}>{m.id.slice(0, 16)}…</div>
             </div>
           ))}
         </div>
