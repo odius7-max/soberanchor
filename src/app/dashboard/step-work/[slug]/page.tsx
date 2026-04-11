@@ -4,7 +4,7 @@ import StepWorkSection from '@/components/dashboard/step-work/StepWorkSection'
 
 interface Prompt {
   id: string
-  type: 'text' | 'yesno' | 'table' | 'reading'
+  type: 'text' | 'yesno' | 'table'
   question: string
   hint?: string
   followup?: string

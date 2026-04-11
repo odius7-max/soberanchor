@@ -2,7 +2,7 @@
 
 interface Prompt {
   id: string
-  type: 'text' | 'yesno' | 'table' | 'reading'
+  type: 'text' | 'yesno' | 'table'
   question: string
   hint?: string
   followup?: string
@@ -27,11 +27,7 @@ function writingLines(count: number): string {
 function promptHTML(p: Prompt, idx: number): string {
   let input = ''
 
-  if (p.type === 'reading') {
-    input = `
-      ${p.hint ? `<blockquote class="reading-note">${p.hint}</blockquote>` : ''}
-      <div class="writing-area">${writingLines(8)}</div>`
-  } else if (p.type === 'text') {
+  if (p.type === 'text') {
     input = `
       <div class="writing-area">${writingLines(8)}</div>`
   } else if (p.type === 'yesno') {
@@ -59,7 +55,7 @@ function promptHTML(p: Prompt, idx: number): string {
       <div class="prompt-num">${idx + 1}.</div>
       <div class="prompt-body">
         <div class="prompt-q">${p.question}</div>
-        ${p.hint && p.type !== 'reading' ? `<p class="prompt-hint">${p.hint}</p>` : ''}
+        ${p.hint ? `<p class="prompt-hint">${p.hint}</p>` : ''}
         ${input}
       </div>
     </div>`
@@ -174,17 +170,6 @@ body{
   font-size:10.5pt;font-style:italic;
   color:#777;line-height:1.55;
   margin-bottom:9pt;
-}
-
-/* ── Reading note ── */
-blockquote.reading-note{
-  font-family:'EB Garamond',Georgia,serif;
-  font-size:10.5pt;font-style:italic;
-  color:#444;line-height:1.65;
-  border-left:3pt solid #2A8A99;
-  padding:7pt 11pt;margin-bottom:11pt;
-  background:#f6fafb;
-  page-break-inside:avoid;
 }
 
 /* ── Writing lines ── */

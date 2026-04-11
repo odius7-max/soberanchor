@@ -9,7 +9,7 @@ import PrintButton from './PrintButton'
 
 interface Prompt {
   id: string
-  type: 'text' | 'yesno' | 'table' | 'reading'
+  type: 'text' | 'yesno' | 'table'
   question: string
   hint?: string
   followup?: string          // yesno
@@ -82,28 +82,6 @@ function TextPrompt({ prompt, value, onChange, readonly }: { prompt: Prompt; val
   )
 }
 
-function ReadingPrompt({ prompt, value, onChange, readonly }: { prompt: Prompt; value: string; onChange: (v: string) => void; readonly: boolean }) {
-  return (
-    <div>
-      {prompt.hint && (
-        <div style={{ background: 'rgba(42,138,153,0.07)', border: '1px solid rgba(42,138,153,0.18)', borderRadius: 10, padding: '10px 14px', marginBottom: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--teal)', marginBottom: 4 }}>📖 Reading Note</div>
-          <div style={{ fontSize: 13, color: 'var(--dark)', lineHeight: 1.6 }}>{prompt.hint}</div>
-        </div>
-      )}
-      <textarea
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        readOnly={readonly}
-        rows={5}
-        placeholder={readonly ? '' : 'Write your reflection here…'}
-        style={readonly ? readonlyTa : ta}
-        onFocus={e => { if (!readonly) e.target.style.borderColor = 'var(--teal)' }}
-        onBlur={e => { if (!readonly) e.target.style.borderColor = 'var(--border)' }}
-      />
-    </div>
-  )
-}
 
 function YesNoPrompt({ prompt, value, onChange, readonly }: {
   prompt: Prompt
@@ -385,7 +363,7 @@ export default function StepWorkSection({ workbook, entry, userId, sponsorRelati
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--navy)', lineHeight: 1.45 }}>{prompt.question}</div>
-                    {prompt.hint && prompt.type !== 'reading' && (
+                    {prompt.hint && (
                       <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 5, lineHeight: 1.55, fontStyle: 'italic' }}>{prompt.hint}</div>
                     )}
                   </div>
@@ -396,9 +374,6 @@ export default function StepWorkSection({ workbook, entry, userId, sponsorRelati
               <div style={{ padding: '0 20px 20px' }}>
                 {prompt.type === 'text' && (
                   <TextPrompt prompt={prompt} value={(responses[prompt.id] as string) ?? ''} onChange={v => handleChange(prompt.id, v)} readonly={!!readonly} />
-                )}
-                {prompt.type === 'reading' && (
-                  <ReadingPrompt prompt={prompt} value={(responses[prompt.id] as string) ?? ''} onChange={v => handleChange(prompt.id, v)} readonly={!!readonly} />
                 )}
                 {prompt.type === 'yesno' && (
                   <YesNoPrompt
