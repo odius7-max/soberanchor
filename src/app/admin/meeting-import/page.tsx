@@ -6,10 +6,12 @@ export const metadata = { title: 'Meeting Import — SoberAnchor Admin' }
 
 async function getFeeds() {
   const admin = createAdminClient()
-  const { data } = await admin
+  const { data, error } = await admin
     .from('meeting_feed_sources')
     .select('id, name, region, feed_url, feed_type, is_active, last_synced_at, last_sync_count, last_sync_errors, created_at')
     .order('created_at', { ascending: true })
+    .limit(500)
+  if (error) console.error('[meeting-import] getFeeds error:', error)
   return data ?? []
 }
 
