@@ -102,6 +102,7 @@ export type SearchIntent = {
   fellowship_slugs: string[];
   facility_types: string[];
   query_intent: "meeting_search" | "informational" | "facility_search" | "step_work" | "crisis";
+  name_keywords?: string[];
 };
 
 export type MeetingResult = {

@@ -158,7 +158,8 @@ Given a user's natural-language query, classify their intent and return ONLY a J
   "include_crisis": boolean,
   "fellowship_slugs": string[],
   "facility_types": string[],
-  "query_intent": "meeting_search" | "informational" | "facility_search" | "step_work" | "crisis"
+  "query_intent": "meeting_search" | "informational" | "facility_search" | "step_work" | "crisis",
+  "name_keywords": string[]
 }
 
 query_intent rules:
@@ -173,6 +174,7 @@ Field rules:
 - "help_type": array of: meetings, treatment, sober_living, therapist, information, crisis, family_meetings
 - "fellowship_slugs": choose from: aa, na, al-anon, alateen, smart-recovery, ga, gam-anon, oa, fa, eda, aba, ca, cma, ma, sa, saa, cosa, s-anon, da, itaa, cgaa, nicotine-anonymous, nar-anon, celebrate-recovery, lifering, pills-anonymous, heroin-anonymous, refuge-recovery, aca, families-anonymous
 - "facility_types": array of: treatment, sober_living, therapist, venue, outpatient
+- "name_keywords": if the user appears to be looking for a specific meeting or place by name, extract the distinctive name words (not fellowship names, not generic words like "meeting"/"group"/"anonymous"). Examples: "find the village meeting" → ["village"]; "serenity group AA" → ["serenity"]; "lighthouse NA meeting" → ["lighthouse"]; "AA meetings near me" → []. Leave [] for general searches with no specific name.
 
 Inference rules:
 - Loved one + alcohol → fellowship_slugs includes both "aa" (for them) AND "al-anon" (for the asker)
@@ -273,6 +275,7 @@ async function queryMeetings(
   location: string | null,
   limit: number,
   dayFilter?: string | null,
+  nameKeywords?: string[] | null,
 ): Promise<MeetingResult[]> {
   const { data: fellowships } = await supabase
     .from("fellowships").select("id, name, slug").in("slug", slugs);
@@ -289,33 +292,44 @@ async function queryMeetings(
   // Fetch a larger batch so we can sort client-side when day filtering
   const fetchLimit = dayFilter ? Math.min(limit * 4, 100) : limit;
 
-  let q = supabase.from("meetings").select(MEETING_SELECT).in("fellowship_id", fids).limit(fetchLimit);
-  if (location) q = q.ilike("city", `%${location}%`);
-  if (dayFilter) q = q.eq("day_of_week", dayFilter);
+  /** Build the OR filter string for name keyword ILIKE matching */
+  function nameOrFilter(keywords: string[]): string {
+    return keywords.map((kw) => `name.ilike.%${kw.replace(/%/g, "")}%`).join(",");
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  type AnyQuery = any;
+
+  let q: AnyQuery = supabase.from("meetings").select(MEETING_SELECT).in("fellowship_id", fids).limit(fetchLimit);
+  if (location)              q = q.ilike("city", `%${location}%`);
+  if (dayFilter)             q = q.eq("day_of_week", dayFilter);
+  if (nameKeywords?.length)  q = q.or(nameOrFilter(nameKeywords));
 
   let { data } = await q;
 
   // Retry without location if no results
   if (!data?.length && location) {
-    let qFallback = supabase.from("meetings").select(MEETING_SELECT).in("fellowship_id", fids).limit(fetchLimit);
-    if (dayFilter) qFallback = qFallback.eq("day_of_week", dayFilter);
+    let qFallback: AnyQuery = supabase.from("meetings").select(MEETING_SELECT).in("fellowship_id", fids).limit(fetchLimit);
+    if (dayFilter)            qFallback = qFallback.eq("day_of_week", dayFilter);
+    if (nameKeywords?.length) qFallback = qFallback.or(nameOrFilter(nameKeywords));
     const { data: fb } = await qFallback;
     data = fb;
   }
 
   // Retry without day filter if still no results
   if (!data?.length && dayFilter) {
-    let qNoDow = supabase.from("meetings").select(MEETING_SELECT).in("fellowship_id", fids).limit(limit);
-    if (location) qNoDow = qNoDow.ilike("city", `%${location}%`);
+    let qNoDow: AnyQuery = supabase.from("meetings").select(MEETING_SELECT).in("fellowship_id", fids).limit(limit);
+    if (location)             qNoDow = qNoDow.ilike("city", `%${location}%`);
+    if (nameKeywords?.length) qNoDow = qNoDow.or(nameOrFilter(nameKeywords));
     const { data: fb2 } = await qNoDow;
     data = fb2;
   }
 
-  const results = (data ?? []).map((m) => toMeeting(m, idToFellowship));
+  const results = ((data ?? []) as Record<string, unknown>[]).map((m) => toMeeting(m, idToFellowship));
 
   // Sort by start_time ascending when day filtering so soonest meeting comes first
   if (dayFilter && results.length > 1) {
-    results.sort((a, b) => parseTimeMinutes(a.start_time) - parseTimeMinutes(b.start_time));
+    results.sort((a: MeetingResult, b: MeetingResult) => parseTimeMinutes(a.start_time) - parseTimeMinutes(b.start_time));
   }
 
   return results.slice(0, limit);
@@ -356,7 +370,8 @@ async function fetchMeetings(intent: SearchIntent, limit: number, dayFilter?: st
       ? intent.fellowship_slugs
       : (ISSUE_FELLOWSHIP_MAP[intent.issue] ?? ["aa", "na"]);
 
-  return queryMeetings(slugs, intent.location, limit, dayFilter);
+  const nameKeywords = intent.name_keywords?.length ? intent.name_keywords : null;
+  return queryMeetings(slugs, intent.location, limit, dayFilter, nameKeywords);
 }
 
 async function fetchFacilities(intent: SearchIntent, limit: number): Promise<FacilityResult[]> {
@@ -678,9 +693,11 @@ async function handleSearch(request: Request, rawQuery: string, context: SearchC
     intent.help_type.some((h) => ["treatment", "sober_living", "therapist"].includes(h))
   );
 
-  // Day-of-week filter: meeting_search always defaults to today; explicit day/keyword overrides
+  // Day-of-week filter: meeting_search defaults to today UNLESS searching by name
+  // (a name search like "find the village meeting" should find the meeting regardless of what day it meets)
+  const hasNameKeywords = (intent.name_keywords?.length ?? 0) > 0;
   const dayFilter = (intent.query_intent === "meeting_search" && wantsMeetings)
-    ? (detectDayFilter(q, nowPST) ?? todayDay)
+    ? (detectDayFilter(q, nowPST) ?? (hasNameKeywords ? null : todayDay))
     : null;
   console.log("[smart-search] Meeting query params:", { query_intent: intent.query_intent, wantsMeetings, dayFilter, location: intent.location, fellowship_slugs: intent.fellowship_slugs });
 
