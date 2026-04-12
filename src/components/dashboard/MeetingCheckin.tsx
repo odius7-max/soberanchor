@@ -158,21 +158,32 @@ export default function MeetingCheckin({ userId }: Props) {
     setLogging(null)
   }
 
-  function applyFilter(list: Meeting[]) {
-    return list.filter(m => {
-      const abbr = m.fellowships?.abbreviation ?? ''
-      if (filter !== 'All' && abbr !== filter) return false
-      if (search.trim()) {
-        const words = search.trim().toLowerCase().split(/\s+/).filter(Boolean)
-        return words.every(w =>
-          m.name.toLowerCase().includes(w) ||
-          (m.location_name ?? '').toLowerCase().includes(w) ||
-          (m.city ?? '').toLowerCase().includes(w) ||
-          abbr.toLowerCase().includes(w)
-        )
-      }
-      return true
+  function applyFilter(list: Meeting[]): Meeting[] {
+    // Apply fellowship chip filter first
+    const afterChip = filter === 'All'
+      ? list
+      : list.filter(m => (m.fellowships?.abbreviation ?? '') === filter)
+
+    if (!search.trim()) return afterChip
+
+    const words = search.trim().toLowerCase().split(/\s+/).filter(Boolean)
+
+    // Tier 1 (primary): ALL words must appear in the meeting name
+    const nameMatches = afterChip.filter(m =>
+      words.every(w => m.name.toLowerCase().includes(w))
+    )
+
+    // Tier 2 (secondary): ALL words must appear in address/city
+    // Excludes tier-1 results and the fellowship abbreviation field
+    const tier1Ids = new Set(nameMatches.map(m => m.id))
+    const addrMatches = afterChip.filter(m => {
+      if (tier1Ids.has(m.id)) return false
+      const addr = `${m.location_name ?? ''} ${m.city ?? ''}`.toLowerCase()
+      return words.every(w => addr.includes(w))
     })
+
+    // Name matches rank first, address matches second
+    return [...nameMatches, ...addrMatches]
   }
 
   const filteredSaved  = applyFilter(savedMeetings)
