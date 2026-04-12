@@ -72,7 +72,7 @@ export default function AddSponseeModal({ onClose, mode = 'add_sponsee' }: Props
         {/* Close */}
         <button onClick={onClose} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--mid)', fontSize: 20, lineHeight: 1, padding: 4 }}>✕</button>
 
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 8 }}>{isFindSponsor ? 'My Recovery' : 'Sponsor View'}</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 8 }}>{isFindSponsor ? 'My Recovery' : 'My Sponsees'}</div>
         <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 600, color: 'var(--navy)', letterSpacing: '-0.5px', marginBottom: 6 }}>{isFindSponsor ? 'Find a Sponsor' : 'Add a Sponsee'}</h2>
         <p style={{ fontSize: 14, color: 'var(--mid)', lineHeight: 1.6, marginBottom: 24 }}>
           {isFindSponsor

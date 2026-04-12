@@ -99,8 +99,8 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
 
   return (
     <div style={{ maxWidth: 780, margin: '0 auto', padding: '32px 20px' }}>
-      <Link href="/dashboard?tab=sponsor" className="text-teal text-sm font-medium hover:underline" style={{ fontFamily: 'var(--font-body)' }}>
-        ← Back to Sponsor View
+      <Link href="/dashboard?tab=sponsees" className="text-teal text-sm font-medium hover:underline" style={{ fontFamily: 'var(--font-body)' }}>
+        ← Back to My Sponsees
       </Link>
 
       {/* Header */}

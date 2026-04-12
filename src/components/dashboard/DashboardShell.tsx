@@ -17,7 +17,7 @@ import CheckInModal from './CheckInModal'
 import PendingRequests from './PendingRequests'
 import type { PendingRequest } from './PendingRequests'
 
-type Role = 'my' | 'meetings' | 'sponsor'
+type Role = 'my' | 'sponsees' | 'meetings'
 type Tab = 'overview' | 'stepwork' | 'journal' | 'meetings' | 'tasks' | 'saved' | 'privacy'
 
 export interface CheckIn { id:string; check_in_date:string; mood:string|null; notes:string|null; sober_today:boolean; meetings_attended:number }
@@ -76,8 +76,8 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    if (params.get('tab') === 'sponsor' && isSponsor) {
-      setRole('sponsor')
+    if (params.get('tab') === 'sponsees' && isSponsor) {
+      setRole('sponsees')
       const url = new URL(window.location.href)
       url.searchParams.delete('tab')
       window.history.replaceState({}, '', url.toString())
@@ -109,9 +109,9 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
   const currentStep = allStepsDone ? 12 : Math.max(1, completedSteps + 1)
 
   const roles = [
-    { id: 'my' as Role, label: '⚓ My Dashboard' },
+    { id: 'my'       as Role, label: '⚓ My Recovery'     },
+    ...(isSponsor ? [{ id: 'sponsees' as Role, label: '👥 My Sponsees' }] : []),
     { id: 'meetings' as Role, label: '📍 Meeting Check-in' },
-    ...(isSponsor ? [{ id: 'sponsor' as Role, label: '👥 Sponsor View' }] : []),
   ]
 
   return (
@@ -136,7 +136,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
           </div>
         </div>
 
-        {/* ── My Dashboard ── */}
+        {/* ── My Recovery ── */}
         {role === 'my' && (
           <>
             {!onboardingCompleted && <OnboardingCard userId={userId} />}
@@ -181,7 +181,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
         )}
 
         {role === 'meetings' && <MeetingCheckin userId={userId} />}
-        {role === 'sponsor' && isSponsor && <SponsorView sponsees={sponsees} pendingRequests={sponsorPendingRequests} />}
+        {role === 'sponsees' && isSponsor && <SponsorView sponsees={sponsees} pendingRequests={sponsorPendingRequests} />}
       </div>
 
       {checkInOpen && <CheckInModal userId={userId} onClose={() => setCheckInOpen(false)} />}
