@@ -614,7 +614,11 @@ async function handleSearch(request: Request, rawQuery: string, context: SearchC
   if (q.length < 2) return Response.json(emptyResponse(q));
 
   // 2. Cache (before auth/rate-limit — cached results don't hit the AI)
-  const cacheKey = `${context}:${q.toLowerCase().slice(0, 150)}`;
+  // Include current day in key for meeting-like queries so "today" doesn't serve yesterday's results
+  const nowPST    = getPSTDate();
+  const todayDay  = DOW[nowPST.getDay()];
+  const isMeetingLike = /\bmeeting\b|\btoday\b|\btonight\b|\bnear\s+me\b|\bnearby\b/i.test(q);
+  const cacheKey = `${context}:${q.toLowerCase().slice(0, 150)}${isMeetingLike ? `:${todayDay}` : ""}`;
   const cached   = queryCache.get(cacheKey);
   const ttl      = isCommonQuery(q) ? CACHE_TTL_COMMON_MS : CACHE_TTL_MS;
   if (cached && Date.now() - cached.ts < ttl) {
@@ -643,24 +647,22 @@ async function handleSearch(request: Request, rawQuery: string, context: SearchC
   // 6. Record usage
   recordRequest(identifier);
 
-  // 7. Compute PST time (used for date injection and day-of-week filtering)
-  const nowPST = getPSTDate();
-
-  // 8. Keyword fallback when no API key
+  // 7. Keyword fallback when no API key
   if (!process.env.ANTHROPIC_API_KEY) {
     const result = await keywordSearch(q, context);
     return Response.json(result);
   }
 
-  // 9. AI classification
+  // 8. AI classification
   const intent = await classifyIntent(q, context, nowPST);
+  console.log("[smart-search] Haiku intent:", JSON.stringify(intent));
   if (!intent) {
     // Classification failed — fall back to keyword search across all tables
     const result = await keywordSearch(q, context);
     return Response.json(result);
   }
 
-  // 10. Decide which tables to query
+  // 9. Decide which tables to query
   const limits = CONTEXT_LIMITS[context];
   const isInformational = intent.query_intent === "informational";
   const isStepWork      = intent.query_intent === "step_work";
@@ -676,10 +678,11 @@ async function handleSearch(request: Request, rawQuery: string, context: SearchC
     intent.help_type.some((h) => ["treatment", "sober_living", "therapist"].includes(h))
   );
 
-  // Day-of-week filter: apply for meeting_search when query mentions today/near-me/a weekday
+  // Day-of-week filter: meeting_search always defaults to today; explicit day/keyword overrides
   const dayFilter = (intent.query_intent === "meeting_search" && wantsMeetings)
-    ? detectDayFilter(q, nowPST)
+    ? (detectDayFilter(q, nowPST) ?? todayDay)
     : null;
+  console.log("[smart-search] Meeting query params:", { query_intent: intent.query_intent, wantsMeetings, dayFilter, location: intent.location, fellowship_slugs: intent.fellowship_slugs });
 
   // For step_work intent: get user's primary fellowship to scope workbook results
   let userFellowshipId: string | null = null;
@@ -705,7 +708,7 @@ async function handleSearch(request: Request, rawQuery: string, context: SearchC
     }
   }
 
-  // 11. Parallel DB queries
+  // 10. Parallel DB queries
   const [meetings, facilities, articles, step_work_results] = await Promise.all([
     wantsMeetings   ? fetchMeetings(intent, limits.meetings, dayFilter)   : Promise.resolve([] as MeetingResult[]),
     wantsFacilities ? fetchFacilities(intent, limits.facilities) : Promise.resolve([] as FacilityResult[]),
@@ -724,7 +727,7 @@ async function handleSearch(request: Request, rawQuery: string, context: SearchC
     ai_powered: true,
   };
 
-  // 11. Cache
+  // 11. Cache result
   if (queryCache.size >= MAX_CACHE_SIZE) {
     queryCache.delete(queryCache.keys().next().value!);
   }
