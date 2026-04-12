@@ -96,6 +96,138 @@ export async function requestSponsor(sponsorUserId: string): Promise<void> {
   revalidatePath('/dashboard')
 }
 
+// ─── Step Work Report ─────────────────────────────────────────────────────────
+
+export interface StepWorkReportEntry {
+  id: string
+  sectionTitle: string
+  stepNumber: number | null
+  slug: string
+  reviewStatus: string | null
+  submittedAt: string | null
+  reviewedAt: string | null
+  updatedAt: string
+  createdAt: string
+  responses: Record<string, unknown> | null
+  totalPrompts: number
+}
+
+export interface StepWorkReportData {
+  entries: StepWorkReportEntry[]        // last 90 days, newest first
+  completedSteps: number
+  totalSteps: number
+  fellowshipName: string | null
+  awaitingReview: number                // all-time submitted count
+  lastActivityDate: string | null       // most recent updated_at ever
+}
+
+export async function getSponseeStepWorkReport(sponseeId: string): Promise<StepWorkReportData> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Verify active relationship and capture fellowship_id
+  const { data: rel } = await supabase
+    .from('sponsor_relationships')
+    .select('id, fellowship_id')
+    .eq('sponsor_id', user.id)
+    .eq('sponsee_id', sponseeId)
+    .eq('status', 'active')
+    .maybeSingle()
+
+  if (!rel) throw new Error('No active sponsor relationship found.')
+
+  const admin = createAdminClient()
+  const ninetyDaysAgo = new Date()
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 89)
+  ninetyDaysAgo.setHours(0, 0, 0, 0)
+
+  const fellowshipId = rel.fellowship_id as string | null
+
+  // Parallel: entries in range + completions + awaiting count + last activity
+  const [entriesRes, completionsRes, awaitingRes, lastActivityRes] = await Promise.all([
+    admin
+      .from('step_work_entries')
+      .select('id, responses, review_status, submitted_at, reviewed_at, updated_at, created_at, program_workbooks(title, step_number, slug, prompts)')
+      .eq('user_id', sponseeId)
+      .gte('updated_at', ninetyDaysAgo.toISOString())
+      .order('updated_at', { ascending: false }),
+    fellowshipId
+      ? admin.from('step_completions').select('step_number').eq('user_id', sponseeId).eq('fellowship_id', fellowshipId).eq('is_completed', true)
+      : admin.from('step_completions').select('step_number').eq('user_id', sponseeId).eq('is_completed', true),
+    admin
+      .from('step_work_entries')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', sponseeId)
+      .eq('review_status', 'submitted'),
+    admin
+      .from('step_work_entries')
+      .select('updated_at')
+      .eq('user_id', sponseeId)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ])
+
+  // Fellowship-specific stats (conditional second pass)
+  let totalSteps = 12
+  let fellowshipName: string | null = null
+  if (fellowshipId) {
+    const [totalStepsRes, fellowshipRes] = await Promise.all([
+      admin
+        .from('program_workbooks')
+        .select('step_number')
+        .eq('fellowship_id', fellowshipId)
+        .not('step_number', 'is', null)
+        .eq('is_active', true),
+      admin.from('fellowships').select('name').eq('id', fellowshipId).single(),
+    ])
+    const distinctSteps = new Set(
+      (totalStepsRes.data ?? [])
+        .filter((w: { step_number: number | null }) => w.step_number !== null)
+        .map((w: { step_number: number }) => w.step_number)
+    ).size
+    totalSteps = distinctSteps || 12
+    fellowshipName = (fellowshipRes.data as { name: string } | null)?.name ?? null
+  }
+
+  // Build typed entries
+  const entries: StepWorkReportEntry[] = (entriesRes.data ?? []).map((e) => {
+    const wb = e.program_workbooks as unknown as {
+      title: string; step_number: number | null; slug: string; prompts: unknown[] | null
+    } | null
+    const prompts = wb?.prompts
+    return {
+      id: e.id as string,
+      sectionTitle: wb?.title ?? 'Step work',
+      stepNumber: (wb?.step_number ?? null) as number | null,
+      slug: wb?.slug ?? '',
+      reviewStatus: e.review_status as string | null,
+      submittedAt: e.submitted_at as string | null,
+      reviewedAt: e.reviewed_at as string | null,
+      updatedAt: e.updated_at as string,
+      createdAt: e.created_at as string,
+      responses: e.responses as Record<string, unknown> | null,
+      totalPrompts: Array.isArray(prompts) ? prompts.length : 0,
+    }
+  })
+
+  const completedSteps = new Set(
+    (completionsRes.data ?? []).map((c: { step_number: number }) => c.step_number)
+  ).size
+
+  return {
+    entries,
+    completedSteps,
+    totalSteps,
+    fellowshipName,
+    awaitingReview: awaitingRes.count ?? 0,
+    lastActivityDate: (lastActivityRes.data as { updated_at: string } | null)?.updated_at ?? null,
+  }
+}
+
+// ─── Check-in Report ──────────────────────────────────────────────────────────
+
 export interface CheckInReportEntry {
   check_in_date: string
   mood: string | null
