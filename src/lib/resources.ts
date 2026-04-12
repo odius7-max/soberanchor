@@ -101,6 +101,7 @@ export type SearchIntent = {
   include_crisis: boolean;
   fellowship_slugs: string[];
   facility_types: string[];
+  query_intent: "meeting_search" | "informational" | "facility_search" | "crisis";
 };
 
 export type MeetingResult = {

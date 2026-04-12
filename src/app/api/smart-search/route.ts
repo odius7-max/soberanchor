@@ -111,7 +111,41 @@ function getIp(request: Request): string {
 
 // ─── Claude classification ────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are a recovery resource classifier for SoberAnchor.com, a comprehensive addiction recovery directory.
+/** Returns the current wall-clock time in the America/Los_Angeles timezone. */
+function getPSTDate(): Date {
+  // toLocaleString with a timezone produces a string that, when parsed,
+  // gives a Date whose getHours/getDay/etc. reflect that timezone.
+  return new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+}
+
+const DOW = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"] as const;
+
+/**
+ * Detects whether a query is asking about today/now/near-me and returns
+ * the matching day-of-week string (e.g. "Monday") or null.
+ * Also handles explicit day names ("AA meetings Saturday").
+ */
+function detectDayFilter(query: string, nowPST: Date): string | null {
+  if (/\b(today|tonight|this morning|this afternoon|this evening|right now|near me|nearby|close to me)\b/i.test(query)) {
+    return DOW[nowPST.getDay()];
+  }
+  const m = query.match(/\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i);
+  if (m) return m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase();
+  return null;
+}
+
+function buildSystemPrompt(nowPST: Date): string {
+  const dayName   = DOW[nowPST.getDay()];
+  const month     = nowPST.toLocaleString("en-US", { month: "long" });
+  const dateStr   = `${dayName}, ${month} ${nowPST.getDate()}, ${nowPST.getFullYear()}`;
+  const h         = nowPST.getHours();
+  const min       = nowPST.getMinutes().toString().padStart(2, "0");
+  const ampm      = h >= 12 ? "PM" : "AM";
+  const timeStr   = `${h % 12 || 12}:${min} ${ampm} PST`;
+
+  return `You are a recovery resource classifier for SoberAnchor.com, a comprehensive addiction recovery directory.
+
+Today is ${dateStr}. The current time is ${timeStr}. When users ask for meetings today, this week, or near me, use this date to filter results by day of week. If no time context is given, show meetings for today first, then upcoming days.
 
 Given a user's natural-language query, classify their intent and return ONLY a JSON object with these exact fields:
 
@@ -123,8 +157,15 @@ Given a user's natural-language query, classify their intent and return ONLY a J
   "urgency": "low" | "moderate" | "high",
   "include_crisis": boolean,
   "fellowship_slugs": string[],
-  "facility_types": string[]
+  "facility_types": string[],
+  "query_intent": "meeting_search" | "informational" | "facility_search" | "crisis"
 }
+
+query_intent rules:
+- "meeting_search": user wants to find specific meetings ("AA meetings near me", "meetings today", "NA meetings Saturday")
+- "informational": user is asking a question about recovery ("what happens at a first AA meeting", "how does NA work", "what is a sponsor", "what should I expect") — for this intent, prioritize articles/resources and suppress meeting listings
+- "facility_search": user wants treatment centers, sober living, therapists, outpatient programs
+- "crisis": user is in distress (want to die, can't go on, relapsed, emergency, overdose, suicide)
 
 Field rules:
 - "issue": one of: alcohol, opioids, gambling, eating_disorder, meth, cocaine, marijuana, nicotine, sex_addiction, debt, internet_gaming, work, family_support, general
@@ -139,11 +180,12 @@ Inference rules:
 - Treatment/rehab/detox language → facility_types includes "treatment"
 - Sober house/halfway/sober living → facility_types includes "sober_living"
 - Counselor/therapist/therapy → facility_types includes "therapist"
-- Crisis language (want to die, can't go on, overdose, emergency, suicide) → urgency="high", include_crisis=true
+- Crisis language (want to die, can't go on, overdose, emergency, suicide) → urgency="high", include_crisis=true, query_intent="crisis"
 - Any query mentioning "meeting" or a fellowship by name → always populate fellowship_slugs
 - Any query mentioning treatment, rehab, detox, facility, center, sober living → always populate facility_types
 - For general recovery queries with no specific issue → aa and na as fellowship_slugs
 - Return ONLY the JSON object, no explanation or markdown`;
+}
 
 type SearchContext = "home" | "resources" | "directory" | "member";
 
@@ -154,7 +196,7 @@ const CONTEXT_HINTS: Record<SearchContext, string> = {
   member:    "User is in their personal recovery dashboard — they may be asking about step work, sponsor relationships, or daily recovery practices.",
 };
 
-async function classifyIntent(query: string, context: SearchContext): Promise<SearchIntent | null> {
+async function classifyIntent(query: string, context: SearchContext, nowPST: Date): Promise<SearchIntent | null> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return null;
 
@@ -163,13 +205,16 @@ async function classifyIntent(query: string, context: SearchContext): Promise<Se
     const msg = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 400,
-      system: SYSTEM_PROMPT,
+      system: buildSystemPrompt(nowPST),
       messages: [{ role: "user", content: `[Context: ${CONTEXT_HINTS[context]}]\n\nQuery: ${query}` }],
     });
 
     const text  = msg.content[0].type === "text" ? msg.content[0].text.trim() : "";
     const clean = text.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
-    return JSON.parse(clean) as SearchIntent;
+    const parsed = JSON.parse(clean) as SearchIntent;
+    // Ensure query_intent always has a value (graceful fallback for older cached responses)
+    if (!parsed.query_intent) parsed.query_intent = "meeting_search";
+    return parsed;
   } catch {
     return null;
   }
@@ -203,7 +248,26 @@ function toMeeting(m: Record<string, unknown>, idToFellowship: Record<string, { 
   };
 }
 
-async function queryMeetings(slugs: string[], location: string | null, limit: number): Promise<MeetingResult[]> {
+/** Parse a time string like "7:00 PM" or "19:00" into minutes since midnight for sorting. */
+function parseTimeMinutes(t: string | null): number {
+  if (!t) return 9999;
+  const pm = /pm/i.test(t);
+  const am = /am/i.test(t);
+  const nums = t.match(/(\d+):(\d+)/);
+  if (!nums) return 9999;
+  let h = parseInt(nums[1], 10);
+  const m = parseInt(nums[2], 10);
+  if (pm && h !== 12) h += 12;
+  if (am && h === 12) h = 0;
+  return h * 60 + m;
+}
+
+async function queryMeetings(
+  slugs: string[],
+  location: string | null,
+  limit: number,
+  dayFilter?: string | null,
+): Promise<MeetingResult[]> {
   const { data: fellowships } = await supabase
     .from("fellowships").select("id, name, slug").in("slug", slugs);
 
@@ -216,18 +280,39 @@ async function queryMeetings(slugs: string[], location: string | null, limit: nu
 
   const MEETING_SELECT = "id, name, fellowship_id, city, state, format, day_of_week, start_time, meeting_url, slug";
 
-  let q = supabase.from("meetings").select(MEETING_SELECT).in("fellowship_id", fids).limit(limit);
+  // Fetch a larger batch so we can sort client-side when day filtering
+  const fetchLimit = dayFilter ? Math.min(limit * 4, 100) : limit;
+
+  let q = supabase.from("meetings").select(MEETING_SELECT).in("fellowship_id", fids).limit(fetchLimit);
   if (location) q = q.ilike("city", `%${location}%`);
+  if (dayFilter) q = q.eq("day_of_week", dayFilter);
 
-  const { data } = await q;
+  let { data } = await q;
 
-  // Retry without location filter if no results
+  // Retry without location if no results
   if (!data?.length && location) {
-    const { data: fallback } = await supabase.from("meetings").select(MEETING_SELECT).in("fellowship_id", fids).limit(limit);
-    return (fallback ?? []).map((m) => toMeeting(m, idToFellowship));
+    let qFallback = supabase.from("meetings").select(MEETING_SELECT).in("fellowship_id", fids).limit(fetchLimit);
+    if (dayFilter) qFallback = qFallback.eq("day_of_week", dayFilter);
+    const { data: fb } = await qFallback;
+    data = fb;
   }
 
-  return (data ?? []).map((m) => toMeeting(m, idToFellowship));
+  // Retry without day filter if still no results
+  if (!data?.length && dayFilter) {
+    let qNoDow = supabase.from("meetings").select(MEETING_SELECT).in("fellowship_id", fids).limit(limit);
+    if (location) qNoDow = qNoDow.ilike("city", `%${location}%`);
+    const { data: fb2 } = await qNoDow;
+    data = fb2;
+  }
+
+  const results = (data ?? []).map((m) => toMeeting(m, idToFellowship));
+
+  // Sort by start_time ascending when day filtering so soonest meeting comes first
+  if (dayFilter && results.length > 1) {
+    results.sort((a, b) => parseTimeMinutes(a.start_time) - parseTimeMinutes(b.start_time));
+  }
+
+  return results.slice(0, limit);
 }
 
 async function queryFacilities(types: string[], location: string | null, limit: number): Promise<FacilityResult[]> {
@@ -258,14 +343,14 @@ async function queryFacilities(types: string[], location: string | null, limit: 
 
 // ─── AI-path DB fetchers ──────────────────────────────────────────────────────
 
-async function fetchMeetings(intent: SearchIntent, limit: number): Promise<MeetingResult[]> {
+async function fetchMeetings(intent: SearchIntent, limit: number, dayFilter?: string | null): Promise<MeetingResult[]> {
   // Use classified slugs; fall back to issue-based defaults; then aa+na as last resort
   const slugs =
     intent.fellowship_slugs.length > 0
       ? intent.fellowship_slugs
       : (ISSUE_FELLOWSHIP_MAP[intent.issue] ?? ["aa", "na"]);
 
-  return queryMeetings(slugs, intent.location, limit);
+  return queryMeetings(slugs, intent.location, limit, dayFilter);
 }
 
 async function fetchFacilities(intent: SearchIntent, limit: number): Promise<FacilityResult[]> {
@@ -477,37 +562,46 @@ async function handleSearch(request: Request, rawQuery: string, context: SearchC
   // 6. Record usage
   recordRequest(identifier);
 
-  // 7. Keyword fallback when no API key
+  // 7. Compute PST time (used for date injection and day-of-week filtering)
+  const nowPST = getPSTDate();
+
+  // 8. Keyword fallback when no API key
   if (!process.env.ANTHROPIC_API_KEY) {
     const result = await keywordSearch(q, context);
     return Response.json(result);
   }
 
-  // 8. AI classification
-  const intent = await classifyIntent(q, context);
+  // 9. AI classification
+  const intent = await classifyIntent(q, context, nowPST);
   if (!intent) {
     // Classification failed — fall back to keyword search across all tables
     const result = await keywordSearch(q, context);
     return Response.json(result);
   }
 
-  // 9. Decide which tables to query
-  //    Use fellowship_slugs/facility_types from intent; fall back to help_type signals.
+  // 10. Decide which tables to query
   const limits = CONTEXT_LIMITS[context];
+  const isInformational = intent.query_intent === "informational";
 
-  const wantsMeetings = !limits.skipMeetings && (
+  // Informational queries → articles only; suppress meetings and facilities
+  const wantsMeetings = !limits.skipMeetings && !isInformational && (
     intent.fellowship_slugs.length > 0 ||
     intent.help_type.some((h) => ["meetings", "family_meetings"].includes(h))
   );
 
-  const wantsFacilities = !limits.skipFacilities && (
+  const wantsFacilities = !limits.skipFacilities && !isInformational && (
     intent.facility_types.length > 0 ||
     intent.help_type.some((h) => ["treatment", "sober_living", "therapist"].includes(h))
   );
 
-  // 10. Parallel DB queries
+  // Day-of-week filter: apply for meeting_search when query mentions today/near-me/a weekday
+  const dayFilter = (intent.query_intent === "meeting_search" && wantsMeetings)
+    ? detectDayFilter(q, nowPST)
+    : null;
+
+  // 11. Parallel DB queries
   const [meetings, facilities, articles] = await Promise.all([
-    wantsMeetings   ? fetchMeetings(intent, limits.meetings)   : Promise.resolve([] as MeetingResult[]),
+    wantsMeetings   ? fetchMeetings(intent, limits.meetings, dayFilter)   : Promise.resolve([] as MeetingResult[]),
     wantsFacilities ? fetchFacilities(intent, limits.facilities) : Promise.resolve([] as FacilityResult[]),
     fetchArticles(intent, context),
   ]);
