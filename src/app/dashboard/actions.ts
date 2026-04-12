@@ -4,22 +4,20 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-// Status of any existing relationship between the searcher and the found user.
-// 'none'               — no active or pending relationship
-// 'is_your_sponsor'    — they are actively your sponsor (sponsor=them, sponsee=you)
-// 'is_your_sponsee'    — you are actively their sponsor (sponsor=you, sponsee=them)
-// 'pending_sent'       — you sent a pending request to them (either direction)
-// 'pending_received'   — they sent a pending request to you (either direction)
-export type RelationshipStatus =
-  | 'none'
-  | 'is_your_sponsor'
-  | 'is_your_sponsee'
-  | 'pending_sent'
-  | 'pending_received'
+// A single existing relationship row between the searcher and the found user.
+// direction 'you_are_sponsor'  → sponsor_id=you,  sponsee_id=them
+// direction 'they_are_sponsor' → sponsor_id=them, sponsee_id=you
+export interface ExistingRelationship {
+  relationshipId:  string
+  direction:       'you_are_sponsor' | 'they_are_sponsor'
+  fellowshipId:    string | null
+  fellowshipAbbr:  string | null
+  status:          'active' | 'pending'
+}
 
 export type SearchResult =
   | { found: false; reason: 'not_found' | 'no_profile' | 'self' }
-  | { found: true; userId: string; email: string; displayName: string | null; relationshipStatus: RelationshipStatus }
+  | { found: true; userId: string; email: string; displayName: string | null; existingRelationships: ExistingRelationship[] }
 
 export async function searchUserByEmail(email: string): Promise<SearchResult> {
   const supabase = await createClient()
@@ -49,96 +47,119 @@ export async function searchUserByEmail(email: string): Promise<SearchResult> {
 
   if (!profile) return { found: false, reason: 'no_profile' }
 
-  // Check for any existing relationship in either direction (active or pending).
-  // We use the admin client here so RLS never silently hides a relationship.
-  const { data: relationships } = await admin
-    .from('sponsor_relationships')
-    .select('sponsor_id, sponsee_id, status')
-    .or(
-      `and(sponsor_id.eq.${user.id},sponsee_id.eq.${found.id}),` +
-      `and(sponsor_id.eq.${found.id},sponsee_id.eq.${user.id})`
-    )
-    .in('status', ['active', 'pending'])
+  // Fetch all relationships between these two users in either direction.
+  // Admin client so RLS never hides a row.
+  const [relsRes, fellowshipsRes] = await Promise.all([
+    admin
+      .from('sponsor_relationships')
+      .select('id, sponsor_id, sponsee_id, fellowship_id, status')
+      .or(
+        `and(sponsor_id.eq.${user.id},sponsee_id.eq.${found.id}),` +
+        `and(sponsor_id.eq.${found.id},sponsee_id.eq.${user.id})`
+      )
+      .in('status', ['active', 'pending']),
+    admin.from('fellowships').select('id, abbreviation'),
+  ])
 
-  let relationshipStatus: RelationshipStatus = 'none'
+  const abbrMap: Record<string, string> = Object.fromEntries(
+    (fellowshipsRes.data ?? []).map((f: { id: string; abbreviation: string }) => [f.id, f.abbreviation])
+  )
 
-  for (const rel of relationships ?? []) {
-    if (rel.status === 'active') {
-      // Active relationships take priority — set and stop looking
-      if (rel.sponsor_id === found.id && rel.sponsee_id === user.id) {
-        relationshipStatus = 'is_your_sponsor'
-      } else if (rel.sponsor_id === user.id && rel.sponsee_id === found.id) {
-        relationshipStatus = 'is_your_sponsee'
-      }
-      break
-    }
-    // Pending: track but keep looking in case there's also an active row
-    if (rel.status === 'pending' && relationshipStatus === 'none') {
-      if (rel.sponsor_id === found.id && rel.sponsee_id === user.id) {
-        // They initiated — from the current user's perspective this is "received"
-        relationshipStatus = 'pending_received'
-      } else if (rel.sponsor_id === user.id && rel.sponsee_id === found.id) {
-        relationshipStatus = 'pending_sent'
-      }
-    }
-  }
+  const existingRelationships: ExistingRelationship[] = (relsRes.data ?? []).map(rel => ({
+    relationshipId:  rel.id as string,
+    direction:       rel.sponsor_id === user.id ? 'you_are_sponsor' : 'they_are_sponsor',
+    fellowshipId:    rel.fellowship_id as string | null,
+    fellowshipAbbr:  rel.fellowship_id ? (abbrMap[rel.fellowship_id as string] ?? null) : null,
+    status:          rel.status as 'active' | 'pending',
+  }))
 
   return {
     found: true,
     userId: found.id,
     email: found.email ?? email,
     displayName: profile.display_name,
-    relationshipStatus,
+    existingRelationships,
   }
 }
 
-export async function sendSponsorRequest(sponseeUserId: string): Promise<void> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
-
-  // Check for an existing relationship
-  const { data: existing } = await supabase
-    .from('sponsor_relationships')
-    .select('id, status')
-    .eq('sponsor_id', user.id)
-    .eq('sponsee_id', sponseeUserId)
-    .maybeSingle()
-
-  if (existing?.status === 'active') throw new Error('You are already sponsoring this person.')
-  if (existing?.status === 'pending') throw new Error('A request is already pending.')
-
-  const { error } = await supabase
-    .from('sponsor_relationships')
-    .insert({ sponsor_id: user.id, sponsee_id: sponseeUserId, status: 'pending' })
-
-  if (error) throw new Error(error.message)
-  revalidatePath('/dashboard')
-}
-
-// Sponsee-initiated: current user wants this person as their sponsor.
-// INSERT RLS requires sponsor_id = auth.uid(), so we use the admin client here.
-export async function requestSponsor(sponsorUserId: string): Promise<void> {
+// Sponsor-initiated: current user (sponsor) sends a request to the sponsee.
+export async function sendSponsorRequest(sponseeUserId: string, fellowshipId: string | null): Promise<void> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
   const admin = createAdminClient()
 
-  // Check for an existing relationship in either direction
-  const { data: existing } = await admin
+  // Per-fellowship duplicate check (DB constraint is the backstop, this gives a clear message)
+  const dupQuery = admin
+    .from('sponsor_relationships')
+    .select('id, status')
+    .eq('sponsor_id', user.id)
+    .eq('sponsee_id', sponseeUserId)
+    .in('status', ['active', 'pending'])
+  const { data: existing } = fellowshipId
+    ? await dupQuery.eq('fellowship_id', fellowshipId)
+    : await dupQuery.is('fellowship_id', null)
+
+  if (existing && existing.length > 0) {
+    const s = existing[0].status
+    if (s === 'active')  throw new Error('You are already sponsoring this person in this program.')
+    if (s === 'pending') throw new Error('A request is already pending for this program.')
+  }
+
+  const { error } = await admin
+    .from('sponsor_relationships')
+    .insert({ sponsor_id: user.id, sponsee_id: sponseeUserId, fellowship_id: fellowshipId ?? null, status: 'pending' })
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/dashboard')
+}
+
+// Sponsee-initiated: current user wants this person as their sponsor.
+// Uses admin client because INSERT RLS requires sponsor_id = auth.uid().
+export async function requestSponsor(sponsorUserId: string, fellowshipId: string | null): Promise<void> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const admin = createAdminClient()
+
+  // Per-fellowship duplicate check
+  const dupQuery = admin
     .from('sponsor_relationships')
     .select('id, status')
     .eq('sponsor_id', sponsorUserId)
     .eq('sponsee_id', user.id)
-    .maybeSingle()
+    .in('status', ['active', 'pending'])
+  const { data: existing } = fellowshipId
+    ? await dupQuery.eq('fellowship_id', fellowshipId)
+    : await dupQuery.is('fellowship_id', null)
 
-  if (existing?.status === 'active') throw new Error('You already have this person as your sponsor.')
-  if (existing?.status === 'pending') throw new Error('A request is already pending.')
+  if (existing && existing.length > 0) {
+    const s = existing[0].status
+    if (s === 'active')  throw new Error('You already have this person as your sponsor for this program.')
+    if (s === 'pending') throw new Error('A request is already pending for this program.')
+  }
 
   const { error } = await admin
     .from('sponsor_relationships')
-    .insert({ sponsor_id: sponsorUserId, sponsee_id: user.id, status: 'pending' })
+    .insert({ sponsor_id: sponsorUserId, sponsee_id: user.id, fellowship_id: fellowshipId ?? null, status: 'pending' })
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/dashboard')
+}
+
+// Either party can unlink an active or pending sponsor relationship.
+export async function removeSponsorRelationship(relationshipId: string): Promise<void> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { error } = await supabase
+    .from('sponsor_relationships')
+    .update({ status: 'ended', ended_at: new Date().toISOString() })
+    .eq('id', relationshipId)
+    .or(`sponsor_id.eq.${user.id},sponsee_id.eq.${user.id}`)
 
   if (error) throw new Error(error.message)
   revalidatePath('/dashboard')

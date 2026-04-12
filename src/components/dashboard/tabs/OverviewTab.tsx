@@ -6,7 +6,9 @@ import { createClient } from '@/lib/supabase/client'
 import AddSponseeModal from '@/components/dashboard/AddSponseeModal'
 import SponsorProTrialModal from '@/components/dashboard/SponsorProTrialModal'
 import { markActivityRead } from '@/app/dashboard/activity/actions'
+import { removeSponsorRelationship } from '@/app/dashboard/actions'
 import { useSponsorAccess } from '@/hooks/useSponsorAccess'
+import type { ActiveSponsor } from '@/components/dashboard/DashboardShell'
 
 const STEPS = [
   { n: 1, s: 'Powerlessness', desc: 'We admitted we were powerless over our addiction' },
@@ -49,7 +51,7 @@ interface Props {
   meetingsTotal: number
   recentMeetings: MeetingAttendance[]
   readingAssignments: ReadingAssignment[]
-  activeSponsor: string | null
+  activeSponsors: ActiveSponsor[]
   isAvailableSponsor: boolean
   activityItems: ActivityItem[]
   displayName?: string
@@ -57,7 +59,7 @@ interface Props {
   onJournal: () => void
 }
 
-export default function OverviewTab({ userId, activeFellowshipId, currentStep, completedSteps, allStepsDone, journalCount, stepWorkCount, recentCheckIns, meetingsThisWeek, meetingsTotal, recentMeetings, readingAssignments, activeSponsor, isAvailableSponsor, activityItems, displayName, onCheckIn, onJournal }: Props) {
+export default function OverviewTab({ userId, activeFellowshipId, currentStep, completedSteps, allStepsDone, journalCount, stepWorkCount, recentCheckIns, meetingsThisWeek, meetingsTotal, recentMeetings, readingAssignments, activeSponsors, isAvailableSponsor, activityItems, displayName, onCheckIn, onJournal }: Props) {
   const router = useRouter()
   const step = STEPS[currentStep - 1]
   const [toggling, setToggling] = useState<string | null>(null)
@@ -65,6 +67,17 @@ export default function OverviewTab({ userId, activeFellowshipId, currentStep, c
   const [togglingRole, setTogglingRole] = useState(false)
   const [showFindSponsor, setShowFindSponsor] = useState(false)
   const [navigating, setNavigating] = useState(false)
+  const [unlinking, setUnlinking] = useState<string | null>(null)
+
+  async function handleUnlink(relationshipId: string) {
+    setUnlinking(relationshipId)
+    try {
+      await removeSponsorRelationship(relationshipId)
+      router.refresh()
+    } finally {
+      setUnlinking(null)
+    }
+  }
   const [showTrialModal, setShowTrialModal] = useState(false)
   const { trialAvailable, refresh: refreshAccess } = useSponsorAccess(userId)
 
@@ -296,22 +309,33 @@ export default function OverviewTab({ userId, activeFellowshipId, currentStep, c
         </div>
 
         {/* Sponsee status */}
-        <div className="flex items-center justify-between py-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-          <div>
-            <div className="font-semibold text-dark" style={{ fontSize: '13px' }}>Sponsee</div>
-            <div className="text-mid" style={{ fontSize: '12px', marginTop: '2px', lineHeight: 1.4 }}>
-              {activeSponsor ? <>Working with <span className="font-semibold" style={{ color: 'var(--teal)' }}>{activeSponsor}</span></> : 'No active sponsor'}
+        <div className="py-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+          <div className="font-semibold text-dark" style={{ fontSize: '13px', marginBottom: '6px' }}>Sponsee</div>
+          {activeSponsors.length === 0 ? (
+            <div className="text-mid" style={{ fontSize: '12px', lineHeight: 1.4 }}>No active sponsor</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {activeSponsors.map(s => (
+                <div key={s.relationshipId} className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    {s.fellowshipAbbr && (
+                      <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 7px', borderRadius: '20px', background: 'rgba(42,138,153,0.1)', color: 'var(--teal)', border: '1px solid rgba(42,138,153,0.2)', flexShrink: 0 }}>
+                        {s.fellowshipAbbr}
+                      </span>
+                    )}
+                    <span className="font-semibold truncate" style={{ fontSize: '12px', color: 'var(--teal)' }}>{s.name}</span>
+                  </div>
+                  <button
+                    onClick={() => handleUnlink(s.relationshipId)}
+                    disabled={unlinking === s.relationshipId}
+                    style={{ fontSize: '11px', color: 'var(--mid)', background: 'none', border: 'none', cursor: unlinking === s.relationshipId ? 'wait' : 'pointer', flexShrink: 0, padding: '2px 4px', opacity: unlinking === s.relationshipId ? 0.5 : 1 }}
+                  >
+                    {unlinking === s.relationshipId ? '…' : 'Unlink'}
+                  </button>
+                </div>
+              ))}
             </div>
-          </div>
-          <span style={{
-            fontSize: '11px', fontWeight: 700, padding: '3px 10px', borderRadius: '20px',
-            background: activeSponsor ? 'rgba(42,138,153,0.1)' : 'rgba(136,136,136,0.08)',
-            color: activeSponsor ? 'var(--teal)' : 'var(--mid)',
-            border: `1px solid ${activeSponsor ? 'rgba(42,138,153,0.2)' : 'var(--border)'}`,
-            whiteSpace: 'nowrap' as const,
-          }}>
-            {activeSponsor ? 'Active' : 'Unlinked'}
-          </span>
+          )}
         </div>
 
         {/* Sponsor status */}
@@ -343,20 +367,18 @@ export default function OverviewTab({ userId, activeFellowshipId, currentStep, c
           </button>
         </div>
 
-        {!activeSponsor && (
-          <div className="mt-3">
-            <button
-              onClick={() => setShowFindSponsor(true)}
-              className="font-semibold text-white rounded-lg transition-colors hover:bg-navy-dark"
-              style={{ fontSize: '13px', padding: '8px 16px', background: 'var(--navy)', border: 'none', cursor: 'pointer', width: '100%' }}
-            >
-              🔍 Find Your Sponsor
-            </button>
-          </div>
-        )}
+        <div className="mt-3">
+          <button
+            onClick={() => setShowFindSponsor(true)}
+            className="font-semibold text-white rounded-lg transition-colors hover:bg-navy-dark"
+            style={{ fontSize: '13px', padding: '8px 16px', background: 'var(--navy)', border: 'none', cursor: 'pointer', width: '100%' }}
+          >
+            {activeSponsors.length > 0 ? '+ Add a Sponsor' : '🔍 Find Your Sponsor'}
+          </button>
+        </div>
       </div>
 
-      {showFindSponsor && <AddSponseeModal mode="find_sponsor" onClose={() => setShowFindSponsor(false)} sponsorName={displayName} />}
+      {showFindSponsor && <AddSponseeModal userId={userId} mode="find_sponsor" onClose={() => setShowFindSponsor(false)} sponsorName={displayName} />}
       {showTrialModal && (
         <SponsorProTrialModal
           userId={userId}

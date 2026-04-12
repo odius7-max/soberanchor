@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import DashboardShell from '@/components/dashboard/DashboardShell'
-import type { CheckIn, JournalEntry, MeetingAttendance, ReadingAssignment, SponseeFull, SponseeCheckIn, ActivityItem, SobrietyMilestone, Fellowship } from '@/components/dashboard/DashboardShell'
+import type { CheckIn, JournalEntry, MeetingAttendance, ReadingAssignment, SponseeFull, SponseeCheckIn, ActivityItem, SobrietyMilestone, Fellowship, ActiveSponsor } from '@/components/dashboard/DashboardShell'
 import type { PendingRequest } from '@/components/dashboard/PendingRequests'
 
 export default async function DashboardPage() {
@@ -40,7 +40,7 @@ export default async function DashboardPage() {
     supabase.from('meeting_attendance').select('id,meeting_name,fellowship_name,attended_at,checkin_method').eq('user_id', userId).order('attended_at', { ascending: false }).limit(20),
     supabase.from('meeting_attendance').select('id', { count: 'exact', head: true }).eq('user_id', userId),
     supabase.from('check_ins').select('id', { count: 'exact', head: true }).eq('user_id', userId),
-    supabase.from('sponsor_relationships').select('id,sponsor_id,users:sponsor_id(display_name:user_profiles(display_name))').eq('sponsee_id', userId).eq('status', 'active').maybeSingle(),
+    supabase.from('sponsor_relationships').select('id,sponsor_id,fellowship_id').eq('sponsee_id', userId).eq('status', 'active'),
     // Pending where I'm the sponsee (sponsor initiated)
     supabase.from('sponsor_relationships').select('id,sponsor_id,created_at').eq('sponsee_id', userId).eq('status', 'pending'),
     // Pending where I'm the sponsor (sponsee initiated)
@@ -84,12 +84,26 @@ export default async function DashboardPage() {
   const checkInsTotal = checkInsTotalRes.count ?? 0
   const activityItems: ActivityItem[] = (activityFeedRes.data ?? []) as ActivityItem[]
 
-  // Sponsor name from relationship
-  const activeSponsorRel = sponsorRelRes.data
-  let activeSponsor: string | null = null
-  if (activeSponsorRel) {
-    const u = activeSponsorRel.users as unknown as { display_name: { display_name: string | null }[] } | null
-    activeSponsor = u?.display_name?.[0]?.display_name ?? 'Sponsor'
+  // Build activeSponsors — resolve display names via admin (RLS blocks cross-user profile reads)
+  const activeSponsorRels = (sponsorRelRes.data ?? []) as { id: string; sponsor_id: string; fellowship_id: string | null }[]
+  let activeSponsors: ActiveSponsor[] = []
+  if (activeSponsorRels.length > 0) {
+    const adminForSponsors = createAdminClient()
+    const sponsorIds = [...new Set(activeSponsorRels.map(r => r.sponsor_id))]
+    const { data: sponsorProfiles } = await adminForSponsors
+      .from('user_profiles').select('id, display_name').in('id', sponsorIds)
+    const sponsorNameMap: Record<string, string | null> = Object.fromEntries(
+      (sponsorProfiles ?? []).map((p: { id: string; display_name: string | null }) => [p.id, p.display_name])
+    )
+    activeSponsors = activeSponsorRels.map(r => {
+      const f = r.fellowship_id ? fellowships.find(f => f.id === r.fellowship_id) : null
+      return {
+        relationshipId: r.id,
+        name: sponsorNameMap[r.sponsor_id] ?? 'Sponsor',
+        fellowshipId: r.fellowship_id ?? null,
+        fellowshipAbbr: f?.abbreviation ?? null,
+      }
+    })
   }
 
   // Meetings this week (since last Sunday)
@@ -134,13 +148,14 @@ export default async function DashboardPage() {
     }))
   }
 
-  // Reading assignments (if has sponsor relationship)
+  // Reading assignments — fetch across all active sponsor relationships
   let readingAssignments: ReadingAssignment[] = []
-  if (activeSponsorRel?.id) {
+  if (activeSponsorRels.length > 0) {
+    const allRelIds = activeSponsorRels.map(r => r.id)
     const { data } = await supabase
       .from('reading_assignments')
       .select('id,title,source,is_completed,due_date,created_at')
-      .eq('relationship_id', activeSponsorRel.id)
+      .in('relationship_id', allRelIds)
       .order('created_at', { ascending: false })
     readingAssignments = (data ?? []) as ReadingAssignment[]
   }
@@ -155,8 +170,17 @@ export default async function DashboardPage() {
       .eq('status', 'active')
 
     if (relData && relData.length > 0) {
-      const sponseeIds = relData.map(r => r.sponsee_id)
-      const relMap = Object.fromEntries(relData.map(r => [r.sponsee_id, { id: r.id, fellowshipId: r.fellowship_id as string | null }]))
+      const sponseeIds = [...new Set(relData.map(r => r.sponsee_id))]
+      // Multiple relationships per sponsee are possible (different fellowships)
+      const relsBySponsee: Record<string, { id: string; fellowshipId: string | null }[]> = {}
+      for (const r of relData) {
+        if (!relsBySponsee[r.sponsee_id]) relsBySponsee[r.sponsee_id] = []
+        relsBySponsee[r.sponsee_id].push({ id: r.id, fellowshipId: r.fellowship_id as string | null })
+      }
+      // For backwards-compat step-completion filtering, use first relationship's fellowship
+      const relMap = Object.fromEntries(
+        Object.entries(relsBySponsee).map(([sid, rels]) => [sid, { id: rels[0].id, fellowshipId: rels[0].fellowshipId }])
+      )
       const sponseeAdmin = createAdminClient()
 
       const sixtyDaysAgo = new Date()
@@ -270,19 +294,25 @@ export default async function DashboardPage() {
         }
       }
 
-      // Fellowship abbreviation via relationship's fellowship_id
-      const fellowshipAbbrBySponsee: Record<string, string | null> = {}
-      for (const rel of relData) {
-        const f = rel.fellowship_id ? fellowships.find(f => f.id === rel.fellowship_id) : null
-        fellowshipAbbrBySponsee[rel.sponsee_id] = f?.abbreviation ?? null
+      // Build per-sponsee relationships list (with fellowship abbr)
+      const relationshipsBySponsee: Record<string, { id: string; fellowshipId: string | null; fellowshipAbbr: string | null }[]> = {}
+      for (const [sid, rels] of Object.entries(relsBySponsee)) {
+        relationshipsBySponsee[sid] = rels.map(r => {
+          const f = r.fellowshipId ? fellowships.find(f => f.id === r.fellowshipId) : null
+          return { id: r.id, fellowshipId: r.fellowshipId, fellowshipAbbr: f?.abbreviation ?? null }
+        })
       }
 
       sponsees = (sponseeProfilesRes.data ?? []).map(sp => {
         const completedSteps = Math.min(completedBySponsee[sp.id] ?? 0, 12)
+        const rels = relationshipsBySponsee[sp.id] ?? []
+        const fellowshipAbbrs = rels.map(r => r.fellowshipAbbr).filter((a): a is string => a !== null)
         return {
           id: sp.id,
           name: (sp.display_name as string | null) ?? 'Anonymous',
-          fellowshipAbbr: fellowshipAbbrBySponsee[sp.id] ?? null,
+          fellowshipAbbr: fellowshipAbbrs[0] ?? null,
+          fellowshipAbbrs,
+          relationships: rels,
           sobrietyDate: (sp.sobriety_date as string | null) ?? null,
           checkInHistory: checkInsBySponsee[sp.id] ?? [],
           lastStepWork: latestStepWorkBySponsee[sp.id] ?? null,
@@ -312,7 +342,7 @@ export default async function DashboardPage() {
       meetingsTotal={meetingsTotal}
       readingAssignments={readingAssignments}
       checkInsTotal={checkInsTotal}
-      activeSponsor={activeSponsor}
+      activeSponsors={activeSponsors}
       sponsees={sponsees}
       pendingRequests={pendingRequests}
       sponsorPendingRequests={sponsorPendingRequests}

@@ -368,14 +368,14 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
           <div style={{ minWidth: 0 }}>
             <div style={{ fontWeight: 700, color: 'var(--navy)', fontSize: 15 }}>{sponsee.name}</div>
             <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 2, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '3px 6px' }}>
-              {sponsee.fellowshipAbbr && (
-                <span style={{
+              {(sponsee.fellowshipAbbrs ?? (sponsee.fellowshipAbbr ? [sponsee.fellowshipAbbr] : [])).map(abbr => (
+                <span key={abbr} style={{
                   background: 'rgba(42,138,153,0.1)', color: 'var(--teal)',
                   borderRadius: 5, padding: '1px 6px', fontWeight: 700, fontSize: 11,
                 }}>
-                  {sponsee.fellowshipAbbr}
+                  {abbr}
                 </span>
-              )}
+              ))}
               <span>{days !== null ? `${days.toLocaleString()} days sober` : 'No sobriety date'}</span>
               {sponsee.sobrietyDate && <span style={{ color: 'var(--border)' }}>·</span>}
               {sponsee.sobrietyDate && (
@@ -890,7 +890,7 @@ export default function SponsorView({ sponsees, pendingRequests, displayName, us
         dashboardContent
       )}
 
-      {showAddModal && <AddSponseeModal onClose={() => setShowAddModal(false)} sponsorName={displayName} />}
+      {showAddModal && <AddSponseeModal userId={userId} onClose={() => setShowAddModal(false)} sponsorName={displayName} />}
     </div>
   )
 }

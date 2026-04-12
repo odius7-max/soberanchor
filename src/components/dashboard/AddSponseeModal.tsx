@@ -2,8 +2,11 @@
 
 import { useState, useTransition, useRef, useEffect, Component } from 'react'
 import type { ReactNode } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { searchUserByEmail, sendSponsorRequest, requestSponsor } from '@/app/dashboard/actions'
-import type { SearchResult } from '@/app/dashboard/actions'
+import type { SearchResult, ExistingRelationship } from '@/app/dashboard/actions'
+
+interface FellowshipOption { id: string; abbreviation: string; name: string }
 
 // ─── Error boundary — catches render/action errors so the whole modal doesn't crash ──
 
@@ -34,6 +37,7 @@ interface Props {
   onClose: () => void
   mode?: 'add_sponsee' | 'find_sponsor'
   sponsorName?: string
+  userId: string
 }
 
 const inputStyle: React.CSSProperties = {
@@ -42,21 +46,45 @@ const inputStyle: React.CSSProperties = {
   boxSizing: 'border-box', color: 'var(--dark)',
 }
 
-export default function AddSponseeModal({ onClose, mode = 'add_sponsee', sponsorName }: Props) {
+export default function AddSponseeModal({ onClose, mode = 'add_sponsee', sponsorName, userId }: Props) {
   const isFindSponsor = mode === 'find_sponsor'
   const [email, setEmail] = useState('')
   const [result, setResult] = useState<SearchResult | null>(null)
   const [isPending, startTransition] = useTransition()
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [fellowships, setFellowships] = useState<FellowshipOption[]>([])
+  const [selectedFellowshipId, setSelectedFellowshipId] = useState<string>('')
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     inputRef.current?.focus()
     function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', onKey)
+    // Fetch user's fellowship options from sobriety_milestones
+    ;(async () => {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('sobriety_milestones')
+        .select('fellowship_id, fellowships(id, abbreviation, name)')
+        .eq('user_id', userId)
+        .not('fellowship_id', 'is', null)
+      if (data) {
+        const seen = new Set<string>()
+        const opts: FellowshipOption[] = []
+        for (const row of data) {
+          const f = row.fellowships as unknown as { id: string; abbreviation: string; name: string } | null
+          if (f && !seen.has(f.id)) {
+            seen.add(f.id)
+            opts.push(f)
+          }
+        }
+        setFellowships(opts)
+        if (opts.length === 1) setSelectedFellowshipId(opts[0].id)
+      }
+    })()
     return () => document.removeEventListener('keydown', onKey)
-  }, [onClose])
+  }, [onClose, userId])
 
   function handleSearch() {
     if (!email.trim()) return
@@ -74,12 +102,13 @@ export default function AddSponseeModal({ onClose, mode = 'add_sponsee', sponsor
   function handleSend() {
     if (!result?.found) return
     setError(null)
+    const fid = selectedFellowshipId || null
     startTransition(async () => {
       try {
         if (isFindSponsor) {
-          await requestSponsor(result.userId)
+          await requestSponsor(result.userId, fid)
         } else {
-          await sendSponsorRequest(result.userId)
+          await sendSponsorRequest(result.userId, fid)
         }
         setSent(true)
       } catch (e: any) {
@@ -90,34 +119,70 @@ export default function AddSponseeModal({ onClose, mode = 'add_sponsee', sponsor
 
   const notFoundReason = !result?.found ? result?.reason : null
 
-  // Derive blocking message for existing relationships (prevents sending duplicate/circular requests)
+  // Derive blocking message for the selected fellowship using existingRelationships
   const relationshipBlock: { title: string; body: string } | null = (() => {
     if (!result?.found) return null
-    const rs = result.relationshipStatus
-    if (rs === 'is_your_sponsor') {
-      return {
-        title: 'This person is already your sponsor.',
-        body: 'You already have an active sponsor relationship with this person.',
-      }
-    }
-    if (rs === 'is_your_sponsee') {
-      return {
-        title: 'You are currently sponsoring this person.',
-        body: isFindSponsor
-          ? 'They cannot also be your sponsor — a circular sponsorship is not allowed.'
-          : 'You already have an active sponsorship with this person.',
-      }
-    }
-    if (rs === 'pending_sent') {
-      return {
-        title: 'Request already sent.',
-        body: 'A pending request to this person already exists. Check your dashboard for updates.',
-      }
-    }
-    if (rs === 'pending_received') {
-      return {
-        title: 'This person already sent you a request.',
-        body: 'Check your dashboard — you have a pending request from this person waiting for your response.',
+    const rels: ExistingRelationship[] = result.existingRelationships
+    const fid = selectedFellowshipId || null
+
+    // Check relationships scoped to the selected fellowship (or null-fellowship)
+    const relevant = rels.filter(r => r.fellowshipId === fid)
+
+    for (const r of relevant) {
+      if (isFindSponsor) {
+        // Looking for a sponsor: block if they are already your sponsor in this fellowship
+        if (r.direction === 'they_are_sponsor' && r.status === 'active') {
+          return {
+            title: `This person is already your ${r.fellowshipAbbr ? r.fellowshipAbbr + ' ' : ''}sponsor.`,
+            body: 'You already have an active sponsor relationship with this person in this program.',
+          }
+        }
+        // Block circular: you already sponsor them in this fellowship
+        if (r.direction === 'you_are_sponsor' && r.status === 'active') {
+          return {
+            title: 'You are currently sponsoring this person in this program.',
+            body: 'A circular sponsorship in the same fellowship is not allowed.',
+          }
+        }
+        if (r.direction === 'they_are_sponsor' && r.status === 'pending') {
+          return {
+            title: 'Request already sent.',
+            body: 'A pending sponsor request to this person already exists for this program.',
+          }
+        }
+        if (r.direction === 'you_are_sponsor' && r.status === 'pending') {
+          return {
+            title: 'This person already sent you a request.',
+            body: 'Check your dashboard — you have a pending request from this person waiting for your response.',
+          }
+        }
+      } else {
+        // Adding a sponsee: block if you already sponsor them in this fellowship
+        if (r.direction === 'you_are_sponsor' && r.status === 'active') {
+          return {
+            title: `You are already sponsoring this person${r.fellowshipAbbr ? ' in ' + r.fellowshipAbbr : ''}.`,
+            body: 'You already have an active sponsorship with this person in this program.',
+          }
+        }
+        // Block circular: they are already your sponsor in this fellowship
+        if (r.direction === 'they_are_sponsor' && r.status === 'active') {
+          return {
+            title: 'This person is currently your sponsor in this program.',
+            body: 'A circular sponsorship in the same fellowship is not allowed.',
+          }
+        }
+        if (r.direction === 'you_are_sponsor' && r.status === 'pending') {
+          return {
+            title: 'Request already sent.',
+            body: 'A pending sponsorship request to this person already exists for this program.',
+          }
+        }
+        if (r.direction === 'they_are_sponsor' && r.status === 'pending') {
+          return {
+            title: 'This person already sent you a request.',
+            body: 'Check your dashboard — you have a pending request from this person waiting for your response.',
+          }
+        }
       }
     }
     return null
@@ -192,6 +257,17 @@ export default function AddSponseeModal({ onClose, mode = 'add_sponsee', sponsor
               <p style={{ fontSize: 13, color: 'var(--mid)', lineHeight: 1.6, margin: 0 }}>
                 {relationshipBlock.body}
               </p>
+              {fellowships.length > 1 && (
+                <div style={{ marginTop: 14 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--mid)', marginBottom: 6 }}>Try a different program:</div>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <button type="button" onClick={() => setSelectedFellowshipId('')} style={{ fontSize: 12, fontWeight: 600, padding: '5px 12px', borderRadius: 20, border: '1.5px solid', cursor: 'pointer', fontFamily: 'var(--font-body)', background: selectedFellowshipId === '' ? 'var(--navy)' : '#fff', color: selectedFellowshipId === '' ? '#fff' : 'var(--mid)', borderColor: selectedFellowshipId === '' ? 'var(--navy)' : 'var(--border)' }}>General</button>
+                    {fellowships.map(f => (
+                      <button key={f.id} type="button" onClick={() => setSelectedFellowshipId(f.id)} style={{ fontSize: 12, fontWeight: 600, padding: '5px 12px', borderRadius: 20, border: '1.5px solid', cursor: 'pointer', fontFamily: 'var(--font-body)', background: selectedFellowshipId === f.id ? 'var(--teal)' : '#fff', color: selectedFellowshipId === f.id ? '#fff' : 'var(--mid)', borderColor: selectedFellowshipId === f.id ? 'var(--teal)' : 'var(--border)' }}>{f.abbreviation}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -209,6 +285,35 @@ export default function AddSponseeModal({ onClose, mode = 'add_sponsee', sponsor
                   <div style={{ fontSize: 13, color: 'var(--mid)', marginTop: 2 }}>{result.email}</div>
                 </div>
               </div>
+
+              {/* Fellowship selector */}
+              {fellowships.length > 0 && (
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--mid)', marginBottom: 6 }}>
+                    Which program is this {isFindSponsor ? 'sponsor' : 'sponsorship'} for?
+                  </label>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedFellowshipId('')}
+                      style={{ fontSize: 12, fontWeight: 600, padding: '5px 12px', borderRadius: 20, border: '1.5px solid', cursor: 'pointer', fontFamily: 'var(--font-body)', background: selectedFellowshipId === '' ? 'var(--navy)' : '#fff', color: selectedFellowshipId === '' ? '#fff' : 'var(--mid)', borderColor: selectedFellowshipId === '' ? 'var(--navy)' : 'var(--border)' }}
+                    >
+                      General
+                    </button>
+                    {fellowships.map(f => (
+                      <button
+                        key={f.id}
+                        type="button"
+                        onClick={() => setSelectedFellowshipId(f.id)}
+                        style={{ fontSize: 12, fontWeight: 600, padding: '5px 12px', borderRadius: 20, border: '1.5px solid', cursor: 'pointer', fontFamily: 'var(--font-body)', background: selectedFellowshipId === f.id ? 'var(--teal)' : '#fff', color: selectedFellowshipId === f.id ? '#fff' : 'var(--mid)', borderColor: selectedFellowshipId === f.id ? 'var(--teal)' : 'var(--border)' }}
+                      >
+                        {f.abbreviation}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <p style={{ fontSize: 13, color: 'var(--mid)', lineHeight: 1.6, marginBottom: 14 }}>
                 They&apos;ll see your request on their dashboard and can accept or decline.
               </p>

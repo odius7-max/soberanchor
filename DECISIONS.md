@@ -18,6 +18,13 @@ Last updated: April 10, 2026
   - Post-login routing: if BOTH roles exist → show role switcher ("Provider Dashboard" / "My Recovery"); if one role → go directly to that dashboard; if neither → role selection/onboarding
   - Nav should include a role switcher for dual-role users (e.g., small toggle or dropdown)
 
+## Account Creation & Onboarding
+- **Account creation is minimal:** email, password, display name only. No fellowship, no sobriety date during signup. Reduce friction to zero.
+- **Post-login onboarding:** After first login, show a warm onboarding flow (not a modal wall — a friendly prompt on the dashboard). Ask: (1) What's your primary fellowship? (dropdown from fellowships table), (2) What's your sobriety date?, (3) Are you a sponsor, sponsee, or both?
+- **Onboarding is skippable** — user can dismiss and fill in later from their profile/settings. Track via `user_profiles.onboarding_completed`.
+- **Multiple sobriety dates:** Users can have multiple sobriety milestones for different substances/behaviors (e.g., alcohol on 9/23/2023, marijuana on 3/1/2024). Stored in `sobriety_milestones` table with `label`, `sobriety_date`, `fellowship_id`, and `is_primary` flag. The primary milestone is what shows on the dashboard day counter and profile.
+- **Fellowship selection:** Linked to the `fellowships` table. This determines which step work program is shown. If no fellowship selected, default to showing AA (most common) with option to change.
+
 ## Listing Tiers (Revenue Model)
 - **Basic (Free):** Listed in directory, phone & website visible, 1 photo, NO lead capture form, NO leads inbox
 - **Enhanced ($149/mo):** Everything in Basic + lead capture form + leads inbox + featured badge ⭐ + verified badge ✓ + up to 10 photos + respond to reviews + basic analytics
@@ -121,7 +128,7 @@ Last updated: April 10, 2026
 - **My Dashboard shows:** "My Sponsor" section (who I'm connected to as sponsee) + pending sponsor requests
 - **Sponsor View tab shows:** "My Sponsees" list + pending sponsee requests + stats (active sponsees, pending reviews, checked in today)
 - **Post-login redirect:** Authenticated users land on `/my-recovery` (not homepage). Providers land on `/providers/dashboard`. Dual-role users land on `/my-recovery` with role switcher available. Unauthenticated visitors see public homepage.
-- **Logo click:** Always links to homepage (/). The 'My Recovery' pill in the nav is the dashboard entry point for logged-in users.
+- **Logo click:** SoberAnchor logo always goes to the public homepage, regardless of auth state. "My Recovery" pill is the entry point to the member center.
 - **Step work frameworks** to be seeded in `program_workbooks` — starting with AA 12-step, then NA, SMART Recovery (4-Point), Celebrate Recovery
 - **AA 12-step workbook SEEDED:** 16 sections, 85 prompts covering all 12 steps with reading assignments, open reflection, yes/no questions, structured inventory tables (resentments, fears, relationships, amends), and daily practice exercises
 - **Step work interaction:** Sponsor assigns workbook exercises → sponsee completes them → submits for review → sponsor reviews and provides feedback (draft → submitted → reviewed → needs_revision)
@@ -171,9 +178,23 @@ Last updated: April 10, 2026
 - **Sign-in page:** Just a subtle one-liner: "Your data is always private and deletable."
 
 ## Content & SEO
-- 7 content pillars: Getting Help, Understanding Addiction, Supporting Someone, Life in Recovery, Sober Lifestyle, Local Guides, Program Explainers
+- Full content strategy documented in `RESOURCES-CONTENT-STRATEGY.md`
+- **7 content tiers:** Fellowship Guides, Getting Help, Supporting a Loved One, Understanding Addiction, Life in Recovery, Local Guides, Books & Media
 - 10 articles seeded in database
 - SEO flywheel: article ranks → links to directory → captures lead → revenue funds more content
+- **Fellowship guide pages** (one per fellowship) are the highest SEO value — "what is AA" gets 40K+ monthly searches
+- **Local guides** are the SEO powerhouse for directory traffic — start with San Diego, expand city by city
+- URL structure: `/resources/fellowships/[slug]`, `/resources/guides/[slug]`, `/resources/local/[city]/[topic]`
+
+## AI-Powered Smart Search
+- Single search bar on Resources page and homepage that understands natural language
+- User types "my son is addicted to pills" → Claude classifies intent → returns structured JSON → frontend queries Supabase and shows personalized results across meetings, facilities, articles, and crisis resources
+- Uses Anthropic API (`claude-haiku-4-5-20251001`) for cost efficiency — ~$0.0002 per query, ~$2/month at 10K searches
+- Cache common query patterns to avoid unnecessary API calls
+- Fallback to traditional keyword search if AI unavailable
+- Rate limit: 1 AI search per 3 seconds per user
+- Always show crisis resources if emotional distress detected
+- Full spec in `RESOURCES-CONTENT-STRATEGY.md`
 
 ## Build Priority Order
 1. Auth flow (email + password, forgot password) ✅
