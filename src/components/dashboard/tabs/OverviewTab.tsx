@@ -339,7 +339,7 @@ export default function OverviewTab({ userId, activeFellowshipId, currentStep, c
               className="font-semibold text-white rounded-lg transition-colors hover:bg-navy-dark"
               style={{ fontSize: '13px', padding: '8px 16px', background: 'var(--navy)', border: 'none', cursor: 'pointer', width: '100%' }}
             >
-              🔍 Find a Sponsor
+              🔍 Find Your Sponsor
             </button>
           </div>
         )}
