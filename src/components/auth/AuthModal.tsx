@@ -153,7 +153,7 @@ export default function AuthModal() {
 
   const HEADER: Record<Step, { title: string; sub: string }> = {
     login:       { title: 'Sign In',              sub: 'Welcome back to SoberAnchor.' },
-    signup:      { title: 'Create Account',        sub: 'Free forever. No credit card.' },
+    signup:      { title: 'Create Account',        sub: 'Your data is private, portable, and always yours. Delete anytime.' },
     forgot:      { title: 'Reset Password',        sub: 'We\'ll send a link to your email.' },
     forgot_sent: { title: 'Check Your Inbox',      sub: `Reset link sent to ${email}` },
     onboarding:  { title: 'Almost There!',         sub: 'Just a few quick things to set up your dashboard.' },
