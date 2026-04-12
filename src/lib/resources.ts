@@ -103,6 +103,9 @@ export type SearchIntent = {
   facility_types: string[];
   query_intent: "meeting_search" | "informational" | "facility_search" | "step_work" | "crisis";
   name_keywords?: string[];
+  meeting_types?: string[];
+  meeting_languages?: string[];
+  meeting_access?: string;
 };
 
 export type MeetingResult = {

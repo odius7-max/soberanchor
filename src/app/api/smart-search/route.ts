@@ -159,7 +159,10 @@ Given a user's natural-language query, classify their intent and return ONLY a J
   "fellowship_slugs": string[],
   "facility_types": string[],
   "query_intent": "meeting_search" | "informational" | "facility_search" | "step_work" | "crisis",
-  "name_keywords": string[]
+  "name_keywords": string[],
+  "meeting_types": string[],
+  "meeting_languages": string[],
+  "meeting_access": string
 }
 
 query_intent rules:
@@ -175,6 +178,9 @@ Field rules:
 - "fellowship_slugs": choose from: aa, na, al-anon, alateen, smart-recovery, ga, gam-anon, oa, fa, eda, aba, ca, cma, ma, sa, saa, cosa, s-anon, da, itaa, cgaa, nicotine-anonymous, nar-anon, celebrate-recovery, lifering, pills-anonymous, heroin-anonymous, refuge-recovery, aca, families-anonymous
 - "facility_types": array of: treatment, sober_living, therapist, venue, outpatient
 - "name_keywords": if the user appears to be looking for a specific meeting or place by name, extract the distinctive name words (not fellowship names, not generic words like "meeting"/"group"/"anonymous"). Examples: "find the village meeting" → ["village"]; "serenity group AA" → ["serenity"]; "lighthouse NA meeting" → ["lighthouse"]; "AA meetings near me" → []. Leave [] for general searches with no specific name.
+- "meeting_types": exact values from the types[] DB field that match the query. Use the synonym map below. Leave [] if none apply.
+- "meeting_languages": exact language values from the types[] DB field. Use [] unless query mentions a language.
+- "meeting_access": "Open" if user wants open meetings, "Closed" if members-only, "" if unspecified.
 
 Inference rules:
 - Loved one + alcohol → fellowship_slugs includes both "aa" (for them) AND "al-anon" (for the asker)
@@ -187,7 +193,90 @@ Inference rules:
 - Any query mentioning "meeting" or a fellowship by name → always populate fellowship_slugs
 - Any query mentioning treatment, rehab, detox, facility, center, sober living → always populate facility_types
 - For general recovery queries with no specific issue → aa and na as fellowship_slugs
-- Return ONLY the JSON object, no explanation or markdown`;
+- Multi-attribute queries like "women's AA meeting in Spanish on Saturday morning" should extract ALL attributes: fellowship_slugs=["aa"], meeting_types=["Women"], meeting_languages=["Spanish"], day=Saturday, time=morning
+
+SYNONYM MAP — map colloquial user language to exact DB values:
+
+MEETING TYPES → populate meeting_types[] with these exact strings:
+outside/outdoors/open air/park/patio → "Outdoor"
+ladies/women-only/female/womens/sisters → "Women"
+guys/men-only/male/mens/brothers → "Men"
+gay/queer/pride/rainbow/LGBTQ/LGBT → "LGBTQ+"
+newcomer/newbie/first time/just starting/never been → "Beginners"
+book study/big book/BB study → "Big Book Study"
+steps/step meeting/working steps/step study → "Step Study"
+speaker meeting/sharing/lead → "Speaker"
+talk/sharing/crosstalk/discussion meeting → "Discussion"
+kids/children/family friendly/bring kids → "Child-Friendly"
+candle/candlelit/candlelight → "Candlelight"
+meditation/mindfulness/quiet/silent → "Meditation"
+young/youth/young people/college age/20s → "Young People"
+wheelchair/accessible/handicap/ADA/disability → "Wheelchair Accessible"
+traditions/tradition study → "Traditions Study"
+12 and 12/twelve and twelve/12x12 → "12x12"
+literature/reading/lit meeting → "Literature"
+as bill sees it/ABSI → "As Bill Sees It"
+
+MEETING ACCESS → populate meeting_access:
+open/anyone can come/visitors welcome/open to public/non-members → "Open"
+closed/members only/private/closed meeting → "Closed"
+
+MEETING LANGUAGE → populate meeting_languages[]:
+english/english-speaking → "English"
+spanish/español/hispanic/latino/latina → "Spanish"
+sign language/ASL/deaf/hearing impaired → "Sign Language"
+
+FELLOWSHIPS → populate fellowship_slugs[]:
+AA/alcoholics anonymous/alcohol meetings/drinking → "aa"
+NA/narcotics anonymous/drug meetings/narcotics → "na"
+al-anon/alanon/loved one drinks/spouse drinks/my husband drinks/my wife drinks/family of alcoholic → "al-anon"
+alateen/teen/teenager/child of alcoholic → "alateen"
+SMART/smart recovery/science-based/CBT/secular recovery → "smart-recovery"
+celebrate recovery/CR/christ-centered/church recovery/faith-based recovery → "celebrate-recovery"
+GA/gamblers anonymous/gambling/betting/sports betting/casino → "ga"
+OA/overeaters anonymous/food addiction/binge eating/compulsive eating → "oa"
+CoDA/coda/codependent/codependency/people pleaser/boundaries → "coda"
+ACA/ACOA/adult children/grew up with alcoholic/childhood trauma/dysfunctional family → "aca"
+SAA/sex addicts/sex addiction/porn addiction/sexual compulsivity → "saa"
+SLAA/love addiction/relationship addiction/love addict → "slaa"
+CA/cocaine anonymous/cocaine/crack/stimulants → "ca"
+CMA/crystal meth/meth/tina → "cma"
+MA/marijuana anonymous/weed/pot/cannabis → "ma"
+HA/heroin anonymous/heroin/opiates/fentanyl → "heroin-anonymous"
+PA/pills anonymous/prescription drugs/painkillers/oxy → "pills-anonymous"
+DA/debtors anonymous/debt/money problems/spending addiction → "da"
+NicA/nicotine anonymous/smoking/vaping/tobacco/juul → "nicotine-anonymous"
+nar-anon/naranon/family of addict/loved one uses drugs → "nar-anon"
+gam-anon/gamanon/family of gambler/spouse gambles → "gam-anon"
+refuge/dharma recovery/buddhist recovery/meditation recovery → "refuge-recovery"
+lifering/secular/non-religious/atheist/agnostic recovery → "lifering"
+WFS/women for sobriety/women-only program → "wfs"
+WA/workaholics/work addiction/workaholic → "wa"
+
+FACILITY TYPES → populate facility_types[]:
+rehab/rehabilitation/treatment center/inpatient/residential/detox → "treatment"
+sober living/sober house/halfway house/recovery housing/oxford house → "sober_living"
+therapist/counselor/therapy/counseling/psychologist/LCSW/MFT/addiction counselor → "therapist"
+outpatient/IOP/intensive outpatient/PHP/partial hospitalization/day program → "outpatient"
+meeting hall/venue/meeting space/club/alano club/recovery club → "venue"
+
+CRISIS LANGUAGE → set query_intent="crisis", urgency="high", include_crisis=true:
+suicidal/want to die/kill myself/hurting myself/self-harm
+overdose/relapsed right now/using right now/about to use
+need help now/urgent/emergency/can't go on/crisis
+
+STEP WORK LANGUAGE → set query_intent="step_work":
+step work/working steps/12 steps/step 1 through step 12
+moral inventory/resentments/amends/powerlessness
+sponsor/sponsorship/find a sponsor/need a sponsor
+big book/basic text/literature/program book (when asking for content, not a meeting)
+CBA/cost benefit analysis (SMART Recovery)
+laundry list/14 traits (ACA)
+three circles/inner circle (SAA)
+hurts habits hangups/8 principles (Celebrate Recovery)
+detachment/detach with love/three Cs (Al-Anon)
+
+Return ONLY the JSON object, no explanation or markdown.`;
 }
 
 type SearchContext = "home" | "resources" | "directory" | "member";
@@ -276,6 +365,9 @@ async function queryMeetings(
   limit: number,
   dayFilter?: string | null,
   nameKeywords?: string[] | null,
+  meetingTypes?: string[] | null,
+  meetingLanguages?: string[] | null,
+  meetingAccess?: string | null,
 ): Promise<MeetingResult[]> {
   const { data: fellowships } = await supabase
     .from("fellowships").select("id, name, slug").in("slug", slugs);
@@ -300,10 +392,19 @@ async function queryMeetings(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   type AnyQuery = any;
 
+  /** Apply meeting type / language / access filters against the types JSONB array */
+  function applyTypeFilters(q: AnyQuery): AnyQuery {
+    if (meetingTypes?.length)     q = q.overlaps("types", meetingTypes);
+    if (meetingLanguages?.length) q = q.overlaps("types", meetingLanguages);
+    if (meetingAccess)            q = q.filter("types", "cs", JSON.stringify([meetingAccess]));
+    return q;
+  }
+
   let q: AnyQuery = supabase.from("meetings").select(MEETING_SELECT).in("fellowship_id", fids).limit(fetchLimit);
   if (location)              q = q.ilike("city", `%${location}%`);
   if (dayFilter)             q = q.eq("day_of_week", dayFilter);
   if (nameKeywords?.length)  q = q.or(nameOrFilter(nameKeywords));
+  q = applyTypeFilters(q);
 
   let { data } = await q;
 
@@ -312,6 +413,7 @@ async function queryMeetings(
     let qFallback: AnyQuery = supabase.from("meetings").select(MEETING_SELECT).in("fellowship_id", fids).limit(fetchLimit);
     if (dayFilter)            qFallback = qFallback.eq("day_of_week", dayFilter);
     if (nameKeywords?.length) qFallback = qFallback.or(nameOrFilter(nameKeywords));
+    qFallback = applyTypeFilters(qFallback);
     const { data: fb } = await qFallback;
     data = fb;
   }
@@ -321,6 +423,7 @@ async function queryMeetings(
     let qNoDow: AnyQuery = supabase.from("meetings").select(MEETING_SELECT).in("fellowship_id", fids).limit(limit);
     if (location)             qNoDow = qNoDow.ilike("city", `%${location}%`);
     if (nameKeywords?.length) qNoDow = qNoDow.or(nameOrFilter(nameKeywords));
+    qNoDow = applyTypeFilters(qNoDow);
     const { data: fb2 } = await qNoDow;
     data = fb2;
   }
@@ -370,8 +473,11 @@ async function fetchMeetings(intent: SearchIntent, limit: number, dayFilter?: st
       ? intent.fellowship_slugs
       : (ISSUE_FELLOWSHIP_MAP[intent.issue] ?? ["aa", "na"]);
 
-  const nameKeywords = intent.name_keywords?.length ? intent.name_keywords : null;
-  return queryMeetings(slugs, intent.location, limit, dayFilter, nameKeywords);
+  const nameKeywords    = intent.name_keywords?.length    ? intent.name_keywords    : null;
+  const meetingTypes    = intent.meeting_types?.length    ? intent.meeting_types    : null;
+  const meetingLanguages= intent.meeting_languages?.length? intent.meeting_languages: null;
+  const meetingAccess   = intent.meeting_access || null;
+  return queryMeetings(slugs, intent.location, limit, dayFilter, nameKeywords, meetingTypes, meetingLanguages, meetingAccess);
 }
 
 async function fetchFacilities(intent: SearchIntent, limit: number): Promise<FacilityResult[]> {
