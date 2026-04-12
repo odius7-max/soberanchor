@@ -134,14 +134,15 @@ function generateSamhsaId(name: string, street: string, city: string, state: str
 
 /**
  * Generate a URL-friendly slug for the facility detail page.
- * Uses a shorter version of the address ID to keep slugs readable.
+ * Appends the last 6 alphanumeric chars of samhsa_id to guarantee uniqueness
+ * even when multiple locations share the same name, city, and state.
  */
-function generateSlug(name: string, city: string, state: string, zip: string): string {
-  const n = kebab(name).slice(0, 50)
-  const c = kebab(city).slice(0, 15)
+function generateSlug(name: string, city: string, state: string, samhsaId: string): string {
+  const n  = kebab(name).slice(0, 50)
+  const c  = kebab(city).slice(0, 15)
   const st = state.toLowerCase().replace(/[^a-z]/g, '').slice(0, 2)
-  const z = zip.replace(/\D/g, '').slice(0, 5)
-  return [n, c, st, z].filter(Boolean).join('-')
+  const suffix = samhsaId.replace(/[^a-z0-9]/gi, '').slice(-6).toLowerCase()
+  return [n, c, st, suffix].filter(Boolean).join('-')
 }
 
 /**
@@ -278,7 +279,7 @@ export function transformFacility(raw: SamhsaRawRecord): FacilityInsert | null {
   return {
     samhsa_id:           samhsaId,
     name:                name || 'Unnamed Facility',
-    slug:                generateSlug(name || 'unnamed-facility', city, state, zip),
+    slug:                generateSlug(name || 'unnamed-facility', city, state, samhsaId),
     phone:               normalizePhone(raw.phone ?? raw.intake1),
     website:             normalizeWebsite(raw.website),
     address_line1:       street1 || null,
