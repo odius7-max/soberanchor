@@ -9,13 +9,16 @@ import PrintButton from './PrintButton'
 
 interface Prompt {
   id: string
-  type: 'text' | 'yesno' | 'table'
+  type: 'text' | 'yesno' | 'table' | 'scale'
   question: string
   hint?: string
   followup?: string          // yesno
   columns?: string[]         // table
   rows?: string              // "dynamic"
   required?: boolean
+  min?: number               // scale
+  max?: number               // scale
+  labels?: string[]          // scale: [minLabel, maxLabel]
 }
 
 interface Workbook {
@@ -209,6 +212,90 @@ function TablePrompt({ prompt, value, onChange, readonly }: {
   )
 }
 
+function ScalePrompt({ prompt, value, onChange, readonly }: {
+  prompt: Prompt
+  value: number | null
+  onChange: (v: number) => void
+  readonly: boolean
+}) {
+  const min = prompt.min ?? 1
+  const max = prompt.max ?? 10
+  const minLabel = prompt.labels?.[0] ?? ''
+  const maxLabel = prompt.labels?.[1] ?? ''
+  const ticks = Array.from({ length: max - min + 1 }, (_, i) => min + i)
+  const isSet = value !== null
+
+  return (
+    <div>
+      {/* Value badge */}
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
+          <div style={{
+            width: 58, height: 58, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: isSet ? 'var(--navy)' : 'var(--warm-gray)',
+            border: isSet ? '3px solid var(--navy)' : '2px dashed var(--border)',
+            color: isSet ? '#fff' : 'var(--mid)',
+            fontSize: isSet ? 26 : 15, fontWeight: 700,
+            fontFamily: 'var(--font-display)',
+            transition: 'background 0.15s, color 0.15s',
+            userSelect: 'none',
+          }}>
+            {isSet ? value : '—'}
+          </div>
+          {!isSet && !readonly && (
+            <span style={{ fontSize: 11, color: 'var(--mid)', fontStyle: 'italic' }}>slide to answer</span>
+          )}
+        </div>
+      </div>
+
+      {/* Slider track */}
+      <div style={{ padding: '0 4px' }}>
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={1}
+          value={isSet ? value! : Math.round((min + max) / 2)}
+          disabled={readonly}
+          onChange={e => onChange(Number(e.target.value))}
+          onMouseDown={() => { if (!isSet && !readonly) onChange(Math.round((min + max) / 2)) }}
+          onTouchStart={() => { if (!isSet && !readonly) onChange(Math.round((min + max) / 2)) }}
+          style={{
+            width: '100%', cursor: readonly ? 'default' : 'pointer',
+            accentColor: 'var(--navy)', height: 6,
+            opacity: !isSet && !readonly ? 0.35 : 1,
+          }}
+        />
+
+        {/* Tick numbers */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, padding: '0 2px' }}>
+          {ticks.map(n => (
+            <span
+              key={n}
+              style={{
+                fontSize: 11, textAlign: 'center', lineHeight: 1, minWidth: 14,
+                color: value === n ? 'var(--navy)' : 'var(--mid)',
+                fontWeight: value === n ? 700 : 400,
+                transition: 'color 0.1s, font-weight 0.1s',
+              }}
+            >
+              {n}
+            </span>
+          ))}
+        </div>
+
+        {/* Min / max labels */}
+        {(minLabel || maxLabel) && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+            <span style={{ fontSize: 12, color: 'var(--mid)', fontStyle: 'italic', maxWidth: '44%', lineHeight: 1.4 }}>{minLabel}</span>
+            <span style={{ fontSize: 12, color: 'var(--mid)', fontStyle: 'italic', maxWidth: '44%', textAlign: 'right', lineHeight: 1.4 }}>{maxLabel}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function StepWorkSection({ workbook, entry, userId, sponsorRelationshipId, isSponsorView = false, sponseeName, stepCompleted = false }: Props) {
@@ -227,6 +314,7 @@ export default function StepWorkSection({ workbook, entry, userId, sponsorRelati
       if (base[p.id] === undefined) {
         if (p.type === 'yesno') base[p.id] = { answer: null, followup: '' }
         else if (p.type === 'table') base[p.id] = []
+        else if (p.type === 'scale') base[p.id] = null
         else base[p.id] = ''
       }
     }
@@ -410,6 +498,14 @@ export default function StepWorkSection({ workbook, entry, userId, sponsorRelati
                   <TablePrompt
                     prompt={prompt}
                     value={(responses[prompt.id] as Array<Record<string, string>>) ?? []}
+                    onChange={v => handleChange(prompt.id, v)}
+                    readonly={!!readonly}
+                  />
+                )}
+                {prompt.type === 'scale' && (
+                  <ScalePrompt
+                    prompt={prompt}
+                    value={(responses[prompt.id] as number | null) ?? null}
                     onChange={v => handleChange(prompt.id, v)}
                     readonly={!!readonly}
                   />

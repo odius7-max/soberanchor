@@ -2,12 +2,15 @@
 
 interface Prompt {
   id: string
-  type: 'text' | 'yesno' | 'table'
+  type: 'text' | 'yesno' | 'table' | 'scale'
   question: string
   hint?: string
   followup?: string
   columns?: string[]
   required?: boolean
+  min?: number
+  max?: number
+  labels?: string[]
 }
 
 interface Workbook {
@@ -37,6 +40,22 @@ function promptHTML(p: Prompt, idx: number): string {
         <span class="yesno-opt">&#9634; &nbsp;No</span>
       </div>
       ${p.followup ? `<p class="followup-label">${p.followup}</p><div class="writing-area">${writingLines(5)}</div>` : ''}`
+  } else if (p.type === 'scale') {
+    const min = p.min ?? 1
+    const max = p.max ?? 10
+    const minLabel = p.labels?.[0] ?? ''
+    const maxLabel = p.labels?.[1] ?? ''
+    const ticks = Array.from({ length: max - min + 1 }, (_, i) => min + i)
+      .map(n => `<span class="scale-tick">${n}</span>`).join('')
+    input = `
+      <div class="scale-wrap">
+        <div class="scale-ticks">${ticks}</div>
+        <div class="scale-labels">
+          <span>${minLabel}</span>
+          <span>${maxLabel}</span>
+        </div>
+        <div class="scale-circle">&#9675;</div>
+      </div>`
   } else if (p.type === 'table') {
     const cols = p.columns ?? []
     const ths = cols.map(c => `<th>${c}</th>`).join('')
@@ -223,6 +242,29 @@ body{
 .footer-copy{
   font-family:'EB Garamond',Georgia,serif;
   font-size:9pt;color:#aaa;letter-spacing:.6px;
+}
+
+/* ── Scale ── */
+.scale-wrap{margin-top:7pt}
+.scale-ticks{
+  display:flex;justify-content:space-between;
+  border-top:1.5pt solid #003366;
+  padding-top:5pt;margin-bottom:3pt;
+}
+.scale-tick{
+  font-family:'Cormorant Garamond',Georgia,serif;
+  font-size:12pt;font-weight:600;color:#003366;
+  width:20pt;text-align:center;
+}
+.scale-labels{
+  display:flex;justify-content:space-between;
+  font-family:'EB Garamond',Georgia,serif;
+  font-size:9.5pt;font-style:italic;color:#777;
+  margin-bottom:6pt;
+}
+.scale-circle{
+  font-size:22pt;color:#bbb;
+  text-align:center;margin-top:4pt;
 }
 
 /* ── Print page setup ── */

@@ -4,13 +4,16 @@ import StepWorkSection from '@/components/dashboard/step-work/StepWorkSection'
 
 interface Prompt {
   id: string
-  type: 'text' | 'yesno' | 'table'
+  type: 'text' | 'yesno' | 'table' | 'scale'
   question: string
   hint?: string
   followup?: string
   columns?: string[]
   rows?: string
   required?: boolean
+  min?: number
+  max?: number
+  labels?: string[]
 }
 
 export default async function StepWorkSectionPage({ params }: { params: Promise<{ slug: string }> }) {
