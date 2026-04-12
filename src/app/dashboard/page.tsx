@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import DashboardShell from '@/components/dashboard/DashboardShell'
-import type { CheckIn, JournalEntry, MeetingAttendance, ReadingAssignment, Sponsee, ActivityItem, SobrietyMilestone, Fellowship } from '@/components/dashboard/DashboardShell'
+import type { CheckIn, JournalEntry, MeetingAttendance, ReadingAssignment, SponseeFull, SponseeCheckIn, ActivityItem, SobrietyMilestone, Fellowship } from '@/components/dashboard/DashboardShell'
 import type { PendingRequest } from '@/components/dashboard/PendingRequests'
 
 export default async function DashboardPage() {
@@ -146,7 +146,7 @@ export default async function DashboardPage() {
   }
 
   // Sponsees (if is_available_sponsor)
-  let sponsees: Sponsee[] = []
+  let sponsees: SponseeFull[] = []
   if (profile?.is_available_sponsor) {
     const { data: relData } = await supabase
       .from('sponsor_relationships')
@@ -157,25 +157,73 @@ export default async function DashboardPage() {
     if (relData && relData.length > 0) {
       const sponseeIds = relData.map(r => r.sponsee_id)
       const relMap = Object.fromEntries(relData.map(r => [r.sponsee_id, { id: r.id, fellowshipId: r.fellowship_id as string | null }]))
+      const sponseeAdmin = createAdminClient()
 
-      const [sponseeProfilesRes, sponseeCheckInsRes, pendingStepWorkRes, stepCompletionsRes] = await Promise.all([
-        supabase.from('user_profiles').select('id,display_name,sobriety_date,current_step').in('id', sponseeIds),
-        supabase.from('check_ins').select('user_id,mood,check_in_date').in('user_id', sponseeIds).order('check_in_date', { ascending: false }),
-        supabase.from('step_work_entries').select('user_id').in('user_id', sponseeIds).eq('review_status', 'submitted'),
-        supabase.from('step_completions').select('user_id,fellowship_id').in('user_id', sponseeIds).eq('is_completed', true),
+      const sixtyDaysAgo = new Date()
+      sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60)
+      const sixtyDaysAgoStr = sixtyDaysAgo.toISOString().slice(0, 10)
+
+      const [
+        sponseeProfilesRes,
+        sponseeCheckInsRes,
+        pendingStepWorkRes,
+        stepCompletionsRes,
+        latestStepWorkRes,
+        meetingAttendanceRes,
+        sponsorNotesRes,
+      ] = await Promise.all([
+        sponseeAdmin.from('user_profiles').select('id,display_name,sobriety_date').in('id', sponseeIds),
+        // 60-day check-in history for mood trend + streak calculation
+        sponseeAdmin.from('check_ins')
+          .select('user_id,check_in_date,mood,notes,sober_today,meetings_attended,called_sponsor')
+          .in('user_id', sponseeIds)
+          .gte('check_in_date', sixtyDaysAgoStr)
+          .order('check_in_date', { ascending: false }),
+        // Count pending reviews per sponsee
+        sponseeAdmin.from('step_work_entries').select('user_id').in('user_id', sponseeIds).eq('review_status', 'submitted'),
+        // Step completions filtered by fellowship
+        sponseeAdmin.from('step_completions').select('user_id,fellowship_id').in('user_id', sponseeIds).eq('is_completed', true),
+        // Latest submitted/reviewed step work entry with workbook title
+        sponseeAdmin.from('step_work_entries')
+          .select('user_id,submitted_at,updated_at,program_workbooks(title,step_number)')
+          .in('user_id', sponseeIds)
+          .in('review_status', ['submitted', 'reviewed'])
+          .order('updated_at', { ascending: false }),
+        // Latest meeting attendance per sponsee
+        sponseeAdmin.from('meeting_attendance')
+          .select('user_id,meeting_name,attended_at')
+          .in('user_id', sponseeIds)
+          .order('attended_at', { ascending: false })
+          .limit(sponseeIds.length * 5),
+        // Sponsor's own private notes (RLS-safe: sponsor_id = current user)
+        supabase.from('sponsor_notes')
+          .select('sponsee_id,note_text,created_at')
+          .eq('sponsor_id', userId)
+          .in('sponsee_id', sponseeIds)
+          .order('created_at', { ascending: false }),
       ])
 
-      const latestCheckIn: Record<string, { mood: string | null; date: string }> = {}
+      // Build check-in history per sponsee
+      const checkInsBySponsee: Record<string, SponseeCheckIn[]> = {}
       for (const ci of (sponseeCheckInsRes.data ?? [])) {
-        if (!latestCheckIn[ci.user_id]) latestCheckIn[ci.user_id] = { mood: ci.mood, date: ci.check_in_date }
+        if (!checkInsBySponsee[ci.user_id]) checkInsBySponsee[ci.user_id] = []
+        checkInsBySponsee[ci.user_id].push({
+          date: ci.check_in_date as string,
+          mood: ci.mood as string | null,
+          notes: ci.notes as string | null,
+          soberToday: ci.sober_today as boolean,
+          meetingsAttended: (ci.meetings_attended as number | null) ?? 0,
+          calledSponsor: ci.called_sponsor as boolean | null,
+        })
       }
 
+      // Pending step work count per sponsee
       const pendingBySponsee: Record<string, number> = {}
       for (const sw of (pendingStepWorkRes.data ?? [])) {
         pendingBySponsee[sw.user_id] = (pendingBySponsee[sw.user_id] ?? 0) + 1
       }
 
-      // Count completed steps per sponsee, filtered to their relationship's fellowship
+      // Completed steps per sponsee filtered to relationship fellowship
       const completedBySponsee: Record<string, number> = {}
       for (const sc of (stepCompletionsRes.data ?? [])) {
         const fellowship = relMap[sc.user_id]?.fellowshipId
@@ -184,17 +232,65 @@ export default async function DashboardPage() {
         }
       }
 
+      // Latest step work per sponsee
+      const latestStepWorkBySponsee: Record<string, { date: string; title: string; stepNumber: number | null }> = {}
+      for (const sw of (latestStepWorkRes.data ?? [])) {
+        if (!latestStepWorkBySponsee[sw.user_id]) {
+          const wb = sw.program_workbooks as unknown as { title: string; step_number: number | null } | null
+          const date = (sw.submitted_at ?? sw.updated_at) as string | null
+          if (date) {
+            latestStepWorkBySponsee[sw.user_id] = {
+              date,
+              title: wb?.title ?? 'Step work',
+              stepNumber: wb?.step_number ?? null,
+            }
+          }
+        }
+      }
+
+      // Latest meeting per sponsee
+      const latestMeetingBySponsee: Record<string, { date: string; name: string }> = {}
+      for (const ma of (meetingAttendanceRes.data ?? [])) {
+        if (!latestMeetingBySponsee[ma.user_id]) {
+          latestMeetingBySponsee[ma.user_id] = {
+            date: (ma.attended_at as string).slice(0, 10),
+            name: ma.meeting_name as string,
+          }
+        }
+      }
+
+      // Latest sponsor note per sponsee
+      const latestNoteBySponsee: Record<string, { text: string; createdAt: string }> = {}
+      for (const note of (sponsorNotesRes.data ?? [])) {
+        if (!latestNoteBySponsee[note.sponsee_id]) {
+          latestNoteBySponsee[note.sponsee_id] = {
+            text: note.note_text as string,
+            createdAt: note.created_at as string,
+          }
+        }
+      }
+
+      // Fellowship abbreviation via relationship's fellowship_id
+      const fellowshipAbbrBySponsee: Record<string, string | null> = {}
+      for (const rel of relData) {
+        const f = rel.fellowship_id ? fellowships.find(f => f.id === rel.fellowship_id) : null
+        fellowshipAbbrBySponsee[rel.sponsee_id] = f?.abbreviation ?? null
+      }
+
       sponsees = (sponseeProfilesRes.data ?? []).map(sp => {
         const completedSteps = Math.min(completedBySponsee[sp.id] ?? 0, 12)
         return {
           id: sp.id,
-          name: sp.display_name ?? 'Anonymous',
-          sobrietyDate: sp.sobriety_date ?? null,
-          currentStep: sp.current_step ?? 1,
-          completedSteps,
-          lastMood: latestCheckIn[sp.id]?.mood ?? null,
-          lastCheckInDate: latestCheckIn[sp.id]?.date ?? null,
+          name: (sp.display_name as string | null) ?? 'Anonymous',
+          fellowshipAbbr: fellowshipAbbrBySponsee[sp.id] ?? null,
+          sobrietyDate: (sp.sobriety_date as string | null) ?? null,
+          checkInHistory: checkInsBySponsee[sp.id] ?? [],
+          lastStepWork: latestStepWorkBySponsee[sp.id] ?? null,
           pendingReviews: pendingBySponsee[sp.id] ?? 0,
+          lastMeeting: latestMeetingBySponsee[sp.id] ?? null,
+          completedSteps,
+          totalSteps: 12,
+          latestNote: latestNoteBySponsee[sp.id] ?? null,
         }
       })
     }

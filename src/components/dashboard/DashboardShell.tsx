@@ -24,7 +24,8 @@ export interface CheckIn { id:string; check_in_date:string; mood:string|null; no
 export interface JournalEntry { id:string; title:string|null; entry_date:string; excerpt:string|null; step_number:number|null; is_shared_with_sponsor:boolean }
 export interface MeetingAttendance { id:string; meeting_name:string; fellowship_name:string|null; attended_at:string; checkin_method:string }
 export interface ReadingAssignment { id:string; title:string; source:string|null; is_completed:boolean; due_date:string|null; created_at:string }
-export interface Sponsee { id:string; name:string; sobrietyDate:string|null; currentStep:number; completedSteps:number; lastMood:string|null; lastCheckInDate:string|null; pendingReviews:number }
+export interface SponseeCheckIn { date:string; mood:string|null; notes:string|null; soberToday:boolean; meetingsAttended:number; calledSponsor:boolean|null }
+export interface SponseeFull { id:string; name:string; fellowshipAbbr:string|null; sobrietyDate:string|null; checkInHistory:SponseeCheckIn[]; lastStepWork:{ date:string; title:string; stepNumber:number|null }|null; pendingReviews:number; lastMeeting:{ date:string; name:string }|null; completedSteps:number; totalSteps:number; latestNote:{ text:string; createdAt:string }|null }
 export interface ActivityItem { id:string; event_type:string; title:string; description:string|null; is_read:boolean; created_at:string }
 export type { SobrietyMilestone, Fellowship }
 
@@ -48,7 +49,7 @@ interface Props {
   readingAssignments: ReadingAssignment[]
   checkInsTotal: number
   activeSponsor: string | null
-  sponsees: Sponsee[]
+  sponsees: SponseeFull[]
   pendingRequests: PendingRequest[]
   sponsorPendingRequests: PendingRequest[]
   activityItems: ActivityItem[]

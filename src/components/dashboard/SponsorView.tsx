@@ -1,152 +1,695 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition, useMemo, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import AddSponseeModal from './AddSponseeModal'
 import PendingRequests from './PendingRequests'
 import type { PendingRequest } from './PendingRequests'
+import { addSponsorNote } from '@/app/dashboard/actions'
+import type { SponseeFull, SponseeCheckIn } from './DashboardShell'
 
-const STEPS = ['Powerlessness','Hope','Decision','Inventory','Admission','Readiness','Humility','Amends List','Amends','Daily Inventory','Spiritual Growth','Service']
-const MILESTONES = [7,14,21,30,60,90,120,180,270,365,500,730]
-const MOOD_META: Record<string,{emoji:string;label:string;color:string}> = {
-  great:{emoji:'😊',label:'great',color:'#27AE60'},good:{emoji:'🙂',label:'good',color:'#2A8A99'},
-  okay:{emoji:'😐',label:'okay',color:'#D4A574'},struggling:{emoji:'😔',label:'struggling',color:'#E67E22'},
-  crisis:{emoji:'😰',label:'crisis',color:'#C0392B'},
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+const MOOD_META: Record<string, { emoji: string; label: string; color: string }> = {
+  great:      { emoji: '😊', label: 'Great',      color: '#27AE60' },
+  good:       { emoji: '🙂', label: 'Good',       color: '#2A8A99' },
+  okay:       { emoji: '😐', label: 'Okay',       color: '#D4A574' },
+  struggling: { emoji: '😔', label: 'Struggling', color: '#E67E22' },
+  crisis:     { emoji: '😰', label: 'Crisis',     color: '#C0392B' },
 }
 
-interface Sponsee { id:string; name:string; sobrietyDate:string|null; currentStep:number; completedSteps:number; lastMood:string|null; lastCheckInDate:string|null; pendingReviews:number }
-interface Props { sponsees: Sponsee[]; pendingRequests: PendingRequest[] }
+const MILESTONE_DAYS = [7, 14, 21, 30, 60, 90, 120, 180, 270, 365, 500, 730, 1000, 1095, 1461, 1826, 2557, 3650]
 
-function calcDays(d:string|null):number|null { if(!d)return null; return Math.floor((Date.now()-new Date(d+'T00:00:00').getTime())/(86400000)) }
-function relDate(d:string|null):string {
-  if(!d)return 'never'
-  const days=Math.floor((Date.now()-new Date(d+'T00:00:00').getTime())/(86400000))
-  if(days===0)return 'Today'; if(days===1)return 'Yesterday'; return `${days} days ago`
+// ─── Utilities ───────────────────────────────────────────────────────────────
+
+function calcDays(d: string | null): number | null {
+  if (!d) return null
+  return Math.floor((Date.now() - new Date(d + 'T00:00:00').getTime()) / 86400000)
+}
+
+function daysSince(d: string | null): number {
+  if (!d) return Infinity
+  return Math.floor((Date.now() - new Date(d.includes('T') ? d : d + 'T00:00:00').getTime()) / 86400000)
+}
+
+function relDate(d: string | null): string {
+  if (!d) return 'Never'
+  const days = daysSince(d)
+  if (days === 0) return 'Today'
+  if (days === 1) return 'Yesterday'
+  return `${days} days ago`
+}
+
+function fmtDate(d: string): string {
+  return new Date(d.includes('T') ? d : d + 'T00:00:00').toLocaleDateString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+  })
+}
+
+function fmtShort(d: string): string {
+  return new Date(d.includes('T') ? d : d + 'T00:00:00').toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric',
+  })
+}
+
+function calcStreak(history: SponseeCheckIn[]): { current: number; longest: number } {
+  if (!history.length) return { current: 0, longest: 0 }
+  const dateSet = new Set(history.map(h => h.date))
+
+  let current = 0
+  const cursor = new Date()
+  while (true) {
+    if (dateSet.has(cursor.toISOString().slice(0, 10))) {
+      current++
+      cursor.setDate(cursor.getDate() - 1)
+    } else {
+      break
+    }
+  }
+
+  const sorted = Array.from(dateSet).sort()
+  let longest = sorted.length > 0 ? 1 : 0
+  let streak = sorted.length > 0 ? 1 : 0
+  for (let i = 1; i < sorted.length; i++) {
+    const diff = Math.round(
+      (new Date(sorted[i] + 'T00:00:00').getTime() - new Date(sorted[i - 1] + 'T00:00:00').getTime()) / 86400000
+    )
+    if (diff === 1) { streak++; longest = Math.max(longest, streak) }
+    else streak = 1
+  }
+  return { current, longest }
+}
+
+function getNextMilestone(sobrietyDate: string | null) {
+  const days = calcDays(sobrietyDate)
+  if (days === null) return null
+  const next = MILESTONE_DAYS.find(m => m > days)
+  if (!next) return null
+  const daysAway = next - days
+  const target = new Date()
+  target.setDate(target.getDate() + daysAway)
+  return {
+    label: `${next} Days`,
+    daysAway,
+    targetDate: target.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+  }
+}
+
+// ─── Mood Trend ───────────────────────────────────────────────────────────────
+
+function MoodTrend({ history }: { history: SponseeCheckIn[] }) {
+  const [page, setPage] = useState(0)
+  const [popover, setPopover] = useState<{ date: string; ci: SponseeCheckIn } | null>(null)
+  const popoverRef = useRef<HTMLDivElement>(null)
+  const maxPage = 3 // 4 pages × 14 days = 56 days (within our 60-day fetch window)
+
+  const dateMap = useMemo(() => {
+    const m: Record<string, SponseeCheckIn> = {}
+    for (const ci of history) m[ci.date] = ci
+    return m
+  }, [history])
+
+  // Build 14 date strings for the current page, oldest on left → newest on right
+  const days = useMemo(() => {
+    const result: string[] = []
+    const today = new Date()
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(today)
+      d.setDate(today.getDate() - (page * 14 + i))
+      result.push(d.toISOString().slice(0, 10))
+    }
+    return result
+  }, [page])
+
+  useEffect(() => {
+    if (!popover) return
+    function close(e: MouseEvent) {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) setPopover(null)
+    }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [popover])
+
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--mid)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 8 }}>
+        14-Day Mood Trend
+      </div>
+
+      {/* Navigation row: ‹ date range › */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
+        <button
+          onClick={() => { setPage(p => Math.min(p + 1, maxPage)); setPopover(null) }}
+          disabled={page >= maxPage}
+          aria-label="Previous 14 days"
+          style={{ background: 'none', border: 'none', cursor: page >= maxPage ? 'not-allowed' : 'pointer', color: page >= maxPage ? 'var(--border)' : 'var(--mid)', fontSize: 18, padding: '2px 6px', lineHeight: 1 }}
+        >‹</button>
+        <div style={{ fontSize: 11, color: 'var(--mid)', fontWeight: 600 }}>
+          {fmtShort(days[0])} — {fmtShort(days[13])}
+        </div>
+        <button
+          onClick={() => { setPage(p => Math.max(p - 1, 0)); setPopover(null) }}
+          disabled={page === 0}
+          aria-label="Next 14 days"
+          style={{ background: 'none', border: 'none', cursor: page === 0 ? 'not-allowed' : 'pointer', color: page === 0 ? 'var(--border)' : 'var(--mid)', fontSize: 18, padding: '2px 6px', lineHeight: 1 }}
+        >›</button>
+      </div>
+
+      {/* Dots row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 3, justifyContent: 'center' }}>
+        {days.map((date, idx) => {
+          const ci = dateMap[date]
+          const mood = ci?.mood ? MOOD_META[ci.mood] : null
+          const isActive = popover?.date === date
+
+          return (
+            <div key={date} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+              {/* Dashed divider between week 1 (idx 0-6) and week 2 (idx 7-13) */}
+              {idx === 7 && (
+                <div style={{ height: 22, width: 0, borderLeft: '1.5px dashed var(--border)', marginLeft: 2, marginRight: 2 }} />
+              )}
+              <button
+                onClick={() => ci ? setPopover(p => p?.date === date ? null : { date, ci }) : undefined}
+                title={ci ? `${date}: ${mood?.label ?? 'checked in'}` : `${date}: no check-in`}
+                style={{
+                  width: 26, height: 26, borderRadius: '50%',
+                  border: 'none', padding: 0,
+                  cursor: ci ? 'pointer' : 'default',
+                  background: ci
+                    ? (mood ? mood.color + '28' : 'rgba(42,138,153,0.14)')
+                    : 'var(--warm-gray)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: ci ? 14 : 7,
+                  outline: isActive ? '2px solid var(--teal)' : 'none',
+                  outlineOffset: 1,
+                  transform: isActive ? 'scale(1.15)' : 'scale(1)',
+                  transition: 'transform 0.12s',
+                  color: ci ? 'inherit' : 'var(--mid)',
+                }}
+              >
+                {ci ? (mood?.emoji ?? '✓') : '·'}
+              </button>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Popover */}
+      {popover && (
+        <div
+          ref={popoverRef}
+          style={{
+            background: '#fff', border: '1.5px solid var(--border)', borderRadius: 12,
+            padding: '14px 16px', marginTop: 10,
+            boxShadow: '0 4px 20px rgba(0,51,102,0.12)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: popover.ci.notes ? 10 : 0 }}>
+            <span style={{ fontSize: 28, lineHeight: 1, flexShrink: 0 }}>
+              {MOOD_META[popover.ci.mood ?? '']?.emoji ?? '✓'}
+            </span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, color: 'var(--navy)', fontSize: 13 }}>
+                {fmtDate(popover.date)}
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: '3px 10px' }}>
+                {popover.ci.mood && (
+                  <span style={{ color: MOOD_META[popover.ci.mood]?.color ?? 'var(--mid)', fontWeight: 600 }}>
+                    {MOOD_META[popover.ci.mood]?.label}
+                  </span>
+                )}
+                <span>{popover.ci.soberToday ? '✓ Sober today' : '✗ Not sober today'}</span>
+                <span>{popover.ci.meetingsAttended} meeting{popover.ci.meetingsAttended !== 1 ? 's' : ''} attended</span>
+                {popover.ci.calledSponsor !== null && (
+                  <span>{popover.ci.calledSponsor ? '✓ Called sponsor' : '✗ Didn\'t call sponsor'}</span>
+                )}
+              </div>
+            </div>
+          </div>
+          {popover.ci.notes && (
+            <div style={{
+              fontSize: 13, color: 'var(--dark)', lineHeight: 1.6,
+              borderTop: '1px solid var(--border)', paddingTop: 10,
+              fontStyle: 'italic',
+            }}>
+              &ldquo;{popover.ci.notes}&rdquo;
+            </div>
+          )}
+          {!popover.ci.notes && !popover.ci.mood && (
+            <div style={{ fontSize: 12, color: 'var(--mid)' }}>No additional details recorded.</div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Sponsee Card ─────────────────────────────────────────────────────────────
+
+function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
+  const router = useRouter()
+  const [showNote, setShowNote] = useState(false)
+  const [noteText, setNoteText] = useState('')
+  const [isPending, startTransition] = useTransition()
+  const [toast, setToast] = useState<string | null>(null)
+  const [localNote, setLocalNote] = useState(sponsee.latestNote)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  const lastCheckIn = sponsee.checkInHistory[0] ?? null
+  const mood = lastCheckIn?.mood ? MOOD_META[lastCheckIn.mood] : null
+  const days = calcDays(sponsee.sobrietyDate)
+  const streak = useMemo(() => calcStreak(sponsee.checkInHistory), [sponsee.checkInHistory])
+  const nextM = useMemo(() => getNextMilestone(sponsee.sobrietyDate), [sponsee.sobrietyDate])
+  const pct = sponsee.totalSteps > 0 ? Math.round((sponsee.completedSteps / sponsee.totalSteps) * 100) : 0
+  const allDone = sponsee.completedSteps >= sponsee.totalSteps && sponsee.totalSteps > 0
+
+  const daysSinceCheckIn = daysSince(lastCheckIn?.date ?? null)
+  const daysSinceStepWork = daysSince(sponsee.lastStepWork?.date ?? null)
+
+  const hasAlert = daysSinceCheckIn > 2 || sponsee.pendingReviews > 2
+  const isOnTrack = daysSinceCheckIn <= 1 && sponsee.pendingReviews === 0
+
+  const showToast = useCallback((msg: string) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 3000)
+  }, [])
+
+  useEffect(() => {
+    if (showNote) textareaRef.current?.focus()
+  }, [showNote])
+
+  function handleSaveNote() {
+    if (!noteText.trim()) return
+    startTransition(async () => {
+      try {
+        await addSponsorNote(sponsee.id, noteText.trim())
+        setLocalNote({ text: noteText.trim(), createdAt: new Date().toISOString() })
+        setNoteText('')
+        setShowNote(false)
+        showToast('Note saved')
+      } catch {
+        showToast('Failed to save note')
+      }
+    })
+  }
+
+  return (
+    <div style={{
+      background: '#fff',
+      borderRadius: 16,
+      border: '1px solid var(--border)',
+      borderLeft: hasAlert ? '3px solid #D4A574' : '1px solid var(--border)',
+      padding: '20px 22px',
+      position: 'relative',
+    }}>
+      {/* Toast */}
+      {toast && (
+        <div style={{
+          position: 'absolute', top: 12, right: 12,
+          background: 'var(--navy)', color: '#fff',
+          borderRadius: 8, padding: '6px 14px',
+          fontSize: 12, fontWeight: 600, zIndex: 10,
+          pointerEvents: 'none',
+        }}>
+          {toast}
+        </div>
+      )}
+
+      {/* ── Header ── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+          <div style={{
+            width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+            background: 'linear-gradient(135deg,#2A8A99,#003366)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#fff', fontSize: 18, fontWeight: 700,
+          }}>
+            {sponsee.name[0]?.toUpperCase() ?? '?'}
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontWeight: 700, color: 'var(--navy)', fontSize: 15 }}>{sponsee.name}</div>
+            <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 2, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '3px 6px' }}>
+              {sponsee.fellowshipAbbr && (
+                <span style={{
+                  background: 'rgba(42,138,153,0.1)', color: 'var(--teal)',
+                  borderRadius: 5, padding: '1px 6px', fontWeight: 700, fontSize: 11,
+                }}>
+                  {sponsee.fellowshipAbbr}
+                </span>
+              )}
+              <span>{days !== null ? `${days.toLocaleString()} days sober` : 'No sobriety date'}</span>
+              {sponsee.sobrietyDate && <span style={{ color: 'var(--border)' }}>·</span>}
+              {sponsee.sobrietyDate && (
+                <span>
+                  Since {new Date(sponsee.sobrietyDate + 'T00:00:00').toLocaleDateString('en-US', {
+                    month: 'short', day: 'numeric', year: 'numeric',
+                  })}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+        {mood && (
+          <span title={`Last mood: ${mood.label}`} style={{ fontSize: 24, flexShrink: 0 }}>
+            {mood.emoji}
+          </span>
+        )}
+      </div>
+
+      {/* ── Alert badges ── */}
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+        {sponsee.pendingReviews > 0 && (
+          <span style={{
+            background: 'rgba(212,165,116,0.12)', color: '#8B6914',
+            border: '1px solid rgba(212,165,116,0.45)', borderRadius: 20,
+            padding: '3px 10px', fontSize: 11, fontWeight: 700,
+          }}>
+            {sponsee.pendingReviews} step{sponsee.pendingReviews !== 1 ? 's' : ''} awaiting review
+          </span>
+        )}
+        {daysSinceCheckIn > 2 && daysSinceCheckIn !== Infinity && (
+          <span style={{
+            background: 'rgba(220,53,69,0.07)', color: '#b02a37',
+            border: '1px solid rgba(220,53,69,0.22)', borderRadius: 20,
+            padding: '3px 10px', fontSize: 11, fontWeight: 700,
+          }}>
+            No check-in in {daysSinceCheckIn} days
+          </span>
+        )}
+        {daysSinceCheckIn === Infinity && (
+          <span style={{
+            background: 'rgba(220,53,69,0.07)', color: '#b02a37',
+            border: '1px solid rgba(220,53,69,0.22)', borderRadius: 20,
+            padding: '3px 10px', fontSize: 11, fontWeight: 700,
+          }}>
+            No check-ins yet
+          </span>
+        )}
+        {isOnTrack && (
+          <span style={{
+            background: 'rgba(39,174,96,0.08)', color: '#1a7a45',
+            border: '1px solid rgba(39,174,96,0.25)', borderRadius: 20,
+            padding: '3px 10px', fontSize: 11, fontWeight: 700,
+          }}>
+            ✓ On track
+          </span>
+        )}
+      </div>
+
+      {/* ── Vitals — 3 columns ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 10 }}>
+        <div style={{ background: 'var(--warm-gray)', borderRadius: 10, padding: '10px 11px' }}>
+          <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--mid)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 4 }}>Last Check-in</div>
+          <div style={{ fontWeight: 700, fontSize: 12, color: daysSinceCheckIn > 2 ? '#D4A574' : 'var(--navy)' }}>
+            {relDate(lastCheckIn?.date ?? null)}
+          </div>
+          {lastCheckIn?.mood && (
+            <div style={{ fontSize: 11, color: 'var(--mid)', marginTop: 2 }}>
+              {MOOD_META[lastCheckIn.mood]?.emoji} {MOOD_META[lastCheckIn.mood]?.label}
+            </div>
+          )}
+        </div>
+
+        <div style={{ background: 'var(--warm-gray)', borderRadius: 10, padding: '10px 11px' }}>
+          <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--mid)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 4 }}>Last Step Work</div>
+          <div style={{ fontWeight: 700, fontSize: 12, color: daysSinceStepWork > 5 ? '#D4A574' : 'var(--navy)' }}>
+            {relDate(sponsee.lastStepWork?.date ?? null)}
+          </div>
+          {sponsee.lastStepWork?.title && (
+            <div style={{ fontSize: 11, color: 'var(--mid)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {sponsee.lastStepWork.title}
+            </div>
+          )}
+        </div>
+
+        <div style={{ background: 'var(--warm-gray)', borderRadius: 10, padding: '10px 11px' }}>
+          <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--mid)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 4 }}>Last Meeting</div>
+          <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--navy)' }}>
+            {relDate(sponsee.lastMeeting?.date ?? null)}
+          </div>
+          {sponsee.lastMeeting?.name && (
+            <div style={{ fontSize: 11, color: 'var(--mid)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {sponsee.lastMeeting.name}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Vitals row 2 — 2 columns ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 8, marginBottom: 16 }}>
+        <div style={{ background: 'rgba(212,165,116,0.07)', border: '1px solid rgba(212,165,116,0.2)', borderRadius: 10, padding: '10px 11px' }}>
+          <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--mid)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 4 }}>Next Milestone</div>
+          {nextM ? (
+            <>
+              <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--navy)' }}>{nextM.label}</div>
+              <div style={{ fontSize: 11, color: 'var(--mid)', marginTop: 2 }}>
+                In {nextM.daysAway} day{nextM.daysAway !== 1 ? 's' : ''} · {nextM.targetDate}
+              </div>
+            </>
+          ) : (
+            <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--navy)' }}>
+              {days !== null && days >= 3650 ? '10+ years 🏆' : days !== null && days > 0 ? 'Long-term recovery!' : 'No date set'}
+            </div>
+          )}
+        </div>
+
+        <div style={{ background: 'rgba(42,138,153,0.06)', border: '1px solid rgba(42,138,153,0.15)', borderRadius: 10, padding: '10px 11px' }}>
+          <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--mid)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 4 }}>Check-in Streak</div>
+          <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--navy)' }}>
+            {streak.current} day{streak.current !== 1 ? 's' : ''} current
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--mid)', marginTop: 2 }}>
+            Longest: {streak.longest} day{streak.longest !== 1 ? 's' : ''}
+          </div>
+        </div>
+      </div>
+
+      {/* ── 14-day mood trend ── */}
+      <MoodTrend history={sponsee.checkInHistory} />
+
+      {/* ── Step progress bar ── */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5, fontSize: 11, color: 'var(--mid)' }}>
+          <span>
+            {allDone
+              ? `All ${sponsee.totalSteps} steps complete`
+              : `Step ${Math.min(sponsee.completedSteps + 1, sponsee.totalSteps)} of ${sponsee.totalSteps}`}
+          </span>
+          <span style={{ fontWeight: 600 }}>{pct}%</span>
+        </div>
+        <div style={{ height: 7, background: 'var(--warm-gray)', borderRadius: 99, overflow: 'hidden' }}>
+          <div style={{
+            height: '100%', borderRadius: 99,
+            width: `${Math.max(pct > 0 ? Math.max(pct, 3) : 0, 0)}%`,
+            background: pct < 25 ? '#D4A574' : 'linear-gradient(90deg,#2A8A99,#003366)',
+            transition: 'width 0.4s',
+          }} />
+        </div>
+      </div>
+
+      {/* ── Latest sponsor note ── */}
+      {localNote && !showNote && (
+        <div style={{ borderLeft: '3px solid var(--teal)', paddingLeft: 12, marginBottom: 14 }}>
+          <div style={{ fontSize: 10, color: 'var(--mid)', marginBottom: 3, fontWeight: 600, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+            Your Note · {new Date(localNote.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--dark)', lineHeight: 1.6, fontStyle: 'italic' }}>
+            &ldquo;{localNote.text}&rdquo;
+          </div>
+        </div>
+      )}
+
+      {/* ── Inline add note ── */}
+      {showNote && (
+        <div style={{ marginBottom: 14 }}>
+          <textarea
+            ref={textareaRef}
+            value={noteText}
+            onChange={e => setNoteText(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Escape') { setShowNote(false); setNoteText('') } }}
+            placeholder="Add a private sponsor note…"
+            rows={3}
+            style={{
+              width: '100%', borderRadius: 8,
+              border: '1.5px solid var(--teal)',
+              padding: '10px 12px', fontSize: 13,
+              fontFamily: 'var(--font-body)', resize: 'vertical',
+              outline: 'none', boxSizing: 'border-box', color: 'var(--dark)',
+            }}
+          />
+          <div style={{ display: 'flex', gap: 8, marginTop: 6, justifyContent: 'flex-end' }}>
+            <button
+              onClick={() => { setShowNote(false); setNoteText('') }}
+              style={{
+                background: 'none', border: '1px solid var(--border)', borderRadius: 7,
+                padding: '6px 14px', fontSize: 12, cursor: 'pointer',
+                color: 'var(--mid)', fontFamily: 'var(--font-body)',
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSaveNote}
+              disabled={isPending || !noteText.trim()}
+              style={{
+                background: 'var(--navy)', color: '#fff', border: 'none', borderRadius: 7,
+                padding: '6px 18px', fontSize: 12, fontWeight: 600,
+                cursor: isPending || !noteText.trim() ? 'not-allowed' : 'pointer',
+                opacity: isPending || !noteText.trim() ? 0.6 : 1,
+                fontFamily: 'var(--font-body)',
+              }}
+            >
+              {isPending ? 'Saving…' : 'Save Note'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Action buttons ── */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <button
+          onClick={() => router.push(`/dashboard/step-work/pending?sponsee=${sponsee.id}`)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            background: 'var(--teal)', color: '#fff', border: 'none',
+            borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 600,
+            cursor: 'pointer', fontFamily: 'var(--font-body)',
+          }}
+        >
+          <span style={{
+            width: 7, height: 7, borderRadius: '50%', flexShrink: 0, display: 'inline-block',
+            background: sponsee.pendingReviews > 0 ? '#ffbe3d' : '#27AE60',
+          }} />
+          Review Step Work{sponsee.pendingReviews > 0 ? ` (${sponsee.pendingReviews})` : ''}
+        </button>
+
+        <button
+          onClick={() => router.push(`/my-recovery/sponsor/sponsee/${sponsee.id}`)}
+          style={{
+            background: 'none', color: 'var(--navy)', border: '1.5px solid var(--navy)',
+            borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 600,
+            cursor: 'pointer', fontFamily: 'var(--font-body)',
+          }}
+        >
+          View Profile
+        </button>
+
+        <button
+          onClick={() => setShowNote(v => !v)}
+          style={{
+            background: 'none', color: 'var(--mid)', border: '1.5px solid var(--border)',
+            borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600,
+            cursor: 'pointer', fontFamily: 'var(--font-body)',
+          }}
+        >
+          Add Note
+        </button>
+
+        <button
+          onClick={() => showToast('Reminder sent')}
+          style={{
+            background: 'none', color: 'var(--mid)', border: '1.5px solid var(--border)',
+            borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600,
+            cursor: 'pointer', fontFamily: 'var(--font-body)',
+          }}
+        >
+          Send Reminder
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Main SponsorView ─────────────────────────────────────────────────────────
+
+interface Props {
+  sponsees: SponseeFull[]
+  pendingRequests: PendingRequest[]
 }
 
 export default function SponsorView({ sponsees, pendingRequests }: Props) {
-  const router = useRouter()
   const [showAddModal, setShowAddModal] = useState(false)
-  const pendingTotal = sponsees.reduce((s,sp)=>s+sp.pendingReviews,0)
-  const checkInsToday = sponsees.filter(sp=>sp.lastCheckInDate===new Date().toISOString().slice(0,10)).length
-  const needsAttention = sponsees.filter(sp=>sp.lastMood==='struggling'||sp.lastMood==='crisis'||sp.pendingReviews>0)
-  const upcoming = sponsees.flatMap(sp=>{
-    const days=calcDays(sp.sobrietyDate); if(days===null)return []
-    const next=MILESTONES.find(m=>m>days); if(!next)return []
-    const away=next-days; if(away>60)return []
-    return [{name:sp.name,milestone:next,daysAway:away,sobrietyDate:sp.sobrietyDate}]
-  })
+
+  const today = new Date().toISOString().slice(0, 10)
+  const pendingTotal = sponsees.reduce((s, sp) => s + sp.pendingReviews, 0)
+  const checkInsToday = sponsees.filter(sp => sp.checkInHistory[0]?.date === today).length
+
+  // Sort: alerted cards first, then oldest check-in date first within each group
+  const sorted = useMemo(() => [...sponsees].sort((a, b) => {
+    const aAlert = daysSince(a.checkInHistory[0]?.date ?? null) > 2 || a.pendingReviews > 2
+    const bAlert = daysSince(b.checkInHistory[0]?.date ?? null) > 2 || b.pendingReviews > 2
+    if (aAlert !== bAlert) return aAlert ? -1 : 1
+    const aDate = a.checkInHistory[0]?.date ?? '0000-00-00'
+    const bDate = b.checkInHistory[0]?.date ?? '0000-00-00'
+    return aDate < bDate ? -1 : aDate > bDate ? 1 : 0
+  }), [sponsees])
 
   return (
     <div>
       <PendingRequests requests={pendingRequests} perspective="as_sponsor" />
 
-      {upcoming.length>0&&(
-        <div className="rounded-[16px] p-5 mb-5" style={{background:'rgba(212,165,116,0.08)',border:'1px solid rgba(212,165,116,0.25)'}}>
-          <div className="font-bold text-navy mb-3" style={{fontSize:'15px'}}>🎉 Upcoming Milestones</div>
-          {upcoming.map((u,i)=>(
-            <div key={i} className="flex justify-between items-center flex-wrap gap-2" style={{borderTop:i>0?'1px solid rgba(212,165,116,0.15)':'none',paddingTop:i>0?'10px':'0',marginTop:i>0?'10px':'0'}}>
-              <div style={{fontSize:'14px',color:'var(--dark)'}}>
-                <strong className="text-navy">{u.name}</strong> hits <strong style={{color:'#D4A574'}}>{u.milestone} Days</strong> in {u.daysAway} day{u.daysAway!==1?'s':''}
-                {u.sobrietyDate&&<span className="text-mid" style={{fontSize:'13px'}}> · Sober since {new Date(u.sobrietyDate+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</span>}
-              </div>
-            </div>
+      {/* ── Summary stats row ── */}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: 130, borderRadius: 14, padding: '18px 20px', background: 'linear-gradient(135deg,#003366,#1a4a5e)' }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 2 }}>
+            Active Sponsees
+          </div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 700, color: '#fff', letterSpacing: '-1px', lineHeight: 1.15 }}>
+            {sponsees.length}
+          </div>
+        </div>
+
+        <div style={{ flex: 1, minWidth: 130, borderRadius: 14, padding: '18px 20px', background: '#fff', border: '1px solid var(--border)' }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--mid)', marginBottom: 2 }}>
+            Pending Reviews
+          </div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 700, letterSpacing: '-1px', lineHeight: 1.15, color: pendingTotal > 0 ? '#D4A574' : 'var(--navy)' }}>
+            {pendingTotal}
+          </div>
+        </div>
+
+        <div style={{ flex: 1, minWidth: 130, borderRadius: 14, padding: '18px 20px', background: '#fff', border: '1px solid var(--border)' }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--mid)', marginBottom: 2 }}>
+            Checked In Today
+          </div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 700, letterSpacing: '-1px', lineHeight: 1.15, color: '#2A8A99' }}>
+            {checkInsToday}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Header + add button ── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <h3 style={{ fontWeight: 700, color: 'var(--navy)', fontSize: 15, margin: 0 }}>Your Sponsees</h3>
+        <button
+          onClick={() => setShowAddModal(true)}
+          style={{
+            background: 'var(--navy)', color: '#fff', border: 'none', borderRadius: 8,
+            padding: '8px 16px', fontSize: 13, fontWeight: 600,
+            cursor: 'pointer', fontFamily: 'var(--font-body)',
+          }}
+        >
+          + Add Sponsee
+        </button>
+      </div>
+
+      {/* ── Sponsee cards ── */}
+      {sponsees.length === 0 ? (
+        <div style={{
+          borderRadius: 16, border: '1px solid var(--border)',
+          padding: '40px 24px', textAlign: 'center', background: '#fff',
+        }}>
+          <div style={{ fontSize: 36, marginBottom: 10 }}>👥</div>
+          <div style={{ fontWeight: 600, color: 'var(--navy)', fontSize: 16, marginBottom: 6 }}>No active sponsees yet</div>
+          <div style={{ fontSize: 14, color: 'var(--mid)' }}>
+            Click &quot;Add Sponsee&quot; to connect with someone you&apos;re sponsoring.
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 20 }}>
+          {sorted.map(sp => (
+            <SponseeCard key={sp.id} sponsee={sp} />
           ))}
-        </div>
-      )}
-
-      <div className="flex gap-4 mb-5 flex-wrap">
-        {[
-          {label:'Active Sponsees',val:sponsees.length,style:{background:'linear-gradient(135deg,#003366,#1a4a5e)'},valStyle:{color:'#fff'}},
-          {label:'Pending Reviews',val:pendingTotal,style:{background:'#fff',border:'1px solid var(--border)'},valStyle:{color:'#D4A574'}},
-          {label:'Checked In Today',val:checkInsToday,style:{background:'#fff',border:'1px solid var(--border)'},valStyle:{color:'#2A8A99'}},
-        ].map(s=>(
-          <div key={s.label} className="rounded-[14px] flex-1" style={{minWidth:'140px',padding:'22px 24px',...s.style}}>
-            <div style={{color:s.style.background==='#fff'?'var(--mid)':'rgba(255,255,255,0.5)',fontSize:'12px',fontWeight:700,letterSpacing:'2px',textTransform:'uppercase'}}>
-              {s.label}
-            </div>
-            <div className="font-bold" style={{fontFamily:'var(--font-display)',fontSize:'40px',letterSpacing:'-1.0px',marginTop:'4px',...s.valStyle}}>{s.val}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-bold text-navy" style={{fontSize:'15px'}}>Your Sponsees</h3>
-        <button onClick={() => setShowAddModal(true)} className="font-semibold text-white rounded-lg hover:bg-navy-dark transition-colors" style={{fontSize:'13px',padding:'8px 16px',background:'var(--navy)',border:'none',cursor:'pointer'}}>+ Add Sponsee</button>
-      </div>
-
-      {sponsees.length===0?(
-        <div className="card-hover rounded-[16px] p-8 text-center mb-5 bg-white border border-[var(--border)]">
-          <div style={{fontSize:'36px',marginBottom:'10px'}}>👥</div>
-          <div className="font-semibold text-navy mb-1" style={{fontSize:'16px'}}>No active sponsees yet</div>
-          <div className="text-mid" style={{fontSize:'14px'}}>Click &quot;Add Sponsee&quot; to connect with someone you&apos;re sponsoring.</div>
-        </div>
-      ):(
-        <div style={{display:'flex',flexDirection:'column',gap:'12px',marginBottom:'20px'}}>
-          {sponsees.map(sp=>{
-            const days=calcDays(sp.sobrietyDate)
-            const mood=sp.lastMood?MOOD_META[sp.lastMood]:null
-            const pct=Math.round((sp.completedSteps/12)*100)
-            const allDone=sp.completedSteps>=12
-            const nextStep=allDone?null:sp.completedSteps+1
-            return(
-              <div key={sp.id} className="card-hover rounded-[16px] p-5 bg-white border border-[var(--border)]">
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center rounded-xl font-bold text-white flex-shrink-0" style={{width:'40px',height:'40px',background:'linear-gradient(135deg,#2A8A99,#003366)',fontSize:'16px'}}>
-                      {sp.name[0]?.toUpperCase()?? '?'}
-                    </div>
-                    <div>
-                      <div className="font-bold text-navy" style={{fontSize:'15px'}}>{sp.name}</div>
-                      <div className="text-mid" style={{fontSize:'12px',marginTop:'1px'}}>
-                        {days!==null?`${days} days sober`:'No sobriety date'} · {allDone?'All steps complete':`Step ${nextStep}: ${STEPS[(nextStep??1)-1]}`}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    {mood&&<span title={`Last mood: ${mood.label}`}>{mood.emoji}</span>}
-                    {sp.pendingReviews>0&&(
-                      <span className="rounded-full font-bold text-white" style={{fontSize:'11px',padding:'2px 8px',background:'#D4A574',minWidth:'20px',textAlign:'center'}}>{sp.pendingReviews}</span>
-                    )}
-                  </div>
-                </div>
-                <div className="mb-3">
-                  <div className="flex justify-between mb-1.5" style={{fontSize:'11px',color:'var(--mid)'}}>
-                    <span>{allDone?'All 12 steps complete':`Step ${nextStep} of 12`}</span><span>{pct}% complete</span>
-                  </div>
-                  <div className="rounded-full overflow-hidden" style={{height:'6px',background:'var(--warm-gray)'}}>
-                    <div className="rounded-full h-full" style={{width:`${pct}%`,background:'linear-gradient(90deg,#2A8A99,#003366)',transition:'width 0.4s'}} />
-                  </div>
-                </div>
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <div style={{fontSize:'12px',color:'var(--mid)'}}>Last check-in: <span className="font-semibold text-dark">{relDate(sp.lastCheckInDate)}</span></div>
-                  <div className="flex gap-2">
-                    {sp.pendingReviews>0&&(
-                      <button onClick={() => router.push(`/dashboard/step-work/pending?sponsee=${sp.id}`)} className="font-semibold text-white rounded-lg" style={{fontSize:'12px',padding:'6px 12px',background:'#2A8A99',border:'none',cursor:'pointer'}}>Review Work ({sp.pendingReviews})</button>
-                    )}
-                    <button onClick={() => router.push(`/my-recovery/sponsor/sponsee/${sp.id}`)} className="font-semibold rounded-lg hover:bg-[var(--navy-10)] transition-colors" style={{fontSize:'12px',padding:'6px 12px',background:'none',border:'1.5px solid var(--navy)',color:'var(--navy)',cursor:'pointer'}}>View Profile</button>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {needsAttention.length>0&&(
-        <div className="rounded-[16px] p-5 bg-white" style={{border:'1.5px solid rgba(212,165,116,0.4)'}}>
-          <h3 className="font-bold text-navy mb-3" style={{fontSize:'15px'}}>⚠️ Needs Attention</h3>
-          <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
-            {needsAttention.map(sp=>{
-              const mood=sp.lastMood?MOOD_META[sp.lastMood]:null
-              return(
-                <div key={sp.id} className="flex items-center gap-3 text-mid" style={{fontSize:'14px'}}>
-                  {mood&&<span style={{fontSize:'18px'}}>{mood.emoji}</span>}
-                  <div><strong className="text-navy">{sp.name}</strong>{mood&&(sp.lastMood==='struggling'||sp.lastMood==='crisis')&&` — "${mood.label}" mood`}{sp.pendingReviews>0&&` · ${sp.pendingReviews} pending review${sp.pendingReviews>1?'s':''}`}</div>
-                </div>
-              )
-            })}
-          </div>
         </div>
       )}
 

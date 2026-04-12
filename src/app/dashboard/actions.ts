@@ -96,6 +96,29 @@ export async function requestSponsor(sponsorUserId: string): Promise<void> {
   revalidatePath('/dashboard')
 }
 
+export async function addSponsorNote(sponseeId: string, noteText: string): Promise<void> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Verify active sponsor relationship before writing
+  const { data: rel } = await supabase
+    .from('sponsor_relationships')
+    .select('id')
+    .eq('sponsor_id', user.id)
+    .eq('sponsee_id', sponseeId)
+    .eq('status', 'active')
+    .maybeSingle()
+
+  if (!rel) throw new Error('No active sponsor relationship found.')
+
+  const { error } = await supabase
+    .from('sponsor_notes')
+    .insert({ sponsor_id: user.id, sponsee_id: sponseeId, note_text: noteText.trim() })
+
+  if (error) throw new Error(error.message)
+}
+
 export async function respondToSponsorRequest(
   relationshipId: string,
   accept: boolean
