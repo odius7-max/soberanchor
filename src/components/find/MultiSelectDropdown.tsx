@@ -74,7 +74,7 @@ export default function MultiSelectDropdown({ options, selected, onChange, defau
             position: 'absolute', top: 'calc(100% + 4px)', left: 0,
             background: '#fff', border: '1.5px solid var(--border)',
             borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
-            minWidth: 170, zIndex: 50, padding: '5px 0',
+            minWidth: 170, zIndex: 200, padding: '5px 0',
             maxHeight: 280, overflowY: 'auto',
           }}
         >

@@ -164,7 +164,7 @@ export default function FilterAccordion({
   return (
     <div>
       {/* Accordion card */}
-      <div className="bg-white rounded-[14px] border border-border mb-4" style={{ overflow: 'hidden' }}>
+      <div className="bg-white rounded-[14px] border border-border mb-4" style={{ position: 'relative' }}>
 
         {/* ── Location section ── */}
         <div>
