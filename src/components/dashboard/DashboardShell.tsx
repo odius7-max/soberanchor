@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import DashboardBanner, { type SobrietyMilestone, type Fellowship } from './DashboardBanner'
 import OverviewTab from './tabs/OverviewTab'
 import JournalTab from './tabs/JournalTab'
@@ -70,6 +70,16 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
 
   const displayName = profile?.display_name ?? 'Friend'
   const isSponsor = profile?.is_available_sponsor ?? false
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('tab') === 'sponsor' && isSponsor) {
+      setRole('sponsor')
+      const url = new URL(window.location.href)
+      url.searchParams.delete('tab')
+      window.history.replaceState({}, '', url.toString())
+    }
+  }, [])
 
   // Active fellowship driven by which milestone tab the user is viewing.
   // undefined = no milestones → fall back to sponsor_relationships in step work.

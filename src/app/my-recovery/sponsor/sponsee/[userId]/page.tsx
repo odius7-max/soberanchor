@@ -1,7 +1,7 @@
 import { redirect, notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import BackButton from '@/components/find/BackButton'
+import Link from 'next/link'
 import SponseeProgram from '@/components/dashboard/SponseeProgram'
 
 const MOOD_META: Record<string, { emoji: string; label: string; color: string }> = {
@@ -99,7 +99,9 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
 
   return (
     <div style={{ maxWidth: 780, margin: '0 auto', padding: '32px 20px' }}>
-      <BackButton fallback="/dashboard" label="← Back to Dashboard" />
+      <Link href="/dashboard?tab=sponsor" className="text-teal text-sm font-medium hover:underline" style={{ fontFamily: 'var(--font-body)' }}>
+        ← Back to Sponsor View
+      </Link>
 
       {/* Header */}
       <div style={{ ...card, marginTop: 20, display: 'flex', alignItems: 'flex-start', gap: 20, flexWrap: 'wrap' as const }}>
