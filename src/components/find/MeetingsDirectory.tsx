@@ -6,11 +6,12 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import FilterAccordion, { type ActiveFilter } from './FilterAccordion'
 import HeartButton from './HeartButton'
+import MultiSelectDropdown from './MultiSelectDropdown'
 import {
   FELLOWSHIP_OPTIONS, DAY_OPTIONS, TIME_OPTIONS, FORMAT_OPTIONS,
   MEETING_SPECIALTY_OPTIONS, MEETING_SORT_OPTIONS,
   haversineMiles, isLiveNow, minutesUntilMeeting, formatCountdown,
-  getTimeRange, buildFilterSummary, fmt12h,
+  getTimeRange, fmt12h,
 } from './findUtils'
 
 interface Meeting {
@@ -43,13 +44,6 @@ const APPROACH_STYLE: Record<string, { bg: string; color: string; border: string
   harm_reduction: { bg: 'rgba(39,174,96,0.08)',  color: '#27AE60',     border: 'rgba(39,174,96,0.2)' },
 }
 
-const selStyle: React.CSSProperties = {
-  padding: '7px 28px 7px 10px', borderRadius: 8, border: '1.5px solid var(--border)',
-  fontSize: 13, fontFamily: 'var(--font-body)', background: '#fff', color: 'var(--dark)',
-  cursor: 'pointer', outline: 'none', appearance: 'none', WebkitAppearance: 'none',
-  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E")`,
-  backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center',
-}
 
 interface Props {
   savedIds?: Record<string, string>
@@ -69,10 +63,10 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
   const [radiusMiles, setRadiusMiles] = useState(15)
 
   const [fellowship, setFellowship] = useState(() => searchParams.get('fellowship') ?? '')
-  const [day, setDay] = useState('')
-  const [time, setTime] = useState('')
-  const [format, setFormat] = useState('')
-  const [specialty, setSpecialty] = useState('')
+  const [days,       setDays]       = useState<string[]>([])
+  const [times,      setTimes]      = useState<string[]>([])
+  const [formats,    setFormats]    = useState<string[]>([])
+  const [specialties,setSpecialties]= useState<string[]>([])
   const [sort, setSort] = useState('soonest')
 
   useEffect(() => {
@@ -99,11 +93,15 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
   }
 
   function removeFilter(key: string) {
-    if (key === 'fellowship') setFellowship('')
-    else if (key === 'day') setDay('')
-    else if (key === 'time') setTime('')
-    else if (key === 'format') setFormat('')
-    else if (key === 'specialty') setSpecialty('')
+    if (key === 'fellowship') { setFellowship(''); setPage(1); return }
+    const colonIdx = key.indexOf(':')
+    if (colonIdx === -1) return
+    const field = key.slice(0, colonIdx)
+    const value = key.slice(colonIdx + 1)
+    if (field === 'day')       setDays(v => v.filter(x => x !== value))
+    else if (field === 'time') setTimes(v => v.filter(x => x !== value))
+    else if (field === 'format')    setFormats(v => v.filter(x => x !== value))
+    else if (field === 'specialty') setSpecialties(v => v.filter(x => x !== value))
     setPage(1)
   }
 
@@ -115,15 +113,15 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
         const f = m.fellowships
         if (!f || f.slug !== fellowship) return false
       }
-      if (day && m.day_of_week !== day) return false
-      if (format && m.format !== format) return false
-      if (time) {
+      if (days.length && !days.includes(m.day_of_week ?? '')) return false
+      if (formats.length && !formats.includes(m.format ?? '')) return false
+      if (times.length) {
         const bucket = getTimeRange(m.start_time)
-        if (bucket !== time) return false
+        if (!times.includes(bucket ?? '')) return false
       }
-      if (specialty) {
-        const types = m.types ?? []
-        if (!types.includes(specialty)) return false
+      if (specialties.length) {
+        const mTypes = m.types ?? []
+        if (!specialties.some(s => mTypes.includes(s))) return false
       }
       if (hasGeo && m.format !== 'online') {
         if (!m.latitude || !m.longitude) return false
@@ -156,20 +154,28 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
   const activeFilters: ActiveFilter[] = []
   if (fellowship) {
     const opt = FELLOWSHIP_OPTIONS.find(o => o.value === fellowship)
-    activeFilters.push({ key: 'fellowship', label: opt?.label.split('–')[0]!.trim() ?? fellowship })
+    activeFilters.push({ key: 'fellowship', label: opt?.label.split('–')[0]?.trim() ?? fellowship })
   }
-  if (day) activeFilters.push({ key: 'day', label: day })
-  if (time) {
-    const opt = TIME_OPTIONS.find(o => o.value === time)
-    activeFilters.push({ key: 'time', label: opt?.label.split(' (')[0] ?? time })
+  for (const d of days)      activeFilters.push({ key: `day:${d}`, label: d })
+  for (const t of times) {
+    const opt = TIME_OPTIONS.find(o => o.value === t)
+    activeFilters.push({ key: `time:${t}`, label: opt?.label.split(' (')[0] ?? t })
   }
-  if (format) {
-    const opt = FORMAT_OPTIONS.find(o => o.value === format)
-    activeFilters.push({ key: 'format', label: opt?.label ?? format })
+  for (const f of formats) {
+    const opt = FORMAT_OPTIONS.find(o => o.value === f)
+    activeFilters.push({ key: `format:${f}`, label: opt?.label ?? f })
   }
-  if (specialty) activeFilters.push({ key: 'specialty', label: specialty })
+  for (const s of specialties) activeFilters.push({ key: `specialty:${s}`, label: s })
 
-  const filterSummary = buildFilterSummary({ fellowship, day, time, format, specialty })
+  const filterSummary = (() => {
+    const parts: string[] = []
+    if (fellowship) { const o = FELLOWSHIP_OPTIONS.find(x => x.value === fellowship); parts.push(o?.label.split('–')[0]?.trim() ?? fellowship) }
+    for (const d of days) parts.push(d)
+    for (const t of times) { const o = TIME_OPTIONS.find(x => x.value === t); parts.push(o?.label.split(' (')[0] ?? t) }
+    for (const f of formats) { const o = FORMAT_OPTIONS.find(x => x.value === f); parts.push(o?.label ?? f) }
+    for (const s of specialties) parts.push(s)
+    return parts.length ? parts.join(' · ') : 'All'
+  })()
   const paginated = filtered.slice(0, page * ITEMS_PER_PAGE)
   const hasMore = filtered.length > paginated.length
 
@@ -187,21 +193,41 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
         filterSummary={filterSummary}
         filterSlot={
           <>
-            <select value={fellowship} onChange={e => { setFellowship(e.target.value); setPage(1) }} style={selStyle}>
+            <select
+              value={fellowship}
+              onChange={e => { setFellowship(e.target.value); setPage(1) }}
+              style={{ padding: '7px 28px 7px 10px', borderRadius: 8, border: '1.5px solid var(--border)', fontSize: 13, fontFamily: 'var(--font-body)', background: '#fff', color: 'var(--dark)', cursor: 'pointer', outline: 'none', appearance: 'none', WebkitAppearance: 'none' }}
+            >
               {FELLOWSHIP_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
-            <select value={day} onChange={e => { setDay(e.target.value); setPage(1) }} style={selStyle}>
-              {DAY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-            <select value={time} onChange={e => { setTime(e.target.value); setPage(1) }} style={selStyle}>
-              {TIME_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-            <select value={format} onChange={e => { setFormat(e.target.value); setPage(1) }} style={selStyle}>
-              {FORMAT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-            <select value={specialty} onChange={e => { setSpecialty(e.target.value); setPage(1) }} style={selStyle}>
-              {MEETING_SPECIALTY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
+            <MultiSelectDropdown
+              options={DAY_OPTIONS.filter(o => o.value !== '')}
+              selected={days}
+              onChange={v => { setDays(v); setPage(1) }}
+              defaultLabel="Any Day"
+              fieldLabel="Day"
+            />
+            <MultiSelectDropdown
+              options={TIME_OPTIONS.filter(o => o.value !== '')}
+              selected={times}
+              onChange={v => { setTimes(v); setPage(1) }}
+              defaultLabel="Any Time"
+              fieldLabel="Time"
+            />
+            <MultiSelectDropdown
+              options={FORMAT_OPTIONS.filter(o => o.value !== '')}
+              selected={formats}
+              onChange={v => { setFormats(v); setPage(1) }}
+              defaultLabel="Any Format"
+              fieldLabel="Format"
+            />
+            <MultiSelectDropdown
+              options={MEETING_SPECIALTY_OPTIONS.filter(o => o.value !== '')}
+              selected={specialties}
+              onChange={v => { setSpecialties(v); setPage(1) }}
+              defaultLabel="Any Type"
+              fieldLabel="Type"
+            />
           </>
         }
         resultCount={loading ? null : filtered.length}
@@ -221,7 +247,7 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
           <div style={{ fontSize: 36, marginBottom: 12 }}>👥</div>
           <p style={{ fontSize: 15 }}>No meetings match your filters.</p>
           <button
-            onClick={() => { setFellowship(''); setDay(''); setTime(''); setFormat(''); setSpecialty(''); setPage(1) }}
+            onClick={() => { setFellowship(''); setDays([]); setTimes([]); setFormats([]); setSpecialties([]); setPage(1) }}
             style={{ marginTop: 12, fontSize: 13, color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: 'var(--font-body)' }}
           >
             Clear filters
