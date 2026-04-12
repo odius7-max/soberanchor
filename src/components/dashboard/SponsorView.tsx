@@ -7,6 +7,7 @@ import PendingRequests from './PendingRequests'
 import type { PendingRequest } from './PendingRequests'
 import { addSponsorNote } from '@/app/dashboard/actions'
 import type { SponseeFull, SponseeCheckIn } from './DashboardShell'
+import CheckInReportModal from './CheckInReportModal'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -249,6 +250,7 @@ function MoodTrend({ history }: { history: SponseeCheckIn[] }) {
 function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
   const router = useRouter()
   const [showNote, setShowNote] = useState(false)
+  const [showReport, setShowReport] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [isPending, startTransition] = useTransition()
   const [toast, setToast] = useState<string | null>(null)
@@ -398,8 +400,15 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
 
       {/* ── Vitals — 3 columns ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 10 }}>
-        <div style={{ background: 'var(--warm-gray)', borderRadius: 10, padding: '10px 11px' }}>
-          <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--mid)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 4 }}>Last Check-in</div>
+        <div
+          onClick={() => setShowReport(true)}
+          title="View check-in report"
+          style={{ background: 'var(--warm-gray)', borderRadius: 10, padding: '10px 11px', cursor: 'pointer', position: 'relative' }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--mid)', letterSpacing: '1px', textTransform: 'uppercase' }}>Last Check-in</div>
+            <span style={{ fontSize: 11, color: 'var(--mid)', opacity: 0.65, lineHeight: 1 }}>🔍</span>
+          </div>
           <div style={{ fontWeight: 700, fontSize: 12, color: daysSinceCheckIn > 2 ? '#D4A574' : 'var(--navy)' }}>
             {relDate(lastCheckIn?.date ?? null)}
           </div>
@@ -596,6 +605,15 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
           Send Reminder
         </button>
       </div>
+
+      {/* Check-in report modal (portal) */}
+      {showReport && (
+        <CheckInReportModal
+          sponseeId={sponsee.id}
+          sponseeName={sponsee.name}
+          onClose={() => setShowReport(false)}
+        />
+      )}
     </div>
   )
 }

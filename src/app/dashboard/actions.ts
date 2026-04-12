@@ -96,6 +96,47 @@ export async function requestSponsor(sponsorUserId: string): Promise<void> {
   revalidatePath('/dashboard')
 }
 
+export interface CheckInReportEntry {
+  check_in_date: string
+  mood: string | null
+  sober_today: boolean
+  meetings_attended: number | null
+  called_sponsor: boolean | null
+  notes: string | null
+}
+
+export async function getSponseeCheckInReport(sponseeId: string, days: number): Promise<CheckInReportEntry[]> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Verify active sponsor relationship
+  const { data: rel } = await supabase
+    .from('sponsor_relationships')
+    .select('id')
+    .eq('sponsor_id', user.id)
+    .eq('sponsee_id', sponseeId)
+    .eq('status', 'active')
+    .maybeSingle()
+
+  if (!rel) throw new Error('No active sponsor relationship found.')
+
+  const rangeStart = new Date()
+  rangeStart.setDate(rangeStart.getDate() - days + 1)
+  const startStr = rangeStart.toISOString().slice(0, 10)
+
+  const admin = createAdminClient()
+  const { data, error } = await admin
+    .from('check_ins')
+    .select('check_in_date,mood,sober_today,meetings_attended,called_sponsor,notes')
+    .eq('user_id', sponseeId)
+    .gte('check_in_date', startStr)
+    .order('check_in_date', { ascending: true })
+
+  if (error) throw new Error(error.message)
+  return (data ?? []) as CheckInReportEntry[]
+}
+
 export async function addSponsorNote(sponseeId: string, noteText: string): Promise<void> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
