@@ -48,6 +48,13 @@ export default function Nav() {
     return () => document.removeEventListener('keydown', onKey)
   }, [])
 
+  // Custom event fired by any page component that wants to open the AI search
+  useEffect(() => {
+    function onOpenSearch() { setMobileOpen(false); setSearchOpen(true) }
+    document.addEventListener('soberanchor:open-search', onOpenSearch)
+    return () => document.removeEventListener('soberanchor:open-search', onOpenSearch)
+  }, [])
+
   const displayName = profile?.display_name
 
   async function handleSignOut() {

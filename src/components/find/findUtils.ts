@@ -55,11 +55,24 @@ export const MEETING_SPECIALTY_OPTIONS: Array<{ value: string; label: string }> 
   { value: 'Beginners', label: 'Beginners' },
   { value: 'Speaker', label: 'Speaker' },
   { value: 'Step Study', label: 'Step Study' },
-  { value: 'Big Book', label: 'Big Book' },
+  { value: 'Big Book Study', label: 'Big Book Study' },
   { value: 'Discussion', label: 'Discussion' },
-  { value: 'Spanish', label: 'Spanish' },
-  { value: 'Secular/Non-Religious', label: 'Secular/Non-Religious' },
+  { value: 'Outdoor', label: 'Outdoor' },
   { value: 'Meditation', label: 'Meditation' },
+  { value: 'Child-Friendly', label: 'Child-Friendly' },
+]
+
+export const LANGUAGE_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: '', label: 'Any Language' },
+  { value: 'English', label: 'English' },
+  { value: 'Spanish', label: 'Spanish' },
+  { value: 'Sign Language', label: 'Sign Language' },
+]
+
+export const ACCESS_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: '', label: 'All' },
+  { value: 'Open', label: 'Open (anyone can attend)' },
+  { value: 'Closed', label: 'Closed (members only)' },
 ]
 
 export const RADIUS_OPTIONS: Array<{ value: number; label: string }> = [

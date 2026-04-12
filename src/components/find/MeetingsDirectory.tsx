@@ -9,7 +9,7 @@ import HeartButton from './HeartButton'
 import MultiSelectDropdown from './MultiSelectDropdown'
 import {
   FELLOWSHIP_OPTIONS, DAY_OPTIONS, TIME_OPTIONS, FORMAT_OPTIONS,
-  MEETING_SPECIALTY_OPTIONS, MEETING_SORT_OPTIONS,
+  MEETING_SPECIALTY_OPTIONS, LANGUAGE_OPTIONS, ACCESS_OPTIONS, MEETING_SORT_OPTIONS,
   haversineMiles, isLiveNow, minutesUntilMeeting, formatCountdown,
   getTimeRange, fmt12h,
 } from './findUtils'
@@ -67,6 +67,8 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
   const [times,      setTimes]      = useState<string[]>([])
   const [formats,    setFormats]    = useState<string[]>([])
   const [specialties,setSpecialties]= useState<string[]>([])
+  const [languages,  setLanguages]  = useState<string[]>([])
+  const [access,     setAccess]     = useState('')
   const [sort, setSort] = useState('soonest')
 
   useEffect(() => {
@@ -94,14 +96,16 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
 
   function removeFilter(key: string) {
     if (key === 'fellowship') { setFellowship(''); setPage(1); return }
+    if (key === 'access')     { setAccess('');     setPage(1); return }
     const colonIdx = key.indexOf(':')
     if (colonIdx === -1) return
     const field = key.slice(0, colonIdx)
     const value = key.slice(colonIdx + 1)
-    if (field === 'day')       setDays(v => v.filter(x => x !== value))
-    else if (field === 'time') setTimes(v => v.filter(x => x !== value))
-    else if (field === 'format')    setFormats(v => v.filter(x => x !== value))
+    if (field === 'day')          setDays(v => v.filter(x => x !== value))
+    else if (field === 'time')     setTimes(v => v.filter(x => x !== value))
+    else if (field === 'format')   setFormats(v => v.filter(x => x !== value))
     else if (field === 'specialty') setSpecialties(v => v.filter(x => x !== value))
+    else if (field === 'language')  setLanguages(v => v.filter(x => x !== value))
     setPage(1)
   }
 
@@ -122,6 +126,14 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
       if (specialties.length) {
         const mTypes = m.types ?? []
         if (!specialties.some(s => mTypes.includes(s))) return false
+      }
+      if (languages.length) {
+        const mTypes = m.types ?? []
+        if (!languages.some(l => mTypes.includes(l))) return false
+      }
+      if (access) {
+        const mTypes = m.types ?? []
+        if (!mTypes.includes(access)) return false
       }
       if (hasGeo && m.format !== 'online') {
         if (!m.latitude || !m.longitude) return false
@@ -166,6 +178,11 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
     activeFilters.push({ key: `format:${f}`, label: opt?.label ?? f })
   }
   for (const s of specialties) activeFilters.push({ key: `specialty:${s}`, label: s })
+  for (const l of languages)   activeFilters.push({ key: `language:${l}`, label: l })
+  if (access) {
+    const opt = ACCESS_OPTIONS.find(o => o.value === access)
+    activeFilters.push({ key: 'access', label: opt?.label.split(' (')[0] ?? access })
+  }
 
   const filterSummary = (() => {
     const parts: string[] = []
@@ -174,6 +191,8 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
     for (const t of times) { const o = TIME_OPTIONS.find(x => x.value === t); parts.push(o?.label.split(' (')[0] ?? t) }
     for (const f of formats) { const o = FORMAT_OPTIONS.find(x => x.value === f); parts.push(o?.label ?? f) }
     for (const s of specialties) parts.push(s)
+    for (const l of languages) parts.push(l)
+    if (access) { const o = ACCESS_OPTIONS.find(x => x.value === access); parts.push(o?.label.split(' (')[0] ?? access) }
     return parts.length ? parts.join(' · ') : 'All'
   })()
   const paginated = filtered.slice(0, page * ITEMS_PER_PAGE)
@@ -189,10 +208,11 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
         locationLng={locationLng}
         radiusMiles={radiusMiles}
         onLocationChange={handleLocationChange}
-        filterHint="(fellowship, day, time, format, type)"
+        filterHint="(fellowship, day, time, format, type, language, access)"
         filterSummary={filterSummary}
         filterSlot={
           <>
+            {/* Fellowship */}
             <select
               value={fellowship}
               onChange={e => { setFellowship(e.target.value); setPage(1) }}
@@ -200,6 +220,7 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
             >
               {FELLOWSHIP_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
+            {/* Day */}
             <MultiSelectDropdown
               options={DAY_OPTIONS.filter(o => o.value !== '')}
               selected={days}
@@ -207,6 +228,7 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
               defaultLabel="Any Day"
               fieldLabel="Day"
             />
+            {/* Time */}
             <MultiSelectDropdown
               options={TIME_OPTIONS.filter(o => o.value !== '')}
               selected={times}
@@ -214,6 +236,7 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
               defaultLabel="Any Time"
               fieldLabel="Time"
             />
+            {/* Format */}
             <MultiSelectDropdown
               options={FORMAT_OPTIONS.filter(o => o.value !== '')}
               selected={formats}
@@ -221,6 +244,7 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
               defaultLabel="Any Format"
               fieldLabel="Format"
             />
+            {/* Type */}
             <MultiSelectDropdown
               options={MEETING_SPECIALTY_OPTIONS.filter(o => o.value !== '')}
               selected={specialties}
@@ -228,6 +252,35 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
               defaultLabel="Any Type"
               fieldLabel="Type"
             />
+            {/* Language */}
+            <MultiSelectDropdown
+              options={LANGUAGE_OPTIONS.filter(o => o.value !== '')}
+              selected={languages}
+              onChange={v => { setLanguages(v); setPage(1) }}
+              defaultLabel="Any Language"
+              fieldLabel="Language"
+            />
+            {/* Access */}
+            <select
+              value={access}
+              onChange={e => { setAccess(e.target.value); setPage(1) }}
+              style={{ padding: '7px 28px 7px 10px', borderRadius: 8, border: `1.5px solid ${access ? 'var(--teal)' : 'var(--border)'}`, fontSize: 13, fontFamily: 'var(--font-body)', background: access ? 'rgba(42,138,153,0.06)' : '#fff', color: access ? 'var(--teal)' : 'var(--dark)', cursor: 'pointer', outline: 'none', appearance: 'none', WebkitAppearance: 'none', fontWeight: access ? 600 : 400 }}
+            >
+              {ACCESS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+            {/* AI search CTA */}
+            <div style={{ width: '100%', marginTop: 6 }}>
+              <span style={{ fontSize: 12, color: 'var(--mid)', fontFamily: 'var(--font-body)' }}>
+                Looking for something more specific?{' '}
+                <button
+                  type="button"
+                  onClick={() => document.dispatchEvent(new CustomEvent('soberanchor:open-search'))}
+                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, color: 'var(--teal)', fontWeight: 600, fontFamily: 'var(--font-body)', textDecoration: 'underline', textUnderlineOffset: 2 }}
+                >
+                  Try AI search above.
+                </button>
+              </span>
+            </div>
           </>
         }
         resultCount={loading ? null : filtered.length}
@@ -247,7 +300,7 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
           <div style={{ fontSize: 36, marginBottom: 12 }}>👥</div>
           <p style={{ fontSize: 15 }}>No meetings match your filters.</p>
           <button
-            onClick={() => { setFellowship(''); setDays([]); setTimes([]); setFormats([]); setSpecialties([]); setPage(1) }}
+            onClick={() => { setFellowship(''); setDays([]); setTimes([]); setFormats([]); setSpecialties([]); setLanguages([]); setAccess(''); setPage(1) }}
             style={{ marginTop: 12, fontSize: 13, color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: 'var(--font-body)' }}
           >
             Clear filters
