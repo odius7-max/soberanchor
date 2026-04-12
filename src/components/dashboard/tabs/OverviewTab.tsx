@@ -50,11 +50,12 @@ interface Props {
   activeSponsor: string | null
   isAvailableSponsor: boolean
   activityItems: ActivityItem[]
+  displayName?: string
   onCheckIn: () => void
   onJournal: () => void
 }
 
-export default function OverviewTab({ userId, activeFellowshipId, currentStep, completedSteps, allStepsDone, journalCount, stepWorkCount, recentCheckIns, meetingsThisWeek, meetingsTotal, recentMeetings, readingAssignments, activeSponsor, isAvailableSponsor, activityItems, onCheckIn, onJournal }: Props) {
+export default function OverviewTab({ userId, activeFellowshipId, currentStep, completedSteps, allStepsDone, journalCount, stepWorkCount, recentCheckIns, meetingsThisWeek, meetingsTotal, recentMeetings, readingAssignments, activeSponsor, isAvailableSponsor, activityItems, displayName, onCheckIn, onJournal }: Props) {
   const router = useRouter()
   const step = STEPS[currentStep - 1]
   const [toggling, setToggling] = useState<string | null>(null)
@@ -347,7 +348,7 @@ export default function OverviewTab({ userId, activeFellowshipId, currentStep, c
         )}
       </div>
 
-      {showFindSponsor && <AddSponseeModal mode="find_sponsor" onClose={() => setShowFindSponsor(false)} />}
+      {showFindSponsor && <AddSponseeModal mode="find_sponsor" onClose={() => setShowFindSponsor(false)} sponsorName={displayName} />}
 
       {/* Recent Activity */}
       <div className={card} style={{ position: 'relative' }}>

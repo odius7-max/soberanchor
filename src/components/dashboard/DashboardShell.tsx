@@ -170,7 +170,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
             </div>
 
             {activeTab === 'overview' && (
-              <OverviewTab userId={userId} activeFellowshipId={activeFellowshipId} currentStep={currentStep} completedSteps={completedSteps} allStepsDone={allStepsDone} journalCount={journalCount} stepWorkCount={stepWorkCount} recentCheckIns={recentCheckIns} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} recentMeetings={meetingAttendance.slice(0,3)} readingAssignments={readingAssignments} activeSponsor={activeSponsor} isAvailableSponsor={isSponsor} activityItems={activityItems} onCheckIn={() => setCheckInOpen(true)} onJournal={() => setActiveTab('journal')} />
+              <OverviewTab userId={userId} activeFellowshipId={activeFellowshipId} currentStep={currentStep} completedSteps={completedSteps} allStepsDone={allStepsDone} journalCount={journalCount} stepWorkCount={stepWorkCount} recentCheckIns={recentCheckIns} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} recentMeetings={meetingAttendance.slice(0,3)} readingAssignments={readingAssignments} activeSponsor={activeSponsor} isAvailableSponsor={isSponsor} activityItems={activityItems} displayName={displayName} onCheckIn={() => setCheckInOpen(true)} onJournal={() => setActiveTab('journal')} />
             )}
             {activeTab === 'stepwork' && <StepWorkTab userId={userId} fellowshipId={activeFellowshipId} />}
             {activeTab === 'journal' && <JournalTab userId={userId} entries={journalEntries} />}
@@ -182,7 +182,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
         )}
 
         {role === 'meetings' && <MeetingCheckin userId={userId} />}
-        {role === 'sponsees' && isSponsor && <SponsorView sponsees={sponsees} pendingRequests={sponsorPendingRequests} />}
+        {role === 'sponsees' && isSponsor && <SponsorView sponsees={sponsees} pendingRequests={sponsorPendingRequests} displayName={displayName} />}
       </div>
 
       {checkInOpen && <CheckInModal userId={userId} onClose={() => setCheckInOpen(false)} />}

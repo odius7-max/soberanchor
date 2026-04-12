@@ -695,9 +695,10 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
 interface Props {
   sponsees: SponseeFull[]
   pendingRequests: PendingRequest[]
+  displayName?: string
 }
 
-export default function SponsorView({ sponsees, pendingRequests }: Props) {
+export default function SponsorView({ sponsees, pendingRequests, displayName }: Props) {
   const [showAddModal, setShowAddModal] = useState(false)
 
   const today = new Date().toISOString().slice(0, 10)
@@ -783,7 +784,7 @@ export default function SponsorView({ sponsees, pendingRequests }: Props) {
         </div>
       )}
 
-      {showAddModal && <AddSponseeModal onClose={() => setShowAddModal(false)} />}
+      {showAddModal && <AddSponseeModal onClose={() => setShowAddModal(false)} sponsorName={displayName} />}
     </div>
   )
 }
