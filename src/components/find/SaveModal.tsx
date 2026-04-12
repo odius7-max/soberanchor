@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 
 interface Props {
   onSave: (listType: 'favorite' | 'watchlist', note: string) => void
@@ -10,9 +11,11 @@ interface Props {
 export default function SaveModal({ onSave, onClose }: Props) {
   const [listType, setListType] = useState<'favorite' | 'watchlist'>('favorite')
   const [note, setNote] = useState('')
+  const [mounted, setMounted] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
+    setMounted(true)
     setTimeout(() => inputRef.current?.focus(), 50)
     function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', onKey)
@@ -24,11 +27,11 @@ export default function SaveModal({ onSave, onClose }: Props) {
     { v: 'watchlist' as const, emoji: '🔖', label: 'Watchlist', desc: 'Maybe / backup' },
   ]
 
-  return (
+  const modal = (
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
       style={{
-        position: 'fixed', inset: 0, zIndex: 200,
+        position: 'fixed', inset: 0, zIndex: 9999,
         background: 'rgba(0,0,0,0.45)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
       }}
@@ -115,4 +118,7 @@ export default function SaveModal({ onSave, onClose }: Props) {
       </div>
     </div>
   )
+
+  if (!mounted) return null
+  return createPortal(modal, document.body)
 }
