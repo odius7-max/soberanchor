@@ -29,19 +29,22 @@ export default function SaveModal({ onSave, onClose }: Props) {
 
   const modal = (
     <div
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      onClick={e => { e.stopPropagation(); if (e.target === e.currentTarget) onClose() }}
       style={{
         position: 'fixed', inset: 0, zIndex: 9999,
         background: 'rgba(0,0,0,0.45)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
       }}
     >
-      <div style={{
-        background: '#fff', borderRadius: 18, padding: '28px 24px',
-        maxWidth: 360, width: '100%',
-        boxShadow: '0 20px 60px rgba(0,51,102,0.2)',
-        position: 'relative',
-      }}>
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: '#fff', borderRadius: 18, padding: '28px 24px',
+          maxWidth: 360, width: '100%',
+          boxShadow: '0 20px 60px rgba(0,51,102,0.2)',
+          position: 'relative',
+        }}
+      >
         <button
           onClick={onClose}
           style={{ position: 'absolute', top: 14, right: 14, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--mid)', fontSize: 18, lineHeight: 1, padding: 4 }}
