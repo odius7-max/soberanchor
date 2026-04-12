@@ -101,7 +101,7 @@ export type SearchIntent = {
   include_crisis: boolean;
   fellowship_slugs: string[];
   facility_types: string[];
-  query_intent: "meeting_search" | "informational" | "facility_search" | "crisis";
+  query_intent: "meeting_search" | "informational" | "facility_search" | "step_work" | "crisis";
 };
 
 export type MeetingResult = {
@@ -141,12 +141,23 @@ export type ArticleResult = {
   pillar: string | null;
 };
 
+export type StepWorkResult = {
+  id: string;
+  title: string;
+  slug: string;
+  step_number: number;
+  description: string | null;
+  fellowship_name: string | null;
+  prompt_count: number;
+};
+
 export type SmartSearchResponse = {
   query: string;
   intent: SearchIntent | null;
   meetings: MeetingResult[];
   facilities: FacilityResult[];
   articles: ArticleResult[];
+  step_work_results: StepWorkResult[];
   crisis: boolean;
   ai_powered: boolean;
   cached?: boolean;

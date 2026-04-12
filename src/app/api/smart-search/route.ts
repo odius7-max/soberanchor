@@ -158,14 +158,15 @@ Given a user's natural-language query, classify their intent and return ONLY a J
   "include_crisis": boolean,
   "fellowship_slugs": string[],
   "facility_types": string[],
-  "query_intent": "meeting_search" | "informational" | "facility_search" | "crisis"
+  "query_intent": "meeting_search" | "informational" | "facility_search" | "step_work" | "crisis"
 }
 
 query_intent rules:
 - "meeting_search": user wants to find specific meetings ("AA meetings near me", "meetings today", "NA meetings Saturday")
-- "informational": user is asking a question about recovery ("what happens at a first AA meeting", "how does NA work", "what is a sponsor", "what should I expect") — for this intent, prioritize articles/resources and suppress meeting listings
+- "informational": user is asking a general question about recovery ("what happens at a first AA meeting", "how does NA work", "what is a sponsor", "what should I expect") — for this intent, prioritize articles/resources and suppress meeting listings
 - "facility_search": user wants treatment centers, sober living, therapists, outpatient programs
-- "crisis": user is in distress (want to die, can't go on, relapsed, emergency, overdose, suicide)
+- "step_work": user is asking about step work, a specific step, or recovery concepts related to working a program ("what does powerlessness mean", "how do I do a moral inventory", "what is step 4 about", "working step 9", "amends list", "searching and fearless", "step 1", "step work help", "I'm on step 3") — will search program_workbooks for relevant sections
+- "crisis": user is in distress (want to die, can't go on, relapsed and scared, emergency, overdose, suicide)
 
 Field rules:
 - "issue": one of: alcohol, opioids, gambling, eating_disorder, meth, cocaine, marijuana, nicotine, sex_addiction, debt, internet_gaming, work, family_support, general
@@ -213,7 +214,12 @@ async function classifyIntent(query: string, context: SearchContext, nowPST: Dat
     const clean = text.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
     const parsed = JSON.parse(clean) as SearchIntent;
     // Ensure query_intent always has a value (graceful fallback for older cached responses)
-    if (!parsed.query_intent) parsed.query_intent = "meeting_search";
+    if (!parsed.query_intent) {
+      const q = query.toLowerCase();
+      parsed.query_intent = /\bstep\s*\d+|\bstep work\b|\binventory\b|\bamends?\b|\bpowerless/i.test(q)
+        ? "step_work"
+        : "meeting_search";
+    }
     return parsed;
   } catch {
     return null;
@@ -407,6 +413,81 @@ async function fetchArticles(intent: SearchIntent, context: SearchContext): Prom
   return (data ?? []) as ArticleResult[];
 }
 
+// ─── Step work fetcher ────────────────────────────────────────────────────────
+
+const STEP_WORDS: Record<string, number> = {
+  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6,
+  seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12,
+};
+
+function extractStepNumber(query: string): number | null {
+  const m = query.match(/\bstep\s+(\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b/i);
+  if (!m) return null;
+  const n = parseInt(m[1], 10);
+  if (!isNaN(n)) return n >= 1 && n <= 12 ? n : null;
+  return STEP_WORDS[m[1].toLowerCase()] ?? null;
+}
+
+async function fetchStepWork(
+  query: string,
+  fellowshipId: string | null,
+  limit: number,
+): Promise<import("@/lib/resources").StepWorkResult[]> {
+  type WorkbookRow = {
+    id: string; title: string; slug: string; step_number: number;
+    description: string | null; fellowship_id: string; prompts: unknown;
+  };
+
+  let q = supabase
+    .from("program_workbooks")
+    .select("id, title, slug, step_number, description, fellowship_id, prompts")
+    .eq("is_active", true)
+    .order("sort_order");
+
+  if (fellowshipId) q = q.eq("fellowship_id", fellowshipId);
+
+  const stepNum = extractStepNumber(query);
+  if (stepNum !== null) q = q.eq("step_number", stepNum);
+
+  const { data: workbooks } = await q.limit(60) as { data: WorkbookRow[] | null };
+  if (!workbooks?.length) return [];
+
+  // Fetch fellowship abbreviations for display
+  const fids = [...new Set(workbooks.map((w) => w.fellowship_id).filter(Boolean))];
+  const fellowshipNames: Record<string, string> = {};
+  if (fids.length) {
+    const { data: fws } = await supabase
+      .from("fellowships").select("id, name, abbreviation").in("id", fids);
+    for (const f of fws ?? []) {
+      fellowshipNames[f.id as string] = (f.abbreviation ?? f.name) as string;
+    }
+  }
+
+  // Score by keyword relevance against title + description
+  const STOP = /\b(step|work|what|how|do|i|a|an|the|is|are|about|does|mean|in|on|my|to|be|it|at|by|or|of|for|and|this|that|which|with|have|from)\b/gi;
+  const terms = query.replace(STOP, " ").toLowerCase().split(/\s+/).filter((t) => t.length > 2);
+
+  const scored = workbooks.map((w) => {
+    const text = [w.title, w.description].filter(Boolean).join(" ").toLowerCase();
+    const score = terms.reduce((s, t) => s + (text.includes(t) ? 1 : 0), 0);
+    return { w, score };
+  });
+
+  // When step number matched, all workbooks for that step are relevant; otherwise filter by score
+  const relevant = stepNum !== null ? scored : scored.filter((s) => s.score > 0);
+  relevant.sort((a, b) => b.score - a.score || a.w.step_number - b.w.step_number);
+
+  return relevant.slice(0, limit).map(({ w }) => ({
+    id: w.id,
+    title: w.title,
+    slug: w.slug,
+    step_number: w.step_number,
+    description: w.description ?? null,
+    fellowship_name: fellowshipNames[w.fellowship_id] ?? null,
+    prompt_count: Array.isArray(w.prompts) ? (w.prompts as unknown[]).length : 0,
+  }));
+}
+
 // ─── Keyword fallback (no AI key or classification failure) ───────────────────
 // Searches meetings, facilities, and articles using simple term matching.
 
@@ -494,11 +575,11 @@ async function keywordSearch(q: string, context: SearchContext): Promise<SmartSe
         .map(({ a }) => a as ArticleResult)
     : [];
 
-  return { query: q, intent: null, meetings, facilities, articles, crisis: false, ai_powered: false };
+  return { query: q, intent: null, meetings, facilities, articles, step_work_results: [], crisis: false, ai_powered: false };
 }
 
 function emptyResponse(query: string): SmartSearchResponse {
-  return { query, intent: null, meetings: [], facilities: [], articles: [], crisis: false, ai_powered: false };
+  return { query, intent: null, meetings: [], facilities: [], articles: [], step_work_results: [], crisis: false, ai_powered: false };
 }
 
 function err429(message: string, retryAfter: number) {
@@ -509,7 +590,7 @@ function err429(message: string, retryAfter: number) {
 
 function errorResponse(query: string, message = "Search unavailable. Please try again."): Response {
   return Response.json(
-    { query, intent: null, meetings: [], facilities: [], articles: [], crisis: false, ai_powered: false, error: message },
+    { query, intent: null, meetings: [], facilities: [], articles: [], step_work_results: [], crisis: false, ai_powered: false, error: message },
     { status: 200 }
   );
 }
@@ -582,14 +663,15 @@ async function handleSearch(request: Request, rawQuery: string, context: SearchC
   // 10. Decide which tables to query
   const limits = CONTEXT_LIMITS[context];
   const isInformational = intent.query_intent === "informational";
+  const isStepWork      = intent.query_intent === "step_work";
 
-  // Informational queries → articles only; suppress meetings and facilities
-  const wantsMeetings = !limits.skipMeetings && !isInformational && (
+  // Informational and step_work queries → suppress directory results
+  const wantsMeetings = !limits.skipMeetings && !isInformational && !isStepWork && (
     intent.fellowship_slugs.length > 0 ||
     intent.help_type.some((h) => ["meetings", "family_meetings"].includes(h))
   );
 
-  const wantsFacilities = !limits.skipFacilities && !isInformational && (
+  const wantsFacilities = !limits.skipFacilities && !isInformational && !isStepWork && (
     intent.facility_types.length > 0 ||
     intent.help_type.some((h) => ["treatment", "sober_living", "therapist"].includes(h))
   );
@@ -599,11 +681,36 @@ async function handleSearch(request: Request, rawQuery: string, context: SearchC
     ? detectDayFilter(q, nowPST)
     : null;
 
+  // For step_work intent: get user's primary fellowship to scope workbook results
+  let userFellowshipId: string | null = null;
+  if (isStepWork && user) {
+    const { data: primaryM } = await supabaseServer
+      .from("sobriety_milestones")
+      .select("fellowship_id")
+      .eq("user_id", user.id)
+      .eq("is_primary", true)
+      .maybeSingle();
+    userFellowshipId = (primaryM as { fellowship_id?: string | null } | null)?.fellowship_id ?? null;
+
+    // Fallback: any milestone with a fellowship
+    if (!userFellowshipId) {
+      const { data: anyM } = await supabaseServer
+        .from("sobriety_milestones")
+        .select("fellowship_id")
+        .eq("user_id", user.id)
+        .not("fellowship_id", "is", null)
+        .limit(1)
+        .maybeSingle();
+      userFellowshipId = (anyM as { fellowship_id?: string | null } | null)?.fellowship_id ?? null;
+    }
+  }
+
   // 11. Parallel DB queries
-  const [meetings, facilities, articles] = await Promise.all([
+  const [meetings, facilities, articles, step_work_results] = await Promise.all([
     wantsMeetings   ? fetchMeetings(intent, limits.meetings, dayFilter)   : Promise.resolve([] as MeetingResult[]),
     wantsFacilities ? fetchFacilities(intent, limits.facilities) : Promise.resolve([] as FacilityResult[]),
     fetchArticles(intent, context),
+    isStepWork ? fetchStepWork(q, userFellowshipId, 5) : Promise.resolve([] as import("@/lib/resources").StepWorkResult[]),
   ]);
 
   const result: SmartSearchResponse = {
@@ -612,6 +719,7 @@ async function handleSearch(request: Request, rawQuery: string, context: SearchC
     meetings,
     facilities,
     articles,
+    step_work_results,
     crisis: intent.include_crisis || intent.urgency === "high",
     ai_powered: true,
   };

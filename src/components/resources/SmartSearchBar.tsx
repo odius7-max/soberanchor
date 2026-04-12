@@ -229,42 +229,27 @@ export default function SmartSearchBar() {
       if (res.status === 429) {
         const data = await res.json();
         setResult({
-          query: q,
-          intent: null,
-          meetings: [],
-          facilities: [],
-          articles: [],
-          crisis: false,
-          ai_powered: false,
+          query: q, intent: null, meetings: [], facilities: [], articles: [], step_work_results: [],
+          crisis: false, ai_powered: false,
           error: data.error ?? "Too many requests. Please wait before searching again.",
         });
         return;
       }
       if (res.status === 403) {
         setResult({
-          query: q,
-          intent: null,
-          meetings: [],
-          facilities: [],
-          articles: [],
-          crisis: false,
-          ai_powered: false,
+          query: q, intent: null, meetings: [], facilities: [], articles: [], step_work_results: [],
+          crisis: false, ai_powered: false,
           error: "Search unavailable. Please reload the page and try again.",
         });
         return;
       }
 
       const data: SmartSearchResponse = await res.json();
-      setResult(data);
+      setResult({ ...data, step_work_results: Array.isArray(data.step_work_results) ? data.step_work_results : [] });
     } catch {
       setResult({
-        query: q,
-        intent: null,
-        meetings: [],
-        facilities: [],
-        articles: [],
-        crisis: false,
-        ai_powered: false,
+        query: q, intent: null, meetings: [], facilities: [], articles: [], step_work_results: [],
+        crisis: false, ai_powered: false,
       });
     } finally {
       setLoading(false);

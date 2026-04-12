@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import Link from 'next/link'
-import type { SmartSearchResponse, MeetingResult, FacilityResult, ArticleResult } from '@/lib/resources'
+import type { SmartSearchResponse, MeetingResult, FacilityResult, ArticleResult, StepWorkResult } from '@/lib/resources'
 import { pillarToCategory, readTime } from '@/lib/resources'
 
 export type SearchContext = 'home' | 'resources' | 'directory' | 'member'
@@ -129,6 +129,41 @@ function ArticleRow({ a, onClose }: { a: ArticleResult; onClose: () => void }) {
   )
 }
 
+function StepWorkRow({ sw, onClose }: { sw: StepWorkResult; onClose: () => void }) {
+  const href = `/dashboard/step-work/${sw.slug}`
+  return (
+    <Link href={href} onClick={onClose}
+      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', borderRadius: 10, textDecoration: 'none', gap: 12 }}
+      className="hover:bg-warm-gray transition-colors"
+    >
+      <div style={{ minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 2 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: 'rgba(212,165,116,0.12)', border: '1px solid rgba(212,165,116,0.25)', color: '#9A7B54', flexShrink: 0 }}>
+            Step {sw.step_number}
+          </span>
+          {sw.fellowship_name && (
+            <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 20, background: 'rgba(42,138,153,0.08)', border: '1px solid rgba(42,138,153,0.15)', color: 'var(--teal)', flexShrink: 0 }}>
+              {sw.fellowship_name}
+            </span>
+          )}
+        </div>
+        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--navy)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {sw.title}
+        </div>
+        {sw.description && (
+          <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {sw.description}
+          </div>
+        )}
+        <div style={{ fontSize: 11, color: 'var(--teal)', fontWeight: 600, marginTop: 3 }}>
+          Continue this in your step work → {sw.prompt_count > 0 ? `${sw.prompt_count} prompts` : ''}
+        </div>
+      </div>
+      <span style={{ fontSize: 12, color: 'var(--teal)', fontWeight: 600, flexShrink: 0 }}>→</span>
+    </Link>
+  )
+}
+
 function ResultSection({ icon, label, count, children }: {
   icon: string; label: string; count: number; children: React.ReactNode
 }) {
@@ -218,7 +253,7 @@ export default function GlobalSearch({ open, context, onClose }: Props) {
         { headers, signal: controller.signal }
       )
 
-      const empty: SmartSearchResponse = { query: q, intent: null, meetings: [], facilities: [], articles: [], crisis: false, ai_powered: false }
+      const empty: SmartSearchResponse = { query: q, intent: null, meetings: [], facilities: [], articles: [], step_work_results: [], crisis: false, ai_powered: false }
 
       if (res.status === 429) {
         const body = await res.json().catch(() => ({}))
@@ -240,10 +275,11 @@ export default function GlobalSearch({ open, context, onClose }: Props) {
         meetings: Array.isArray(data.meetings) ? data.meetings : [],
         facilities: Array.isArray(data.facilities) ? data.facilities : [],
         articles: Array.isArray(data.articles) ? data.articles : [],
+        step_work_results: Array.isArray(data.step_work_results) ? data.step_work_results : [],
       })
     } catch (e) {
       if ((e as Error).name !== 'AbortError') {
-        setResult({ query: q, intent: null, meetings: [], facilities: [], articles: [], crisis: false, ai_powered: false, error: 'Search unavailable. Please try again.' })
+        setResult({ query: q, intent: null, meetings: [], facilities: [], articles: [], step_work_results: [], crisis: false, ai_powered: false, error: 'Search unavailable. Please try again.' })
       }
     } finally {
       setLoading(false)
@@ -273,7 +309,8 @@ export default function GlobalSearch({ open, context, onClose }: Props) {
     result.crisis ||
     (result.meetings?.length ?? 0) > 0 ||
     (result.facilities?.length ?? 0) > 0 ||
-    (result.articles?.length ?? 0) > 0
+    (result.articles?.length ?? 0) > 0 ||
+    (result.step_work_results?.length ?? 0) > 0
   )
 
   const showEmpty = result && !hasResults && !result.error && !loading
@@ -435,6 +472,16 @@ export default function GlobalSearch({ open, context, onClose }: Props) {
                   <Link href="/find#facilities" onClick={onClose}
                     style={{ display: 'block', padding: '6px 14px', fontSize: 12, color: 'var(--teal)', fontWeight: 600, textDecoration: 'none' }}>
                     Browse all listings →
+                  </Link>
+                </ResultSection>
+              )}
+
+              {(result.step_work_results?.length ?? 0) > 0 && (
+                <ResultSection icon="📋" label="Step Work" count={result.step_work_results.length}>
+                  {result.step_work_results.map(sw => <StepWorkRow key={sw.id} sw={sw} onClose={onClose} />)}
+                  <Link href="/dashboard/step-work" onClick={onClose}
+                    style={{ display: 'block', padding: '6px 14px', fontSize: 12, color: 'var(--teal)', fontWeight: 600, textDecoration: 'none' }}>
+                    View all step work →
                   </Link>
                 </ResultSection>
               )}
