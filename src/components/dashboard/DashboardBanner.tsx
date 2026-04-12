@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useScrollFade } from '@/hooks/useScrollFade'
 
 const QUOTES = [
   { text: "One day at a time. That's all anyone can do.", attr: "The Program" },
@@ -160,6 +161,7 @@ export default function DashboardBanner({
 }: Props) {
   const router = useRouter()
   const [milestones, setMilestones] = useState<SobrietyMilestone[]>(initialMilestones)
+  const { ref: stepsScrollRef, fadeLeft: stepsFadeLeft, fadeRight: stepsFadeRight } = useScrollFade()
 
   // Active tab on the normal banner view
   const initPrimaryIdx = initialMilestones.findIndex(m => m.is_primary)
@@ -632,7 +634,14 @@ export default function DashboardBanner({
 
             {/* ── ROW 3: step progress circles ── */}
             {activeMilestone?.fellowship_id && (
-              <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2, scrollbarWidth: 'none' as const }}>
+              <div style={{ position: 'relative' }}>
+                {stepsFadeLeft && (
+                  <div aria-hidden style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 40, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to right, #002244, transparent)' }} />
+                )}
+                {stepsFadeRight && (
+                  <div aria-hidden style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 40, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to left, #002244, transparent)' }} />
+                )}
+              <div ref={stepsScrollRef} style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2, scrollbarWidth: 'none' as const }}>
                 {STEPS.map(({ n, s }) => {
                   const isDone = n < currentStep
                   const isActive = n === currentStep
@@ -654,6 +663,7 @@ export default function DashboardBanner({
                     </div>
                   )
                 })}
+              </div>
               </div>
             )}
           </>

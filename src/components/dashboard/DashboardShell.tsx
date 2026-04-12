@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+import { useScrollFade } from '@/hooks/useScrollFade'
 import DashboardBanner, { type SobrietyMilestone, type Fellowship } from './DashboardBanner'
 import OverviewTab from './tabs/OverviewTab'
 import JournalTab from './tabs/JournalTab'
@@ -67,6 +68,8 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
   const [role, setRole] = useState<Role>('my')
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [checkInOpen, setCheckInOpen] = useState(false)
+  const { ref: roleScrollRef,  fadeLeft: roleFadeLeft,  fadeRight: roleFadeRight  } = useScrollFade()
+  const { ref: tabsScrollRef,  fadeLeft: tabsFadeLeft,  fadeRight: tabsFadeRight  } = useScrollFade()
 
   const displayName = profile?.display_name ?? 'Friend'
   const isSponsor = profile?.is_available_sponsor ?? false
@@ -116,13 +119,21 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
       <div className="max-w-[940px] mx-auto">
 
         {/* Role toggle */}
-        <div className="flex p-1 rounded-xl mb-6 overflow-x-auto" style={{ background: 'var(--warm-gray)', border: '1px solid var(--border)', scrollbarWidth: 'none', gap: '2px' }}>
-          {roles.map(r => (
-            <button key={r.id} onClick={() => setRole(r.id)} className="flex-shrink-0 rounded-lg font-semibold transition-all"
-              style={{ padding: '9px 18px', fontSize: '14px', cursor: 'pointer', background: role === r.id ? '#fff' : 'transparent', color: role === r.id ? 'var(--navy)' : 'var(--mid)', border: 'none', boxShadow: role === r.id ? '0 1px 4px rgba(0,51,102,0.1)' : 'none' }}>
-              {r.label}
-            </button>
-          ))}
+        <div className="relative rounded-xl mb-6" style={{ background: 'var(--warm-gray)', border: '1px solid var(--border)' }}>
+          {roleFadeLeft && (
+            <div aria-hidden style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 40, zIndex: 1, pointerEvents: 'none', borderRadius: '12px 0 0 12px', background: 'linear-gradient(to right, var(--warm-gray), transparent)' }} />
+          )}
+          {roleFadeRight && (
+            <div aria-hidden style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 40, zIndex: 1, pointerEvents: 'none', borderRadius: '0 12px 12px 0', background: 'linear-gradient(to left, var(--warm-gray), transparent)' }} />
+          )}
+          <div ref={roleScrollRef} className="flex p-1 overflow-x-auto" style={{ scrollbarWidth: 'none', gap: '2px' }}>
+            {roles.map(r => (
+              <button key={r.id} onClick={() => setRole(r.id)} className="flex-shrink-0 rounded-lg font-semibold transition-all"
+                style={{ padding: '9px 18px', fontSize: '14px', cursor: 'pointer', background: role === r.id ? '#fff' : 'transparent', color: role === r.id ? 'var(--navy)' : 'var(--mid)', border: 'none', boxShadow: role === r.id ? '0 1px 4px rgba(0,51,102,0.1)' : 'none' }}>
+                {r.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* ── My Dashboard ── */}
@@ -140,13 +151,21 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
             />
 
             {/* Tabs */}
-            <div className="flex mb-5 overflow-x-auto" style={{ borderBottom: '2px solid var(--border)', scrollbarWidth: 'none', gap: '0' }}>
-              {TABS.map(t => (
-                <button key={t.id} onClick={() => setActiveTab(t.id)} className="font-semibold flex-shrink-0 transition-colors"
-                  style={{ padding: '10px 18px', fontSize: '14px', cursor: 'pointer', background: 'none', border: 'none', color: activeTab === t.id ? 'var(--navy)' : 'var(--mid)', borderBottom: activeTab === t.id ? '2px solid var(--navy)' : '2px solid transparent', marginBottom: '-2px' }}>
-                  {t.label}
-                </button>
-              ))}
+            <div className="relative mb-5" style={{ borderBottom: '2px solid var(--border)' }}>
+              {tabsFadeLeft && (
+                <div aria-hidden style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 40, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to right, #fff, transparent)' }} />
+              )}
+              {tabsFadeRight && (
+                <div aria-hidden style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 40, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to left, #fff, transparent)' }} />
+              )}
+              <div ref={tabsScrollRef} className="flex overflow-x-auto" style={{ scrollbarWidth: 'none', gap: '0' }}>
+                {TABS.map(t => (
+                  <button key={t.id} onClick={() => setActiveTab(t.id)} className="font-semibold flex-shrink-0 transition-colors"
+                    style={{ padding: '10px 18px', fontSize: '14px', cursor: 'pointer', background: 'none', border: 'none', color: activeTab === t.id ? 'var(--navy)' : 'var(--mid)', borderBottom: activeTab === t.id ? '2px solid var(--navy)' : '2px solid transparent', marginBottom: '-2px' }}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {activeTab === 'overview' && (
