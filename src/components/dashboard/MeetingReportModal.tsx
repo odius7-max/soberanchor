@@ -144,16 +144,19 @@ function ModalBody({ sponseeName, onClose, allEntries, loading, fetchError }: Mo
 
   return (
     <div
-      onClick={onClose}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 0' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      className="md:p-4"
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
     >
       <div
         onClick={e => e.stopPropagation()}
-        className="md:rounded-[20px] md:mx-4"
+        className="md:rounded-[20px] md:max-h-[calc(100vh-32px)]"
         style={{
-          background: 'var(--background)', width: '100%', maxWidth: 580,
-          maxHeight: '90vh', overflowY: 'auto', position: 'relative',
+          background: '#fff', width: '100%', maxWidth: 640,
+          height: '100%', maxHeight: '100dvh',
+          overflowY: 'auto', position: 'relative',
           padding: '20px 16px',
+          boxShadow: '0 24px 64px rgba(0,51,102,0.24)',
         }}
       >
         {/* Header */}

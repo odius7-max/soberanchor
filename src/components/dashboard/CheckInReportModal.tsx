@@ -243,8 +243,8 @@ function ModalBody({ sponseeId, sponseeName, onClose }: ContentProps) {
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
       className="md:p-4"
       style={{
-        position: 'fixed', inset: 0, zIndex: 1000,
-        background: 'rgba(0,0,0,0.52)',
+        position: 'fixed', inset: 0, zIndex: 100,
+        background: 'rgba(0,0,0,0.45)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}
     >
@@ -253,7 +253,7 @@ function ModalBody({ sponseeId, sponseeName, onClose }: ContentProps) {
         className="md:rounded-[20px] md:max-h-[calc(100vh-32px)]"
         style={{
           background: '#fff',
-          width: '100%', maxWidth: 720,
+          width: '100%', maxWidth: 640,
           height: '100%',
           maxHeight: '100dvh',
           display: 'flex', flexDirection: 'column',
