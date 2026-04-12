@@ -105,7 +105,6 @@ export default function CheckInModal({ userId, onClose }: Props) {
             <div
               className="rounded-md flex items-center justify-center transition-colors flex-shrink-0"
               style={{ width: '22px', height: '22px', background: calledSponsor ? '#2A8A99' : '#fff', border: calledSponsor ? '2px solid #2A8A99' : '2px solid #D0CBC4', color: '#fff', fontSize: '13px' }}
-              onClick={() => setCalledSponsor(v => !v)}
             >
               {calledSponsor ? '✓' : ''}
             </div>
