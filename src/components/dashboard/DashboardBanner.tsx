@@ -539,99 +539,98 @@ export default function DashboardBanner({
           </div>
         ) : (
           // ════════════════════════════════════════════════
-          // NORMAL BANNER VIEW
+          // NORMAL BANNER VIEW — 3 rows: top bar | quote | steps
           // ════════════════════════════════════════════════
           <>
-            {/* Greeting */}
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 600, color: '#fff', letterSpacing: '-0.5px', marginBottom: 14 }}>
-              {getGreeting()}, {displayName} 👋
-            </div>
+            {/* ── ROW 1: greeting+tabs | day count | stat boxes ── */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 16 }}>
 
-            {/* Milestone tab pills + manage button */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
-              {milestones.map((m, i) => {
-                const badge = getFellowshipBadge(m.fellowship_id)
-                const isActive = i === activeIdx
-                return (
+              {/* LEFT: greeting + milestone pills */}
+              <div style={{ flexShrink: 0, maxWidth: '38%' }}>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 600, color: '#fff', letterSpacing: '-0.4px', marginBottom: 8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {getGreeting()}, {displayName} 👋
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+                  {milestones.map((m, i) => {
+                    const badge = getFellowshipBadge(m.fellowship_id)
+                    const isActive = i === activeIdx
+                    return (
+                      <button
+                        key={m.id}
+                        onClick={() => switchTab(i)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 4,
+                          padding: '4px 11px', borderRadius: 999, cursor: 'pointer',
+                          background: isActive ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.1)',
+                          border: isActive ? 'none' : '1px solid rgba(255,255,255,0.18)',
+                          color: isActive ? 'var(--navy)' : 'rgba(255,255,255,0.8)',
+                          fontSize: 11, fontWeight: 700, transition: 'all 0.15s',
+                        }}
+                      >
+                        {m.label}
+                        {badge && <span style={{ fontSize: 9, opacity: 0.65 }}>· {badge}</span>}
+                        {m.is_primary && <span style={{ fontSize: 8, opacity: 0.5, marginLeft: 1 }}>★</span>}
+                      </button>
+                    )
+                  })}
                   <button
-                    key={m.id}
-                    onClick={() => switchTab(i)}
+                    onClick={openPanel}
                     style={{
-                      display: 'flex', alignItems: 'center', gap: 4,
-                      padding: '5px 13px', borderRadius: 999, cursor: 'pointer',
-                      background: isActive ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.1)',
-                      border: isActive ? 'none' : '1px solid rgba(255,255,255,0.18)',
-                      color: isActive ? 'var(--navy)' : 'rgba(255,255,255,0.8)',
-                      fontSize: 12, fontWeight: 700, transition: 'all 0.15s',
+                      padding: '4px 10px', borderRadius: 999, cursor: 'pointer',
+                      background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.14)',
+                      color: 'rgba(255,255,255,0.55)', fontSize: 11, fontWeight: 600, transition: 'all 0.15s',
                     }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = 'rgba(255,255,255,0.8)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'rgba(255,255,255,0.55)' }}
                   >
-                    {m.label}
-                    {badge && <span style={{ fontSize: 10, opacity: 0.65 }}>· {badge}</span>}
-                    {m.is_primary && <span style={{ fontSize: 9, opacity: 0.5, marginLeft: 1 }}>★</span>}
+                    {milestones.length === 0 ? '+ Add milestone' : '+ Add/Edit Milestone(s)'}
                   </button>
-                )
-              })}
-              <button
-                onClick={openPanel}
-                style={{
-                  padding: '5px 12px', borderRadius: 999, cursor: 'pointer',
-                  background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.14)',
-                  color: 'rgba(255,255,255,0.55)', fontSize: 12, fontWeight: 600, transition: 'all 0.15s',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = 'rgba(255,255,255,0.8)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'rgba(255,255,255,0.55)' }}
-              >
-                {milestones.length === 0 ? '+ Add milestone' : '+ Add/Edit Milestone(s)'}
-              </button>
-            </div>
+                </div>
+              </div>
 
-            {/* Stats row: days flush left, stat boxes flush right, all on one line */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16 }}>
-              {/* Day count */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {/* CENTER: day count */}
+              <div style={{ textAlign: 'center', flexShrink: 0 }}>
                 {daysClean !== null ? (
-                  <>
-                    <span style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 700, color: '#fff', lineHeight: 1, letterSpacing: '-1px' }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, justifyContent: 'center' }}>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: 64, fontWeight: 700, color: '#fff', lineHeight: 1, letterSpacing: '-2px' }}>
                       {daysClean.toLocaleString()}
                     </span>
-                    <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14 }}>days</span>
-                    {isMilestoneDay && (
-                      <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 999, background: 'rgba(212,165,116,0.2)', border: '1px solid rgba(212,165,116,0.35)', color: '#D4A574', fontWeight: 700 }}>
-                        🎉 {daysClean} Days!
-                      </span>
-                    )}
-                  </>
+                    <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 18 }}>days</span>
+                  </div>
                 ) : (
-                  <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>No sobriety date set</span>
+                  <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>No date set</span>
+                )}
+                {isMilestoneDay && (
+                  <div style={{ fontSize: 11, marginTop: 4, color: '#D4A574', fontWeight: 700 }}>🎉 Milestone day!</div>
                 )}
               </div>
 
-              {/* Stat boxes */}
+              {/* RIGHT: stat boxes */}
               <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                 {nextM !== null && daysToNext !== null && (
-                  <div style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.11)', borderRadius: 10, padding: '9px 14px', minWidth: 100 }}>
+                  <div style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.11)', borderRadius: 10, padding: '10px 14px', minWidth: 108 }}>
                     <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' as const }}>Next Milestone</div>
-                    <div style={{ color: '#D4A574', fontSize: 16, fontWeight: 700, marginTop: 2, lineHeight: 1 }}>{nextM} Days</div>
-                    <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, marginTop: 2 }}>{daysToNext} day{daysToNext !== 1 ? 's' : ''} away</div>
+                    <div style={{ color: '#D4A574', fontSize: 17, fontWeight: 700, marginTop: 3, lineHeight: 1 }}>{nextM} Days</div>
+                    <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, marginTop: 3 }}>{daysToNext} day{daysToNext !== 1 ? 's' : ''} away</div>
                   </div>
                 )}
                 {activeMilestone?.fellowship_id && (
-                  <div style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.11)', borderRadius: 10, padding: '9px 14px', minWidth: 100 }}>
+                  <div style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.11)', borderRadius: 10, padding: '10px 14px', minWidth: 108 }}>
                     <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' as const }}>Currently On</div>
-                    <div style={{ color: '#fff', fontSize: 16, fontWeight: 700, marginTop: 2, lineHeight: 1 }}>Step {currentStep}</div>
-                    <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, marginTop: 2 }}>{STEPS[currentStep - 1]?.s}</div>
+                    <div style={{ color: '#fff', fontSize: 17, fontWeight: 700, marginTop: 3, lineHeight: 1 }}>Step {currentStep}</div>
+                    <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, marginTop: 3 }}>{STEPS[currentStep - 1]?.s}</div>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Quote */}
-            <div style={{ background: 'rgba(255,255,255,0.05)', borderLeft: '3px solid rgba(212,165,116,0.4)', padding: '12px 16px', marginBottom: 18, borderRadius: '0 8px 8px 0' }}>
-              <div style={{ fontFamily: 'var(--font-display)', color: 'rgba(255,255,255,0.85)', fontSize: 16, fontStyle: 'italic', lineHeight: 1.5, fontWeight: 500 }}>&ldquo;{quote.text}&rdquo;</div>
-              <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, marginTop: 5 }}>— {quote.attr}</div>
+            {/* ── ROW 2: quote ── */}
+            <div style={{ background: 'rgba(255,255,255,0.05)', borderLeft: '3px solid rgba(212,165,116,0.4)', padding: '11px 16px', marginBottom: 16, borderRadius: '0 8px 8px 0' }}>
+              <div style={{ fontFamily: 'var(--font-display)', color: 'rgba(255,255,255,0.85)', fontSize: 15, fontStyle: 'italic', lineHeight: 1.5, fontWeight: 500 }}>&ldquo;{quote.text}&rdquo;</div>
+              <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, marginTop: 4 }}>— {quote.attr}</div>
             </div>
 
-            {/* Step progress strip — hidden for tracking-only milestones */}
+            {/* ── ROW 3: step progress circles ── */}
             {activeMilestone?.fellowship_id && (
               <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2, scrollbarWidth: 'none' as const }}>
                 {STEPS.map(({ n, s }) => {
