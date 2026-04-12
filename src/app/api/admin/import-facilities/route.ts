@@ -28,13 +28,15 @@ interface StateStats {
   skipped:       number
   errors:        number
   error_samples: string[]
+  debug_sample?: { keys: string[]; first_record: unknown }
 }
 
 // ─── Fetch + paginate one state ──────────────────────────────────────────────
 
 async function importState(
-  stateId: number,
-  admin:   ReturnType<typeof createAdminClient>,
+  stateId:    number,
+  admin:      ReturnType<typeof createAdminClient>,
+  captureDebug?: boolean,
 ): Promise<StateStats> {
   const stats: StateStats = {
     state_id:      stateId,
@@ -81,6 +83,20 @@ async function importState(
       }
 
       rows = Array.isArray(body.rows) ? (body.rows as SamhsaRawRecord[]) : []
+
+      // Capture raw structure of first 3 records for debugging
+      if (captureDebug && page === 1 && rows.length > 0) {
+        const sample = rows[0] as Record<string, unknown>
+        stats.debug_sample = {
+          keys: Object.keys(sample),
+          first_record: sample,
+        }
+        console.log('[import-facilities] DEBUG first record keys:', JSON.stringify(Object.keys(sample)))
+        console.log('[import-facilities] DEBUG first record:', JSON.stringify(sample))
+        for (let di = 0; di < Math.min(3, rows.length); di++) {
+          console.log(`[import-facilities] DEBUG record[${di}] keys:`, JSON.stringify(Object.keys(rows[di] as Record<string, unknown>)))
+        }
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
       stats.errors++
@@ -205,7 +221,7 @@ export async function POST(req: NextRequest) {
 
   for (let i = 0; i < stateIds.length; i++) {
     if (i > 0) await new Promise(r => setTimeout(r, 1000))  // 1s between states
-    const stateStats = await importState(stateIds[i], admin)
+    const stateStats = await importState(stateIds[i], admin, i === 0)  // capture debug for first state
     perStateStats.push(stateStats)
   }
 
