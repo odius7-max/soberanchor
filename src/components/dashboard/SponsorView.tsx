@@ -9,6 +9,7 @@ import { addSponsorNote } from '@/app/dashboard/actions'
 import type { SponseeFull, SponseeCheckIn } from './DashboardShell'
 import CheckInReportModal from './CheckInReportModal'
 import StepWorkReportModal from './StepWorkReportModal'
+import MeetingReportModal from './MeetingReportModal'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -253,6 +254,7 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
   const [showNote, setShowNote] = useState(false)
   const [showReport, setShowReport] = useState(false)
   const [showStepWorkReport, setShowStepWorkReport] = useState(false)
+  const [showMeetingReport, setShowMeetingReport] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [isPending, startTransition] = useTransition()
   const [toast, setToast] = useState<string | null>(null)
@@ -437,8 +439,12 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
           )}
         </div>
 
-        <div style={{ background: 'var(--warm-gray)', borderRadius: 10, padding: '10px 11px' }}>
-          <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--mid)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 4 }}>Last Meeting</div>
+        <div onClick={() => setShowMeetingReport(true)} title="View meeting report"
+          style={{ background: 'var(--warm-gray)', borderRadius: 10, padding: '10px 11px', cursor: 'pointer', position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--mid)', letterSpacing: '1px', textTransform: 'uppercase' }}>Last Meeting</div>
+            <span style={{ fontSize: 11, color: 'var(--mid)', opacity: 0.65, lineHeight: 1 }}>🔍</span>
+          </div>
           <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--navy)' }}>
             {relDate(sponsee.lastMeeting?.date ?? null)}
           </div>
@@ -627,6 +633,15 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
           sponseeId={sponsee.id}
           sponseeName={sponsee.name}
           onClose={() => setShowStepWorkReport(false)}
+        />
+      )}
+
+      {/* Meeting report modal (portal) */}
+      {showMeetingReport && (
+        <MeetingReportModal
+          sponseeId={sponsee.id}
+          sponseeName={sponsee.name}
+          onClose={() => setShowMeetingReport(false)}
         />
       )}
     </div>

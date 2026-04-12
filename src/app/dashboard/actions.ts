@@ -292,6 +292,62 @@ export async function addSponsorNote(sponseeId: string, noteText: string): Promi
   if (error) throw new Error(error.message)
 }
 
+// ─── Meeting Report ───────────────────────────────────────────────────────────
+
+export interface MeetingReportEntry {
+  id: string
+  meetingId: string | null
+  meetingName: string
+  fellowshipName: string | null
+  meetingSlug: string | null
+  attendedAt: string
+  checkinMethod: string
+}
+
+export async function getSponseeMeetingReport(sponseeId: string): Promise<MeetingReportEntry[]> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Verify active sponsor relationship
+  const { data: rel } = await supabase
+    .from('sponsor_relationships')
+    .select('id')
+    .eq('sponsor_id', user.id)
+    .eq('sponsee_id', sponseeId)
+    .eq('status', 'active')
+    .maybeSingle()
+
+  if (!rel) throw new Error('No active sponsor relationship found.')
+
+  const ninetyDaysAgo = new Date()
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 89)
+  ninetyDaysAgo.setHours(0, 0, 0, 0)
+
+  const admin = createAdminClient()
+  const { data, error } = await admin
+    .from('meeting_attendance')
+    .select('id,meeting_id,meeting_name,fellowship_name,attended_at,checkin_method,meetings(slug)')
+    .eq('user_id', sponseeId)
+    .gte('attended_at', ninetyDaysAgo.toISOString())
+    .order('attended_at', { ascending: true })
+
+  if (error) throw new Error(error.message)
+
+  return (data ?? []).map((e) => {
+    const m = e.meetings as unknown as { slug: string } | null
+    return {
+      id: e.id as string,
+      meetingId: e.meeting_id as string | null,
+      meetingName: e.meeting_name as string,
+      fellowshipName: e.fellowship_name as string | null,
+      meetingSlug: m?.slug ?? null,
+      attendedAt: e.attended_at as string,
+      checkinMethod: e.checkin_method as string,
+    }
+  })
+}
+
 export async function respondToSponsorRequest(
   relationshipId: string,
   accept: boolean
