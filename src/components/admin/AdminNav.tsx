@@ -36,6 +36,12 @@ const NAV_ITEMS = [
       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
     </svg>
   )},
+  { href: '/admin/facility-import', label: 'Facility Import', icon: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+      <line x1="12" y1="2" x2="12" y2="2"/><polyline points="17 21 17 13 7 13 7 21"/>
+    </svg>
+  )},
 ]
 
 export default function AdminNav() {
