@@ -8,6 +8,7 @@ import {
   readTime,
   type ArticleRow,
 } from "@/lib/resources";
+import FellowshipsPage from "./FellowshipsPage";
 
 export const revalidate = 3600;
 
@@ -23,6 +24,10 @@ export default async function CategoryPage({
   const { category } = await params;
   const cat = getCategoryBySlug(category);
   if (!cat) notFound();
+
+  if (category === "fellowships") {
+    return <FellowshipsPage cat={cat} />;
+  }
 
   const pillars = getPillarsForCategory(category);
 

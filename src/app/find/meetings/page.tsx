@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import MeetingsDirectory from '@/components/find/MeetingsDirectory'
 import { getUserSavedIds } from '../actions'
@@ -41,7 +42,9 @@ export default async function MeetingsPage() {
         </p>
       </div>
 
-      <MeetingsDirectory savedIds={savedIds} />
+      <Suspense>
+        <MeetingsDirectory savedIds={savedIds} />
+      </Suspense>
     </div>
   )
 }

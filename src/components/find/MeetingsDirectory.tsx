@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import FilterAccordion, { type ActiveFilter } from './FilterAccordion'
@@ -55,6 +56,8 @@ interface Props {
 }
 
 export default function MeetingsDirectory({ savedIds = {} }: Props) {
+  const searchParams = useSearchParams()
+
   const [allMeetings, setAllMeetings] = useState<Meeting[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -65,7 +68,7 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
   const [locationLng, setLocationLng] = useState<number | null>(null)
   const [radiusMiles, setRadiusMiles] = useState(15)
 
-  const [fellowship, setFellowship] = useState('')
+  const [fellowship, setFellowship] = useState(() => searchParams.get('fellowship') ?? '')
   const [day, setDay] = useState('')
   const [time, setTime] = useState('')
   const [format, setFormat] = useState('')
