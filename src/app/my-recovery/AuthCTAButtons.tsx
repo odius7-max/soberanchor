@@ -8,13 +8,13 @@ export function HeroCTAButtons() {
   return (
     <div className="flex gap-3 justify-center flex-wrap mb-4">
       <button
-        onClick={openAuthModal}
+        onClick={() => openAuthModal('signup')}
         className="bg-teal text-white font-semibold text-base px-8 py-3.5 rounded-xl hover:opacity-90 transition-opacity"
       >
         Sign up free
       </button>
       <button
-        onClick={openAuthModal}
+        onClick={() => openAuthModal('login')}
         className="border-2 border-teal text-teal font-semibold text-base px-8 py-3.5 rounded-xl hover:bg-[var(--teal-10)] transition-colors"
       >
         Sign in
@@ -28,7 +28,7 @@ export function GetStartedButton() {
 
   return (
     <button
-      onClick={openAuthModal}
+      onClick={() => openAuthModal('signup')}
       className="inline-block bg-navy text-white font-semibold px-8 py-3.5 rounded-xl hover:bg-navy-dark transition-colors"
     >
       Get started — it&apos;s free →

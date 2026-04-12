@@ -20,14 +20,23 @@ export interface UserProfile {
   is_available_sponsor: boolean
 }
 
+export interface AuthPromptOptions {
+  title?: string
+  body?: string
+}
+
 interface AuthContextType {
   user: User | null
   profile: UserProfile | null
   isProvider: boolean
   loading: boolean
   isAuthModalOpen: boolean
-  openAuthModal: () => void
+  authModalInitialStep: 'login' | 'signup'
+  openAuthModal: (step?: 'login' | 'signup') => void
   closeAuthModal: () => void
+  authPrompt: Required<AuthPromptOptions> | null
+  openAuthPrompt: (opts?: AuthPromptOptions) => void
+  closeAuthPrompt: () => void
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
 }
@@ -41,6 +50,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isProvider, setIsProvider] = useState(false)
   const [loading, setLoading] = useState(true)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  const [authModalInitialStep, setAuthModalInitialStep] = useState<'login' | 'signup'>('login')
+  const [authPrompt, setAuthPrompt] = useState<Required<AuthPromptOptions> | null>(null)
   const mounted = useRef(true)
 
   const fetchProfile = useCallback(
@@ -100,8 +111,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [fetchProfile, supabase.auth])
 
-  const openAuthModal = useCallback(() => setIsAuthModalOpen(true), [])
+  const openAuthModal = useCallback((step: 'login' | 'signup' = 'login') => {
+    setAuthModalInitialStep(step)
+    setIsAuthModalOpen(true)
+  }, [])
   const closeAuthModal = useCallback(() => setIsAuthModalOpen(false), [])
+
+  const openAuthPrompt = useCallback((opts?: AuthPromptOptions) => {
+    setAuthPrompt({
+      title: opts?.title ?? 'Join SoberAnchor',
+      body:  opts?.body  ?? 'Create a free account to access this feature.',
+    })
+  }, [])
+  const closeAuthPrompt = useCallback(() => setAuthPrompt(null), [])
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut()
@@ -113,7 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [fetchProfile, supabase.auth])
 
   return (
-    <AuthContext.Provider value={{ user, profile, isProvider, loading, isAuthModalOpen, openAuthModal, closeAuthModal, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, isProvider, loading, isAuthModalOpen, authModalInitialStep, openAuthModal, closeAuthModal, authPrompt, openAuthPrompt, closeAuthPrompt, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   )

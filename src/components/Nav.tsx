@@ -226,13 +226,13 @@ export default function Nav() {
               /* Logged-out: Sign in text + Get Started pill */
               <>
                 <button
-                  onClick={openAuthModal}
+                  onClick={() => openAuthModal('login')}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 500, color: 'var(--mid)', padding: '8px 4px', fontFamily: 'var(--font-body)' }}
                 >
                   Sign in
                 </button>
                 <button
-                  onClick={openAuthModal}
+                  onClick={() => openAuthModal('signup')}
                   style={{
                     background: 'var(--navy)', color: '#fff', border: 'none',
                     borderRadius: 999, padding: '9px 20px',
@@ -340,13 +340,13 @@ export default function Nav() {
             ) : (
               <div className="pt-4 flex gap-3">
                 <button
-                  onClick={() => { setMobileOpen(false); openAuthModal() }}
+                  onClick={() => { setMobileOpen(false); openAuthModal('login') }}
                   style={{ flex: 1, background: 'none', border: '1.5px solid var(--border)', borderRadius: 8, padding: '11px', fontSize: 14, fontWeight: 600, color: 'var(--mid)', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
                 >
                   Sign in
                 </button>
                 <button
-                  onClick={() => { setMobileOpen(false); openAuthModal() }}
+                  onClick={() => { setMobileOpen(false); openAuthModal('signup') }}
                   style={{ flex: 1, background: 'var(--navy)', border: 'none', borderRadius: 8, padding: '11px', fontSize: 14, fontWeight: 600, color: '#fff', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
                 >
                   Get Started

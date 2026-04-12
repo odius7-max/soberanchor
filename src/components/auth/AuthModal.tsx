@@ -28,7 +28,7 @@ const focusTeal = (e: React.FocusEvent<HTMLInputElement>) => (e.target.style.bor
 const blurGray  = (e: React.FocusEvent<HTMLInputElement>) => (e.target.style.borderColor = '#E8E4DF')
 
 export default function AuthModal() {
-  const { isAuthModalOpen, closeAuthModal, refreshProfile } = useAuth()
+  const { isAuthModalOpen, authModalInitialStep, closeAuthModal, refreshProfile } = useAuth()
   const router = useRouter()
   const supabase = createClient()
 
@@ -46,6 +46,11 @@ export default function AuthModal() {
 
   const nameRef = useRef<HTMLInputElement>(null)
   const backdropRef = useRef<HTMLDivElement>(null)
+
+  // When modal opens, start at the requested step
+  useEffect(() => {
+    if (isAuthModalOpen) setStep(authModalInitialStep)
+  }, [isAuthModalOpen, authModalInitialStep])
 
   // Reset state when modal closes
   useEffect(() => {

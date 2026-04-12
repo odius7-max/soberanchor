@@ -19,7 +19,7 @@ export default function HeartButton({
   initialSavedId = null,
   size = 20,
 }: Props) {
-  const { user, openAuthModal } = useAuth()
+  const { user, openAuthPrompt } = useAuth()
   const [savedId, setSavedId] = useState<string | null>(initialSavedId)
   const [showModal, setShowModal] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -30,7 +30,10 @@ export default function HeartButton({
     e.preventDefault()
     e.stopPropagation()
     if (!user) {
-      openAuthModal()
+      openAuthPrompt({
+        title: 'Save your favorites',
+        body: 'Create a free account to save listings and keep them in an easy, accessible place to reference anytime.',
+      })
       return
     }
     if (isSaved) {

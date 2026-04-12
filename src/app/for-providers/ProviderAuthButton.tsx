@@ -7,7 +7,7 @@ export default function ProviderAuthButton() {
 
   return (
     <button
-      onClick={openAuthModal}
+      onClick={() => openAuthModal('login')}
       className="border-2 border-teal text-teal font-semibold text-base px-8 py-3.5 rounded-xl hover:bg-[var(--teal-10)] transition-colors"
     >
       Already listed? Sign in
