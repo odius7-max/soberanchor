@@ -32,16 +32,20 @@ export default async function SponsorReviewPage({ params }: { params: Promise<{ 
 
   if (!entry) notFound()
 
-  // Verify current user is the sponsor
+  // Sponsors cannot view drafts — only submitted or reviewed entries
+  if (entry.review_status === 'draft' || entry.review_status === 'needs_revision') notFound()
+
+  // Verify current user is the ACTIVE sponsor for this entry's relationship
   if (entry.sponsor_relationship_id) {
     const { data: rel } = await supabase
       .from('sponsor_relationships')
-      .select('sponsor_id')
+      .select('sponsor_id, status')
       .eq('id', entry.sponsor_relationship_id)
       .single()
-    if (!rel || rel.sponsor_id !== user.id) notFound()
+    // Must be the sponsor AND the relationship must still be active
+    if (!rel || rel.sponsor_id !== user.id || rel.status !== 'active') notFound()
   } else {
-    // No relationship — only the entry owner's sponsor can review
+    // No relationship attached — access denied
     notFound()
   }
 

@@ -68,8 +68,9 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
     admin.from('check_ins').select('id, check_in_date, mood, notes, sober_today, meetings_attended').eq('user_id', sponseeId).order('check_in_date', { ascending: false }).limit(5),
     admin.from('journal_entries').select('id, title, entry_date, excerpt, step_number').eq('user_id', sponseeId).eq('is_shared_with_sponsor', true).order('entry_date', { ascending: false }).limit(10),
     admin.from('step_work_entries')
-      .select('id, workbook_id, review_status, submitted_at, reviewed_at, program_workbooks(title, step_number, slug)')
+      .select('id, workbook_id, review_status, submitted_at, reviewed_at, updated_at, program_workbooks(title, step_number, slug)')
       .eq('user_id', sponseeId)
+      .in('review_status', ['submitted', 'reviewed'])   // never expose drafts to sponsors
       .order('submitted_at', { ascending: false }),
     admin.from('fellowships').select('id, name, abbreviation, slug').order('name'),
     rel.fellowship_id
@@ -88,7 +89,7 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
 
   const sobrietyDays = calcDays(profile.sobriety_date)
   const submittedEntries = stepEntries.filter(e => e.review_status === 'submitted')
-  const otherEntries = stepEntries.filter(e => e.review_status !== 'submitted')
+  const reviewedEntries = stepEntries.filter(e => e.review_status === 'reviewed')
 
   const completedSteps = Math.min(initialCompletions.filter(c => c.is_completed).length, 12)
   const allStepsDone = completedSteps >= 12
@@ -160,22 +161,41 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
         </div>
       )}
 
-      {/* All step work */}
-      {otherEntries.length > 0 && (
+      {/* Reviewed step work — clickable history */}
+      {reviewedEntries.length > 0 && (
         <div style={card}>
-          <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--navy)', marginBottom: 14 }}>📖 Step Work History</h2>
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--navy)', marginBottom: 4 }}>✅ Reviewed Work</h2>
+          <p style={{ fontSize: 12, color: 'var(--mid)', marginBottom: 14 }}>Click any section to re-read responses and your feedback.</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {otherEntries.map(e => {
+            {reviewedEntries.map(e => {
               const wb = e.program_workbooks as unknown as { title: string; step_number: number | null; slug: string } | null
-              const meta = STATUS_META[e.review_status] ?? STATUS_META.draft
+              const isUpdated = !!e.reviewed_at && !!(e as { updated_at?: string | null }).updated_at &&
+                new Date((e as { updated_at: string }).updated_at) > new Date(e.reviewed_at)
               return (
-                <div key={e.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', gap: 12 }}>
-                  <div>
+                <a
+                  key={e.id}
+                  href={`/dashboard/step-work/review/${e.id}`}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderRadius: 10, border: '1px solid var(--border)', textDecoration: 'none', gap: 12, background: '#fff' }}
+                >
+                  <div style={{ minWidth: 0 }}>
+                    {wb?.step_number && (
+                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)', letterSpacing: '1.5px', textTransform: 'uppercase' as const, marginBottom: 2 }}>
+                        Step {wb.step_number}
+                      </div>
+                    )}
                     <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--navy)' }}>{wb?.title ?? 'Step Work'}</div>
-                    {e.reviewed_at && <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 2 }}>Reviewed {relDate(e.reviewed_at)}</div>}
+                    <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 2 }}>
+                      {e.reviewed_at ? `Reviewed ${relDate(e.reviewed_at)}` : 'Reviewed'}
+                      {isUpdated && <span style={{ color: '#9A7B54', fontWeight: 600, marginLeft: 8 }}>· Updated since review</span>}
+                    </div>
                   </div>
-                  <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: meta.bg, color: meta.color, whiteSpace: 'nowrap' as const }}>{meta.label}</span>
-                </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: STATUS_META.reviewed.bg, color: STATUS_META.reviewed.color, whiteSpace: 'nowrap' as const }}>
+                      Reviewed
+                    </span>
+                    <span style={{ fontSize: 13, color: 'var(--mid)' }}>→</span>
+                  </div>
+                </a>
               )
             })}
           </div>
