@@ -15,12 +15,12 @@ function getSearchContext(pathname: string): SearchContext {
 }
 
 export default function Nav() {
-  const pathname = usePathname()
-  const router = useRouter()
+  const pathname  = usePathname()
+  const router    = useRouter()
   const { user, profile, isProvider, loading, openAuthModal, signOut } = useAuth()
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const [mobileOpen,   setMobileOpen]   = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
-  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchOpen,   setSearchOpen]   = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -57,219 +57,208 @@ export default function Nav() {
     router.refresh()
   }
 
-  // Core nav links — Our Story only shown when logged out
   const coreLinks = [
-    { href: '/find', label: 'Find Help' },
-    { href: '/find/meetings', label: 'Meetings' },
-    { href: '/resources', label: 'Resources' },
+    { href: '/find',          label: 'Find Help'  },
+    { href: '/find/meetings', label: 'Meetings'   },
+    { href: '/resources',     label: 'Resources'  },
   ]
 
   const isActive = (href: string) =>
-    href === '/find'
-      ? pathname === '/find'
-      : pathname.startsWith(href)
+    href === '/find' ? pathname === '/find' : pathname.startsWith(href)
+
+  const linkCls = (href: string) =>
+    `px-3.5 py-2 rounded-lg text-[13.5px] font-medium transition-colors whitespace-nowrap ${
+      isActive(href) ? 'text-teal bg-[var(--teal-10)]' : 'text-dark hover:bg-warm-gray'
+    }`
+
+  // ── Magnifying-glass icon ──────────────────────────────────────────────────
+  const SearchIcon = (
+    <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden style={{ flexShrink: 0 }}>
+      <circle cx="8.5" cy="8.5" r="5.75" stroke="#888" strokeWidth="1.75"/>
+      <path d="M13 13L17.5 17.5" stroke="#888" strokeWidth="1.75" strokeLinecap="round"/>
+    </svg>
+  )
 
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-[var(--border)]">
-      <div className="max-w-[1120px] mx-auto px-6 flex items-center justify-between h-[64px]">
+    <nav className="sticky top-0 z-50 bg-white">
 
-        {/* ── Logo ── */}
-        <Link
-          href="/"
-          className="flex items-center flex-shrink-0"
-          aria-label="SoberAnchor home"
-        >
-          <Image
-            src="/logo-nav.png"
-            alt="SoberAnchor"
-            width={235}
-            height={32}
-            style={{ height: 32, width: 'auto' }}
-            priority
-          />
-        </Link>
+      {/* ── Row 1: logo · nav links · auth ── */}
+      <div className="border-b border-[var(--border)]">
+        <div className="max-w-[1120px] mx-auto px-6 flex items-center justify-between h-[60px]">
 
-        {/* ── Desktop nav ── */}
-        <div className="hidden md:flex items-center gap-0.5">
-          {coreLinks.map(l => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={`px-4 py-2 rounded-lg text-[14px] font-medium transition-colors ${
-                isActive(l.href)
-                  ? 'text-teal bg-[var(--teal-10)]'
-                  : 'text-dark hover:bg-warm-gray'
-              }`}
-            >
-              {l.label}
-            </Link>
-          ))}
-
-          {/* Our Story — logged-out only */}
-          {!loading && !user && (
-            <Link
-              href="/our-story"
-              className={`px-4 py-2 rounded-lg text-[14px] font-medium transition-colors ${
-                pathname === '/our-story'
-                  ? 'text-teal bg-[var(--teal-10)]'
-                  : 'text-dark hover:bg-warm-gray'
-              }`}
-            >
-              Our Story
-            </Link>
-          )}
-
-          {/* AI Search pill */}
-          <button
-            onClick={() => setSearchOpen(true)}
-            aria-label="AI Search (⌘K)"
-            title="AI Search (⌘K)"
-            style={{
-              display: 'flex', alignItems: 'center', gap: 7,
-              background: 'var(--warm-gray)', border: '1.5px solid var(--border)',
-              borderRadius: 999, padding: '6px 10px 6px 10px',
-              cursor: 'pointer', fontFamily: 'var(--font-body)',
-              transition: 'all 0.15s', marginLeft: 6, width: 210,
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--teal)'; e.currentTarget.style.background = '#fff' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--warm-gray)' }}
-          >
-            {/* Sparkle icon */}
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden style={{ flexShrink: 0 }}>
-              <path d="M8 1 L8.8 5.5 L13 6 L8.8 6.5 L8 11 L7.2 6.5 L3 6 L7.2 5.5 Z" fill="#2A8A99"/>
-              <path d="M13 1 L13.5 3 L15 3.5 L13.5 4 L13 6 L12.5 4 L11 3.5 L12.5 3 Z" fill="#2A8A99" opacity="0.55"/>
-            </svg>
-            <span style={{ flex: 1, textAlign: 'left', fontSize: 13, color: 'var(--mid)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              Ask anything…
-            </span>
-            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--mid)', background: '#fff', border: '1px solid var(--border)', borderRadius: 4, padding: '1px 5px', flexShrink: 0, letterSpacing: '0.2px' }}>
-              ⌘K
-            </span>
-          </button>
-
-          {/* Separator */}
-          <span className="w-px h-5 bg-[var(--border)] mx-2" />
-
-          {/* For Providers — muted */}
-          <Link
-            href="/for-providers"
-            className={`text-[13px] px-3 py-1.5 rounded-lg transition-colors ${
-              pathname === '/for-providers'
-                ? 'text-teal font-semibold'
-                : 'text-mid hover:text-dark'
-            }`}
-          >
-            For Providers
+          {/* Logo */}
+          <Link href="/" className="flex items-center flex-shrink-0 mr-4" aria-label="SoberAnchor home">
+            <Image
+              src="/logo-nav.png"
+              alt="SoberAnchor"
+              width={235}
+              height={32}
+              style={{ height: 30, width: 'auto' }}
+              priority
+            />
           </Link>
-        </div>
 
-        {/* ── Desktop right side ── */}
-        <div className="hidden md:flex items-center gap-2">
-          {!loading && (
-            user ? (
-              /* Logged-in: unified pill */
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={() => setDropdownOpen(v => !v)}
-                  aria-label="My account"
-                  aria-expanded={dropdownOpen}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 0,
-                    background: 'rgba(0,51,102,0.07)',
-                    border: '1px solid rgba(0,51,102,0.12)',
-                    borderRadius: 999, padding: '7px 14px',
-                    cursor: 'pointer', transition: 'background 0.15s',
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,51,102,0.11)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,51,102,0.07)')}
-                >
-                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)', whiteSpace: 'nowrap' }}>
-                    My Recovery{displayName ? ` | ${displayName}` : ''} ▾
-                  </span>
-                </button>
+          {/* Desktop nav links */}
+          <div className="hidden md:flex items-center gap-0.5 flex-1">
+            {coreLinks.map(l => (
+              <Link key={l.href} href={l.href} className={linkCls(l.href)}>
+                {l.label}
+              </Link>
+            ))}
 
-                {/* Dropdown */}
-                {dropdownOpen && (
-                  <div
-                    className="absolute right-0 top-full mt-2 rounded-xl overflow-hidden"
-                    style={{ background: '#fff', border: '1px solid var(--border)', boxShadow: '0 8px 32px rgba(0,51,102,0.1)', minWidth: 210, zIndex: 60 }}
+            {/* Our Story — logged-out only */}
+            {!loading && !user && (
+              <Link
+                href="/our-story"
+                className={`px-3.5 py-2 rounded-lg text-[13.5px] font-medium transition-colors whitespace-nowrap ${
+                  pathname === '/our-story' ? 'text-teal bg-[var(--teal-10)]' : 'text-dark hover:bg-warm-gray'
+                }`}
+              >
+                Our Story
+              </Link>
+            )}
+
+            {/* For Providers — muted, always shown */}
+            <Link
+              href="/for-providers"
+              className={`px-3.5 py-2 rounded-lg text-[13.5px] font-medium transition-colors whitespace-nowrap ${
+                pathname === '/for-providers' ? 'text-teal font-semibold' : 'text-mid hover:text-dark hover:bg-warm-gray'
+              }`}
+            >
+              For Providers
+            </Link>
+          </div>
+
+          {/* Desktop auth */}
+          <div className="hidden md:flex items-center gap-2 flex-shrink-0">
+            {!loading && (
+              user ? (
+                /* Logged-in: My Recovery pill */
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setDropdownOpen(v => !v)}
+                    aria-label="My account"
+                    aria-expanded={dropdownOpen}
+                    style={{
+                      display: 'flex', alignItems: 'center',
+                      background: 'rgba(0,51,102,0.07)',
+                      border: '1px solid rgba(0,51,102,0.12)',
+                      borderRadius: 999, padding: '7px 14px',
+                      cursor: 'pointer', transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,51,102,0.11)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,51,102,0.07)')}
                   >
-                    <Link href="/dashboard" onClick={() => setDropdownOpen(false)} className="flex items-center justify-between px-4 py-3 text-[14px] text-dark hover:bg-warm-gray transition-colors">
-                      Dashboard
-                      {pathname === '/dashboard' && <span className="text-[10px] font-bold text-teal">●</span>}
-                    </Link>
-                    <Link href="/my-recovery/profile" onClick={() => setDropdownOpen(false)} className="flex items-center justify-between px-4 py-3 text-[14px] text-dark hover:bg-warm-gray transition-colors">
-                      Profile
-                      {pathname === '/my-recovery/profile' && <span className="text-[10px] font-bold text-teal">●</span>}
-                    </Link>
-                    <Link href="/my-recovery/settings" onClick={() => setDropdownOpen(false)} className="flex items-center justify-between px-4 py-3 text-[14px] text-dark hover:bg-warm-gray transition-colors">
-                      Settings
-                      {pathname === '/my-recovery/settings' && <span className="text-[10px] font-bold text-teal">●</span>}
-                    </Link>
-                    {isProvider && (
-                      <Link href="/providers/dashboard" onClick={() => setDropdownOpen(false)} className="flex items-center justify-between px-4 py-3 text-[14px] text-dark hover:bg-warm-gray transition-colors">
-                        Provider Dashboard
-                        {pathname.startsWith('/providers') && <span className="text-[10px] font-bold text-teal">●</span>}
-                      </Link>
-                    )}
-                    <button
-                      onClick={handleSignOut}
-                      className="block w-full text-left px-4 py-3 text-[14px] text-mid hover:bg-warm-gray transition-colors"
-                      style={{ background: 'none', border: 'none', borderTop: '1px solid var(--border)', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
-                    >
-                      Sign Out
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              /* Logged-out: Sign in text + Get Started pill */
-              <>
-                <button
-                  onClick={() => openAuthModal('login')}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 500, color: 'var(--mid)', padding: '8px 4px', fontFamily: 'var(--font-body)' }}
-                >
-                  Sign in
-                </button>
-                <button
-                  onClick={() => openAuthModal('signup')}
-                  style={{
-                    background: 'var(--navy)', color: '#fff', border: 'none',
-                    borderRadius: 999, padding: '9px 20px',
-                    fontSize: 14, fontWeight: 600, cursor: 'pointer',
-                    fontFamily: 'var(--font-body)', whiteSpace: 'nowrap',
-                    transition: 'opacity 0.15s',
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.opacity = '0.88')}
-                  onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-                >
-                  Get Started
-                </button>
-              </>
-            )
-          )}
-        </div>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)', whiteSpace: 'nowrap' }}>
+                      My Recovery{displayName ? ` | ${displayName}` : ''} ▾
+                    </span>
+                  </button>
 
-        {/* ── Mobile: search icon + hamburger ── */}
-        <div className="md:hidden flex items-center gap-2">
+                  {dropdownOpen && (
+                    <div
+                      className="absolute right-0 top-full mt-2 rounded-xl overflow-hidden"
+                      style={{ background: '#fff', border: '1px solid var(--border)', boxShadow: '0 8px 32px rgba(0,51,102,0.1)', minWidth: 210, zIndex: 60 }}
+                    >
+                      <Link href="/dashboard" onClick={() => setDropdownOpen(false)} className="flex items-center justify-between px-4 py-3 text-[14px] text-dark hover:bg-warm-gray transition-colors">
+                        Dashboard
+                        {pathname === '/dashboard' && <span className="text-[10px] font-bold text-teal">●</span>}
+                      </Link>
+                      <Link href="/my-recovery/profile" onClick={() => setDropdownOpen(false)} className="flex items-center justify-between px-4 py-3 text-[14px] text-dark hover:bg-warm-gray transition-colors">
+                        Profile
+                        {pathname === '/my-recovery/profile' && <span className="text-[10px] font-bold text-teal">●</span>}
+                      </Link>
+                      <Link href="/my-recovery/settings" onClick={() => setDropdownOpen(false)} className="flex items-center justify-between px-4 py-3 text-[14px] text-dark hover:bg-warm-gray transition-colors">
+                        Settings
+                        {pathname === '/my-recovery/settings' && <span className="text-[10px] font-bold text-teal">●</span>}
+                      </Link>
+                      {isProvider && (
+                        <Link href="/providers/dashboard" onClick={() => setDropdownOpen(false)} className="flex items-center justify-between px-4 py-3 text-[14px] text-dark hover:bg-warm-gray transition-colors">
+                          Provider Dashboard
+                          {pathname.startsWith('/providers') && <span className="text-[10px] font-bold text-teal">●</span>}
+                        </Link>
+                      )}
+                      <button
+                        onClick={handleSignOut}
+                        className="block w-full text-left px-4 py-3 text-[14px] text-mid hover:bg-warm-gray transition-colors"
+                        style={{ background: 'none', border: 'none', borderTop: '1px solid var(--border)', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Logged-out: Sign In + Get Started */
+                <>
+                  <button
+                    onClick={() => openAuthModal('login')}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, color: 'var(--mid)', padding: '8px 6px', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}
+                  >
+                    Sign In
+                  </button>
+                  <button
+                    onClick={() => openAuthModal('signup')}
+                    style={{
+                      background: 'var(--navy)', color: '#fff', border: 'none',
+                      borderRadius: 999, padding: '8px 18px',
+                      fontSize: 13.5, fontWeight: 600, cursor: 'pointer',
+                      fontFamily: 'var(--font-body)', whiteSpace: 'nowrap',
+                      transition: 'opacity 0.15s',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.opacity = '0.88')}
+                    onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+                  >
+                    Get Started
+                  </button>
+                </>
+              )
+            )}
+          </div>
+
+          {/* Mobile: hamburger only (search is in Row 2) */}
           <button
-            onClick={() => { setMobileOpen(false); setSearchOpen(true) }}
-            aria-label="AI Search"
-            style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'var(--warm-gray)', border: '1.5px solid var(--border)', borderRadius: 999, cursor: 'pointer', padding: '5px 10px', lineHeight: 1 }}
-          >
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden>
-              <path d="M8 1 L8.8 5.5 L13 6 L8.8 6.5 L8 11 L7.2 6.5 L3 6 L7.2 5.5 Z" fill="#2A8A99"/>
-              <path d="M13 1 L13.5 3 L15 3.5 L13.5 4 L13 6 L12.5 4 L11 3.5 L12.5 3 Z" fill="#2A8A99" opacity="0.55"/>
-            </svg>
-            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--teal)', fontFamily: 'var(--font-body)' }}>Ask AI</span>
-          </button>
-          <button
-            className="text-2xl text-navy"
+            className="md:hidden text-2xl text-navy"
             aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
             onClick={() => setMobileOpen(o => !o)}
             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 1 }}
           >
             {mobileOpen ? '✕' : '☰'}
+          </button>
+        </div>
+      </div>
+
+      {/* ── Row 2: search bar ── */}
+      <div className="border-b border-[var(--border)]" style={{ background: '#F7F6F4' }}>
+        <div className="max-w-[1120px] mx-auto px-6 py-2">
+          <button
+            onClick={() => { setMobileOpen(false); setSearchOpen(true) }}
+            aria-label="Search SoberAnchor"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              width: '100%', maxWidth: 620,
+              margin: '0 auto',
+              background: '#fff',
+              border: '1.5px solid var(--border)',
+              borderRadius: 10,
+              padding: '8px 14px',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-body)',
+              transition: 'border-color 0.15s, box-shadow 0.15s',
+              textAlign: 'left',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = 'var(--teal)'
+              e.currentTarget.style.boxShadow  = '0 0 0 3px rgba(42,138,153,0.08)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = 'var(--border)'
+              e.currentTarget.style.boxShadow   = 'none'
+            }}
+          >
+            {SearchIcon}
+            <span style={{ flex: 1, fontSize: 13.5, color: 'var(--mid)', letterSpacing: '0.1px' }}>
+              Ask anything…
+            </span>
           </button>
         </div>
       </div>
@@ -343,7 +332,7 @@ export default function Nav() {
                   onClick={() => { setMobileOpen(false); openAuthModal('login') }}
                   style={{ flex: 1, background: 'none', border: '1.5px solid var(--border)', borderRadius: 8, padding: '11px', fontSize: 14, fontWeight: 600, color: 'var(--mid)', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
                 >
-                  Sign in
+                  Sign In
                 </button>
                 <button
                   onClick={() => { setMobileOpen(false); openAuthModal('signup') }}
@@ -356,6 +345,7 @@ export default function Nav() {
           )}
         </div>
       )}
+
       <GlobalSearch
         open={searchOpen}
         context={getSearchContext(pathname)}
