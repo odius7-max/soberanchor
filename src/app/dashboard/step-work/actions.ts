@@ -115,6 +115,50 @@ export async function submitStepWork(entryId: string) {
   return { success: true }
 }
 
+/**
+ * Force-saves an entry that is in submitted or reviewed state.
+ * Resets review_status to 'draft', increments __edit_count in responses,
+ * and updates updated_at. reviewed_at is preserved so the UI can detect
+ * "edited after review" by checking reviewed_at != null && status === 'draft'.
+ */
+export async function editStepWorkEntry({
+  entryId,
+  responses,
+}: {
+  entryId: string
+  responses: Record<string, unknown>
+}) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { data: existing } = await supabase
+    .from('step_work_entries')
+    .select('id, responses')
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (!existing) return { error: 'Entry not found' }
+
+  const prevCount = ((existing.responses as Record<string, unknown> | null)?.__edit_count as number) ?? 0
+  const updatedResponses = { ...responses, __edit_count: prevCount + 1 }
+
+  const { error } = await supabase
+    .from('step_work_entries')
+    .update({
+      responses: updatedResponses,
+      review_status: 'draft',
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard/step-work')
+  return { id: entryId, edit_count: prevCount + 1 }
+}
+
 export async function saveSponsorFeedback({
   entryId,
   feedback,

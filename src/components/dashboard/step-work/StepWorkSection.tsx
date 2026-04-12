@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { saveStepWorkEntry, submitStepWork, saveSponsorFeedback } from '@/app/dashboard/step-work/actions'
+import { saveStepWorkEntry, editStepWorkEntry, submitStepWork, saveSponsorFeedback } from '@/app/dashboard/step-work/actions'
 import PrintButton from './PrintButton'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -38,6 +38,7 @@ interface Entry {
   sponsor_feedback: string | null
   submitted_at: string | null
   reviewed_at: string | null
+  updated_at: string | null
 }
 
 interface Props {
@@ -53,11 +54,13 @@ interface Props {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const STATUS_META: Record<string, { label: string; icon: string; bg: string; color: string; border: string }> = {
-  draft:             { label: 'Draft — auto-saving',    icon: '✏️', bg: 'rgba(42,138,153,0.07)',  color: 'var(--teal)', border: 'rgba(42,138,153,0.2)' },
-  submitted:         { label: 'Submitted for review',   icon: '📤', bg: 'rgba(212,165,116,0.1)',  color: '#9A7B54',     border: 'rgba(212,165,116,0.3)' },
-  reviewed:          { label: 'Reviewed by sponsor',    icon: '✅', bg: 'rgba(39,174,96,0.08)',   color: '#27AE60',     border: 'rgba(39,174,96,0.2)' },
-  needs_revision:    { label: 'Needs revision',         icon: '🔁', bg: 'rgba(231,76,60,0.07)',   color: '#C0392B',     border: 'rgba(231,76,60,0.2)' },
-  sponsor_completed: { label: 'Completed via sponsor',  icon: '✓',  bg: 'rgba(39,174,96,0.06)',   color: '#27AE60',     border: 'rgba(39,174,96,0.12)' },
+  draft:                { label: 'Draft — auto-saving',      icon: '✏️', bg: 'rgba(42,138,153,0.07)',  color: 'var(--teal)', border: 'rgba(42,138,153,0.2)' },
+  submitted:            { label: 'Submitted for review',     icon: '📤', bg: 'rgba(212,165,116,0.1)',  color: '#9A7B54',     border: 'rgba(212,165,116,0.3)' },
+  reviewed:             { label: 'Reviewed by sponsor',      icon: '✅', bg: 'rgba(39,174,96,0.08)',   color: '#27AE60',     border: 'rgba(39,174,96,0.2)' },
+  needs_revision:       { label: 'Needs revision',           icon: '🔁', bg: 'rgba(231,76,60,0.07)',   color: '#C0392B',     border: 'rgba(231,76,60,0.2)' },
+  sponsor_completed:    { label: 'Completed via sponsor',    icon: '✓',  bg: 'rgba(39,174,96,0.06)',   color: '#27AE60',     border: 'rgba(39,174,96,0.12)' },
+  updated_since_review: { label: 'Updated since review',     icon: '✏️', bg: 'rgba(212,165,116,0.1)',  color: '#9A7B54',     border: 'rgba(212,165,116,0.3)' },
+  editing:              { label: 'Editing — auto-saving',    icon: '✏️', bg: 'rgba(42,138,153,0.07)',  color: 'var(--teal)', border: 'rgba(42,138,153,0.2)' },
 }
 
 const ta: React.CSSProperties = {
@@ -300,7 +303,13 @@ function ScalePrompt({ prompt, value, onChange, readonly }: {
 
 export default function StepWorkSection({ workbook, entry, userId, sponsorRelationshipId, isSponsorView = false, sponseeName, stepCompleted = false }: Props) {
   const router = useRouter()
-  const readonly = isSponsorView || entry?.review_status === 'submitted' || entry?.review_status === 'reviewed'
+
+  // isEditing: user clicked "Edit" on a submitted/reviewed entry
+  const [isEditing, setIsEditing] = useState(false)
+  // Track what status the entry had when editing started (to show correct badges)
+  const [editingFromStatus, setEditingFromStatus] = useState<string | null>(null)
+
+  const readonly = isSponsorView || (!isEditing && (entry?.review_status === 'submitted' || entry?.review_status === 'reviewed'))
 
   // Effective status: sponsor-completed step with no/draft digital entry shows 'sponsor_completed'
   const isSponsorCompletedSection =
@@ -326,6 +335,20 @@ export default function StepWorkSection({ workbook, entry, userId, sponsorRelati
   const [status, setStatus] = useState<string>(
     isSponsorCompletedSection ? 'sponsor_completed' : (entry?.review_status ?? 'draft')
   )
+
+  // "Edited after review" — detected when reviewed_at is set and status is draft
+  // This persists across page loads and is also true during active editing of a reviewed entry
+  const isUpdatedSinceReview =
+    !!entry?.reviewed_at && (status === 'draft' || editingFromStatus === 'reviewed')
+
+  const editCount = (responses.__edit_count as number | undefined) ?? 0
+
+  // Computed display status for the badge
+  const displayStatus = isEditing
+    ? 'editing'
+    : isUpdatedSinceReview
+    ? 'updated_since_review'
+    : status
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [submitLoading, setSubmitLoading] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -341,19 +364,32 @@ export default function StepWorkSection({ workbook, entry, userId, sponsorRelati
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Auto-save (skip if readonly or sponsor view)
+  // Auto-save. When isEditing, bypass the submitted/reviewed guard via editStepWorkEntry.
   const doSave = useCallback(async (current: Record<string, unknown>) => {
-    if (readonly || isSponsorView) return
+    if (isSponsorView) return
+    if (!isEditing && readonly) return
     setSaveState('saving')
-    const result = await saveStepWorkEntry({ workbookId: workbook.id, responses: current, sponsorRelationshipId })
-    if ('error' in result) {
-      setSaveState('error')
+
+    if (isEditing && entryId) {
+      const result = await editStepWorkEntry({ entryId, responses: current })
+      if ('error' in result) {
+        setSaveState('error')
+      } else {
+        setStatus('draft')   // reset from submitted/reviewed → draft
+        setSaveState('saved')
+        setTimeout(() => setSaveState('idle'), 2500)
+      }
     } else {
-      if (!entryId && result.id) setEntryId(result.id)
-      setSaveState('saved')
-      setTimeout(() => setSaveState('idle'), 2500)
+      const result = await saveStepWorkEntry({ workbookId: workbook.id, responses: current, sponsorRelationshipId })
+      if ('error' in result) {
+        setSaveState('error')
+      } else {
+        if (!entryId && result.id) setEntryId(result.id)
+        setSaveState('saved')
+        setTimeout(() => setSaveState('idle'), 2500)
+      }
     }
-  }, [workbook.id, sponsorRelationshipId, readonly, isSponsorView, entryId])
+  }, [workbook.id, sponsorRelationshipId, readonly, isSponsorView, entryId, isEditing])
 
   function handleChange(promptId: string, val: unknown) {
     const next = { ...responses, [promptId]: val }
@@ -377,6 +413,7 @@ export default function StepWorkSection({ workbook, entry, userId, sponsorRelati
       if (result.error) { setSubmitError(result.error); return }
     }
     setStatus('submitted')
+    setIsEditing(false)
     setSubmitError(null)
   }
 
@@ -391,9 +428,15 @@ export default function StepWorkSection({ workbook, entry, userId, sponsorRelati
     }
   }
 
-  const statusMeta = STATUS_META[status] ?? STATUS_META.draft
-  const canSubmit = !readonly && status !== 'submitted' && status !== 'reviewed'
+  const statusMeta = STATUS_META[displayStatus] ?? STATUS_META.draft
+  const canSubmit = !readonly && !isEditing && status !== 'submitted' && status !== 'reviewed'
+  const canEdit = !isSponsorView && !isEditing && (status === 'submitted' || status === 'reviewed')
   const hasSponsor = !!sponsorRelationshipId
+
+  function handleStartEditing() {
+    setEditingFromStatus(status)
+    setIsEditing(true)
+  }
 
   return (
     <div className="max-w-[780px] mx-auto px-6 py-8 pb-20">
@@ -422,9 +465,23 @@ export default function StepWorkSection({ workbook, entry, userId, sponsorRelati
               <p style={{ fontSize: 14, color: 'var(--mid)', marginTop: 8, lineHeight: 1.6, maxWidth: 600 }}>{workbook.description}</p>
             )}
           </div>
-          {/* Status badge + print */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          {/* Status badge + edit button + print */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
             <PrintButton workbook={workbook} />
+            {canEdit && (
+              <button
+                onClick={handleStartEditing}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 700,
+                  background: '#fff', color: 'var(--navy)',
+                  border: '1.5px solid var(--navy)', cursor: 'pointer',
+                  fontFamily: 'var(--font-body)', whiteSpace: 'nowrap',
+                }}
+              >
+                ✏️ Edit
+              </button>
+            )}
             <div style={{ padding: '6px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: statusMeta.bg, color: statusMeta.color, border: `1px solid ${statusMeta.border}`, whiteSpace: 'nowrap' }}>
               {statusMeta.icon} {statusMeta.label}
             </div>
@@ -446,8 +503,45 @@ export default function StepWorkSection({ workbook, entry, userId, sponsorRelati
           </div>
         )}
 
+        {/* Updated-since-review notice (shown to sponsee and sponsor alike) */}
+        {isUpdatedSinceReview && !isEditing && (
+          <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 10, background: 'rgba(212,165,116,0.1)', border: '1px solid rgba(212,165,116,0.3)', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+            <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>✏️</span>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#9A7B54', marginBottom: 2 }}>
+                {isSponsorView ? 'Updated since your review' : 'Updated since last review'}
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--mid)', lineHeight: 1.5 }}>
+                {isSponsorView
+                  ? 'Your sponsee has edited their responses. Consider reviewing the updates and leaving new feedback.'
+                  : `This section was edited after your sponsor reviewed it.${editCount > 0 ? ` Revision ${editCount}.` : ''}`}
+                {entry?.updated_at && (
+                  <span> Last edited {new Date(entry.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}.</span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Active-editing banner */}
+        {isEditing && (
+          <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 10, background: 'rgba(42,138,153,0.07)', border: '1px solid rgba(42,138,153,0.2)', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+            <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>✏️</span>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--teal)', marginBottom: 2 }}>
+                Editing — changes save automatically
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--mid)', lineHeight: 1.5 }}>
+                {editingFromStatus === 'submitted'
+                  ? 'Saving will reset this to draft so your sponsor can re-review your updated responses.'
+                  : 'Your previous responses are pre-filled. Sponsor feedback is preserved below each prompt.'}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Auto-save indicator */}
-        {!readonly && !isSponsorView && (
+        {(!readonly || isEditing) && !isSponsorView && (
           <div style={{ marginTop: 12, fontSize: 12, color: saveState === 'error' ? '#C0392B' : saveState === 'saving' ? 'var(--mid)' : saveState === 'saved' ? '#27AE60' : 'transparent' }}>
             {saveState === 'saving' && '💾 Saving…'}
             {saveState === 'saved' && '✓ Saved'}

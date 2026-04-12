@@ -4,13 +4,16 @@ import StepWorkSection from '@/components/dashboard/step-work/StepWorkSection'
 
 interface Prompt {
   id: string
-  type: 'text' | 'yesno' | 'table'
+  type: 'text' | 'yesno' | 'table' | 'scale'
   question: string
   hint?: string
   followup?: string
   columns?: string[]
   rows?: string
   required?: boolean
+  min?: number
+  max?: number
+  labels?: string[]
 }
 
 export default async function SponsorReviewPage({ params }: { params: Promise<{ entryId: string }> }) {
@@ -23,7 +26,7 @@ export default async function SponsorReviewPage({ params }: { params: Promise<{ 
   // Fetch entry with relationship info
   const { data: entry } = await supabase
     .from('step_work_entries')
-    .select('id, user_id, workbook_id, sponsor_relationship_id, review_status, responses, sponsor_feedback, submitted_at, reviewed_at')
+    .select('id, user_id, workbook_id, sponsor_relationship_id, review_status, responses, sponsor_feedback, submitted_at, reviewed_at, updated_at')
     .eq('id', entryId)
     .single()
 

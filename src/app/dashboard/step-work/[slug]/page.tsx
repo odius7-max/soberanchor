@@ -36,7 +36,7 @@ export default async function StepWorkSectionPage({ params }: { params: Promise<
   // Fetch user's entry for this workbook
   const { data: entry } = await supabase
     .from('step_work_entries')
-    .select('id, review_status, responses, sponsor_feedback, submitted_at, reviewed_at')
+    .select('id, review_status, responses, sponsor_feedback, submitted_at, reviewed_at, updated_at')
     .eq('user_id', user.id)
     .eq('workbook_id', workbook.id)
     .maybeSingle()
