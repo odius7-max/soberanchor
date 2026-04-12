@@ -7,6 +7,8 @@ import PendingRequests from './PendingRequests'
 import type { PendingRequest } from './PendingRequests'
 import { addSponsorNote, sendSponsorReminder } from '@/app/dashboard/actions'
 import type { SponseeFull, SponseeCheckIn } from './DashboardShell'
+import { useSponsorAccess } from '@/hooks/useSponsorAccess'
+import Link from 'next/link'
 import CheckInReportModal from './CheckInReportModal'
 import StepWorkReportModal from './StepWorkReportModal'
 import MeetingReportModal from './MeetingReportModal'
@@ -696,10 +698,12 @@ interface Props {
   sponsees: SponseeFull[]
   pendingRequests: PendingRequest[]
   displayName?: string
+  userId: string
 }
 
-export default function SponsorView({ sponsees, pendingRequests, displayName }: Props) {
+export default function SponsorView({ sponsees, pendingRequests, displayName, userId }: Props) {
   const [showAddModal, setShowAddModal] = useState(false)
+  const { status, daysRemaining } = useSponsorAccess(userId)
 
   const today = new Date().toISOString().slice(0, 10)
   const pendingTotal = sponsees.reduce((s, sp) => s + sp.pendingReviews, 0)
@@ -715,37 +719,24 @@ export default function SponsorView({ sponsees, pendingRequests, displayName }: 
     return aDate < bDate ? -1 : aDate > bDate ? 1 : 0
   }), [sponsees])
 
-  return (
-    <div>
+  // ─── Reusable inner content ───────────────────────────────────────────────
+  const dashboardContent = (
+    <>
       <PendingRequests requests={pendingRequests} perspective="as_sponsor" />
 
       {/* ── Summary stats row ── */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 130, borderRadius: 14, padding: '18px 20px', background: 'linear-gradient(135deg,#003366,#1a4a5e)' }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 2 }}>
-            Active Sponsees
-          </div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 700, color: '#fff', letterSpacing: '-1px', lineHeight: 1.15 }}>
-            {sponsees.length}
-          </div>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 2 }}>Active Sponsees</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 700, color: '#fff', letterSpacing: '-1px', lineHeight: 1.15 }}>{sponsees.length}</div>
         </div>
-
         <div style={{ flex: 1, minWidth: 130, borderRadius: 14, padding: '18px 20px', background: '#fff', border: '1px solid var(--border)' }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--mid)', marginBottom: 2 }}>
-            Pending Reviews
-          </div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 700, letterSpacing: '-1px', lineHeight: 1.15, color: pendingTotal > 0 ? '#D4A574' : 'var(--navy)' }}>
-            {pendingTotal}
-          </div>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--mid)', marginBottom: 2 }}>Pending Reviews</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 700, letterSpacing: '-1px', lineHeight: 1.15, color: pendingTotal > 0 ? '#D4A574' : 'var(--navy)' }}>{pendingTotal}</div>
         </div>
-
         <div style={{ flex: 1, minWidth: 130, borderRadius: 14, padding: '18px 20px', background: '#fff', border: '1px solid var(--border)' }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--mid)', marginBottom: 2 }}>
-            Checked In Today
-          </div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 700, letterSpacing: '-1px', lineHeight: 1.15, color: '#2A8A99' }}>
-            {checkInsToday}
-          </div>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--mid)', marginBottom: 2 }}>Checked In Today</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 700, letterSpacing: '-1px', lineHeight: 1.15, color: '#2A8A99' }}>{checkInsToday}</div>
         </div>
       </div>
 
@@ -754,34 +745,149 @@ export default function SponsorView({ sponsees, pendingRequests, displayName }: 
         <h3 style={{ fontWeight: 700, color: 'var(--navy)', fontSize: 15, margin: 0 }}>Your Sponsees</h3>
         <button
           onClick={() => setShowAddModal(true)}
-          style={{
-            background: 'var(--navy)', color: '#fff', border: 'none', borderRadius: 8,
-            padding: '8px 16px', fontSize: 13, fontWeight: 600,
-            cursor: 'pointer', fontFamily: 'var(--font-body)',
-          }}
-        >
+          style={{ background: 'var(--navy)', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
           + Add Sponsee
         </button>
       </div>
 
       {/* ── Sponsee cards ── */}
       {sponsees.length === 0 ? (
-        <div style={{
-          borderRadius: 16, border: '1px solid var(--border)',
-          padding: '40px 24px', textAlign: 'center', background: '#fff',
-        }}>
+        <div style={{ borderRadius: 16, border: '1px solid var(--border)', padding: '40px 24px', textAlign: 'center', background: '#fff' }}>
           <div style={{ fontSize: 36, marginBottom: 10 }}>👥</div>
           <div style={{ fontWeight: 600, color: 'var(--navy)', fontSize: 16, marginBottom: 6 }}>No active sponsees yet</div>
-          <div style={{ fontSize: 14, color: 'var(--mid)' }}>
-            Click &quot;Add Sponsee&quot; to connect with someone you&apos;re sponsoring.
-          </div>
+          <div style={{ fontSize: 14, color: 'var(--mid)' }}>Click &quot;Add Sponsee&quot; to connect with someone you&apos;re sponsoring.</div>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 20 }}>
-          {sorted.map(sp => (
-            <SponseeCard key={sp.id} sponsee={sp} />
-          ))}
+          {sorted.map(sp => (<SponseeCard key={sp.id} sponsee={sp} />))}
         </div>
+      )}
+    </>
+  )
+
+  return (
+    <div>
+      {/* ── Trial active banner (green) ── */}
+      {status === 'trialing' && daysRemaining > 7 && (
+        <div style={{ background: 'rgba(39,174,96,0.08)', border: '1px solid rgba(39,174,96,0.25)', borderRadius: 10, padding: '10px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 13, color: '#27AE60', fontWeight: 500 }}>
+            Sponsor Pro trial — <strong>{daysRemaining} days remaining</strong>
+          </span>
+          <span style={{ background: '#27AE60', color: '#fff', fontSize: 10, fontWeight: 700, letterSpacing: '1px', padding: '3px 8px', borderRadius: 20, textTransform: 'uppercase' }}>Pro</span>
+        </div>
+      )}
+
+      {/* ── Trial warning banner (amber) ── */}
+      {status === 'trialing' && daysRemaining <= 7 && (
+        <div style={{ background: 'rgba(212,165,116,0.1)', border: '1.5px solid rgba(212,165,116,0.5)', borderRadius: 10, padding: '10px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <span style={{ fontSize: 13, color: '#a0692a', fontWeight: 500 }}>
+            Your trial ends in <strong>{daysRemaining} day{daysRemaining !== 1 ? 's' : ''}</strong>. Subscribe to keep your tools.
+          </span>
+          <Link href="/upgrade" style={{ background: 'var(--navy)', color: '#fff', borderRadius: 7, padding: '6px 14px', fontSize: 12, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
+            Upgrade
+          </Link>
+        </div>
+      )}
+
+      {/* ── Expired locked overlay ── */}
+      {status === 'expired' ? (
+        <div>
+          {/* Blurred teaser strip */}
+          <div style={{ overflow: 'hidden', maxHeight: 170, borderRadius: 14, marginBottom: 0, position: 'relative' }}>
+            <div style={{ filter: 'blur(5px)', opacity: 0.45, pointerEvents: 'none', userSelect: 'none' }}>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', padding: '4px 0' }}>
+                {[['Active Sponsees', String(sponsees.length), 'linear-gradient(135deg,#003366,#1a4a5e)', '#fff', 'rgba(255,255,255,0.55)'],
+                  ['Pending Reviews', String(pendingTotal), '#fff', pendingTotal > 0 ? '#D4A574' : 'var(--navy)', 'var(--mid)'],
+                  ['Checked In Today', String(checkInsToday), '#fff', '#2A8A99', 'var(--mid)']
+                ].map(([label, value, bg, color, labelColor]) => (
+                  <div key={label} style={{ flex: 1, minWidth: 130, borderRadius: 14, padding: '18px 20px', background: bg, border: bg === '#fff' ? '1px solid var(--border)' : undefined }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: labelColor, marginBottom: 2 }}>{label}</div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 700, color: color, letterSpacing: '-1px', lineHeight: 1.15 }}>{value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Gradient fade */}
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 80, background: 'linear-gradient(to bottom, transparent, #f8f6f3)' }} />
+          </div>
+
+          {/* Lock screen */}
+          <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 20, padding: '36px 28px', textAlign: 'center', marginTop: 8 }}>
+            {/* Anchor icon */}
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg,#2A8A99,#1a6b78)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: '0 4px 12px rgba(42,138,153,0.25)' }}>
+              <svg width="26" height="26" viewBox="0 0 64 64" fill="none">
+                <path d="M32 10a6 6 0 1 1 0 12 6 6 0 0 1 0-12z" stroke="#fff" strokeWidth="2.5"/>
+                <path d="M32 22v28" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/>
+                <path d="M20 42c0 6.627 5.373 12 12 12s12-5.373 12-12" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/>
+                <path d="M24 34h16" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/>
+              </svg>
+            </div>
+
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 600, color: 'var(--navy)', letterSpacing: '-0.4px', margin: '0 0 8px' }}>
+              Your sponsee data is safe
+            </h2>
+            <p style={{ fontSize: 14, color: 'var(--mid)', lineHeight: 1.65, margin: '0 0 28px', maxWidth: 360, marginLeft: 'auto', marginRight: 'auto' }}>
+              Subscribe to access your dashboard, mood trends, step work reviews, and reports.
+            </p>
+
+            {/* Pricing cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20, textAlign: 'left' }}>
+              {/* Monthly — featured */}
+              <div style={{ border: '2px solid var(--teal)', borderRadius: 14, padding: '20px 18px', background: 'rgba(42,138,153,0.03)' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--teal)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 8 }}>Monthly</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700, color: 'var(--navy)', letterSpacing: '-0.5px', lineHeight: 1 }}>$9.99</div>
+                <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 4 }}>per month</div>
+              </div>
+              {/* Annual */}
+              <div style={{ border: '1px solid var(--border)', borderRadius: 14, padding: '20px 18px', background: '#fff' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--mid)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 8 }}>Annual</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700, color: 'var(--navy)', letterSpacing: '-0.5px', lineHeight: 1 }}>$79.99</div>
+                <div style={{ fontSize: 12, color: '#27AE60', marginTop: 4, fontWeight: 600 }}>Save 33%</div>
+              </div>
+            </div>
+
+            <Link href="/upgrade" style={{ display: 'block', background: 'var(--teal)', color: '#fff', borderRadius: 10, padding: '14px', fontSize: 15, fontWeight: 600, textDecoration: 'none', letterSpacing: '-0.2px', marginBottom: 12, textAlign: 'center' }}>
+              Subscribe to Sponsor Pro
+            </Link>
+            <p style={{ fontSize: 12, color: 'var(--mid)', margin: '0 0 28px' }}>
+              Linking with sponsees and marking steps complete is always free.
+            </p>
+
+            {/* Mission section */}
+            <div style={{ background: 'rgba(0,51,102,0.03)', border: '1px solid rgba(0,51,102,0.08)', borderRadius: 14, padding: '20px 20px', textAlign: 'left' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <svg width="16" height="16" viewBox="0 0 64 64" fill="none">
+                  <path d="M32 8a6 6 0 1 1 0 12 6 6 0 0 1 0-12z" stroke="var(--navy)" strokeWidth="2.5"/>
+                  <path d="M32 20v28" stroke="var(--navy)" strokeWidth="2.5" strokeLinecap="round"/>
+                  <path d="M20 40c0 6.627 5.373 12 12 12s12-5.373 12-12" stroke="var(--navy)" strokeWidth="2.5" strokeLinecap="round"/>
+                  <path d="M24 32h16" stroke="var(--navy)" strokeWidth="2.5" strokeLinecap="round"/>
+                </svg>
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)' }}>Why we charge</span>
+              </div>
+              <p style={{ fontSize: 13, color: 'var(--mid)', lineHeight: 1.65, margin: '0 0 14px' }}>
+                Sponsorship is free — and always will be. These tools take real resources to build and maintain. We&apos;re not a venture-backed startup or a corporation. We&apos;re a family in recovery who built what we wished existed.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+                {[
+                  'Your subscription covers servers, development, and support — nothing more',
+                  'A portion of every subscription is donated to recovery community organizations',
+                  'No ads. No data selling. No investors to answer to. Just people helping people',
+                  'Sponsee accounts, meetings, step work, and the full directory are free forever',
+                ].map(point => (
+                  <div key={point} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--teal)', flexShrink: 0, marginTop: 5 }} />
+                    <span style={{ fontSize: 12, color: 'var(--mid)', lineHeight: 1.5 }}>{point}</span>
+                  </div>
+                ))}
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--mid)', fontStyle: 'italic', lineHeight: 1.65, margin: 0 }}>
+                &ldquo;We built SoberAnchor because Angel couldn&apos;t find what she needed during her own recovery. Your support lets us keep building it for everyone else.&rdquo; — Angel &amp; Travis Johnson, co-founders
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        dashboardContent
       )}
 
       {showAddModal && <AddSponseeModal onClose={() => setShowAddModal(false)} sponsorName={displayName} />}

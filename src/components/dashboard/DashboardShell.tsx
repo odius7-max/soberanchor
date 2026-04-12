@@ -182,7 +182,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
         )}
 
         {role === 'meetings' && <MeetingCheckin userId={userId} />}
-        {role === 'sponsees' && isSponsor && <SponsorView sponsees={sponsees} pendingRequests={sponsorPendingRequests} displayName={displayName} />}
+        {role === 'sponsees' && isSponsor && <SponsorView sponsees={sponsees} pendingRequests={sponsorPendingRequests} displayName={displayName} userId={userId} />}
       </div>
 
       {checkInOpen && <CheckInModal userId={userId} onClose={() => setCheckInOpen(false)} />}

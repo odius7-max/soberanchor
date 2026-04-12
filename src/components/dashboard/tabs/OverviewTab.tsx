@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import AddSponseeModal from '@/components/dashboard/AddSponseeModal'
+import SponsorProTrialModal from '@/components/dashboard/SponsorProTrialModal'
 import { markActivityRead } from '@/app/dashboard/activity/actions'
+import { useSponsorAccess } from '@/hooks/useSponsorAccess'
 
 const STEPS = [
   { n: 1, s: 'Powerlessness', desc: 'We admitted we were powerless over our addiction' },
@@ -63,6 +65,8 @@ export default function OverviewTab({ userId, activeFellowshipId, currentStep, c
   const [togglingRole, setTogglingRole] = useState(false)
   const [showFindSponsor, setShowFindSponsor] = useState(false)
   const [navigating, setNavigating] = useState(false)
+  const [showTrialModal, setShowTrialModal] = useState(false)
+  const { trialAvailable, refresh: refreshAccess } = useSponsorAccess(userId)
 
   const unreadCount = activityItems.filter(i => !i.is_read).length
 
@@ -80,6 +84,10 @@ export default function OverviewTab({ userId, activeFellowshipId, currentStep, c
     setSponsorAvailable(next)
     setTogglingRole(false)
     router.refresh()
+    // After toggling ON, offer the trial if it hasn't been used
+    if (next && trialAvailable) {
+      setShowTrialModal(true)
+    }
   }
 
   async function toggleTask(id: string, current: boolean) {
@@ -349,6 +357,13 @@ export default function OverviewTab({ userId, activeFellowshipId, currentStep, c
       </div>
 
       {showFindSponsor && <AddSponseeModal mode="find_sponsor" onClose={() => setShowFindSponsor(false)} sponsorName={displayName} />}
+      {showTrialModal && (
+        <SponsorProTrialModal
+          userId={userId}
+          onClose={() => setShowTrialModal(false)}
+          onTrialStarted={() => { refreshAccess(); setShowTrialModal(false) }}
+        />
+      )}
 
       {/* Recent Activity */}
       <div className={card} style={{ position: 'relative' }}>
