@@ -86,6 +86,13 @@ interface ImportResult {
   per_state_stats:           StateStats[]
 }
 
+// Progress tracked during an in-flight import
+interface ImportProgress {
+  currentIndex: number   // 0-based index of the state currently being fetched
+  total:        number   // total states selected
+  stateId:      number   // SAMHSA ID of the state currently being fetched
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function FacilityImportClient({
@@ -95,14 +102,22 @@ export default function FacilityImportClient({
   totalCount:  number
   samhsaCount: number
 }) {
-  const [selected, setSelected] = useState<Set<number>>(new Set())
-  const [importing, setImporting] = useState(false)
-  const [result, setResult]       = useState<ImportResult | null>(null)
+  const [selected, setSelected]       = useState<Set<number>>(new Set())
+  const [progress, setProgress]       = useState<ImportProgress | null>(null)
+  const [perStateStats, setPerStateStats] = useState<StateStats[]>([])
   const [resultError, setResultError] = useState<string | null>(null)
+  const [done, setDone]               = useState(false)
 
-  // Live counts updated optimistically after each import
-  const [liveSamhsa, setLiveSamhsa]   = useState(samhsaCount)
-  const [liveTotal,  setLiveTotal]    = useState(totalCount)
+  // Live counts updated as each state completes
+  const [liveSamhsa, setLiveSamhsa] = useState(samhsaCount)
+  const [liveTotal,  setLiveTotal]  = useState(totalCount)
+
+  const importing = progress !== null
+
+  // Derived totals from accumulated per-state results
+  const runningImported = perStateStats.reduce((s, r) => s + r.imported, 0)
+  const runningSkipped  = perStateStats.reduce((s, r) => s + r.skipped, 0)
+  const runningErrors   = perStateStats.reduce((s, r) => s + r.errors, 0)
 
   function toggle(id: number) {
     setSelected(prev => {
@@ -118,26 +133,57 @@ export default function FacilityImportClient({
 
   async function runImport() {
     if (selected.size === 0) return
-    setImporting(true)
-    setResult(null)
+
+    const stateIds = [...selected]
+    const total    = stateIds.length
+
+    // Reset all result state
+    setPerStateStats([])
     setResultError(null)
-    try {
-      const res = await fetch('/api/admin/import-facilities', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ states: [...selected] }),
-      })
-      const data: ImportResult = await res.json()
-      if (!res.ok) throw new Error((data as unknown as { error?: string }).error ?? 'Import failed')
-      setResult(data)
-      // Optimistically bump the counts
-      setLiveSamhsa(prev => prev + data.total_facilities_imported)
-      setLiveTotal(prev => prev + data.total_facilities_imported)
-    } catch (err: unknown) {
-      setResultError(err instanceof Error ? err.message : String(err))
-    } finally {
-      setImporting(false)
+    setDone(false)
+
+    for (let i = 0; i < stateIds.length; i++) {
+      const stateId = stateIds[i]
+      setProgress({ currentIndex: i, total, stateId })
+
+      try {
+        const res = await fetch('/api/admin/import-facilities', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ states: stateId }),
+        })
+        const data = await res.json() as ImportResult | { error?: string }
+
+        if (!res.ok) {
+          const msg = (data as { error?: string }).error ?? `HTTP ${res.status}`
+          // Record a failed state entry so it shows in the table
+          setPerStateStats(prev => [...prev, {
+            state_id: stateId, pages_fetched: 0,
+            imported: 0, skipped: 0, errors: 1,
+            error_samples: [msg],
+          }])
+          continue
+        }
+
+        const result = data as ImportResult
+        const statSingle = result.per_state_stats?.[0]
+        if (statSingle) {
+          setPerStateStats(prev => [...prev, statSingle])
+          setLiveSamhsa(prev => prev + statSingle.imported)
+          setLiveTotal(prev => prev + statSingle.imported)
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err)
+        setPerStateStats(prev => [...prev, {
+          state_id: stateId, pages_fetched: 0,
+          imported: 0, skipped: 0, errors: 1,
+          error_samples: [`Fetch failed: ${msg}`],
+        }])
+      }
     }
+
+    setProgress(null)
+    setDone(true)
   }
 
   const allSelected      = selected.size === STATES.length
@@ -245,30 +291,63 @@ export default function FacilityImportClient({
         </div>
       </div>
 
-      {/* ── Import button ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 28 }}>
-        <button
-          onClick={runImport}
-          disabled={importing || selected.size === 0}
-          style={{
-            background: selected.size === 0 ? 'var(--mid)' : 'var(--teal)',
-            color: '#fff', border: 'none', borderRadius: 10,
-            padding: '13px 28px', fontSize: 14, fontWeight: 700,
-            cursor: importing || selected.size === 0 ? 'not-allowed' : 'pointer',
-            opacity: importing || selected.size === 0 ? 0.6 : 1,
-            fontFamily: 'var(--font-body)', whiteSpace: 'nowrap',
-            letterSpacing: '0.2px',
-          }}>
-          {importing
-            ? '⟳ Importing…'
-            : selected.size === 0
-              ? 'Select states to import'
-              : `↓ Import ${selected.size} State${selected.size > 1 ? 's' : ''}`}
-        </button>
-        {importing && (
-          <span style={{ fontSize: 13, color: 'var(--mid)' }}>
-            Fetching from SAMHSA FindTreatment.gov — this may take several minutes for large states.
-          </span>
+      {/* ── Import button + progress ── */}
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: importing ? 16 : 0 }}>
+          <button
+            onClick={runImport}
+            disabled={importing || selected.size === 0}
+            style={{
+              background: selected.size === 0 ? 'var(--mid)' : 'var(--teal)',
+              color: '#fff', border: 'none', borderRadius: 10,
+              padding: '13px 28px', fontSize: 14, fontWeight: 700,
+              cursor: importing || selected.size === 0 ? 'not-allowed' : 'pointer',
+              opacity: importing || selected.size === 0 ? 0.6 : 1,
+              fontFamily: 'var(--font-body)', whiteSpace: 'nowrap',
+              letterSpacing: '0.2px',
+            }}>
+            {importing
+              ? '⟳ Importing…'
+              : selected.size === 0
+                ? 'Select states to import'
+                : `↓ Import ${selected.size} State${selected.size > 1 ? 's' : ''}`}
+          </button>
+          {done && !importing && (
+            <span style={{ fontSize: 13, color: '#27AE60', fontWeight: 600 }}>
+              Import complete — {runningImported.toLocaleString()} facilities imported
+            </span>
+          )}
+        </div>
+
+        {/* Progress bar + status line */}
+        {importing && progress && (
+          <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 20px' }}>
+            {/* Status text */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)' }}>
+                {(() => {
+                  const stateInfo = STATES.find(s => s.id === progress.stateId)
+                  return `Importing state ${progress.currentIndex + 1} of ${progress.total} — ${stateInfo?.abbr ?? ''} ${stateInfo?.name ?? ''}`
+                })()}
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--mid)' }}>
+                {runningImported.toLocaleString()} imported so far
+              </div>
+            </div>
+            {/* Progress bar */}
+            <div style={{ height: 6, background: 'var(--border)', borderRadius: 3, overflow: 'hidden' }}>
+              <div style={{
+                height: '100%',
+                width: `${Math.round((progress.currentIndex / progress.total) * 100)}%`,
+                background: 'var(--teal)',
+                borderRadius: 3,
+                transition: 'width 0.3s ease',
+              }} />
+            </div>
+            <div style={{ marginTop: 8, fontSize: 12, color: 'var(--mid)' }}>
+              Each state is fetched individually — the page must stay open until all states complete.
+            </div>
+          </div>
         )}
       </div>
 
@@ -279,18 +358,27 @@ export default function FacilityImportClient({
         </div>
       )}
 
-      {/* ── Results panel ── */}
-      {result && (
+      {/* ── Results panel — appears and grows as each state completes ── */}
+      {perStateStats.length > 0 && (
         <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: '24px 28px' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 18 }}>Import Results</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase' }}>
+              {importing ? 'Import Progress' : 'Import Results'}
+            </div>
+            {importing && (
+              <div style={{ fontSize: 12, color: 'var(--mid)' }}>
+                {perStateStats.length} of {progress?.total ?? selected.size} states done
+              </div>
+            )}
+          </div>
 
-          {/* Summary stat cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 28 }}>
+          {/* Running summary stat cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 24 }}>
             {[
-              { label: 'States Processed',       value: result.states_processed,                      color: 'var(--navy)' },
-              { label: 'Facilities Imported',     value: result.total_facilities_imported.toLocaleString(), color: '#27AE60' },
-              { label: 'Skipped',                 value: result.total_skipped.toLocaleString(),        color: 'var(--mid)' },
-              { label: 'Errors',                  value: result.total_errors,                          color: result.total_errors > 0 ? '#C0392B' : 'var(--mid)' },
+              { label: 'States Done',          value: perStateStats.length,              color: 'var(--navy)' },
+              { label: 'Facilities Imported',  value: runningImported.toLocaleString(),  color: '#27AE60' },
+              { label: 'Skipped',              value: runningSkipped.toLocaleString(),   color: 'var(--mid)' },
+              { label: 'Errors',               value: runningErrors,                     color: runningErrors > 0 ? '#C0392B' : 'var(--mid)' },
             ].map(card => (
               <div key={card.label} style={{ background: 'var(--off-white)', borderRadius: 10, padding: '16px 20px' }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 6 }}>{card.label}</div>
@@ -299,7 +387,7 @@ export default function FacilityImportClient({
             ))}
           </div>
 
-          {/* Per-state breakdown */}
+          {/* Per-state breakdown table — rows stream in as states finish */}
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--mid)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 12 }}>Per-State Breakdown</div>
           <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -313,7 +401,7 @@ export default function FacilityImportClient({
                 </tr>
               </thead>
               <tbody>
-                {result.per_state_stats.map((stat, i) => {
+                {perStateStats.map((stat, i) => {
                   const stateInfo = STATES.find(s => s.id === stat.state_id)
                   return (
                     <tr key={stat.state_id} style={{ borderTop: i > 0 ? '1px solid var(--border)' : undefined }}>
@@ -346,6 +434,17 @@ export default function FacilityImportClient({
                     </tr>
                   )
                 })}
+                {/* "Loading next…" placeholder row while in-flight */}
+                {importing && progress && (
+                  <tr style={{ borderTop: perStateStats.length > 0 ? '1px solid var(--border)' : undefined }}>
+                    <td colSpan={6} style={{ padding: '12px 16px', fontSize: 13, color: 'var(--mid)', fontStyle: 'italic' }}>
+                      {(() => {
+                        const s = STATES.find(st => st.id === progress.stateId)
+                        return `Fetching ${s?.abbr ?? ''} ${s?.name ?? ''}…`
+                      })()}
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
