@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useScrollFade } from '@/hooks/useScrollFade'
@@ -162,6 +162,15 @@ export default function DashboardBanner({
   const router = useRouter()
   const [milestones, setMilestones] = useState<SobrietyMilestone[]>(initialMilestones)
   const { ref: stepsScrollRef, fadeLeft: stepsFadeLeft, fadeRight: stepsFadeRight } = useScrollFade()
+  const { ref: msTabsScrollRef, fadeLeft: msTabsFadeLeft, fadeRight: msTabsFadeRight } = useScrollFade()
+  const activeStepRef = useRef<HTMLDivElement>(null)
+
+  // Scroll active step circle into view on load / step change
+  useEffect(() => {
+    if (activeStepRef.current) {
+      activeStepRef.current.scrollIntoView({ behavior: 'instant' as ScrollBehavior, block: 'nearest', inline: 'center' })
+    }
+  }, [currentStep])
 
   // Active tab on the normal banner view
   const initPrimaryIdx = initialMilestones.findIndex(m => m.is_primary)
@@ -348,8 +357,8 @@ export default function DashboardBanner({
 
   return (
     <div
-      className="rounded-[20px] overflow-hidden mb-6 relative"
-      style={{ background: 'linear-gradient(145deg,#002244 0%,#003366 35%,#1a4a5e 70%,#2A8A99 100%)', padding: '28px 32px 24px' }}
+      className="rounded-[20px] overflow-hidden mb-6 relative px-4 pt-5 pb-5 md:px-8 md:pt-7 md:pb-6"
+      style={{ background: 'linear-gradient(145deg,#002244 0%,#003366 35%,#1a4a5e 70%,#2A8A99 100%)' }}
     >
       <svg aria-hidden className="absolute bottom-0 left-0 right-0 pointer-events-none" viewBox="0 0 900 120" fill="none" preserveAspectRatio="none" style={{ height: 120, width: '100%', opacity: 0.04 }}>
         <path d="M0 60 Q150 0 300 60 Q450 120 600 60 Q750 0 900 60 L900 120 L0 120Z" fill="#fff" />
@@ -544,56 +553,76 @@ export default function DashboardBanner({
           // NORMAL BANNER VIEW — 3 rows: top bar | quote | steps
           // ════════════════════════════════════════════════
           <>
-            {/* ── ROW 1: greeting+tabs | day count | stat boxes ── */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 16 }}>
+            {/* ── ROW 1: mobile = vertical stack, desktop = 3-col flex row ── */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 mb-4">
 
-              {/* LEFT: greeting + milestone pills */}
-              <div style={{ flexShrink: 0, maxWidth: '38%' }}>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 600, color: '#fff', letterSpacing: '-0.4px', marginBottom: 8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {/* Greeting + milestone tabs */}
+              <div className="md:flex-shrink-0 md:max-w-[38%]">
+                {/* Greeting — full width, no truncation */}
+                <div
+                  className="text-white mb-2"
+                  style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 600, letterSpacing: '-0.4px' }}
+                >
                   {getGreeting()}, {displayName} 👋
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
-                  {milestones.map((m, i) => {
-                    const badge = getFellowshipBadge(m.fellowship_id)
-                    const isActive = i === activeIdx
-                    return (
-                      <button
-                        key={m.id}
-                        onClick={() => switchTab(i)}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 4,
-                          padding: '4px 11px', borderRadius: 999, cursor: 'pointer',
-                          background: isActive ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.1)',
-                          border: isActive ? 'none' : '1px solid rgba(255,255,255,0.18)',
-                          color: isActive ? 'var(--navy)' : 'rgba(255,255,255,0.8)',
-                          fontSize: 11, fontWeight: 700, transition: 'all 0.15s',
-                        }}
-                      >
-                        {m.label}
-                        {badge && <span style={{ fontSize: 9, opacity: 0.65 }}>· {badge}</span>}
-                        {m.is_primary && <span style={{ fontSize: 8, opacity: 0.5, marginLeft: 1 }}>★</span>}
-                      </button>
-                    )
-                  })}
-                  <button
-                    onClick={openPanel}
-                    style={{
-                      padding: '4px 10px', borderRadius: 999, cursor: 'pointer',
-                      background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.14)',
-                      color: 'rgba(255,255,255,0.55)', fontSize: 11, fontWeight: 600, transition: 'all 0.15s',
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = 'rgba(255,255,255,0.8)' }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'rgba(255,255,255,0.55)' }}
+
+                {/* Milestone pills — horizontal scroll row */}
+                <div style={{ position: 'relative' }}>
+                  {msTabsFadeLeft && (
+                    <div aria-hidden style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 32, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to right, #002244, transparent)' }} />
+                  )}
+                  {msTabsFadeRight && (
+                    <div aria-hidden style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 32, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to left, #002244, transparent)' }} />
+                  )}
+                  <div
+                    ref={msTabsScrollRef}
+                    className="flex overflow-x-auto pb-0.5"
+                    style={{ gap: 5, flexWrap: 'nowrap', scrollbarWidth: 'none' }}
                   >
-                    {milestones.length === 0 ? '+ Add milestone' : '+ Add/Edit Milestone(s)'}
-                  </button>
+                    {milestones.map((m, i) => {
+                      const badge = getFellowshipBadge(m.fellowship_id)
+                      const isActive = i === activeIdx
+                      return (
+                        <button
+                          key={m.id}
+                          onClick={() => switchTab(i)}
+                          className="flex-shrink-0"
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 4,
+                            padding: '4px 11px', borderRadius: 999, cursor: 'pointer',
+                            background: isActive ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.1)',
+                            border: isActive ? 'none' : '1px solid rgba(255,255,255,0.18)',
+                            color: isActive ? 'var(--navy)' : 'rgba(255,255,255,0.8)',
+                            fontSize: 11, fontWeight: 700, transition: 'all 0.15s',
+                          }}
+                        >
+                          {m.label}
+                          {badge && <span style={{ fontSize: 9, opacity: 0.65 }}>· {badge}</span>}
+                          {m.is_primary && <span style={{ fontSize: 8, opacity: 0.5, marginLeft: 1 }}>★</span>}
+                        </button>
+                      )
+                    })}
+                    <button
+                      onClick={openPanel}
+                      className="flex-shrink-0"
+                      style={{
+                        padding: '4px 10px', borderRadius: 999, cursor: 'pointer',
+                        background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.14)',
+                        color: 'rgba(255,255,255,0.55)', fontSize: 11, fontWeight: 600, transition: 'all 0.15s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = 'rgba(255,255,255,0.8)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'rgba(255,255,255,0.55)' }}
+                    >
+                      {milestones.length === 0 ? '+ Add milestone' : '+ Add/Edit'}
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              {/* CENTER: day count */}
-              <div style={{ textAlign: 'center', flexShrink: 0 }}>
+              {/* Day count — hero moment on mobile */}
+              <div className="text-center md:flex-shrink-0 py-1 md:py-0">
                 {daysClean !== null ? (
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, justifyContent: 'center' }}>
+                  <div className="flex items-baseline justify-center gap-2">
                     <span style={{ fontFamily: 'var(--font-display)', fontSize: 64, fontWeight: 700, color: '#fff', lineHeight: 1, letterSpacing: '-2px' }}>
                       {daysClean.toLocaleString()}
                     </span>
@@ -607,17 +636,23 @@ export default function DashboardBanner({
                 )}
               </div>
 
-              {/* RIGHT: stat boxes */}
-              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              {/* Stat boxes — equal-width columns on mobile, fixed-width on desktop */}
+              <div className="flex gap-2 md:flex-shrink-0">
                 {nextM !== null && daysToNext !== null && (
-                  <div style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.11)', borderRadius: 10, padding: '10px 14px', minWidth: 108 }}>
+                  <div
+                    className="flex-1 md:flex-none"
+                    style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.11)', borderRadius: 10, padding: '10px 14px', minWidth: 0 }}
+                  >
                     <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' as const }}>Next Milestone</div>
                     <div style={{ color: '#D4A574', fontSize: 17, fontWeight: 700, marginTop: 3, lineHeight: 1 }}>{nextM} Days</div>
                     <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, marginTop: 3 }}>{daysToNext} day{daysToNext !== 1 ? 's' : ''} away</div>
                   </div>
                 )}
                 {activeMilestone?.fellowship_id && (
-                  <div style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.11)', borderRadius: 10, padding: '10px 14px', minWidth: 108 }}>
+                  <div
+                    className="flex-1 md:flex-none"
+                    style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.11)', borderRadius: 10, padding: '10px 14px', minWidth: 0 }}
+                  >
                     <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' as const }}>Currently On</div>
                     <div style={{ color: '#fff', fontSize: 17, fontWeight: 700, marginTop: 3, lineHeight: 1 }}>Step {currentStep}</div>
                     <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, marginTop: 3 }}>{STEPS[currentStep - 1]?.s}</div>
@@ -646,7 +681,7 @@ export default function DashboardBanner({
                   const isDone = n < currentStep
                   const isActive = n === currentStep
                   return (
-                    <div key={n} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flexShrink: 0, minWidth: 46 }}>
+                    <div key={n} ref={isActive ? activeStepRef : null} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flexShrink: 0, minWidth: 46 }}>
                       <div style={{
                         width: 38, height: 38, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: 13, fontWeight: 700,

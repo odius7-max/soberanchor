@@ -129,7 +129,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
           <div ref={roleScrollRef} className="flex p-1 overflow-x-auto" style={{ scrollbarWidth: 'none', gap: '2px' }}>
             {roles.map(r => (
               <button key={r.id} onClick={() => setRole(r.id)} className="flex-shrink-0 rounded-lg font-semibold transition-all"
-                style={{ padding: '9px 18px', fontSize: '14px', cursor: 'pointer', background: role === r.id ? '#fff' : 'transparent', color: role === r.id ? 'var(--navy)' : 'var(--mid)', border: 'none', boxShadow: role === r.id ? '0 1px 4px rgba(0,51,102,0.1)' : 'none' }}>
+                style={{ padding: '9px 18px', fontSize: '14px', cursor: 'pointer', whiteSpace: 'nowrap', background: role === r.id ? '#fff' : 'transparent', color: role === r.id ? 'var(--navy)' : 'var(--mid)', border: 'none', boxShadow: role === r.id ? '0 1px 4px rgba(0,51,102,0.1)' : 'none' }}>
                 {r.label}
               </button>
             ))}
@@ -161,7 +161,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
               <div ref={tabsScrollRef} className="flex overflow-x-auto" style={{ scrollbarWidth: 'none', gap: '0' }}>
                 {TABS.map(t => (
                   <button key={t.id} onClick={() => setActiveTab(t.id)} className="font-semibold flex-shrink-0 transition-colors"
-                    style={{ padding: '10px 18px', fontSize: '14px', cursor: 'pointer', background: 'none', border: 'none', color: activeTab === t.id ? 'var(--navy)' : 'var(--mid)', borderBottom: activeTab === t.id ? '2px solid var(--navy)' : '2px solid transparent', marginBottom: '-2px' }}>
+                    style={{ padding: '10px 18px', fontSize: '14px', cursor: 'pointer', background: 'none', border: 'none', whiteSpace: 'nowrap', color: activeTab === t.id ? 'var(--navy)' : 'var(--mid)', borderBottom: activeTab === t.id ? '2px solid var(--navy)' : '2px solid transparent', marginBottom: '-2px' }}>
                     {t.label}
                   </button>
                 ))}
