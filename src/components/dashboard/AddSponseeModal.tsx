@@ -1,8 +1,34 @@
 'use client'
 
-import { useState, useTransition, useRef, useEffect } from 'react'
+import { useState, useTransition, useRef, useEffect, Component } from 'react'
+import type { ReactNode } from 'react'
 import { searchUserByEmail, sendSponsorRequest, requestSponsor } from '@/app/dashboard/actions'
 import type { SearchResult } from '@/app/dashboard/actions'
+
+// ─── Error boundary — catches render/action errors so the whole modal doesn't crash ──
+
+class ModalErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  constructor(props: { children: ReactNode }) {
+    super(props)
+    this.state = { error: null }
+  }
+  static getDerivedStateFromError(error: Error) { return { error } }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ background: '#FEE', border: '1px solid #F5C6CB', borderRadius: 10, padding: '14px 16px', fontSize: 13, color: '#721C24' }}>
+          <strong>Something went wrong.</strong> Please close this window and try again.
+          {process.env.NODE_ENV === 'development' && (
+            <div style={{ marginTop: 6, fontFamily: 'monospace', fontSize: 11, opacity: 0.8 }}>
+              {this.state.error.message}
+            </div>
+          )}
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 
 interface Props {
   onClose: () => void
@@ -64,6 +90,41 @@ export default function AddSponseeModal({ onClose, mode = 'add_sponsee', sponsor
 
   const notFoundReason = !result?.found ? result?.reason : null
 
+  // Derive blocking message for existing relationships (prevents sending duplicate/circular requests)
+  const relationshipBlock: { title: string; body: string } | null = (() => {
+    if (!result?.found) return null
+    const rs = result.relationshipStatus
+    if (rs === 'is_your_sponsor') {
+      return {
+        title: 'This person is already your sponsor.',
+        body: 'You already have an active sponsor relationship with this person.',
+      }
+    }
+    if (rs === 'is_your_sponsee') {
+      return {
+        title: 'You are currently sponsoring this person.',
+        body: isFindSponsor
+          ? 'They cannot also be your sponsor — a circular sponsorship is not allowed.'
+          : 'You already have an active sponsorship with this person.',
+      }
+    }
+    if (rs === 'pending_sent') {
+      return {
+        title: 'Request already sent.',
+        body: 'A pending request to this person already exists. Check your dashboard for updates.',
+      }
+    }
+    if (rs === 'pending_received') {
+      return {
+        title: 'This person already sent you a request.',
+        body: 'Check your dashboard — you have a pending request from this person waiting for your response.',
+      }
+    }
+    return null
+  })()
+
+  const canSendRequest = result?.found && !sent && !relationshipBlock
+
   return (
     <div
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
@@ -108,69 +169,97 @@ export default function AddSponseeModal({ onClose, mode = 'add_sponsee', sponsor
           </div>
         )}
 
-        {/* ── Found ── */}
-        {result?.found && !sent && (
-          <div style={{ background: 'rgba(42,138,153,0.06)', border: '1.5px solid rgba(42,138,153,0.2)', borderRadius: 14, padding: '18px 20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg,#2A8A99,#003366)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 18, fontWeight: 700, flexShrink: 0 }}>
-                {(result.displayName ?? result.email)[0].toUpperCase()}
-              </div>
-              <div>
-                <div style={{ fontWeight: 700, color: 'var(--navy)', fontSize: 15 }}>
-                  {result.displayName ?? 'SoberAnchor Member'}
+        {/* ── Wrap dynamic result area in error boundary ── */}
+        <ModalErrorBoundary>
+
+          {/* ── Found + relationship block ── */}
+          {result?.found && !sent && relationshipBlock && (
+            <div style={{ background: 'rgba(255,193,7,0.08)', border: '1.5px solid rgba(255,193,7,0.4)', borderRadius: 14, padding: '18px 20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg,#2A8A99,#003366)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 18, fontWeight: 700, flexShrink: 0 }}>
+                  {(result.displayName ?? result.email)[0].toUpperCase()}
                 </div>
-                <div style={{ fontSize: 13, color: 'var(--mid)', marginTop: 2 }}>{result.email}</div>
+                <div>
+                  <div style={{ fontWeight: 700, color: 'var(--navy)', fontSize: 15 }}>
+                    {result.displayName ?? 'SoberAnchor Member'}
+                  </div>
+                  <div style={{ fontSize: 13, color: 'var(--mid)', marginTop: 2 }}>{result.email}</div>
+                </div>
               </div>
+              <div style={{ fontWeight: 600, color: 'var(--navy)', fontSize: 14, marginBottom: 4 }}>
+                {relationshipBlock.title}
+              </div>
+              <p style={{ fontSize: 13, color: 'var(--mid)', lineHeight: 1.6, margin: 0 }}>
+                {relationshipBlock.body}
+              </p>
             </div>
-            <p style={{ fontSize: 13, color: 'var(--mid)', lineHeight: 1.6, marginBottom: 14 }}>
-              They&apos;ll see your request on their dashboard and can accept or decline.
-            </p>
-            <button
-              onClick={handleSend}
-              disabled={isPending}
-              style={{ width: '100%', background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 8, padding: '12px', fontSize: 14, fontWeight: 600, cursor: isPending ? 'not-allowed' : 'pointer', opacity: isPending ? 0.7 : 1, fontFamily: 'var(--font-body)' }}>
-              {isPending ? 'Sending…' : isFindSponsor ? 'Send Sponsor Request →' : 'Send Sponsorship Request →'}
-            </button>
-          </div>
-        )}
+          )}
 
-        {/* ── Request sent ── */}
-        {sent && (
-          <div style={{ background: 'rgba(39,174,96,0.07)', border: '1.5px solid rgba(39,174,96,0.25)', borderRadius: 14, padding: '24px 20px', textAlign: 'center' }}>
-            <div style={{ fontSize: 36, marginBottom: 10 }}>✓</div>
-            <div style={{ fontWeight: 700, color: 'var(--navy)', fontSize: 16, marginBottom: 6 }}>Request sent!</div>
-            <div style={{ fontSize: 14, color: 'var(--mid)', lineHeight: 1.6, marginBottom: 18 }}>
-              {result?.found && (result.displayName ?? 'They')} will see your request on their dashboard.
+          {/* ── Found + can send ── */}
+          {canSendRequest && (
+            <div style={{ background: 'rgba(42,138,153,0.06)', border: '1.5px solid rgba(42,138,153,0.2)', borderRadius: 14, padding: '18px 20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg,#2A8A99,#003366)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 18, fontWeight: 700, flexShrink: 0 }}>
+                  {(result.displayName ?? result.email)[0].toUpperCase()}
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, color: 'var(--navy)', fontSize: 15 }}>
+                    {result.displayName ?? 'SoberAnchor Member'}
+                  </div>
+                  <div style={{ fontSize: 13, color: 'var(--mid)', marginTop: 2 }}>{result.email}</div>
+                </div>
+              </div>
+              <p style={{ fontSize: 13, color: 'var(--mid)', lineHeight: 1.6, marginBottom: 14 }}>
+                They&apos;ll see your request on their dashboard and can accept or decline.
+              </p>
+              <button
+                onClick={handleSend}
+                disabled={isPending}
+                style={{ width: '100%', background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 8, padding: '12px', fontSize: 14, fontWeight: 600, cursor: isPending ? 'not-allowed' : 'pointer', opacity: isPending ? 0.7 : 1, fontFamily: 'var(--font-body)' }}>
+                {isPending ? 'Sending…' : isFindSponsor ? 'Send Sponsor Request →' : 'Send Sponsorship Request →'}
+              </button>
             </div>
-            <button onClick={onClose} style={{ background: 'var(--navy)', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 28px', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
-              Done
-            </button>
-          </div>
-        )}
+          )}
 
-        {/* ── Not found ── */}
-        {result && !result.found && (
-          <div style={{ background: 'var(--warm-gray)', border: '1px solid var(--border)', borderRadius: 14, padding: '20px' }}>
-            <div style={{ fontWeight: 600, color: 'var(--navy)', fontSize: 14, marginBottom: 6 }}>
-              {notFoundReason === 'self'
-                ? 'That\'s your own email.'
-                : notFoundReason === 'no_profile'
-                ? 'That account doesn\'t have a member profile yet.'
-                : `No SoberAnchor account found for "${email}".`}
+          {/* ── Request sent ── */}
+          {sent && (
+            <div style={{ background: 'rgba(39,174,96,0.07)', border: '1.5px solid rgba(39,174,96,0.25)', borderRadius: 14, padding: '24px 20px', textAlign: 'center' }}>
+              <div style={{ fontSize: 36, marginBottom: 10 }}>✓</div>
+              <div style={{ fontWeight: 700, color: 'var(--navy)', fontSize: 16, marginBottom: 6 }}>Request sent!</div>
+              <div style={{ fontSize: 14, color: 'var(--mid)', lineHeight: 1.6, marginBottom: 18 }}>
+                {result?.found && (result.displayName ?? 'They')} will see your request on their dashboard.
+              </div>
+              <button onClick={onClose} style={{ background: 'var(--navy)', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 28px', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
+                Done
+              </button>
             </div>
-            {notFoundReason !== 'self' && (
-              <>
-                <p style={{ fontSize: 13, color: 'var(--mid)', lineHeight: 1.6, marginBottom: 14 }}>
-                  They may not have signed up yet. Send them a personal invite email and they can create a free account.
-                </p>
-                {!isFindSponsor
-                  ? <InviteComposer email={email} sponsorName={sponsorName ?? 'Your sponsor'} />
-                  : <CopyInviteLink email={email} mode={mode} />
-                }
-              </>
-            )}
-          </div>
-        )}
+          )}
+
+          {/* ── Not found ── */}
+          {result && !result.found && (
+            <div style={{ background: 'var(--warm-gray)', border: '1px solid var(--border)', borderRadius: 14, padding: '20px' }}>
+              <div style={{ fontWeight: 600, color: 'var(--navy)', fontSize: 14, marginBottom: 6 }}>
+                {notFoundReason === 'self'
+                  ? 'That\'s your own email.'
+                  : notFoundReason === 'no_profile'
+                  ? 'That account doesn\'t have a member profile yet.'
+                  : `No SoberAnchor account found for "${email}".`}
+              </div>
+              {notFoundReason !== 'self' && (
+                <>
+                  <p style={{ fontSize: 13, color: 'var(--mid)', lineHeight: 1.6, marginBottom: 14 }}>
+                    They may not have signed up yet. Send them a personal invite email and they can create a free account.
+                  </p>
+                  {!isFindSponsor
+                    ? <InviteComposer email={email} sponsorName={sponsorName ?? 'Your sponsor'} />
+                    : <CopyInviteLink email={email} mode={mode} />
+                  }
+                </>
+              )}
+            </div>
+          )}
+
+        </ModalErrorBoundary>
       </div>
     </div>
   )
