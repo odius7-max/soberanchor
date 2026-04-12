@@ -585,36 +585,24 @@ export default function DashboardBanner({
               </button>
             </div>
 
-            {/* Sobriety date line */}
-            <div style={{ marginBottom: 18, minHeight: 22, color: 'rgba(255,255,255,0.45)', fontSize: 13 }}>
-              {activeMilestone ? (
-                <>
-                  Sober since{' '}
-                  <span style={{ color: 'rgba(255,255,255,0.75)', fontWeight: 600 }}>{fmtDate(activeMilestone.sobriety_date)}</span>
-                </>
-              ) : (
-                <span style={{ color: 'rgba(255,255,255,0.35)' }}>Add a sobriety date to track your journey.</span>
-              )}
-            </div>
-
-            {/* Stats row: day count left, milestone boxes right — all on one line */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+            {/* Stats row: days flush left, stat boxes flush right, all on one line */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16 }}>
               {/* Day count */}
-              <div style={{ flex: '1 1 auto', display: 'flex', alignItems: 'baseline', gap: 10, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 {daysClean !== null ? (
                   <>
-                    <span style={{ fontFamily: 'var(--font-display)', fontSize: 52, fontWeight: 700, color: '#fff', lineHeight: 1, letterSpacing: '-1.5px' }}>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 700, color: '#fff', lineHeight: 1, letterSpacing: '-1px' }}>
                       {daysClean.toLocaleString()}
                     </span>
-                    <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 15, flexShrink: 0 }}>days</span>
+                    <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14 }}>days</span>
                     {isMilestoneDay && (
-                      <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 999, background: 'rgba(212,165,116,0.2)', border: '1px solid rgba(212,165,116,0.35)', color: '#D4A574', fontWeight: 700, flexShrink: 0 }}>
+                      <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 999, background: 'rgba(212,165,116,0.2)', border: '1px solid rgba(212,165,116,0.35)', color: '#D4A574', fontWeight: 700 }}>
                         🎉 {daysClean} Days!
                       </span>
                     )}
                   </>
                 ) : (
-                  <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 15 }}>No sobriety date set</span>
+                  <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>No sobriety date set</span>
                 )}
               </div>
 
