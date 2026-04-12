@@ -6,26 +6,28 @@ import { createClient } from '@/lib/supabase/client'
 
 interface Fellowship { id: string; name: string; abbreviation: string | null }
 
-type Step = 1 | 2 | 3
+type Step = 1 | 2 | 3 | 4
 type Role = 'sponsee' | 'sponsor' | 'both'
 
 const ROLE_OPTIONS: { value: Role; emoji: string; title: string; desc: string }[] = [
-  { value: 'sponsee', emoji: '🧭', title: 'I have a sponsor',       desc: "I'm working the steps with someone guiding me"     },
-  { value: 'sponsor', emoji: '⚓', title: "I sponsor others",        desc: "I guide others through the program"                },
-  { value: 'both',    emoji: '🤝', title: 'Both',                   desc: "I have a sponsor and I also sponsor others"        },
+  { value: 'sponsee', emoji: '🧭', title: 'I have a sponsor',    desc: "I'm working the steps with someone guiding me"   },
+  { value: 'sponsor', emoji: '⚓', title: 'I sponsor others',    desc: 'I guide others through the program'              },
+  { value: 'both',    emoji: '🤝', title: 'Both',                desc: 'I have a sponsor and I also sponsor others'      },
 ]
 
 export default function OnboardingCard({ userId }: { userId: string }) {
   const router = useRouter()
   const supabase = createClient()
 
-  const [step, setStep] = useState<Step>(1)
+  const [step, setStep]               = useState<Step>(1)
   const [fellowships, setFellowships] = useState<Fellowship[]>([])
-  const [fellowshipId, setFellowshipId] = useState<string>('')
-  const [sobrietyDate, setSobrietyDate] = useState<string>('')
-  const [role, setRole] = useState<Role>('sponsee')
-  const [saving, setSaving] = useState(false)
-  const [dismissed, setDismissed] = useState(false)
+  const [displayName, setDisplayName] = useState('')
+  const [fellowshipId, setFellowshipId] = useState('')
+  const [sobrietyDate, setSobrietyDate] = useState('')
+  const [role, setRole]               = useState<Role>('sponsee')
+  const [saving, setSaving]           = useState(false)
+  const [saveError, setSaveError]     = useState<string | null>(null)
+  const [dismissed, setDismissed]     = useState(false)
 
   useEffect(() => {
     supabase.from('fellowships').select('id, name, abbreviation').order('name').then(({ data }) => {
@@ -34,32 +36,27 @@ export default function OnboardingCard({ userId }: { userId: string }) {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function dismiss() {
-    setDismissed(true)
-    await supabase.from('user_profiles').update({ onboarding_completed: true }).eq('id', userId)
-    router.refresh()
-  }
+    // Save whatever the user already entered, but don't require it
+    const profileUpdates: Record<string, unknown> = {
+      onboarding_completed: true,
+      updated_at: new Date().toISOString(),
+    }
+    if (displayName.trim()) profileUpdates.display_name = displayName.trim()
+    if (fellowshipId)       profileUpdates.primary_fellowship_id = fellowshipId
+    if (sobrietyDate)       profileUpdates.sobriety_date = sobrietyDate
+    if (role === 'sponsor' || role === 'both') profileUpdates.is_available_sponsor = true
 
-  async function complete() {
-    setSaving(true)
-    const now = new Date().toISOString()
-    const updates: Record<string, unknown> = { onboarding_completed: true, updated_at: now }
-
-    if (fellowshipId) updates.primary_fellowship_id = fellowshipId
-    if (sobrietyDate)  updates.sobriety_date = sobrietyDate
-    if (role === 'sponsor' || role === 'both') updates.is_available_sponsor = true
-
-    await supabase.from('user_profiles').update(updates).eq('id', userId)
+    await supabase.from('user_profiles').update(profileUpdates).eq('id', userId)
 
     if (sobrietyDate) {
+      const fellowship = fellowships.find(f => f.id === fellowshipId)
       await supabase.from('sobriety_milestones').upsert(
         {
-          user_id: userId,
+          user_id:      userId,
           fellowship_id: fellowshipId || null,
-          label: fellowships.find(f => f.id === fellowshipId)?.abbreviation
-            ?? fellowships.find(f => f.id === fellowshipId)?.name
-            ?? 'Sobriety',
+          label:         fellowship?.abbreviation ?? fellowship?.name ?? 'Sobriety',
           sobriety_date: sobrietyDate,
-          is_primary: true,
+          is_primary:    true,
         },
         { onConflict: 'user_id,label' }
       )
@@ -69,14 +66,78 @@ export default function OnboardingCard({ userId }: { userId: string }) {
     router.refresh()
   }
 
+  async function complete() {
+    setSaving(true)
+    setSaveError(null)
+
+    // 1 — Save profile fields (excluding onboarding_completed)
+    const profileUpdates: Record<string, unknown> = { updated_at: new Date().toISOString() }
+    if (displayName.trim()) profileUpdates.display_name = displayName.trim()
+    if (fellowshipId)       profileUpdates.primary_fellowship_id = fellowshipId
+    if (sobrietyDate)       profileUpdates.sobriety_date = sobrietyDate
+    if (role === 'sponsor' || role === 'both') profileUpdates.is_available_sponsor = true
+
+    const { error: profileError } = await supabase
+      .from('user_profiles')
+      .update(profileUpdates)
+      .eq('id', userId)
+
+    if (profileError) {
+      setSaveError('Failed to save your profile. Please try again.')
+      setSaving(false)
+      return
+    }
+
+    // 2 — Create sobriety milestone if a date was entered
+    if (sobrietyDate) {
+      const fellowship = fellowships.find(f => f.id === fellowshipId)
+      const { error: milestoneError } = await supabase
+        .from('sobriety_milestones')
+        .upsert(
+          {
+            user_id:       userId,
+            fellowship_id: fellowshipId || null,
+            label:         fellowship?.abbreviation ?? fellowship?.name ?? 'Sobriety',
+            sobriety_date: sobrietyDate,
+            is_primary:    true,
+          },
+          { onConflict: 'user_id,label' }
+        )
+
+      if (milestoneError) {
+        setSaveError('Failed to save your sobriety date. Please try again.')
+        setSaving(false)
+        return
+      }
+    }
+
+    // 3 — Mark onboarding complete only after all other writes succeeded
+    const { error: completeError } = await supabase
+      .from('user_profiles')
+      .update({ onboarding_completed: true, updated_at: new Date().toISOString() })
+      .eq('id', userId)
+
+    if (completeError) {
+      setSaveError('Setup almost done — tap again to finish.')
+      setSaving(false)
+      return
+    }
+
+    setDismissed(true)
+    router.refresh()
+  }
+
   if (dismissed) return null
 
-  const canAdvance =
-    (step === 1 && fellowshipId) ||
-    (step === 2 && sobrietyDate) ||
-    step === 3
+  // "Next" requires data for fellowship (step 2) and sobriety date (step 3).
+  // Name and role steps are always advanceable.
+  const nextEnabled =
+    step === 1 ? true :
+    step === 2 ? !!fellowshipId :
+    step === 3 ? !!sobrietyDate :
+    true
 
-  const progress = ((step - 1) / 3) * 100
+  const progress = ((step - 1) / 4) * 100
 
   return (
     <div style={{ borderRadius: 18, marginBottom: 24, overflow: 'hidden', border: '1.5px solid rgba(42,138,153,0.3)', background: 'linear-gradient(135deg, rgba(42,138,153,0.04) 0%, rgba(0,51,102,0.03) 100%)' }}>
@@ -90,12 +151,13 @@ export default function OnboardingCard({ userId }: { userId: string }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--teal)', marginBottom: 4 }}>
-              Step {step} of 3 · Setup
+              Step {step} of 4 · Setup
             </div>
             <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--navy)', margin: 0 }}>
-              {step === 1 && 'What fellowship are you working?'}
-              {step === 2 && "What's your sobriety date?"}
-              {step === 3 && 'What best describes your role?'}
+              {step === 1 && 'What should we call you?'}
+              {step === 2 && 'What fellowship are you working?'}
+              {step === 3 && "What's your sobriety date?"}
+              {step === 4 && 'What best describes your role?'}
             </h3>
           </div>
           <button onClick={dismiss} style={{ fontSize: 12, color: 'var(--mid)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', flexShrink: 0, marginTop: 2 }}>
@@ -103,8 +165,28 @@ export default function OnboardingCard({ userId }: { userId: string }) {
           </button>
         </div>
 
-        {/* Step 1 — Fellowship */}
+        {/* Step 1 — Name */}
         {step === 1 && (
+          <div>
+            <p style={{ fontSize: 14, color: 'var(--mid)', marginBottom: 16, lineHeight: 1.6 }}>
+              This is what shows on your dashboard. Use your first name or an alias — whatever feels right.
+            </p>
+            <input
+              type="text"
+              value={displayName}
+              onChange={e => setDisplayName(e.target.value)}
+              placeholder="e.g. Alex"
+              maxLength={50}
+              autoFocus
+              style={{ fontSize: 15, fontWeight: 600, color: 'var(--navy)', padding: '11px 14px', borderRadius: 10, border: '1.5px solid var(--border)', background: '#fff', fontFamily: 'var(--font-body)', width: '100%', maxWidth: 280, outline: 'none', boxSizing: 'border-box' }}
+              onFocus={e => (e.target.style.borderColor = '#2A8A99')}
+              onBlur={e  => (e.target.style.borderColor = 'var(--border)')}
+            />
+          </div>
+        )}
+
+        {/* Step 2 — Fellowship */}
+        {step === 2 && (
           <div>
             <p style={{ fontSize: 14, color: 'var(--mid)', marginBottom: 16, lineHeight: 1.6 }}>
               This determines which step work program is shown on your dashboard. You can change it any time.
@@ -125,8 +207,8 @@ export default function OnboardingCard({ userId }: { userId: string }) {
           </div>
         )}
 
-        {/* Step 2 — Sobriety date */}
-        {step === 2 && (
+        {/* Step 3 — Sobriety date */}
+        {step === 3 && (
           <div>
             <p style={{ fontSize: 14, color: 'var(--mid)', marginBottom: 16, lineHeight: 1.6 }}>
               This starts your day counter. You can add multiple dates later (e.g. alcohol, gambling) from your profile settings.
@@ -141,8 +223,8 @@ export default function OnboardingCard({ userId }: { userId: string }) {
           </div>
         )}
 
-        {/* Step 3 — Role */}
-        {step === 3 && (
+        {/* Step 4 — Role */}
+        {step === 4 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {ROLE_OPTIONS.map(opt => (
               <label
@@ -160,6 +242,10 @@ export default function OnboardingCard({ userId }: { userId: string }) {
           </div>
         )}
 
+        {saveError && (
+          <div style={{ marginTop: 14, fontSize: 13, color: '#C0392B', fontWeight: 500 }}>{saveError}</div>
+        )}
+
         {/* Footer nav */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 22 }}>
           {step > 1 ? (
@@ -168,21 +254,21 @@ export default function OnboardingCard({ userId }: { userId: string }) {
             </button>
           ) : <span />}
 
-          {step < 3 ? (
+          {step < 4 ? (
             <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-              {step < 3 && (
+              {/* Skip is always available — it advances without requiring input */}
+              {!nextEnabled && (
                 <button
                   onClick={() => setStep(s => (s + 1) as Step)}
-                  disabled={!canAdvance}
-                  style={{ fontSize: 13, fontWeight: 600, color: 'var(--mid)', background: 'none', border: 'none', cursor: canAdvance ? 'pointer' : 'default', padding: '8px 0', opacity: canAdvance ? 1 : 0.4 }}
+                  style={{ fontSize: 13, fontWeight: 600, color: 'var(--mid)', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0' }}
                 >
                   Skip this step →
                 </button>
               )}
               <button
                 onClick={() => setStep(s => (s + 1) as Step)}
-                disabled={!canAdvance}
-                style={{ fontSize: 14, fontWeight: 700, color: '#fff', background: canAdvance ? 'var(--navy)' : 'var(--mid)', border: 'none', borderRadius: 10, padding: '10px 24px', cursor: canAdvance ? 'pointer' : 'default', transition: 'background 0.2s' }}
+                disabled={!nextEnabled}
+                style={{ fontSize: 14, fontWeight: 700, color: '#fff', background: nextEnabled ? 'var(--navy)' : 'var(--mid)', border: 'none', borderRadius: 10, padding: '10px 24px', cursor: nextEnabled ? 'pointer' : 'default', transition: 'background 0.2s' }}
               >
                 Next →
               </button>
