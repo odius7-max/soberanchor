@@ -326,7 +326,7 @@ export default function GlobalSearch({ open, context, onClose }: Props) {
         style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 660, boxShadow: '0 24px 80px rgba(0,0,0,0.22)', display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: '82vh' }}
         onMouseDown={e => e.stopPropagation()}
       >
-        {/* ── Header: AI label + Esc ── */}
+        {/* ── Header: AI label + close ── */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px 0', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             {/* Sparkle icon */}
@@ -336,9 +336,19 @@ export default function GlobalSearch({ open, context, onClose }: Props) {
             </svg>
             <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', letterSpacing: '0.3px' }}>AI Search</span>
           </div>
-          <button onClick={onClose}
-            style={{ background: 'var(--warm-gray)', border: '1px solid var(--border)', borderRadius: 6, padding: '3px 9px', fontSize: 12, color: 'var(--mid)', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
-            Esc
+          <button
+            onClick={onClose}
+            aria-label="Close search"
+            style={{
+              width: 30, height: 30, borderRadius: '50%',
+              background: 'var(--warm-gray)', border: '1px solid var(--border)',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 16, color: 'var(--mid)', lineHeight: 1, transition: 'background 0.15s, color 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#ede9e4'; e.currentTarget.style.color = 'var(--dark)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--warm-gray)'; e.currentTarget.style.color = 'var(--mid)' }}
+          >
+            ×
           </button>
         </div>
 
