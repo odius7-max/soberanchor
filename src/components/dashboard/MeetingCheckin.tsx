@@ -163,12 +163,12 @@ export default function MeetingCheckin({ userId }: Props) {
       const abbr = m.fellowships?.abbreviation ?? ''
       if (filter !== 'All' && abbr !== filter) return false
       if (search.trim()) {
-        const q = search.toLowerCase()
-        return (
-          m.name.toLowerCase().includes(q) ||
-          (m.location_name ?? '').toLowerCase().includes(q) ||
-          (m.city ?? '').toLowerCase().includes(q) ||
-          abbr.toLowerCase().includes(q)
+        const words = search.trim().toLowerCase().split(/\s+/).filter(Boolean)
+        return words.every(w =>
+          m.name.toLowerCase().includes(w) ||
+          (m.location_name ?? '').toLowerCase().includes(w) ||
+          (m.city ?? '').toLowerCase().includes(w) ||
+          abbr.toLowerCase().includes(w)
         )
       }
       return true
