@@ -24,8 +24,9 @@ export default function ProviderLoginPage() {
   const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
 
-  function go(s: Step) { setError(null); setStep(s) }
+  function go(s: Step) { setError(null); setSuccess(null); setStep(s) }
 
   async function afterLogin() {
     const supabase = createClient()
@@ -57,7 +58,7 @@ export default function ProviderLoginPage() {
       // Email confirmation required
       setLoading(false)
       go('login')
-      setError('Account created! Check your email to confirm, then sign in.')
+      setSuccess('Account created! Check your email to confirm, then sign in.')
       return
     }
     await afterLogin()
@@ -119,6 +120,7 @@ export default function ProviderLoginPage() {
                 placeholder="••••••••"
                 style={inputStyle} onFocus={focusTeal} onBlur={blurGray} />
             </div>
+            {success && <p style={{ color: 'var(--teal)', fontSize: 13, fontWeight: 500 }}>{success}</p>}
             {error && <p style={{ color: '#C0392B', fontSize: 13, fontWeight: 500 }}>{error}</p>}
             <button onClick={handleLogin} disabled={loading}
               style={{ width: '100%', background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 8, padding: 13, fontSize: 15, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, fontFamily: 'var(--font-body)' }}>

@@ -42,6 +42,7 @@ export default function AuthModal() {
   const [fellowships, setFellowships] = useState<Fellowship[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
 
   const nameRef = useRef<HTMLInputElement>(null)
   const backdropRef = useRef<HTMLDivElement>(null)
@@ -51,7 +52,7 @@ export default function AuthModal() {
     if (!isAuthModalOpen) {
       setTimeout(() => {
         setStep('login'); setEmail(''); setPassword(''); setConfirm('')
-        setDisplayName(''); setSobrietyDate(''); setFellowshipId(''); setError(null)
+        setDisplayName(''); setSobrietyDate(''); setFellowshipId(''); setError(null); setSuccess(null)
       }, 300)
     }
   }, [isAuthModalOpen])
@@ -105,7 +106,7 @@ export default function AuthModal() {
       // Show a friendly message in the login step
       setStep('login')
       setPassword('')
-      setError('Account created! Check your email to confirm, then sign in.')
+      setSuccess('Account created! Check your email to confirm, then sign in.')
       return
     }
     if (data.user) await afterAuth(data.user.id)
@@ -204,6 +205,7 @@ export default function AuthModal() {
                   placeholder="••••••••"
                   className={inputCls} style={inputStyle} onFocus={focusTeal} onBlur={blurGray} />
               </div>
+              {success && <p style={{ fontSize: 13, color: 'var(--teal)', fontWeight: 500 }}>{success}</p>}
               {error && <p style={{ fontSize: 13, color: '#C0392B', fontWeight: 500 }}>{error}</p>}
               <button onClick={handleLogin} disabled={loading}
                 className="w-full rounded-xl font-semibold text-white"
@@ -211,11 +213,11 @@ export default function AuthModal() {
                 {loading ? 'Signing in…' : 'Sign In →'}
               </button>
               <div className="flex justify-between" style={{ fontSize: 13 }}>
-                <button onClick={() => { setError(null); setStep('signup') }}
+                <button onClick={() => { setError(null); setSuccess(null); setStep('signup') }}
                   style={{ background: 'none', border: 'none', color: '#2A8A99', fontWeight: 600, cursor: 'pointer', fontSize: 13, padding: 0 }}>
                   Create account
                 </button>
-                <button onClick={() => { setError(null); setStep('forgot') }}
+                <button onClick={() => { setError(null); setSuccess(null); setStep('forgot') }}
                   style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 13, padding: 0 }}>
                   Forgot password?
                 </button>
@@ -258,7 +260,7 @@ export default function AuthModal() {
                 </p>
                 <p style={{ fontSize: 12, fontWeight: 600, color: '#888', marginTop: 6 }}>— Angel, co-founder</p>
               </div>
-              <button onClick={() => { setError(null); setStep('login') }}
+              <button onClick={() => { setError(null); setSuccess(null); setStep('login') }}
                 style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 13, textAlign: 'center' }}>
                 ← Back to sign in
               </button>
@@ -281,7 +283,7 @@ export default function AuthModal() {
                 style={{ padding: 13, fontSize: 15, background: '#003366', border: 'none', cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1 }}>
                 {loading ? 'Sending…' : 'Send Reset Link'}
               </button>
-              <button onClick={() => { setError(null); setStep('login') }}
+              <button onClick={() => { setError(null); setSuccess(null); setStep('login') }}
                 style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 13, textAlign: 'center' }}>
                 ← Back to sign in
               </button>
@@ -296,7 +298,7 @@ export default function AuthModal() {
                 If an account exists for <strong>{email}</strong>, a reset link is on its way.
               </p>
               <p style={{ fontSize: 13, color: '#888', marginBottom: 20 }}>Check your spam folder if you don&apos;t see it within a minute.</p>
-              <button onClick={() => { setError(null); setStep('login') }}
+              <button onClick={() => { setError(null); setSuccess(null); setStep('login') }}
                 style={{ background: 'none', border: 'none', color: '#2A8A99', fontWeight: 600, cursor: 'pointer', fontSize: 14 }}>
                 ← Back to sign in
               </button>
