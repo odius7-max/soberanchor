@@ -597,45 +597,50 @@ export default function DashboardBanner({
               )}
             </div>
 
-            {/* Day count + stat cards */}
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
-              <div>
+            {/* Stats row: day count left, milestone boxes right — all on one line */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+              {/* Day count */}
+              <div style={{ flex: '1 1 auto', display: 'flex', alignItems: 'baseline', gap: 10, minWidth: 0 }}>
                 {daysClean !== null ? (
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-                    <span style={{ fontFamily: 'var(--font-display)', fontSize: 56, fontWeight: 700, color: '#fff', lineHeight: 1, letterSpacing: '-1.5px' }}>
+                  <>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: 52, fontWeight: 700, color: '#fff', lineHeight: 1, letterSpacing: '-1.5px' }}>
                       {daysClean.toLocaleString()}
                     </span>
-                    <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 16 }}>days</span>
+                    <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 15, flexShrink: 0 }}>days</span>
                     {isMilestoneDay && (
-                      <span style={{ fontSize: 12, padding: '4px 12px', borderRadius: 999, background: 'rgba(212,165,116,0.2)', border: '1px solid rgba(212,165,116,0.35)', color: '#D4A574', fontWeight: 700 }}>
+                      <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 999, background: 'rgba(212,165,116,0.2)', border: '1px solid rgba(212,165,116,0.35)', color: '#D4A574', fontWeight: 700, flexShrink: 0 }}>
                         🎉 {daysClean} Days!
                       </span>
                     )}
-                  </div>
-                ) : null}
+                  </>
+                ) : (
+                  <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 15 }}>No sobriety date set</span>
+                )}
               </div>
-              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+
+              {/* Stat boxes */}
+              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                 {nextM !== null && daysToNext !== null && (
-                  <div style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.11)', borderRadius: 12, padding: '12px 16px', minWidth: 110 }}>
-                    <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10, fontWeight: 600, letterSpacing: '1.5px', textTransform: 'uppercase' as const }}>Next Milestone</div>
-                    <div style={{ color: '#D4A574', fontSize: 18, fontWeight: 700, marginTop: 3 }}>{nextM} Days</div>
-                    <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, marginTop: 2 }}>{daysToNext} day{daysToNext !== 1 ? 's' : ''} away</div>
+                  <div style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.11)', borderRadius: 10, padding: '9px 14px', minWidth: 100 }}>
+                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' as const }}>Next Milestone</div>
+                    <div style={{ color: '#D4A574', fontSize: 16, fontWeight: 700, marginTop: 2, lineHeight: 1 }}>{nextM} Days</div>
+                    <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, marginTop: 2 }}>{daysToNext} day{daysToNext !== 1 ? 's' : ''} away</div>
                   </div>
                 )}
                 {activeMilestone?.fellowship_id && (
-                  <div style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.11)', borderRadius: 12, padding: '12px 16px' }}>
-                    <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10, fontWeight: 600, letterSpacing: '1.5px', textTransform: 'uppercase' as const }}>Currently On</div>
-                    <div style={{ color: '#fff', fontSize: 18, fontWeight: 700, marginTop: 3 }}>Step {currentStep}</div>
-                    <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, marginTop: 2 }}>{STEPS[currentStep - 1]?.s}</div>
+                  <div style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.11)', borderRadius: 10, padding: '9px 14px', minWidth: 100 }}>
+                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' as const }}>Currently On</div>
+                    <div style={{ color: '#fff', fontSize: 16, fontWeight: 700, marginTop: 2, lineHeight: 1 }}>Step {currentStep}</div>
+                    <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, marginTop: 2 }}>{STEPS[currentStep - 1]?.s}</div>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Quote */}
-            <div style={{ background: 'rgba(255,255,255,0.05)', borderLeft: '3px solid rgba(212,165,116,0.4)', padding: '14px 18px', marginBottom: 20, borderRadius: '0 8px 8px 0' }}>
-              <div style={{ fontFamily: 'var(--font-display)', color: 'rgba(255,255,255,0.85)', fontSize: 17, fontStyle: 'italic', lineHeight: 1.55, fontWeight: 500 }}>&ldquo;{quote.text}&rdquo;</div>
-              <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, marginTop: 6 }}>— {quote.attr}</div>
+            <div style={{ background: 'rgba(255,255,255,0.05)', borderLeft: '3px solid rgba(212,165,116,0.4)', padding: '12px 16px', marginBottom: 18, borderRadius: '0 8px 8px 0' }}>
+              <div style={{ fontFamily: 'var(--font-display)', color: 'rgba(255,255,255,0.85)', fontSize: 16, fontStyle: 'italic', lineHeight: 1.5, fontWeight: 500 }}>&ldquo;{quote.text}&rdquo;</div>
+              <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, marginTop: 5 }}>— {quote.attr}</div>
             </div>
 
             {/* Step progress strip — hidden for tracking-only milestones */}
