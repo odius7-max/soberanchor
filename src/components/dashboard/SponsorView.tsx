@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import AddSponseeModal from './AddSponseeModal'
 import PendingRequests from './PendingRequests'
 import type { PendingRequest } from './PendingRequests'
-import { addSponsorNote } from '@/app/dashboard/actions'
+import { addSponsorNote, sendSponsorReminder } from '@/app/dashboard/actions'
 import type { SponseeFull, SponseeCheckIn } from './DashboardShell'
 import CheckInReportModal from './CheckInReportModal'
 import StepWorkReportModal from './StepWorkReportModal'
@@ -260,6 +260,19 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
   const [toast, setToast] = useState<string | null>(null)
   const [localNote, setLocalNote] = useState(sponsee.latestNote)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [isSendingReminder, setIsSendingReminder] = useState(false)
+  const [reminderDisabledUntil, setReminderDisabledUntil] = useState<number | null>(null)
+
+  // Restore rate-limit state from localStorage on mount
+  useEffect(() => {
+    const key = `sober_reminder_${sponsee.id}`
+    const stored = localStorage.getItem(key)
+    if (stored) {
+      const until = parseInt(stored, 10)
+      if (Date.now() < until) setReminderDisabledUntil(until)
+      else localStorage.removeItem(key)
+    }
+  }, [sponsee.id])
 
   const lastCheckIn = sponsee.checkInHistory[0] ?? null
   const mood = lastCheckIn?.mood ? MOOD_META[lastCheckIn.mood] : null
@@ -297,6 +310,24 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
         showToast('Failed to save note')
       }
     })
+  }
+
+  async function handleSendReminder() {
+    if (isSendingReminder || (reminderDisabledUntil !== null && Date.now() < reminderDisabledUntil)) return
+    setIsSendingReminder(true)
+    try {
+      await sendSponsorReminder(sponsee.id)
+      const until = Date.now() + 24 * 60 * 60 * 1000
+      localStorage.setItem(`sober_reminder_${sponsee.id}`, String(until))
+      setReminderDisabledUntil(until)
+      showToast('Reminder sent')
+    } catch (e) {
+      const msg = (e as Error).message
+      if (msg === 'RATE_LIMITED') showToast('Already sent today')
+      else showToast('Failed to send reminder')
+    } finally {
+      setIsSendingReminder(false)
+    }
   }
 
   return (
@@ -606,16 +637,27 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
           Add Note
         </button>
 
-        <button
-          onClick={() => showToast('Reminder sent')}
-          style={{
-            background: 'none', color: 'var(--mid)', border: '1.5px solid var(--border)',
-            borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600,
-            cursor: 'pointer', fontFamily: 'var(--font-body)',
-          }}
-        >
-          Send Reminder
-        </button>
+        {(() => {
+          const isDisabled = isSendingReminder || (reminderDisabledUntil !== null && Date.now() < reminderDisabledUntil)
+          return (
+            <button
+              onClick={handleSendReminder}
+              disabled={isDisabled}
+              title={isDisabled && !isSendingReminder ? 'Reminder sent today' : undefined}
+              style={{
+                background: 'none',
+                color: isDisabled ? 'var(--border)' : 'var(--mid)',
+                border: '1.5px solid var(--border)',
+                borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600,
+                cursor: isDisabled ? 'not-allowed' : 'pointer',
+                opacity: isDisabled ? 0.55 : 1,
+                fontFamily: 'var(--font-body)',
+              }}
+            >
+              {isSendingReminder ? 'Sending…' : isDisabled ? 'Sent Today' : 'Send Reminder'}
+            </button>
+          )
+        })()}
       </div>
 
       {/* Check-in report modal (portal) */}

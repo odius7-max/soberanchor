@@ -292,6 +292,66 @@ export async function addSponsorNote(sponseeId: string, noteText: string): Promi
   if (error) throw new Error(error.message)
 }
 
+// ─── Sponsor Reminder ────────────────────────────────────────────────────────
+
+export async function sendSponsorReminder(sponseeId: string): Promise<{ sponsorName: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Get sponsor's display name
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('display_name')
+    .eq('id', user.id)
+    .single()
+  const sponsorName = (profile?.display_name as string | null) ?? 'Your sponsor'
+
+  // Verify active sponsor relationship
+  const { data: rel } = await supabase
+    .from('sponsor_relationships')
+    .select('id')
+    .eq('sponsor_id', user.id)
+    .eq('sponsee_id', sponseeId)
+    .eq('status', 'active')
+    .maybeSingle()
+
+  if (!rel) throw new Error('No active sponsor relationship found.')
+
+  const admin = createAdminClient()
+
+  // Rate limit: one reminder per sponsor per sponsee per 24 hours
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+  const { data: recent } = await admin
+    .from('activity_feed')
+    .select('id')
+    .eq('user_id', sponseeId)
+    .eq('event_type', 'reminder')
+    .gte('created_at', since)
+    .filter('metadata->>sponsor_id', 'eq', user.id)
+    .limit(1)
+
+  if ((recent ?? []).length > 0) throw new Error('RATE_LIMITED')
+
+  const { error } = await admin
+    .from('activity_feed')
+    .insert({
+      user_id: sponseeId,
+      event_type: 'reminder',
+      title: `${sponsorName} sent you a reminder`,
+      description: 'Your sponsor is checking in — how are you doing today?',
+      is_read: false,
+      metadata: {
+        sponsor_id: user.id,
+        sponsor_name: sponsorName,
+        message: 'Your sponsor is checking in — how are you doing today?',
+      },
+    })
+
+  if (error) throw new Error(error.message)
+  return { sponsorName }
+}
+
 // ─── Meeting Report ───────────────────────────────────────────────────────────
 
 export interface MeetingReportEntry {

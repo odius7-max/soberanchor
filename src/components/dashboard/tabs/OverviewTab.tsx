@@ -135,6 +135,7 @@ export default function OverviewTab({ userId, activeFellowshipId, currentStep, c
     task_assigned:      '#2980B9',
     check_in:           '#2A8A99',
     account_created:    '#888',
+    reminder:           '#2A8A99',
   }
 
   const ACTIVITY_ICON: Record<string, string> = {
@@ -144,6 +145,7 @@ export default function OverviewTab({ userId, activeFellowshipId, currentStep, c
     task_assigned:      '📋',
     check_in:           '💬',
     account_created:    '🎉',
+    reminder:           '🔔',
   }
 
   const card = "rounded-[16px] p-5 bg-white border border-border card-hover"
