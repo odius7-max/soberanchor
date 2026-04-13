@@ -1,10 +1,9 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import AssignTaskModal from './AssignTaskModal'
 import type { SponsorTask } from '@/app/actions/sponsorTasks'
 import { deleteTask } from '@/app/actions/sponsorTasks'
-import { useRouter } from 'next/navigation'
 
 const CATEGORY_ICONS: Record<string, string> = {
   reading:    '📖',
@@ -36,18 +35,15 @@ interface Props {
 }
 
 export default function SponseeTasksSection({ sponseeId, sponseeName, relationshipId, initialTasks }: Props) {
-  const router = useRouter()
   const [showModal, setShowModal]       = useState(false)
   const [tasks, setTasks]               = useState<SponsorTask[]>(initialTasks)
   const [deletingId, setDeletingId]     = useState<string | null>(null)
-  const [, startTransition]             = useTransition()
 
   const active    = tasks.filter(t => t.status !== 'completed')
   const completed = tasks.filter(t => t.status === 'completed')
 
-  function handleAssigned() {
-    // Refresh server data
-    router.refresh()
+  function handleAssigned(task: SponsorTask) {
+    setTasks(prev => [task, ...prev])
   }
 
   async function handleDelete(id: string) {
@@ -56,7 +52,6 @@ export default function SponseeTasksSection({ sponseeId, sponseeName, relationsh
     await deleteTask(id)
     setTasks(prev => prev.filter(t => t.id !== id))
     setDeletingId(null)
-    startTransition(() => { router.refresh() })
   }
 
   return (

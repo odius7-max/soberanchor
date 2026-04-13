@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { assignTask } from '@/app/actions/sponsorTasks'
+import { createClient } from '@/lib/supabase/client'
+import type { SponsorTask } from '@/app/actions/sponsorTasks'
 
 const CATEGORIES: { value: string; icon: string; label: string }[] = [
   { value: 'reading',    icon: '📖', label: 'Reading'     },
@@ -28,7 +29,7 @@ interface Props {
   sponseeName: string
   relationshipId: string
   onClose: () => void
-  onAssigned: () => void
+  onAssigned: (task: SponsorTask) => void
 }
 
 export default function AssignTaskModal({ sponseeId, sponseeName, relationshipId, onClose, onAssigned }: Props) {
@@ -63,25 +64,35 @@ export default function AssignTaskModal({ sponseeId, sponseeName, relationshipId
     setSaving(true)
     setError(null)
     try {
-      const result = await assignTask({
-        sponseeId,
-        relationshipId,
-        title,
-        description: description || null,
-        category,
-        dueDate: dueDate || null,
-        isRecurring,
-        recurrenceInterval: isRecurring ? recurrence : null,
-        sponsorNote: sponsorNote || null,
-      })
-      if (result.error) {
-        setError(result.error)
-        return
-      }
-      onAssigned()
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setError('Not authenticated'); return }
+
+      const { data: task, error: insertError } = await supabase
+        .from('sponsor_tasks')
+        .insert({
+          sponsor_relationship_id: relationshipId,
+          sponsor_id: user.id,
+          sponsee_id: sponseeId,
+          title: title.trim(),
+          description: description.trim() || null,
+          category,
+          status: 'assigned',
+          due_date: dueDate || null,
+          is_recurring: isRecurring,
+          recurrence_interval: isRecurring ? recurrence : null,
+          sponsor_note: sponsorNote.trim() || null,
+        })
+        .select('*')
+        .single()
+
+      if (insertError) { setError(insertError.message); return }
+      if (!task) { setError('Insert returned no data — check RLS policies on sponsor_tasks'); return }
+
+      onAssigned(task as SponsorTask)
       close()
     } catch (err) {
-      console.error('[AssignTaskModal] assignTask threw:', err)
+      console.error('[AssignTaskModal] insert threw:', err)
       setError('Something went wrong. Please try again.')
     } finally {
       setSaving(false)

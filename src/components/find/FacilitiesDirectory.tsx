@@ -163,27 +163,27 @@ export default function FacilitiesDirectory({ facilityType, savedIds = {} }: Pro
         const { latitude: lat, longitude: lng } = pos.coords
         setGeoStatus('granted')
         setSort('nearest')
-        // Reverse-geocode for a display name (best-effort)
+        // Set lat/lng immediately so the data fetch fires right away
+        setLocationLat(lat)
+        setLocationLng(lng)
+        setLocationText('Near you')
+        setLocationDisplayName('Near you')
+        // Reverse-geocode for a better display name (best-effort, async)
         fetch(
           `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
           { headers: { 'User-Agent': 'SoberAnchor/1.0' } },
         )
           .then(r => r.json())
           .then((data: { address?: { city?: string; town?: string; village?: string; county?: string; state_abbreviation?: string; state?: string } }) => {
-            const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || ''
-            const state = data.address?.state_abbreviation || data.address?.state || ''
-            const displayName = [city, state].filter(Boolean).join(', ') || 'Near you'
-            setLocationText(displayName)
-            setLocationDisplayName(displayName)
-            setLocationLat(lat)
-            setLocationLng(lng)
+            try {
+              const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || ''
+              const state = data.address?.state_abbreviation || data.address?.state || ''
+              const displayName = [city, state].filter(Boolean).join(', ') || 'Near you'
+              setLocationText(displayName)
+              setLocationDisplayName(displayName)
+            } catch { /* ignore parse errors */ }
           })
-          .catch(() => {
-            setLocationText('Near you')
-            setLocationDisplayName('Near you')
-            setLocationLat(lat)
-            setLocationLng(lng)
-          })
+          .catch(() => { /* already set to 'Near you' above */ })
       },
       () => { setGeoStatus('denied') },
       { timeout: 10000, maximumAge: 300000 },
