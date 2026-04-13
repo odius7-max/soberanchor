@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useTransition } from 'react'
+import { useState, useEffect, useRef, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { updateTaskStatus } from '@/app/actions/sponsorTasks'
@@ -27,6 +27,19 @@ const CATEGORY_ICONS: Record<string, string> = {
   custom:     '⭐',
 }
 
+const CATEGORY_PLACEHOLDERS: Record<string, string> = {
+  reading:    'What stood out to you? Any reflections?',
+  writing:    'Your response...',
+  action:     'Notes on what you did...',
+  meeting:    'How did the meeting go?',
+  amends:     'Reflections on this amends...',
+  service:    'What service did you do?',
+  prayer:     'Any reflections?',
+  meditation: 'Any reflections?',
+  reflection: 'Your thoughts...',
+  custom:     'Notes...',
+}
+
 function fmtDate(s: string) {
   return new Date(s.includes('T') ? s : s + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
@@ -36,15 +49,68 @@ function isOverdue(task: SponsorTask): boolean {
   return new Date(task.due_date + 'T00:00:00') < new Date(new Date().toDateString())
 }
 
-// ── Sponsor Task row ────────────────────────────────────────────────────────
+// ── Sponsor Task row ──────────────────────────────────────────────────────────
 
-function SponsorTaskRow({ task, onUpdate }: { task: SponsorTask; onUpdate: (id: string, status: 'assigned' | 'in_progress' | 'completed', note?: string) => void }) {
-  const [showNoteInput, setShowNoteInput] = useState(false)
-  const [note, setNote]                   = useState(task.sponsee_note ?? '')
-  const overdue = isOverdue(task)
+function SponsorTaskRow({
+  task,
+  onUpdate,
+}: {
+  task: SponsorTask
+  onUpdate: (id: string, status: 'assigned' | 'in_progress' | 'completed', note?: string) => Promise<void>
+}) {
+  const [expanded, setExpanded]     = useState(false)
+  const [note, setNote]             = useState(task.sponsee_note ?? '')
+  const [saveState, setSaveState]   = useState<'idle' | 'saving' | 'saved'>('idle')
+  const [completing, setCompleting] = useState(false)
+  const debounceRef  = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isMountedRef = useRef(true)
 
-  const isCompleted  = task.status === 'completed'
-  const isInProgress = task.status === 'in_progress'
+  const isCompleted = task.status === 'completed'
+  const overdue     = isOverdue(task)
+  const placeholder = CATEGORY_PLACEHOLDERS[task.category] ?? 'Notes...'
+
+  useEffect(() => () => { isMountedRef.current = false }, [])
+
+  // Unified expand/collapse — called by both checkbox and CTA
+  function handleToggleExpand() {
+    const willExpand = !expanded
+    setExpanded(willExpand)
+    // Advance to in_progress only on first expand from assigned
+    if (willExpand && task.status === 'assigned') {
+      onUpdate(task.id, 'in_progress')
+    }
+  }
+
+  // Debounced auto-save of the sponsee note
+  function handleNoteChange(value: string) {
+    setNote(value)
+    setSaveState('saving')
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(async () => {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('sponsor_tasks')
+        .update({ sponsee_note: value.trim() || null })
+        .eq('id', task.id)
+      if (!isMountedRef.current) return
+      if (!error) {
+        setSaveState('saved')
+        setTimeout(() => { if (isMountedRef.current) setSaveState('idle') }, 2000)
+      } else {
+        console.error('sponsee_note auto-save error:', error)
+        setSaveState('idle')
+      }
+    }, 1000)
+  }
+
+  async function handleMarkComplete() {
+    setCompleting(true)
+    await onUpdate(task.id, 'completed', note || undefined)
+    if (isMountedRef.current) {
+      setCompleting(false)
+      setExpanded(false)
+    }
+  }
 
   return (
     <div
@@ -53,21 +119,23 @@ function SponsorTaskRow({ task, onUpdate }: { task: SponsorTask; onUpdate: (id: 
         border: overdue ? '1.5px solid rgba(192,57,43,0.25)' : '1px solid var(--border)',
         background: isCompleted ? 'var(--warm-gray)' : overdue ? 'rgba(192,57,43,0.02)' : '#fff',
         padding: '13px 15px',
+        transition: 'background 0.2s',
       }}
     >
       <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-        {/* Checkbox */}
+
+        {/* Checkbox — completes if done, otherwise toggles expand panel */}
         <button
-          onClick={() => {
-            if (isCompleted) {
-              onUpdate(task.id, 'assigned')
-            } else {
-              setShowNoteInput(true)
-            }
-          }}
+          onClick={() => { if (isCompleted) { onUpdate(task.id, 'assigned') } else { handleToggleExpand() } }}
           style={{
             width: 24, height: 24, borderRadius: 6, flexShrink: 0, marginTop: 2,
-            border: isCompleted ? 'none' : overdue ? '2px solid rgba(192,57,43,0.4)' : '2px solid var(--border)',
+            border: isCompleted
+              ? 'none'
+              : expanded
+                ? '2px solid var(--teal)'
+                : overdue
+                  ? '2px solid rgba(192,57,43,0.4)'
+                  : '2px solid var(--border)',
             background: isCompleted ? '#27AE60' : '#fff',
             color: '#fff', fontSize: 12, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -77,6 +145,7 @@ function SponsorTaskRow({ task, onUpdate }: { task: SponsorTask; onUpdate: (id: 
         </button>
 
         <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Title + badges */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 14, fontWeight: 600, color: isCompleted ? 'var(--mid)' : 'var(--navy)', textDecoration: isCompleted ? 'line-through' : 'none' }}>
               {CATEGORY_ICONS[task.category] ?? '⭐'} {task.title}
@@ -84,6 +153,11 @@ function SponsorTaskRow({ task, onUpdate }: { task: SponsorTask; onUpdate: (id: 
             {overdue && (
               <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: 'rgba(192,57,43,0.1)', color: '#c0392b' }}>
                 OVERDUE
+              </span>
+            )}
+            {task.status === 'in_progress' && !overdue && !isCompleted && (
+              <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: 'rgba(42,138,153,0.1)', color: 'var(--teal)' }}>
+                IN PROGRESS
               </span>
             )}
           </div>
@@ -112,55 +186,82 @@ function SponsorTaskRow({ task, onUpdate }: { task: SponsorTask; onUpdate: (id: 
             )}
           </div>
 
-          {/* Note on completion input */}
-          {showNoteInput && !isCompleted && (
-            <div style={{ marginTop: 10 }}>
+          {/* Completed: show sponsee note as read-only */}
+          {isCompleted && task.sponsee_note && (
+            <div style={{ marginTop: 6, fontSize: 12, color: 'var(--mid)', fontStyle: 'italic', lineHeight: 1.5 }}>
+              &ldquo;{task.sponsee_note}&rdquo;
+            </div>
+          )}
+
+          {/* Expanded response panel */}
+          {expanded && !isCompleted && (
+            <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--mid)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Your response
+                </span>
+                {saveState === 'saving' && (
+                  <span style={{ fontSize: 10, color: 'var(--mid)' }}>Saving…</span>
+                )}
+                {saveState === 'saved' && (
+                  <span style={{ fontSize: 10, color: '#27AE60', fontWeight: 600 }}>✓ Saved</span>
+                )}
+              </div>
               <textarea
                 value={note}
-                onChange={e => setNote(e.target.value)}
-                placeholder="Add a note (optional)…"
-                rows={2}
+                onChange={e => handleNoteChange(e.target.value)}
+                placeholder={placeholder}
+                rows={3}
                 autoFocus
                 style={{
-                  width: '100%', fontSize: 12, padding: '8px 10px', borderRadius: 8,
+                  width: '100%', fontSize: 13, padding: '9px 11px', borderRadius: 8,
                   border: '1.5px solid var(--teal)', fontFamily: 'var(--font-body)',
                   resize: 'vertical', boxSizing: 'border-box', outline: 'none',
-                  color: 'var(--dark)',
+                  color: 'var(--dark)', lineHeight: 1.5,
                 }}
               />
-              <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+              <div style={{ display: 'flex', gap: 8, marginTop: 8, justifyContent: 'flex-end' }}>
                 <button
-                  onClick={() => setShowNoteInput(false)}
-                  style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, padding: '5px 12px', fontSize: 11, cursor: 'pointer', color: 'var(--mid)', fontFamily: 'var(--font-body)' }}
+                  onClick={() => setExpanded(false)}
+                  style={{
+                    background: 'none', border: '1px solid var(--border)', borderRadius: 8,
+                    padding: '7px 14px', fontSize: 12, cursor: 'pointer',
+                    color: 'var(--mid)', fontFamily: 'var(--font-body)', fontWeight: 500,
+                  }}
                 >
-                  Cancel
+                  Collapse
                 </button>
                 <button
-                  onClick={() => { onUpdate(task.id, 'completed', note || undefined); setShowNoteInput(false) }}
-                  style={{ background: '#27AE60', color: '#fff', border: 'none', borderRadius: 6, padding: '5px 14px', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-body)' }}
+                  onClick={handleMarkComplete}
+                  disabled={completing}
+                  style={{
+                    background: '#27AE60', color: '#fff', border: 'none', borderRadius: 8,
+                    padding: '7px 16px', fontSize: 12, fontWeight: 700,
+                    cursor: completing ? 'wait' : 'pointer',
+                    fontFamily: 'var(--font-body)', opacity: completing ? 0.7 : 1,
+                  }}
                 >
-                  Mark Complete
+                  {completing ? 'Saving…' : '✓ Mark Complete'}
                 </button>
               </div>
             </div>
           )}
         </div>
 
-        {/* In-progress toggle */}
-        {!isCompleted && !showNoteInput && (
+        {/* CTA — same action as checkbox: toggles the expand panel */}
+        {!isCompleted && (
           <button
-            onClick={() => onUpdate(task.id, isInProgress ? 'assigned' : 'in_progress')}
-            title={isInProgress ? 'Back to assigned' : 'Mark in progress'}
+            onClick={handleToggleExpand}
+            title={expanded ? 'Collapse' : task.status === 'in_progress' ? 'Continue task' : 'Start task'}
             style={{
-              background: isInProgress ? 'rgba(42,138,153,0.1)' : 'none',
+              background: (expanded || task.status === 'in_progress') ? 'rgba(42,138,153,0.1)' : 'none',
               border: '1px solid var(--border)', borderRadius: 6,
               padding: '4px 8px', fontSize: 10, fontWeight: 700, cursor: 'pointer',
-              color: isInProgress ? 'var(--teal)' : 'var(--mid)',
-              flexShrink: 0, fontFamily: 'var(--font-body)',
-              whiteSpace: 'nowrap',
+              color: (expanded || task.status === 'in_progress') ? 'var(--teal)' : 'var(--mid)',
+              flexShrink: 0, fontFamily: 'var(--font-body)', whiteSpace: 'nowrap',
             }}
           >
-            {isInProgress ? '▶ In Progress' : 'Start'}
+            {expanded ? '▲ Hide' : task.status === 'in_progress' ? '▶ In Progress' : 'Start'}
           </button>
         )}
       </div>
@@ -168,7 +269,7 @@ function SponsorTaskRow({ task, onUpdate }: { task: SponsorTask; onUpdate: (id: 
   )
 }
 
-// ── Main TasksTab ────────────────────────────────────────────────────────────
+// ── Main TasksTab ─────────────────────────────────────────────────────────────
 
 export default function TasksTab({ userId, readingAssignments, hasSponsor }: Props) {
   const router = useRouter()
@@ -177,7 +278,7 @@ export default function TasksTab({ userId, readingAssignments, hasSponsor }: Pro
   const [toggling, setToggling]         = useState<string | null>(null)
   const [, startTransition]             = useTransition()
 
-  // Fetch sponsor_tasks assigned to this user
+  // Fetch sponsor_tasks assigned to this user (re-runs on every mount)
   useEffect(() => {
     const supabase = createClient()
     supabase
@@ -202,14 +303,47 @@ export default function TasksTab({ userId, readingAssignments, hasSponsor }: Pro
     setToggling(null)
   }
 
-  async function handleSponsorTaskUpdate(id: string, status: 'assigned' | 'in_progress' | 'completed', note?: string) {
-    setSponsorTasks(prev => prev.map(t => t.id === id ? { ...t, status, completed_at: status === 'completed' ? new Date().toISOString() : null, sponsee_note: note !== undefined ? note : t.sponsee_note } : t))
-    await updateTaskStatus({ taskId: id, status, sponseeNote: note })
+  // Part 2 fix: check server action result and revert on error
+  async function handleSponsorTaskUpdate(
+    id: string,
+    status: 'assigned' | 'in_progress' | 'completed',
+    note?: string,
+  ): Promise<void> {
+    // Optimistic update
+    setSponsorTasks(prev => prev.map(t =>
+      t.id === id
+        ? {
+            ...t,
+            status,
+            completed_at: status === 'completed'
+              ? new Date().toISOString()
+              : status === 'assigned' ? null : t.completed_at,
+            sponsee_note: note !== undefined ? note : t.sponsee_note,
+          }
+        : t
+    ))
+
+    const result = await updateTaskStatus({ taskId: id, status, sponseeNote: note })
+
+    if (result.error) {
+      // Server action failed — revert by re-fetching fresh DB state
+      console.error('[TasksTab] updateTaskStatus failed:', result.error)
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('sponsor_tasks')
+        .select('*')
+        .eq('sponsee_id', userId)
+        .order('assigned_at', { ascending: false })
+      if (data) setSponsorTasks(data as SponsorTask[])
+      return
+    }
+
     startTransition(() => { router.refresh() })
   }
 
-  const hasTasks = hasSponsor && (readingAssignments.length > 0 || sponsorTasks.length > 0)
+  const hasTasks   = hasSponsor && (readingAssignments.length > 0 || sponsorTasks.length > 0)
   const hasAnything = hasTasks || (!loadingTasks && sponsorTasks.length > 0)
+  void hasAnything // suppress unused warning
 
   if (!hasSponsor && !loadingTasks && sponsorTasks.length === 0) return (
     <div className="text-center py-16 text-mid">
@@ -289,9 +423,12 @@ export default function TasksTab({ userId, readingAssignments, hasSponsor }: Pro
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
               {pendingReadings.map(task => (
                 <div key={task.id} className="card-hover rounded-[14px] flex gap-4 items-start px-5 py-4 bg-white border border-[var(--border)]">
-                  <button onClick={() => toggleReadingTask(task.id, task.is_completed)} disabled={toggling === task.id}
+                  <button
+                    onClick={() => toggleReadingTask(task.id, task.is_completed)}
+                    disabled={toggling === task.id}
                     className="flex items-center justify-center flex-shrink-0 rounded-lg transition-colors"
-                    style={{ width: '26px', height: '26px', marginTop: '1px', background: '#fff', border: '2px solid #D0CBC4', cursor: 'pointer' }} />
+                    style={{ width: '26px', height: '26px', marginTop: '1px', background: '#fff', border: '2px solid #D0CBC4', cursor: 'pointer' }}
+                  />
                   <div className="flex-1">
                     <div className="font-medium text-dark" style={{ fontSize: '15px' }}>{task.title}</div>
                     {task.source && <div style={{ fontSize: '13px', color: 'var(--mid)', marginTop: '3px' }}>{task.source}</div>}
@@ -308,9 +445,12 @@ export default function TasksTab({ userId, readingAssignments, hasSponsor }: Pro
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {completedReadings.map(task => (
                   <div key={task.id} className="rounded-[14px] flex gap-4 items-start px-5 py-4 border border-[var(--border)]" style={{ background: 'var(--warm-gray)' }}>
-                    <button onClick={() => toggleReadingTask(task.id, task.is_completed)} disabled={toggling === task.id}
+                    <button
+                      onClick={() => toggleReadingTask(task.id, task.is_completed)}
+                      disabled={toggling === task.id}
                       className="flex items-center justify-center flex-shrink-0 rounded-lg"
-                      style={{ width: '26px', height: '26px', marginTop: '1px', background: '#27AE60', border: '2px solid #27AE60', color: '#fff', fontSize: '13px', cursor: 'pointer' }}>✓</button>
+                      style={{ width: '26px', height: '26px', marginTop: '1px', background: '#27AE60', border: '2px solid #27AE60', color: '#fff', fontSize: '13px', cursor: 'pointer' }}
+                    >✓</button>
                     <div className="flex-1">
                       <div className="font-medium" style={{ fontSize: '15px', color: 'var(--mid)', textDecoration: 'line-through' }}>{task.title}</div>
                     </div>
