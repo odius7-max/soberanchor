@@ -43,6 +43,8 @@ export default function AuthModal() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
 
   const nameRef = useRef<HTMLInputElement>(null)
   const backdropRef = useRef<HTMLDivElement>(null)
@@ -57,7 +59,8 @@ export default function AuthModal() {
     if (!isAuthModalOpen) {
       setTimeout(() => {
         setStep('login'); setEmail(''); setPassword(''); setConfirm('')
-        setDisplayName(''); setSobrietyDate(''); setFellowshipId(''); setError(null); setSuccess(null)
+        setDisplayName(''); setSobrietyDate(''); setFellowshipId('')
+        setError(null); setSuccess(null); setShowPassword(false); setShowConfirm(false)
       }, 300)
     }
   }, [isAuthModalOpen])
@@ -88,12 +91,25 @@ export default function AuthModal() {
     }
   }
 
+  function friendlyAuthError(msg: string): string {
+    if (msg.toLowerCase().includes('invalid login credentials') || msg.toLowerCase().includes('invalid credentials')) {
+      return 'Incorrect email or password. Please try again.'
+    }
+    if (msg.toLowerCase().includes('email not confirmed')) {
+      return 'Please check your email to confirm your account before signing in.'
+    }
+    if (msg.toLowerCase().includes('too many requests') || msg.toLowerCase().includes('rate limit')) {
+      return 'Too many attempts. Please wait a moment and try again.'
+    }
+    return 'Something went wrong. Please try again.'
+  }
+
   async function handleLogin() {
     if (!email.trim() || !password) { setError('Email and password are required.'); return }
     setLoading(true); setError(null)
     const { data, error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
     setLoading(false)
-    if (err) { setError(err.message); return }
+    if (err) { setError(friendlyAuthError(err.message)); return }
     if (data.user) await afterAuth(data.user.id)
   }
 
@@ -104,7 +120,7 @@ export default function AuthModal() {
     setLoading(true); setError(null)
     const { data, error: err } = await supabase.auth.signUp({ email: email.trim(), password })
     setLoading(false)
-    if (err) { setError(err.message); return }
+    if (err) { setError(friendlyAuthError(err.message)); return }
     // If email confirmation is required, user won't have a session yet
     if (data.user && !data.session) {
       setError(null)
@@ -167,14 +183,14 @@ export default function AuthModal() {
   return (
     <div
       ref={backdropRef}
-      className="fixed inset-0 z-50 flex items-center justify-center px-4"
-      style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}
+      className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6"
+      style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)', overflowY: 'auto' }}
       onMouseDown={e => { if (step === 'login' && e.target === backdropRef.current) closeAuthModal() }}
       onKeyDown={e => { if (step === 'login' && e.key === 'Escape') closeAuthModal() }}
     >
       <div
         className="w-full rounded-2xl overflow-hidden"
-        style={{ maxWidth: 420, background: '#fff', boxShadow: '0 24px 64px rgba(0,51,102,0.18)' }}
+        style={{ maxWidth: 420, background: '#fff', boxShadow: '0 24px 64px rgba(0,51,102,0.18)', flexShrink: 0 }}
       >
         {/* Header */}
         <div
@@ -198,31 +214,65 @@ export default function AuthModal() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
                 <label className="font-semibold text-navy block mb-1.5" style={{ fontSize: 14 }}>Email</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                <input
+                  type="email" value={email} onChange={e => setEmail(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleLogin()}
                   placeholder="you@example.com" autoFocus
-                  className={inputCls} style={inputStyle} onFocus={focusTeal} onBlur={blurGray} />
+                  autoComplete="email"
+                  className={inputCls} style={inputStyle} onFocus={focusTeal} onBlur={blurGray}
+                />
               </div>
               <div>
                 <label className="font-semibold text-navy block mb-1.5" style={{ fontSize: 14 }}>Password</label>
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                  placeholder="••••••••"
-                  className={inputCls} style={inputStyle} onFocus={focusTeal} onBlur={blurGray} />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password} onChange={e => setPassword(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                    placeholder="••••••••"
+                    autoComplete="current-password"
+                    className={inputCls}
+                    style={{ ...inputStyle, paddingRight: 48 }}
+                    onFocus={focusTeal} onBlur={blurGray}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(v => !v)}
+                    tabIndex={-1}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    style={{
+                      position: 'absolute', right: 0, top: 0, bottom: 0,
+                      width: 48, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      color: '#888', fontSize: 18, zIndex: 2,
+                      // Min 44px touch target baked in (the full height of the input)
+                    }}
+                  >
+                    {showPassword ? '🙈' : '👁️'}
+                  </button>
+                </div>
               </div>
-              {success && <p style={{ fontSize: 13, color: 'var(--teal)', fontWeight: 500 }}>{success}</p>}
-              {error && <p style={{ fontSize: 13, color: '#C0392B', fontWeight: 500 }}>{error}</p>}
+              {success && (
+                <p role="status" style={{ fontSize: 13, color: 'var(--teal)', fontWeight: 500, margin: 0 }}>
+                  {success}
+                </p>
+              )}
+              {error && (
+                <p role="alert" style={{ fontSize: 13, color: '#C0392B', fontWeight: 600, margin: 0, padding: '10px 12px', background: 'rgba(192,57,43,0.06)', borderRadius: 8, border: '1px solid rgba(192,57,43,0.18)' }}>
+                  {error}
+                </p>
+              )}
               <button onClick={handleLogin} disabled={loading}
                 className="w-full rounded-xl font-semibold text-white"
                 style={{ padding: 13, fontSize: 15, background: '#003366', border: 'none', cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1 }}>
                 {loading ? 'Signing in…' : 'Sign In →'}
               </button>
               <div className="flex justify-between" style={{ fontSize: 13 }}>
-                <button onClick={() => { setError(null); setSuccess(null); setStep('signup') }}
+                <button onClick={() => { setError(null); setSuccess(null); setShowPassword(false); setStep('signup') }}
                   style={{ background: 'none', border: 'none', color: '#2A8A99', fontWeight: 600, cursor: 'pointer', fontSize: 13, padding: 0 }}>
                   Create account
                 </button>
-                <button onClick={() => { setError(null); setSuccess(null); setStep('forgot') }}
+                <button onClick={() => { setError(null); setSuccess(null); setShowPassword(false); setStep('forgot') }}
                   style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 13, padding: 0 }}>
                   Forgot password?
                 </button>
@@ -237,22 +287,55 @@ export default function AuthModal() {
                 <label className="font-semibold text-navy block mb-1.5" style={{ fontSize: 14 }}>Email</label>
                 <input type="email" value={email} onChange={e => setEmail(e.target.value)}
                   placeholder="you@example.com" autoFocus
+                  autoComplete="email"
                   className={inputCls} style={inputStyle} onFocus={focusTeal} onBlur={blurGray} />
               </div>
               <div>
                 <label className="font-semibold text-navy block mb-1.5" style={{ fontSize: 14 }}>Password</label>
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                  placeholder="Min. 8 characters"
-                  className={inputCls} style={inputStyle} onFocus={focusTeal} onBlur={blurGray} />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password} onChange={e => setPassword(e.target.value)}
+                    placeholder="Min. 8 characters"
+                    autoComplete="new-password"
+                    className={inputCls} style={{ ...inputStyle, paddingRight: 48 }}
+                    onFocus={focusTeal} onBlur={blurGray}
+                  />
+                  <button
+                    type="button" onClick={() => setShowPassword(v => !v)} tabIndex={-1}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: 18, zIndex: 2 }}
+                  >
+                    {showPassword ? '🙈' : '👁️'}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="font-semibold text-navy block mb-1.5" style={{ fontSize: 14 }}>Confirm Password</label>
-                <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleSignup()}
-                  placeholder="••••••••"
-                  className={inputCls} style={inputStyle} onFocus={focusTeal} onBlur={blurGray} />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showConfirm ? 'text' : 'password'}
+                    value={confirm} onChange={e => setConfirm(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleSignup()}
+                    placeholder="••••••••"
+                    autoComplete="new-password"
+                    className={inputCls} style={{ ...inputStyle, paddingRight: 48 }}
+                    onFocus={focusTeal} onBlur={blurGray}
+                  />
+                  <button
+                    type="button" onClick={() => setShowConfirm(v => !v)} tabIndex={-1}
+                    aria-label={showConfirm ? 'Hide password' : 'Show password'}
+                    style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: 18, zIndex: 2 }}
+                  >
+                    {showConfirm ? '🙈' : '👁️'}
+                  </button>
+                </div>
               </div>
-              {error && <p style={{ fontSize: 13, color: '#C0392B', fontWeight: 500 }}>{error}</p>}
+              {error && (
+                <p role="alert" style={{ fontSize: 13, color: '#C0392B', fontWeight: 600, margin: 0, padding: '10px 12px', background: 'rgba(192,57,43,0.06)', borderRadius: 8, border: '1px solid rgba(192,57,43,0.18)' }}>
+                  {error}
+                </p>
+              )}
               <button onClick={handleSignup} disabled={loading}
                 className="w-full rounded-xl font-semibold text-white"
                 style={{ padding: 13, fontSize: 15, background: '#2A8A99', border: 'none', cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1 }}>
