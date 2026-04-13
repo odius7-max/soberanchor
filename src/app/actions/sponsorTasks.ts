@@ -69,19 +69,26 @@ export async function assignTask(input: {
     .select('id')
     .single()
 
-  if (error) return { error: error.message }
+  console.log('[assignTask] insert result:', { data: task, error })
 
-  // Send notification (best-effort)
-  try {
-    const admin = createAdminClient()
-    const { data: sponsorProfile } = await admin
-      .from('user_profiles').select('display_name').eq('id', user.id).maybeSingle()
-    await sendNotification(input.sponseeId, 'sponsor_assigns_task', {
-      sponsorName: sponsorProfile?.display_name ?? 'Your sponsor',
-      taskTitle: input.title.trim(),
-      dueDate: input.dueDate || null,
-    })
-  } catch { /* non-fatal */ }
+  if (error) return { error: error.message }
+  if (!task) return { error: 'Insert returned no data — check RLS policies on sponsor_tasks' }
+
+  // Fire-and-forget notification — never await so a slow email API can't block the action
+  Promise.resolve().then(async () => {
+    try {
+      const admin = createAdminClient()
+      const { data: sponsorProfile } = await admin
+        .from('user_profiles').select('display_name').eq('id', user.id).maybeSingle()
+      await sendNotification(input.sponseeId, 'sponsor_assigns_task', {
+        sponsorName: sponsorProfile?.display_name ?? 'Your sponsor',
+        taskTitle: input.title.trim(),
+        dueDate: input.dueDate || null,
+      })
+    } catch (err) {
+      console.error('[assignTask] notification failed (non-fatal):', err)
+    }
+  })
 
   revalidatePath(`/my-recovery/sponsor/sponsee/${input.sponseeId}`)
   return {}
@@ -124,17 +131,21 @@ export async function updateTaskStatus(input: {
 
   if (error) return { error: error.message }
 
-  // Notify sponsor when sponsee completes a task
+  // Fire-and-forget notification when sponsee completes a task
   if (input.status === 'completed' && task.status !== 'completed') {
-    try {
-      const admin = createAdminClient()
-      const { data: sponseeProfile } = await admin
-        .from('user_profiles').select('display_name').eq('id', user.id).maybeSingle()
-      await sendNotification(task.sponsor_id, 'sponsee_completes_task', {
-        sponseeName: sponseeProfile?.display_name ?? 'Your sponsee',
-        taskTitle: task.title,
-      })
-    } catch { /* non-fatal */ }
+    Promise.resolve().then(async () => {
+      try {
+        const admin = createAdminClient()
+        const { data: sponseeProfile } = await admin
+          .from('user_profiles').select('display_name').eq('id', user.id).maybeSingle()
+        await sendNotification(task.sponsor_id, 'sponsee_completes_task', {
+          sponseeName: sponseeProfile?.display_name ?? 'Your sponsee',
+          taskTitle: task.title,
+        })
+      } catch (err) {
+        console.error('[updateTaskStatus] notification failed (non-fatal):', err)
+      }
+    })
   }
 
   revalidatePath('/dashboard')

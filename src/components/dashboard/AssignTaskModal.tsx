@@ -62,21 +62,30 @@ export default function AssignTaskModal({ sponseeId, sponseeName, relationshipId
     if (!title.trim()) { setError('Title is required'); return }
     setSaving(true)
     setError(null)
-    const result = await assignTask({
-      sponseeId,
-      relationshipId,
-      title,
-      description: description || null,
-      category,
-      dueDate: dueDate || null,
-      isRecurring,
-      recurrenceInterval: isRecurring ? recurrence : null,
-      sponsorNote: sponsorNote || null,
-    })
-    setSaving(false)
-    if (result.error) { setError(result.error); return }
-    onAssigned()
-    close()
+    try {
+      const result = await assignTask({
+        sponseeId,
+        relationshipId,
+        title,
+        description: description || null,
+        category,
+        dueDate: dueDate || null,
+        isRecurring,
+        recurrenceInterval: isRecurring ? recurrence : null,
+        sponsorNote: sponsorNote || null,
+      })
+      if (result.error) {
+        setError(result.error)
+        return
+      }
+      onAssigned()
+      close()
+    } catch (err) {
+      console.error('[AssignTaskModal] assignTask threw:', err)
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const inp: React.CSSProperties = {
