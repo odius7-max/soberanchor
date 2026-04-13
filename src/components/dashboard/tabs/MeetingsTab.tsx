@@ -530,7 +530,7 @@ export default function MeetingsTab({ userId, meetingsThisWeek, meetingsTotal, m
             <div
               key={m.id}
               className="card-hover rounded-[14px] flex items-center gap-4 px-4 py-3.5 bg-white border border-[var(--border)]"
-              style={{ position: 'relative', zIndex: openMenuId === m.id ? 1 : 'auto' }}
+              style={{ position: 'relative', zIndex: openMenuId === m.id ? 51 : 'auto' }}
             >
               <span style={{ fontSize: '18px' }}>{methodIcon[m.checkin_method] ?? '📍'}</span>
               <div className="flex-1 min-w-0">
