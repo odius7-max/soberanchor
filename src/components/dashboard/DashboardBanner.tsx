@@ -24,6 +24,9 @@ const STEPS = [
 
 const DAY_MILESTONES = [7, 14, 21, 30, 60, 90, 120, 180, 270, 365, 500, 730, 1000, 1095]
 
+// Dot colors cycling through fellowship rows
+const DOT_COLORS = ['#D4A574', '#2A8A99', '#27AE60', '#9B59B6', '#E67E22', '#E74C3C']
+
 const FIELD_STYLE: React.CSSProperties = {
   width: '100%', fontSize: 13, padding: '9px 12px', borderRadius: 8,
   border: '1.5px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.1)',
@@ -48,6 +51,10 @@ function calcDays(dateStr: string): number {
 
 function fmtDate(d: string) {
   return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+}
+
+function fmtDateShort(d: string) {
+  return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 export interface SobrietyMilestone {
@@ -162,7 +169,6 @@ export default function DashboardBanner({
   const router = useRouter()
   const [milestones, setMilestones] = useState<SobrietyMilestone[]>(initialMilestones)
   const { ref: stepsScrollRef, fadeLeft: stepsFadeLeft, fadeRight: stepsFadeRight } = useScrollFade()
-  const { ref: msTabsScrollRef, fadeLeft: msTabsFadeLeft, fadeRight: msTabsFadeRight } = useScrollFade()
   const activeStepRef = useRef<HTMLDivElement>(null)
 
   // Scroll active step circle into view on load / step change
@@ -172,18 +178,18 @@ export default function DashboardBanner({
     }
   }, [currentStep])
 
-  // Active tab on the normal banner view
+  // Active row in the fellowship table
   const initPrimaryIdx = initialMilestones.findIndex(m => m.is_primary)
   const [activeIdx, setActiveIdx] = useState(initPrimaryIdx >= 0 ? initPrimaryIdx : 0)
 
   // Management panel
   const [showPanel, setShowPanel] = useState(false)
-  const [editingId, setEditingId] = useState<string | 'new' | null>(null) // null=closed, 'new'=adding
+  const [editingId, setEditingId] = useState<string | 'new' | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [needsNewPrimary, setNeedsNewPrimary] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  // Shared form fields (used for both edit and add)
+  // Shared form fields
   const [fLabel, setFLabel] = useState('')
   const [fDate, setFDate] = useState('')
   const [fFellowshipId, setFFellowshipId] = useState('')
@@ -197,7 +203,7 @@ export default function DashboardBanner({
   const isMilestoneDay = daysClean !== null && DAY_MILESTONES.includes(daysClean)
   const quote = QUOTES[(daysClean ?? 0) % QUOTES.length]
 
-  function getFellowshipBadge(fid: string | null): string | null {
+  function getFellowshipAbbr(fid: string | null): string | null {
     if (!fid) return null
     const f = fellowships.find(f => f.id === fid)
     return f ? (f.abbreviation ?? f.name) : null
@@ -266,7 +272,6 @@ export default function DashboardBanner({
         if (willBePrimary) {
           await supabase.from('user_profiles').update({ sobriety_date: fDate, primary_fellowship_id: fFellowshipId || null }).eq('id', userId)
           onActiveFellowshipChange(fFellowshipId || null)
-          // Sync active tab to new primary
           setActiveIdx(next.findIndex(m => m.is_primary))
           router.refresh()
         }
@@ -322,7 +327,6 @@ export default function DashboardBanner({
 
     if (wasPrimary && next.length > 0) {
       setNeedsNewPrimary(true)
-      // Clear profile sobriety date until user picks a new primary
       await supabase.from('user_profiles').update({ sobriety_date: null, primary_fellowship_id: null }).eq('id', userId)
       onActiveFellowshipChange(null)
       setActiveIdx(0)
@@ -333,7 +337,6 @@ export default function DashboardBanner({
       setActiveIdx(0)
       router.refresh()
     } else {
-      // Deleted a non-primary — keep active tab in bounds
       setActiveIdx(i => Math.min(i, next.length - 1))
     }
   }
@@ -360,6 +363,7 @@ export default function DashboardBanner({
       className="rounded-[20px] overflow-hidden mb-6 relative px-4 pt-5 pb-5 md:px-8 md:pt-7 md:pb-6"
       style={{ background: 'linear-gradient(145deg,#002244 0%,#003366 35%,#1a4a5e 70%,#2A8A99 100%)' }}
     >
+      {/* Decorative waves */}
       <svg aria-hidden className="absolute bottom-0 left-0 right-0 pointer-events-none" viewBox="0 0 900 120" fill="none" preserveAspectRatio="none" style={{ height: 120, width: '100%', opacity: 0.04 }}>
         <path d="M0 60 Q150 0 300 60 Q450 120 600 60 Q750 0 900 60 L900 120 L0 120Z" fill="#fff" />
         <path d="M0 80 Q150 30 300 80 Q450 130 600 80 Q750 30 900 80 L900 120 L0 120Z" fill="#fff" opacity="0.5" />
@@ -369,10 +373,9 @@ export default function DashboardBanner({
       <div className="relative">
         {showPanel ? (
           // ════════════════════════════════════════════════
-          // MANAGEMENT PANEL
+          // MANAGEMENT PANEL (unchanged)
           // ════════════════════════════════════════════════
           <div>
-            {/* Panel header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600, color: '#fff', letterSpacing: '-0.3px' }}>
                 Sobriety Milestones
@@ -385,27 +388,23 @@ export default function DashboardBanner({
               </button>
             </div>
 
-            {/* "Pick new primary" warning */}
             {needsNewPrimary && (
               <div style={{ background: 'rgba(212,165,116,0.12)', border: '1px solid rgba(212,165,116,0.35)', borderRadius: 10, padding: '11px 14px', marginBottom: 14, fontSize: 13, color: '#D4A574', lineHeight: 1.5 }}>
                 Your primary milestone was removed — please set a new one below.
               </div>
             )}
 
-            {/* No milestones yet */}
             {milestones.length === 0 && editingId !== 'new' && (
               <div style={{ textAlign: 'center', padding: '24px 0 16px', color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>
                 No milestones yet. Add your first one below.
               </div>
             )}
 
-            {/* Milestone cards */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
               {milestones.map(m => {
-                const badge = getFellowshipBadge(m.fellowship_id)
+                const badge = getFellowshipAbbr(m.fellowship_id)
                 const days = calcDays(m.sobriety_date)
 
-                // ── Delete confirmation ──
                 if (confirmDeleteId === m.id) {
                   return (
                     <div key={m.id} style={{ background: 'rgba(192,57,43,0.1)', border: '1.5px solid rgba(192,57,43,0.35)', borderRadius: 12, padding: '16px' }}>
@@ -413,104 +412,43 @@ export default function DashboardBanner({
                         Remove this milestone? This will permanently remove your <strong style={{ color: '#fff' }}>{m.label}</strong> milestone and its associated step work progress. This cannot be undone.
                       </div>
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <button
-                          onClick={() => setConfirmDeleteId(null)}
-                          style={{ flex: 1, padding: '8px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)' }}
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={confirmDelete}
-                          style={{ flex: 2, padding: '8px', borderRadius: 8, border: 'none', background: 'rgba(192,57,43,0.7)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-body)' }}
-                        >
-                          Remove permanently
-                        </button>
+                        <button onClick={() => setConfirmDeleteId(null)} style={{ flex: 1, padding: '8px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>Cancel</button>
+                        <button onClick={confirmDelete} style={{ flex: 2, padding: '8px', borderRadius: 8, border: 'none', background: 'rgba(192,57,43,0.7)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>Remove permanently</button>
                       </div>
                     </div>
                   )
                 }
 
-                // ── Edit form ──
                 if (editingId === m.id) {
                   return (
                     <div key={m.id} style={{ background: 'rgba(42,138,153,0.1)', border: '1.5px solid rgba(42,138,153,0.3)', borderRadius: 12, padding: '16px' }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', marginBottom: 12, letterSpacing: '1px', textTransform: 'uppercase' }}>
-                        Editing — {m.label}
-                      </div>
-                      <MilestoneForm
-                        label={fLabel} setLabel={setFLabel}
-                        date={fDate} setDate={setFDate}
-                        fellowshipId={fFellowshipId} setFellowshipId={setFFellowshipId}
-                        isPrimary={fIsPrimary} setIsPrimary={setFIsPrimary}
-                        fellowships={fellowships}
-                        showPrimaryToggle={!m.is_primary}
-                        saving={saving}
-                        onSave={saveForm}
-                        onCancel={cancelForm}
-                        saveLabel="Save changes"
-                      />
+                      <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', marginBottom: 12, letterSpacing: '1px', textTransform: 'uppercase' }}>Editing — {m.label}</div>
+                      <MilestoneForm label={fLabel} setLabel={setFLabel} date={fDate} setDate={setFDate} fellowshipId={fFellowshipId} setFellowshipId={setFFellowshipId} isPrimary={fIsPrimary} setIsPrimary={setFIsPrimary} fellowships={fellowships} showPrimaryToggle={!m.is_primary} saving={saving} onSave={saveForm} onCancel={cancelForm} saveLabel="Save changes" />
                     </div>
                   )
                 }
 
-                // ── Normal card ──
                 return (
-                  <div
-                    key={m.id}
-                    style={{
-                      background: m.is_primary ? 'rgba(212,165,116,0.07)' : 'rgba(255,255,255,0.07)',
-                      border: m.is_primary ? '1.5px solid rgba(212,165,116,0.45)' : '1px solid rgba(255,255,255,0.12)',
-                      borderRadius: 12, padding: '14px 16px',
-                    }}
-                  >
+                  <div key={m.id} style={{ background: m.is_primary ? 'rgba(212,165,116,0.07)' : 'rgba(255,255,255,0.07)', border: m.is_primary ? '1.5px solid rgba(212,165,116,0.45)' : '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '14px 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-                      {/* Info */}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap', marginBottom: 5 }}>
                           <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{m.label}</span>
-                          {m.is_primary && (
-                            <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: 'rgba(212,165,116,0.2)', border: '1px solid rgba(212,165,116,0.35)', color: '#D4A574', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-                              Primary
-                            </span>
-                          )}
-                          {badge && (
-                            <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: 'rgba(42,138,153,0.2)', border: '1px solid rgba(42,138,153,0.25)', color: 'rgba(255,255,255,0.75)' }}>
-                              {badge}
-                            </span>
-                          )}
+                          {m.is_primary && <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: 'rgba(212,165,116,0.2)', border: '1px solid rgba(212,165,116,0.35)', color: '#D4A574', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Primary</span>}
+                          {badge && <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: 'rgba(42,138,153,0.2)', border: '1px solid rgba(42,138,153,0.25)', color: 'rgba(255,255,255,0.75)' }}>{badge}</span>}
                         </div>
                         <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>
-                          {fmtDate(m.sobriety_date)} ·{' '}
-                          <strong style={{ color: 'rgba(255,255,255,0.8)', fontWeight: 700 }}>{days.toLocaleString()}</strong> days
+                          {fmtDate(m.sobriety_date)} · <strong style={{ color: 'rgba(255,255,255,0.8)', fontWeight: 700 }}>{days.toLocaleString()}</strong> days
                         </div>
                       </div>
-                      {/* Actions */}
                       <div style={{ display: 'flex', gap: 5, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                         {(!m.is_primary || needsNewPrimary) && (
-                          <button
-                            onClick={() => setAsPrimary(m.id)}
-                            style={{
-                              fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 7, cursor: 'pointer', fontFamily: 'var(--font-body)',
-                              background: needsNewPrimary ? 'rgba(212,165,116,0.2)' : 'rgba(255,255,255,0.08)',
-                              border: needsNewPrimary ? '1px solid rgba(212,165,116,0.4)' : '1px solid rgba(255,255,255,0.15)',
-                              color: needsNewPrimary ? '#D4A574' : 'rgba(255,255,255,0.65)',
-                            }}
-                          >
+                          <button onClick={() => setAsPrimary(m.id)} style={{ fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 7, cursor: 'pointer', fontFamily: 'var(--font-body)', background: needsNewPrimary ? 'rgba(212,165,116,0.2)' : 'rgba(255,255,255,0.08)', border: needsNewPrimary ? '1px solid rgba(212,165,116,0.4)' : '1px solid rgba(255,255,255,0.15)', color: needsNewPrimary ? '#D4A574' : 'rgba(255,255,255,0.65)' }}>
                             {needsNewPrimary ? '★ Set primary' : 'Set primary'}
                           </button>
                         )}
-                        <button
-                          onClick={() => startEdit(m)}
-                          style={{ fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.65)', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => { setConfirmDeleteId(m.id); setEditingId(null) }}
-                          style={{ fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 7, border: '1px solid rgba(192,57,43,0.3)', background: 'rgba(192,57,43,0.1)', color: '#e88', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
-                        >
-                          Remove
-                        </button>
+                        <button onClick={() => startEdit(m)} style={{ fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.65)', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>Edit</button>
+                        <button onClick={() => { setConfirmDeleteId(m.id); setEditingId(null) }} style={{ fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 7, border: '1px solid rgba(192,57,43,0.3)', background: 'rgba(192,57,43,0.1)', color: '#e88', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>Remove</button>
                       </div>
                     </div>
                   </div>
@@ -518,24 +456,10 @@ export default function DashboardBanner({
               })}
             </div>
 
-            {/* Add new milestone */}
             {editingId === 'new' ? (
               <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px dashed rgba(255,255,255,0.2)', borderRadius: 12, padding: '16px' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', marginBottom: 12, letterSpacing: '1px', textTransform: 'uppercase' }}>
-                  New milestone
-                </div>
-                <MilestoneForm
-                  label={fLabel} setLabel={setFLabel}
-                  date={fDate} setDate={setFDate}
-                  fellowshipId={fFellowshipId} setFellowshipId={setFFellowshipId}
-                  isPrimary={fIsPrimary} setIsPrimary={setFIsPrimary}
-                  fellowships={fellowships}
-                  showPrimaryToggle={milestones.length > 0}
-                  saving={saving}
-                  onSave={saveForm}
-                  onCancel={cancelForm}
-                  saveLabel="Add milestone"
-                />
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', marginBottom: 12, letterSpacing: '1px', textTransform: 'uppercase' }}>New milestone</div>
+                <MilestoneForm label={fLabel} setLabel={setFLabel} date={fDate} setDate={setFDate} fellowshipId={fFellowshipId} setFellowshipId={setFFellowshipId} isPrimary={fIsPrimary} setIsPrimary={setFIsPrimary} fellowships={fellowships} showPrimaryToggle={milestones.length > 0} saving={saving} onSave={saveForm} onCancel={cancelForm} saveLabel="Add milestone" />
               </div>
             ) : (
               <button
@@ -550,124 +474,213 @@ export default function DashboardBanner({
           </div>
         ) : (
           // ════════════════════════════════════════════════
-          // NORMAL BANNER VIEW — 3 rows: top bar | quote | steps
+          // NORMAL BANNER VIEW — redesigned table layout
           // ════════════════════════════════════════════════
           <>
-            {/* ── ROW 1: mobile = vertical stack, desktop = 3-col flex row ── */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 mb-4">
+            {/* Greeting */}
+            <div style={{ fontSize: 22, fontWeight: 500, color: '#fff', marginBottom: 16, letterSpacing: '-0.3px' }}>
+              {getGreeting()}, {displayName} 👋
+              {isMilestoneDay && (
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#D4A574', marginLeft: 10 }}>🎉 Milestone day!</span>
+              )}
+            </div>
 
-              {/* Greeting + milestone tabs */}
-              <div className="md:flex-shrink-0 md:max-w-[38%]">
-                {/* Greeting — full width, no truncation */}
-                <div
-                  className="text-white mb-2"
-                  style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 600, letterSpacing: '-0.4px' }}
-                >
-                  {getGreeting()}, {displayName} 👋
-                </div>
+            {/* ── Main body: fellowship table + stat cards ── */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-0">
 
-                {/* Milestone pills — horizontal scroll row */}
-                <div style={{ position: 'relative' }}>
-                  {msTabsFadeLeft && (
-                    <div aria-hidden style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 32, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to right, #002244, transparent)' }} />
-                  )}
-                  {msTabsFadeRight && (
-                    <div aria-hidden style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 32, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to left, #002244, transparent)' }} />
-                  )}
-                  <div
-                    ref={msTabsScrollRef}
-                    className="flex overflow-x-auto pb-0.5"
-                    style={{ gap: 5, flexWrap: 'nowrap', scrollbarWidth: 'none' }}
-                  >
+              {/* LEFT: fellowship table */}
+              <div className="flex-1 min-w-0">
+                {milestones.length === 0 ? (
+                  <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 14, paddingBottom: 8 }}>
+                    No milestones yet.
+                  </div>
+                ) : (
+                  <div style={{ width: '100%' }}>
+                    {/* Column headers */}
+                    <div
+                      className="hidden sm:grid"
+                      style={{ gridTemplateColumns: '1fr 52px 120px 90px', gap: 0, paddingBottom: 6, borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: 4 }}
+                    >
+                      <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '1px', textTransform: 'uppercase' }}>Milestone</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '1px', textTransform: 'uppercase' }}>Prog.</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '1px', textTransform: 'uppercase', textAlign: 'right' }}>Sober Since</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '1px', textTransform: 'uppercase', textAlign: 'right' }}>Days</span>
+                    </div>
+                    {/* Mobile headers (3-col) */}
+                    <div
+                      className="grid sm:hidden"
+                      style={{ gridTemplateColumns: '1fr 110px 76px', gap: 0, paddingBottom: 6, borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: 4 }}
+                    >
+                      <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '1px', textTransform: 'uppercase' }}>Milestone</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '1px', textTransform: 'uppercase', textAlign: 'right' }}>Sober Since</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '1px', textTransform: 'uppercase', textAlign: 'right' }}>Days</span>
+                    </div>
+
+                    {/* Rows */}
                     {milestones.map((m, i) => {
-                      const badge = getFellowshipBadge(m.fellowship_id)
                       const isActive = i === activeIdx
+                      const abbr = getFellowshipAbbr(m.fellowship_id)
+                      const days = calcDays(m.sobriety_date)
+                      const dot = DOT_COLORS[i % DOT_COLORS.length]
+
                       return (
                         <button
                           key={m.id}
                           onClick={() => switchTab(i)}
-                          className="flex-shrink-0"
                           style={{
-                            display: 'flex', alignItems: 'center', gap: 4,
-                            padding: '4px 11px', borderRadius: 999, cursor: 'pointer',
-                            background: isActive ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.1)',
-                            border: isActive ? 'none' : '1px solid rgba(255,255,255,0.18)',
-                            color: isActive ? 'var(--navy)' : 'rgba(255,255,255,0.8)',
-                            fontSize: 11, fontWeight: 700, transition: 'all 0.15s',
+                            display: 'block', width: '100%', textAlign: 'left',
+                            background: 'none', border: 'none', padding: 0,
+                            cursor: isActive ? 'default' : 'pointer',
+                            borderBottom: i < milestones.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
                           }}
+                          onMouseEnter={e => { if (!isActive) e.currentTarget.style.opacity = '0.8' }}
+                          onMouseLeave={e => { if (!isActive) e.currentTarget.style.opacity = String(isActive ? 1 : 0.5) }}
                         >
-                          {m.label}
-                          {badge && <span style={{ fontSize: 9, opacity: 0.65 }}>· {badge}</span>}
-                          {m.is_primary && <span style={{ fontSize: 8, opacity: 0.5, marginLeft: 1 }}>★</span>}
+                          {/* Desktop row (4-col) */}
+                          <div
+                            className="hidden sm:grid"
+                            style={{
+                              gridTemplateColumns: '1fr 52px 120px 90px',
+                              alignItems: 'center',
+                              padding: isActive ? '11px 0' : '8px 0',
+                              opacity: isActive ? 1 : 0.5,
+                              transition: 'opacity 0.15s',
+                            }}
+                          >
+                            {/* Label + dot */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <div style={{ width: 7, height: 7, borderRadius: '50%', background: dot, flexShrink: 0 }} />
+                              <span style={{ fontSize: isActive ? 15 : 13, fontWeight: isActive ? 700 : 500, color: '#fff', lineHeight: 1.2 }}>
+                                {m.label}
+                              </span>
+                            </div>
+                            {/* Program */}
+                            <span style={{ fontSize: 12, color: isActive ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.4)', fontWeight: 600 }}>
+                              {abbr ?? '—'}
+                            </span>
+                            {/* Sobriety date */}
+                            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', textAlign: 'right' }}>
+                              {fmtDateShort(m.sobriety_date)}
+                            </span>
+                            {/* Days */}
+                            <div style={{ textAlign: 'right' }}>
+                              {isActive ? (
+                                <span style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: '#fff', letterSpacing: '-0.5px', lineHeight: 1 }}>
+                                  {days.toLocaleString()}<span style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.5)', marginLeft: 3 }}>days</span>
+                                </span>
+                              ) : (
+                                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
+                                  {days.toLocaleString()}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Mobile row (3-col, no program) */}
+                          <div
+                            className="grid sm:hidden"
+                            style={{
+                              gridTemplateColumns: '1fr 110px 76px',
+                              alignItems: 'center',
+                              padding: isActive ? '11px 0' : '8px 0',
+                              opacity: isActive ? 1 : 0.5,
+                              transition: 'opacity 0.15s',
+                            }}
+                          >
+                            {/* Label + dot */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                              <div style={{ width: 7, height: 7, borderRadius: '50%', background: dot, flexShrink: 0 }} />
+                              <div>
+                                <div style={{ fontSize: isActive ? 14 : 12, fontWeight: isActive ? 700 : 500, color: '#fff', lineHeight: 1.2 }}>{m.label}</div>
+                                {abbr && <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 1 }}>{abbr}</div>}
+                              </div>
+                            </div>
+                            {/* Sobriety date */}
+                            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', textAlign: 'right' }}>
+                              {fmtDateShort(m.sobriety_date)}
+                            </span>
+                            {/* Days */}
+                            <div style={{ textAlign: 'right' }}>
+                              {isActive ? (
+                                <span style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#fff', letterSpacing: '-0.5px' }}>
+                                  {days.toLocaleString()}<span style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.5)', marginLeft: 2 }}>d</span>
+                                </span>
+                              ) : (
+                                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>
+                                  {days.toLocaleString()}
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </button>
                       )
                     })}
-                    <button
-                      onClick={openPanel}
-                      className="flex-shrink-0"
-                      style={{
-                        padding: '4px 10px', borderRadius: 999, cursor: 'pointer',
-                        background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.14)',
-                        color: 'rgba(255,255,255,0.55)', fontSize: 11, fontWeight: 600, transition: 'all 0.15s',
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = 'rgba(255,255,255,0.8)' }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'rgba(255,255,255,0.55)' }}
-                    >
-                      {milestones.length === 0 ? '+ Add milestone' : '+ Add/Edit'}
-                    </button>
                   </div>
-                </div>
+                )}
+
+                {/* Edit milestones link */}
+                <button
+                  onClick={openPanel}
+                  style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', background: 'none', border: 'none', cursor: 'pointer', marginTop: 10, padding: 0, fontFamily: 'var(--font-body)', transition: 'color 0.15s' }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.6)' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.3)' }}
+                >
+                  {milestones.length === 0 ? '+ Add milestone' : 'Edit milestones →'}
+                </button>
               </div>
 
-              {/* Day count — hero moment on mobile */}
-              <div className="text-center md:flex-shrink-0 py-1 md:py-0">
-                {daysClean !== null ? (
-                  <div className="flex items-baseline justify-center gap-2">
-                    <span style={{ fontFamily: 'var(--font-display)', fontSize: 64, fontWeight: 700, color: '#fff', lineHeight: 1, letterSpacing: '-2px' }}>
-                      {daysClean.toLocaleString()}
-                    </span>
-                    <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 18 }}>days</span>
+              {/* RIGHT (desktop) / BELOW (mobile): stat cards */}
+              <div
+                className="flex sm:flex-col gap-3"
+                style={{ flexShrink: 0 }}
+              >
+                {/* Next milestone card */}
+                {nextM !== null && daysToNext !== null ? (
+                  <div
+                    className="flex-1 sm:flex-none"
+                    style={{ background: 'rgba(212,165,116,0.15)', border: '1px solid rgba(212,165,116,0.25)', borderRadius: 12, padding: '14px 16px', minWidth: 0 }}
+                  >
+                    <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 6 }}>Next Milestone</div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: '#D4A574', lineHeight: 1, letterSpacing: '-0.5px' }}>{nextM}</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>{daysToNext} day{daysToNext !== 1 ? 's' : ''} away</div>
                   </div>
                 ) : (
-                  <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>No date set</span>
+                  /* All milestones passed — show total count */
+                  daysClean !== null && (
+                    <div
+                      className="flex-1 sm:flex-none"
+                      style={{ background: 'rgba(212,165,116,0.15)', border: '1px solid rgba(212,165,116,0.25)', borderRadius: 12, padding: '14px 16px', minWidth: 0 }}
+                    >
+                      <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 6 }}>Total Days</div>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: '#D4A574', lineHeight: 1, letterSpacing: '-0.5px' }}>{daysClean.toLocaleString()}</div>
+                      <div style={{ fontSize: 11, color: '#27AE60', marginTop: 4, fontWeight: 600 }}>All milestones passed ✓</div>
+                    </div>
+                  )
                 )}
-                {isMilestoneDay && (
-                  <div style={{ fontSize: 11, marginTop: 4, color: '#D4A574', fontWeight: 700 }}>🎉 Milestone day!</div>
-                )}
-              </div>
 
-              {/* Stat boxes — equal-width columns on mobile, fixed-width on desktop */}
-              <div className="flex gap-2 md:flex-shrink-0">
-                {nextM !== null && daysToNext !== null && (
-                  <div
-                    className="flex-1 md:flex-none"
-                    style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.11)', borderRadius: 10, padding: '10px 14px', minWidth: 0 }}
-                  >
-                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' as const }}>Next Milestone</div>
-                    <div style={{ color: '#D4A574', fontSize: 17, fontWeight: 700, marginTop: 3, lineHeight: 1 }}>{nextM} Days</div>
-                    <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, marginTop: 3 }}>{daysToNext} day{daysToNext !== 1 ? 's' : ''} away</div>
-                  </div>
-                )}
+                {/* Currently on step */}
                 {activeMilestone?.fellowship_id && (
                   <div
-                    className="flex-1 md:flex-none"
-                    style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.11)', borderRadius: 10, padding: '10px 14px', minWidth: 0 }}
+                    className="flex-1 sm:flex-none"
+                    style={{ background: 'rgba(212,165,116,0.15)', border: '1px solid rgba(212,165,116,0.25)', borderRadius: 12, padding: '14px 16px', minWidth: 0 }}
                   >
-                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' as const }}>Currently On</div>
-                    <div style={{ color: '#fff', fontSize: 17, fontWeight: 700, marginTop: 3, lineHeight: 1 }}>Step {currentStep}</div>
-                    <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, marginTop: 3 }}>{STEPS[currentStep - 1]?.s}</div>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 6 }}>Currently On</div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: '#fff', lineHeight: 1, letterSpacing: '-0.5px' }}>Step {currentStep}</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>{STEPS[currentStep - 1]?.s}</div>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* ── ROW 2: quote ── */}
-            <div style={{ background: 'rgba(255,255,255,0.05)', borderLeft: '3px solid rgba(212,165,116,0.4)', padding: '11px 16px', marginBottom: 16, borderRadius: '0 8px 8px 0' }}>
-              <div style={{ fontFamily: 'var(--font-display)', color: 'rgba(255,255,255,0.85)', fontSize: 15, fontStyle: 'italic', lineHeight: 1.5, fontWeight: 500 }}>&ldquo;{quote.text}&rdquo;</div>
-              <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, marginTop: 4 }}>— {quote.attr}</div>
+            {/* ── Quote: thin divider, italic, muted ── */}
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: 18, paddingTop: 14, marginBottom: activeMilestone?.fellowship_id ? 16 : 0 }}>
+              <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13, fontStyle: 'italic', lineHeight: 1.65 }}>
+                &ldquo;{quote.text}&rdquo;
+              </div>
+              <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, marginTop: 5 }}>— {quote.attr}</div>
             </div>
 
-            {/* ── ROW 3: step progress circles ── */}
+            {/* ── Step progress bar ── */}
             {activeMilestone?.fellowship_id && (
               <div style={{ position: 'relative' }}>
                 {stepsFadeLeft && (
@@ -676,29 +689,29 @@ export default function DashboardBanner({
                 {stepsFadeRight && (
                   <div aria-hidden style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 40, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to left, #002244, transparent)' }} />
                 )}
-              <div ref={stepsScrollRef} style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2, scrollbarWidth: 'none' as const }}>
-                {STEPS.map(({ n, s }) => {
-                  const isDone = n < currentStep
-                  const isActive = n === currentStep
-                  return (
-                    <div key={n} ref={isActive ? activeStepRef : null} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flexShrink: 0, minWidth: 46 }}>
-                      <div style={{
-                        width: 38, height: 38, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 13, fontWeight: 700,
-                        background: isDone ? '#2A8A99' : isActive ? '#D4A574' : 'rgba(255,255,255,0.1)',
-                        border: isDone ? '2px solid rgba(255,255,255,0.3)' : isActive ? '2.5px solid rgba(255,255,255,0.9)' : '1.5px solid rgba(255,255,255,0.15)',
-                        color: isDone || isActive ? '#fff' : 'rgba(255,255,255,0.3)',
-                        boxShadow: isActive ? '0 0 18px rgba(212,165,116,0.5)' : 'none',
-                      }}>
-                        {isDone ? '✓' : n}
+                <div ref={stepsScrollRef} style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2, scrollbarWidth: 'none' as const }}>
+                  {STEPS.map(({ n, s }) => {
+                    const isDone = n < currentStep
+                    const isActivStep = n === currentStep
+                    return (
+                      <div key={n} ref={isActivStep ? activeStepRef : null} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flexShrink: 0, minWidth: 46 }}>
+                        <div style={{
+                          width: 38, height: 38, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 13, fontWeight: 700,
+                          background: isDone ? '#D4A574' : isActivStep ? '#2A8A99' : 'rgba(255,255,255,0.1)',
+                          border: isDone ? '2px solid rgba(255,255,255,0.2)' : isActivStep ? '2.5px solid rgba(255,255,255,0.9)' : '1.5px solid rgba(255,255,255,0.15)',
+                          color: isDone || isActivStep ? '#fff' : 'rgba(255,255,255,0.3)',
+                          boxShadow: isActivStep ? '0 0 18px rgba(42,138,153,0.6)' : 'none',
+                        }}>
+                          {isDone ? '✓' : n}
+                        </div>
+                        <span style={{ fontSize: 9, fontWeight: 600, maxWidth: 50, textAlign: 'center', lineHeight: 1.3, color: isDone ? 'rgba(255,255,255,0.5)' : isActivStep ? '#2A8A99' : 'rgba(255,255,255,0.25)' }}>
+                          {s}
+                        </span>
                       </div>
-                      <span style={{ fontSize: 9, fontWeight: 600, maxWidth: 50, textAlign: 'center', lineHeight: 1.3, color: isDone ? 'rgba(255,255,255,0.6)' : isActive ? '#D4A574' : 'rgba(255,255,255,0.25)' }}>
-                        {s}
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
+                    )
+                  })}
+                </div>
               </div>
             )}
           </>
