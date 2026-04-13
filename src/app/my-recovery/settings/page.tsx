@@ -32,7 +32,7 @@ export default async function SettingsPage() {
 
       <div style={card}>
         <h2 style={{ fontSize: 14, fontWeight: 700, color: 'var(--navy)', marginBottom: 20 }}>Account & Security</h2>
-        <SettingsForm email={user.email ?? null} />
+        <SettingsForm email={user.email ?? null} userId={user.id} />
       </div>
     </div>
   )

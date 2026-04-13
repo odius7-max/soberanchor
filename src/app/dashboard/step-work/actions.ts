@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+import { sendNotification } from '@/lib/notifications'
 
 /**
  * After a sponsor marks a step complete in step_completions, re-read all
@@ -111,6 +112,35 @@ export async function submitStepWork(entryId: string) {
     .eq('user_id', user.id)
 
   if (error) return { error: error.message }
+
+  // Notify the sponsor (best-effort — doesn't affect return value)
+  try {
+    const admin = createAdminClient()
+    const { data: entry } = await admin
+      .from('step_work_entries')
+      .select('workbook_id, sponsor_relationship_id')
+      .eq('id', entryId)
+      .single()
+
+    if (entry?.sponsor_relationship_id) {
+      const [{ data: rel }, { data: sponseeProfile }, workbookRes] = await Promise.all([
+        admin.from('sponsor_relationships').select('sponsor_id').eq('id', entry.sponsor_relationship_id).single(),
+        admin.from('user_profiles').select('display_name').eq('id', user.id).single(),
+        entry.workbook_id
+          ? admin.from('program_workbooks').select('title, step_number').eq('id', entry.workbook_id).single()
+          : Promise.resolve({ data: null }),
+      ])
+      const sponsorId = (rel as { sponsor_id: string } | null)?.sponsor_id
+      if (sponsorId) {
+        await sendNotification(sponsorId, 'sponsee_submits_step_work', {
+          sponseeName:  (sponseeProfile  as { display_name: string | null } | null)?.display_name ?? 'Your sponsee',
+          stepNumber:   (workbookRes.data as { step_number: number | null } | null)?.step_number  ?? null,
+          sectionTitle: (workbookRes.data as { title: string }              | null)?.title        ?? 'Step Work',
+        })
+      }
+    }
+  } catch { /* non-fatal */ }
+
   revalidatePath('/dashboard/step-work')
   return { success: true }
 }
@@ -200,25 +230,34 @@ export async function saveSponsorFeedback({
 
   if (error) return { error: error.message }
 
-  // Write activity event for the sponsee (non-blocking)
+  // Write activity event + send notification to sponsee (both best-effort)
   try {
     const admin = createAdminClient()
-    const [{ data: sponsorProfile }, { data: workbook }] = await Promise.all([
+    const [{ data: sponsorProfile }, workbookRes] = await Promise.all([
       admin.from('user_profiles').select('display_name').eq('id', user.id).single(),
       entry.workbook_id
-        ? admin.from('program_workbooks').select('title').eq('id', entry.workbook_id).single()
+        ? admin.from('program_workbooks').select('title, step_number').eq('id', entry.workbook_id).single()
         : Promise.resolve({ data: null }),
     ])
-    const sponsorName = (sponsorProfile as { display_name: string | null } | null)?.display_name ?? 'Your sponsor'
-    const workbookTitle = (workbook as { title: string } | null)?.title ?? 'Step Work'
-    await admin.from('activity_feed').insert({
-      user_id: entry.user_id,
-      event_type: 'step_work_reviewed',
-      title: `${workbookTitle} reviewed`,
-      description: `${sponsorName} reviewed your step work and left feedback`,
-      metadata: { entry_id: entryId, workbook_title: workbookTitle },
-    })
-  } catch { /* activity write is best-effort */ }
+    const sponsorName   = (sponsorProfile as { display_name: string | null } | null)?.display_name ?? 'Your sponsor'
+    const workbookTitle = (workbookRes.data as { title: string }              | null)?.title        ?? 'Step Work'
+    const stepNumber    = (workbookRes.data as { step_number: number | null } | null)?.step_number  ?? null
+
+    await Promise.all([
+      admin.from('activity_feed').insert({
+        user_id:    entry.user_id,
+        event_type: 'step_work_reviewed',
+        title:      `${workbookTitle} reviewed`,
+        description:`${sponsorName} reviewed your step work and left feedback`,
+        metadata:   { entry_id: entryId, workbook_title: workbookTitle },
+      }),
+      sendNotification(entry.user_id as string, 'sponsor_feedback_on_step_work', {
+        sponsorName,
+        stepNumber,
+        sectionTitle: workbookTitle,
+      }),
+    ])
+  } catch { /* best-effort */ }
 
   revalidatePath('/dashboard')
   return { success: true }

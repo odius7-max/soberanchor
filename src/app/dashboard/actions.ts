@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sendNotification } from '@/lib/notifications'
 
 // A single existing relationship row between the searcher and the found user.
 // direction 'you_are_sponsor'  → sponsor_id=you,  sponsee_id=them
@@ -112,6 +113,21 @@ export async function sendSponsorRequest(sponseeUserId: string, fellowshipId: st
     .insert({ sponsor_id: user.id, sponsee_id: sponseeUserId, fellowship_id: fellowshipId ?? null, status: 'pending' })
 
   if (error) throw new Error(error.message)
+
+  // Notify the sponsee (best-effort)
+  try {
+    const [{ data: sponsorProfile }, fellowshipRes] = await Promise.all([
+      admin.from('user_profiles').select('display_name').eq('id', user.id).single(),
+      fellowshipId
+        ? admin.from('fellowships').select('abbreviation').eq('id', fellowshipId).single()
+        : Promise.resolve({ data: null }),
+    ])
+    await sendNotification(sponseeUserId, 'sponsor_connection_request', {
+      requesterName: (sponsorProfile as { display_name: string | null } | null)?.display_name ?? 'Someone',
+      fellowship:    (fellowshipRes.data as { abbreviation: string } | null)?.abbreviation ?? null,
+    })
+  } catch { /* non-fatal */ }
+
   revalidatePath('/dashboard')
 }
 
@@ -146,6 +162,21 @@ export async function requestSponsor(sponsorUserId: string, fellowshipId: string
     .insert({ sponsor_id: sponsorUserId, sponsee_id: user.id, fellowship_id: fellowshipId ?? null, status: 'pending' })
 
   if (error) throw new Error(error.message)
+
+  // Notify the sponsor (best-effort)
+  try {
+    const [{ data: sponseeProfile }, fellowshipRes] = await Promise.all([
+      admin.from('user_profiles').select('display_name').eq('id', user.id).single(),
+      fellowshipId
+        ? admin.from('fellowships').select('abbreviation').eq('id', fellowshipId).single()
+        : Promise.resolve({ data: null }),
+    ])
+    await sendNotification(sponsorUserId, 'sponsor_connection_request', {
+      requesterName: (sponseeProfile as { display_name: string | null } | null)?.display_name ?? 'Someone',
+      fellowship:    (fellowshipRes.data as { abbreviation: string } | null)?.abbreviation ?? null,
+    })
+  } catch { /* non-fatal */ }
+
   revalidatePath('/dashboard')
 }
 
