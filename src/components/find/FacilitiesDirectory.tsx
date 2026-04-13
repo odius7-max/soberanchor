@@ -90,6 +90,8 @@ interface Facility {
   description: string | null
   is_featured: boolean
   is_verified: boolean
+  is_claimed: boolean
+  source: string | null
   listing_tier: string | null
   latitude: number | null
   longitude: number | null
@@ -222,7 +224,7 @@ export default function FacilitiesDirectory({ facilityType, savedIds = {} }: Pro
       // No geo — load all facilities for this type
       supabase
         .from('facilities')
-        .select('id, name, city, state, facility_type, description, is_featured, is_verified, listing_tier, latitude, longitude, phone, website, accepts_insurance, avg_rating, review_count')
+        .select('id, name, city, state, facility_type, description, is_featured, is_verified, is_claimed, source, listing_tier, latitude, longitude, phone, website, accepts_insurance, avg_rating, review_count')
         .eq('facility_type', facilityType)
         .then(({ data, error }) => {
           if (gen !== loadGenRef.current) return // stale
@@ -474,6 +476,27 @@ export default function FacilitiesDirectory({ facilityType, savedIds = {} }: Pro
         </div>
       ) : (
         <>
+          {filtered.length < 10 && (facilityType === 'sober_living' || facilityType === 'therapist') && (
+            <div style={{ background: 'rgba(42,138,153,0.04)', border: '1px solid rgba(42,138,153,0.15)', borderRadius: 12, padding: '14px 18px', marginBottom: 16 }}>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--navy)', lineHeight: 1.6 }}>
+                <strong>We&rsquo;re actively building our {facilityType === 'sober_living' ? 'sober living' : 'therapist'} directory.</strong>{' '}
+                In the meantime, try searching on{' '}
+                <a
+                  href={`https://www.google.com/maps/search/${facilityType === 'sober_living' ? 'sober+living+homes' : 'addiction+therapist'}+near+me`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: 'var(--teal)', fontWeight: 600 }}
+                >
+                  Google Maps
+                </a>{' '}
+                for {facilityType === 'sober_living' ? 'sober living homes' : 'addiction therapists'} near you, or help us grow by{' '}
+                <Link href="/for-providers" style={{ color: 'var(--teal)', fontWeight: 600 }}>
+                  suggesting a listing
+                </Link>
+                .
+              </p>
+            </div>
+          )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {paginated.map(f => (
               <FacilityCard key={f.id} facility={f} icon={meta.icon} bg={meta.bg} savedId={savedIds[f.id] ?? null} />
@@ -539,9 +562,14 @@ function FacilityCard({ facility: f, icon, bg, savedId }: {
                     ⭐ Featured
                   </span>
                 )}
-                {f.is_verified && (
+                {f.is_verified && f.is_claimed && (
                   <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--teal)', background: 'var(--teal-10)', border: '1px solid rgba(42,138,153,0.2)', borderRadius: 20, padding: '2px 7px' }}>
                     ✓ Verified
+                  </span>
+                )}
+                {!f.is_verified && f.source === 'samhsa' && (
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#4A6785', background: 'rgba(74,103,133,0.08)', border: '1px solid rgba(74,103,133,0.2)', borderRadius: 20, padding: '2px 7px' }}>
+                    SAMHSA Listed
                   </span>
                 )}
               </div>

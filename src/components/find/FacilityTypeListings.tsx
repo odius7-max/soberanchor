@@ -17,7 +17,7 @@ const TYPE_ICONS: Record<string, string> = {
 export default async function FacilityTypeListings({ facilityType }: Props) {
   const { data: facilities } = await supabase
     .from('facilities')
-    .select('id, name, city, state, facility_type, description, is_featured, is_verified, listing_tier')
+    .select('id, name, city, state, facility_type, description, is_featured, is_verified, is_claimed, source, listing_tier')
     .eq('facility_type', facilityType)
     .order('listing_tier', { ascending: false }) // premium → enhanced → basic
     .order('is_featured', { ascending: false })
@@ -37,9 +37,32 @@ export default async function FacilityTypeListings({ facilityType }: Props) {
     )
   }
 
+  const showLowResultBanner = facilities.length < 10 && (facilityType === 'sober_living' || facilityType === 'therapist')
+
   return (
     <>
       <p className="text-sm text-mid mb-5">{facilities.length} listing{facilities.length !== 1 ? 's' : ''} found</p>
+      {showLowResultBanner && (
+        <div className="rounded-xl p-4 mb-5" style={{ background: 'rgba(42,138,153,0.04)', border: '1px solid rgba(42,138,153,0.15)' }}>
+          <p className="text-sm text-navy leading-relaxed m-0">
+            <strong>We&rsquo;re actively building our {facilityType === 'sober_living' ? 'sober living' : 'therapist'} directory.</strong>{' '}
+            In the meantime, try searching on{' '}
+            <a
+              href={`https://www.google.com/maps/search/${facilityType === 'sober_living' ? 'sober+living+homes' : 'addiction+therapist'}+near+me`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-teal font-semibold hover:underline"
+            >
+              Google Maps
+            </a>{' '}
+            for {facilityType === 'sober_living' ? 'sober living homes' : 'addiction therapists'} near you, or help us grow by{' '}
+            <Link href="/for-providers" className="text-teal font-semibold hover:underline">
+              suggesting a listing
+            </Link>
+            .
+          </p>
+        </div>
+      )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {facilities.map((f) => (
           <Link
@@ -61,9 +84,14 @@ export default async function FacilityTypeListings({ facilityType }: Props) {
                       ⭐ Featured
                     </span>
                   )}
-                  {f.is_verified && (
+                  {f.is_verified && f.is_claimed && (
                     <span className="inline-flex items-center gap-1 bg-[var(--teal-10)] border border-[var(--teal-20)] text-teal text-xs font-semibold rounded-full px-3 py-0.5">
                       ✓ Verified
+                    </span>
+                  )}
+                  {!f.is_verified && f.source === 'samhsa' && (
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-0.5" style={{ color: '#4A6785', background: 'rgba(74,103,133,0.08)', border: '1px solid rgba(74,103,133,0.2)' }}>
+                      SAMHSA Listed
                     </span>
                   )}
                 </div>

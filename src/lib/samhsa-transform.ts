@@ -303,7 +303,7 @@ export function transformFacility(raw: SamhsaRawRecord): FacilityInsert | null {
     longitude:           lng,
     facility_type:       deriveFacilityType(categories),
     listing_tier:        'basic',
-    is_verified:         true,
+    is_verified:         false,  // SAMHSA data is not SoberAnchor-verified; show 'SAMHSA Listed' badge instead
     is_featured:         false,
     is_claimed:          false,
     accepts_insurance:   deriveAcceptsInsurance(categories, legacyPayments),

@@ -46,9 +46,14 @@ export default async function FacilityDetail({
             ⭐ Featured
           </span>
         )}
-        {facility.is_verified && (
+        {facility.is_verified && facility.is_claimed && (
           <span className="inline-block bg-[var(--teal-10)] border border-[var(--teal-20)] text-teal text-xs font-medium rounded-full px-3 py-1">
             ✓ Verified
+          </span>
+        )}
+        {!facility.is_verified && facility.source === 'samhsa' && (
+          <span className="inline-block text-xs font-medium rounded-full px-3 py-1" style={{ color: '#4A6785', background: 'rgba(74,103,133,0.08)', border: '1px solid rgba(74,103,133,0.2)' }}>
+            SAMHSA Listed
           </span>
         )}
         <div className="ml-auto">
