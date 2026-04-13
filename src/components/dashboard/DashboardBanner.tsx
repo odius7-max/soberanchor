@@ -22,7 +22,34 @@ const STEPS = [
   { n: 10, s: 'Daily Inventory' }, { n: 11, s: 'Spiritual Growth' }, { n: 12, s: 'Service' },
 ]
 
-const DAY_MILESTONES = [7, 14, 21, 30, 60, 90, 120, 180, 270, 365, 500, 730, 1000, 1095]
+// Early milestones (days)
+const EARLY_MILESTONES = [1, 7, 14, 30, 60, 90, 120, 180, 270]
+
+/** Returns the next milestone day count after daysClean (always exists — annual milestones are infinite). */
+function getNextMilestone(daysClean: number): number {
+  const early = EARLY_MILESTONES.find(m => m > daysClean)
+  if (early !== undefined) return early
+  // Annual: 365, 730, 1095, ... — find the next year boundary
+  const yearsCompleted = Math.floor(daysClean / 365)
+  return (yearsCompleted + 1) * 365
+}
+
+/** True on any milestone day. */
+function checkIsMilestoneDay(daysClean: number): boolean {
+  if (EARLY_MILESTONES.includes(daysClean)) return true
+  return daysClean > 0 && daysClean % 365 === 0
+}
+
+/**
+ * Human-readable milestone label.
+ * < 365 days → "X Days"
+ * ≥ 365 days → "X Years" (365 = 1 Year, 730 = 2 Years, etc.)
+ */
+function fmtMilestoneLabel(days: number): string {
+  if (days < 365) return `${days} Days`
+  const years = Math.round(days / 365)
+  return `${years} Year${years !== 1 ? 's' : ''}`
+}
 
 // Dot colors cycling through fellowship rows
 const DOT_COLORS = ['#D4A574', '#2A8A99', '#27AE60', '#9B59B6', '#E67E22', '#E74C3C']
@@ -198,9 +225,10 @@ export default function DashboardBanner({
   // ── Normal banner derived state ──
   const activeMilestone = milestones[activeIdx] ?? null
   const daysClean = activeMilestone ? calcDays(activeMilestone.sobriety_date) : null
-  const nextM = daysClean !== null ? (DAY_MILESTONES.find(m => m > daysClean) ?? null) : null
-  const daysToNext = nextM !== null && daysClean !== null ? nextM - daysClean : null
-  const isMilestoneDay = daysClean !== null && DAY_MILESTONES.includes(daysClean)
+  const nextMDays = daysClean !== null ? getNextMilestone(daysClean) : null
+  const daysToNext = nextMDays !== null && daysClean !== null ? nextMDays - daysClean : null
+  const nextMLabel = nextMDays !== null ? fmtMilestoneLabel(nextMDays) : null
+  const isMilestoneDay = daysClean !== null && checkIsMilestoneDay(daysClean)
   const quote = QUOTES[(daysClean ?? 0) % QUOTES.length]
 
   function getFellowshipAbbr(fid: string | null): string | null {
@@ -634,28 +662,30 @@ export default function DashboardBanner({
                 className="flex sm:flex-col gap-3"
                 style={{ flexShrink: 0 }}
               >
-                {/* Next milestone card */}
-                {nextM !== null && daysToNext !== null ? (
-                  <div
-                    className="flex-1 sm:flex-none"
-                    style={{ background: 'rgba(212,165,116,0.15)', border: '1px solid rgba(212,165,116,0.25)', borderRadius: 12, padding: '14px 16px', minWidth: 0 }}
-                  >
-                    <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 6 }}>Next Milestone</div>
-                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: '#D4A574', lineHeight: 1, letterSpacing: '-0.5px' }}>{nextM}</div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>{daysToNext} day{daysToNext !== 1 ? 's' : ''} away</div>
-                  </div>
-                ) : (
-                  /* All milestones passed — show total count */
-                  daysClean !== null && (
+                {daysClean !== null && (
+                  <>
+                    {/* Total Days */}
                     <div
                       className="flex-1 sm:flex-none"
                       style={{ background: 'rgba(212,165,116,0.15)', border: '1px solid rgba(212,165,116,0.25)', borderRadius: 12, padding: '14px 16px', minWidth: 0 }}
                     >
-                      <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 6 }}>Total Days</div>
-                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: '#D4A574', lineHeight: 1, letterSpacing: '-0.5px' }}>{daysClean.toLocaleString()}</div>
-                      <div style={{ fontSize: 11, color: '#27AE60', marginTop: 4, fontWeight: 600 }}>All milestones passed ✓</div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 6 }}>Total Days</div>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, color: '#D4A574', lineHeight: 1, letterSpacing: '-0.5px' }}>{daysClean.toLocaleString()}</div>
+                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 4 }}>days sober</div>
                     </div>
-                  )
+
+                    {/* Next Milestone — always present, annual milestones never end */}
+                    {nextMLabel !== null && daysToNext !== null && (
+                      <div
+                        className="flex-1 sm:flex-none"
+                        style={{ background: 'rgba(42,138,153,0.12)', border: '1px solid rgba(42,138,153,0.25)', borderRadius: 12, padding: '14px 16px', minWidth: 0 }}
+                      >
+                        <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 6 }}>Next Milestone</div>
+                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, color: '#fff', lineHeight: 1, letterSpacing: '-0.5px' }}>{nextMLabel}</div>
+                        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>{daysToNext} day{daysToNext !== 1 ? 's' : ''} away</div>
+                      </div>
+                    )}
+                  </>
                 )}
 
                 {/* Currently on step */}
@@ -664,9 +694,9 @@ export default function DashboardBanner({
                     className="flex-1 sm:flex-none"
                     style={{ background: 'rgba(212,165,116,0.15)', border: '1px solid rgba(212,165,116,0.25)', borderRadius: 12, padding: '14px 16px', minWidth: 0 }}
                   >
-                    <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 6 }}>Currently On</div>
-                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: '#fff', lineHeight: 1, letterSpacing: '-0.5px' }}>Step {currentStep}</div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>{STEPS[currentStep - 1]?.s}</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 6 }}>Currently On</div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, color: '#fff', lineHeight: 1, letterSpacing: '-0.5px' }}>Step {currentStep}</div>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>{STEPS[currentStep - 1]?.s}</div>
                   </div>
                 )}
               </div>
