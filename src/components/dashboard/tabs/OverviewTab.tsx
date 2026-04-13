@@ -505,8 +505,9 @@ export default function OverviewTab({ userId, activeFellowshipId, currentStep, c
                 return (
                   <div
                     key={task.id}
-                    className="flex items-start gap-3 py-3"
-                    style={{ borderTop: i > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}
+                    onClick={onViewTasks}
+                    className="flex items-start gap-3 py-3 rounded-lg hover:bg-[var(--warm-gray)] -mx-2 px-2"
+                    style={{ borderTop: i > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none', cursor: 'pointer' }}
                   >
                     <span style={{ fontSize: '18px', flexShrink: 0, marginTop: '1px' }}>{TASK_ICONS[task.category] ?? '⭐'}</span>
                     <div className="flex-1 min-w-0">
