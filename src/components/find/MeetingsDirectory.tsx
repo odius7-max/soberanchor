@@ -11,7 +11,7 @@ import {
   FELLOWSHIP_OPTIONS, DAY_OPTIONS, TIME_OPTIONS, FORMAT_OPTIONS,
   MEETING_SPECIALTY_OPTIONS, LANGUAGE_OPTIONS, ACCESS_OPTIONS, MEETING_SORT_OPTIONS,
   FELLOWSHIP_FINDERS, FINDER_BY_SLUG, QUICK_FELLOWSHIP_CHIPS,
-  haversineMiles, isLiveNow, minutesUntilMeeting, formatCountdown,
+  isLiveNow, minutesUntilMeeting, formatCountdown,
   getTimeRange, fmt12h,
 } from './findUtils'
 
@@ -67,6 +67,10 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
   const [locationLat, setLocationLat] = useState<number | null>(null)
   const [locationLng, setLocationLng] = useState<number | null>(null)
   const [radiusMiles, setRadiusMiles] = useState(15)
+
+  // id → distance_miles from the nearby_meetings PostGIS function
+  const [nearbyDistances, setNearbyDistances] = useState<Map<string, number> | null>(null)
+  const [nearbyLoading, setNearbyLoading] = useState(false)
 
   const [fellowship, setFellowship] = useState(() => searchParams.get('fellowship') ?? '')
   const [days,       setDays]       = useState<string[]>([])
@@ -148,6 +152,39 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
       })
   }, [])
 
+  // ── Nearby meetings via PostGIS — re-runs whenever location or radius changes ─
+  useEffect(() => {
+    if (!locationLat || !locationLng) {
+      setNearbyDistances(null)
+      setNearbyLoading(false)
+      return
+    }
+    setNearbyLoading(true)
+    const supabase = createClient()
+    supabase
+      .rpc('nearby_meetings', {
+        user_lat: locationLat,
+        user_lng: locationLng,
+        radius_miles: radiusMiles,
+        result_limit: 500,
+      })
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('[MeetingsDirectory] nearby_meetings RPC error:', error)
+          setNearbyDistances(new Map()) // empty map → 0 nearby results on error
+          setNearbyLoading(false)
+          return
+        }
+        const map = new Map<string, number>()
+        for (const row of (data ?? []) as Array<{ id: string; distance_miles?: number }>) {
+          map.set(row.id, row.distance_miles ?? 0)
+        }
+        setNearbyDistances(map)
+        setNearbyLoading(false)
+      })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locationLat, locationLng, radiusMiles])
+
   function handleLocationChange(v: { text: string; displayName: string | null; lat: number | null; lng: number | null; radius: number }) {
     setLocationText(v.text)
     setLocationDisplayName(v.displayName)
@@ -199,18 +236,15 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
         const mTypes = m.types ?? []
         if (!mTypes.includes(access)) return false
       }
-      if (hasGeo && m.format !== 'online') {
-        if (!m.latitude || !m.longitude) return false
-        const dist = haversineMiles(locationLat!, locationLng!, m.latitude, m.longitude)
-        if (dist > radiusMiles) return false
+      if (hasGeo && m.format !== 'online' && nearbyDistances !== null) {
+        // nearbyDistances loaded from PostGIS nearby_meetings() function
+        if (!nearbyDistances.has(m.id)) return false
       }
       return true
     })
     .map(m => ({
       ...m,
-      _distance: hasGeo && m.latitude && m.longitude
-        ? haversineMiles(locationLat!, locationLng!, m.latitude, m.longitude)
-        : undefined,
+      _distance: nearbyDistances?.get(m.id),
       _minsUntil: minutesUntilMeeting(m.day_of_week, m.start_time),
     }))
     .sort((a, b) => {
@@ -285,10 +319,10 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
   // ── "Today's meetings" banner — shown when only today's day is filtered ───────
   const showTodayBanner = todayName !== '' && days.length === 1 && days[0] === todayName
 
-  // Contextual result count label when geo is active
+  // Contextual result count label — only once PostGIS nearby data has loaded
   const resultLabel = loading
     ? undefined
-    : hasGeo
+    : (hasGeo && nearbyDistances !== null && !nearbyLoading)
       ? `${filtered.length.toLocaleString()} meeting${filtered.length !== 1 ? 's' : ''} within ${radiusMiles} mi`
       : undefined
 
@@ -301,6 +335,10 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
   ) : geoStatus === 'requesting' ? (
     <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 6 }}>
       Detecting your location…
+    </div>
+  ) : nearbyLoading ? (
+    <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 6 }}>
+      Finding meetings near you…
     </div>
   ) : null
 
