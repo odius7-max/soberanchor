@@ -406,6 +406,24 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
             {sponsee.pendingReviews} step{sponsee.pendingReviews !== 1 ? 's' : ''} awaiting review
           </span>
         )}
+        {sponsee.overdueTasks > 0 && (
+          <span style={{
+            background: 'rgba(192,57,43,0.07)', color: '#c0392b',
+            border: '1px solid rgba(192,57,43,0.22)', borderRadius: 20,
+            padding: '3px 10px', fontSize: 11, fontWeight: 700,
+          }}>
+            {sponsee.overdueTasks} task{sponsee.overdueTasks !== 1 ? 's' : ''} overdue
+          </span>
+        )}
+        {sponsee.activeTasks > 0 && sponsee.overdueTasks === 0 && (
+          <span style={{
+            background: 'rgba(42,138,153,0.07)', color: 'var(--teal)',
+            border: '1px solid rgba(42,138,153,0.2)', borderRadius: 20,
+            padding: '3px 10px', fontSize: 11, fontWeight: 700,
+          }}>
+            📋 {sponsee.activeTasks} active task{sponsee.activeTasks !== 1 ? 's' : ''}
+          </span>
+        )}
         {daysSinceCheckIn > 2 && daysSinceCheckIn !== Infinity && (
           <span style={{
             background: 'rgba(220,53,69,0.07)', color: '#b02a37',

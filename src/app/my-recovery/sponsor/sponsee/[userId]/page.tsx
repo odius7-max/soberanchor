@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import Link from 'next/link'
 import SponseeProgram from '@/components/dashboard/SponseeProgram'
+import SponseeTasksSection from '@/components/dashboard/SponseeTasksSection'
+import type { SponsorTask } from '@/app/actions/sponsorTasks'
 
 const MOOD_META: Record<string, { emoji: string; label: string; color: string }> = {
   great:      { emoji: '😊', label: 'great',      color: '#27AE60' },
@@ -63,6 +65,7 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
     stepWorkRes,
     fellowshipsRes,
     completionsRes,
+    tasksRes,
   ] = await Promise.all([
     admin.from('user_profiles').select('display_name, sobriety_date, current_step').eq('id', sponseeId).single(),
     admin.from('check_ins').select('id, check_in_date, mood, notes, sober_today, meetings_attended').eq('user_id', sponseeId).order('check_in_date', { ascending: false }).limit(5),
@@ -76,6 +79,11 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
     rel.fellowship_id
       ? admin.from('step_completions').select('step_number, is_completed, completed_method, sponsor_note, completed_at').eq('user_id', sponseeId).eq('fellowship_id', rel.fellowship_id)
       : Promise.resolve({ data: [] as { step_number: number; is_completed: boolean | null; completed_method: string | null; sponsor_note: string | null; completed_at: string | null }[], error: null }),
+    admin.from('sponsor_tasks')
+      .select('*')
+      .eq('sponsor_id', user.id)
+      .eq('sponsee_id', sponseeId)
+      .order('assigned_at', { ascending: false }),
   ])
 
   if (!profileRes.data) notFound()
@@ -86,6 +94,7 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
   const stepEntries = stepWorkRes.data ?? []
   const fellowships = (fellowshipsRes.data ?? []) as { id: string; name: string; abbreviation: string | null; slug: string }[]
   const initialCompletions = (completionsRes.data ?? []) as { step_number: number; is_completed: boolean | null; completed_method: string | null; sponsor_note: string | null; completed_at: string | null }[]
+  const sponsorTasks = (tasksRes.data ?? []) as SponsorTask[]
 
   const sobrietyDays = calcDays(profile.sobriety_date)
   const submittedEntries = stepEntries.filter(e => e.review_status === 'submitted')
@@ -141,6 +150,16 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
         currentStep={profile.current_step ?? 1}
         initialCompletions={initialCompletions}
       />
+
+      {/* Tasks */}
+      <div style={card}>
+        <SponseeTasksSection
+          sponseeId={sponseeId}
+          sponseeName={profile.display_name ?? 'your sponsee'}
+          relationshipId={rel.id}
+          initialTasks={sponsorTasks}
+        />
+      </div>
 
       {/* Submitted step work — needs review */}
       {submittedEntries.length > 0 && (

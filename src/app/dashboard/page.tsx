@@ -187,6 +187,8 @@ export default async function DashboardPage() {
       sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60)
       const sixtyDaysAgoStr = sixtyDaysAgo.toISOString().slice(0, 10)
 
+      const today = new Date().toISOString().slice(0, 10)
+
       const [
         sponseeProfilesRes,
         sponseeCheckInsRes,
@@ -195,6 +197,7 @@ export default async function DashboardPage() {
         latestStepWorkRes,
         meetingAttendanceRes,
         sponsorNotesRes,
+        sponsorTasksRes,
       ] = await Promise.all([
         sponseeAdmin.from('user_profiles').select('id,display_name,sobriety_date').in('id', sponseeIds),
         // 60-day check-in history for mood trend + streak calculation
@@ -225,6 +228,12 @@ export default async function DashboardPage() {
           .eq('sponsor_id', userId)
           .in('sponsee_id', sponseeIds)
           .order('created_at', { ascending: false }),
+        // Active sponsor tasks for task counter badges
+        supabase.from('sponsor_tasks')
+          .select('sponsee_id,status,due_date')
+          .eq('sponsor_id', userId)
+          .in('sponsee_id', sponseeIds)
+          .neq('status', 'completed'),
       ])
 
       // Build check-in history per sponsee
@@ -294,6 +303,17 @@ export default async function DashboardPage() {
         }
       }
 
+      // Active + overdue task counts per sponsee
+      const activeTasksBySponsee: Record<string, number> = {}
+      const overdueTasksBySponsee: Record<string, number> = {}
+      for (const t of (sponsorTasksRes.data ?? [])) {
+        const sid = t.sponsee_id as string
+        activeTasksBySponsee[sid] = (activeTasksBySponsee[sid] ?? 0) + 1
+        if (t.due_date && (t.due_date as string) < today) {
+          overdueTasksBySponsee[sid] = (overdueTasksBySponsee[sid] ?? 0) + 1
+        }
+      }
+
       // Build per-sponsee relationships list (with fellowship abbr)
       const relationshipsBySponsee: Record<string, { id: string; fellowshipId: string | null; fellowshipAbbr: string | null }[]> = {}
       for (const [sid, rels] of Object.entries(relsBySponsee)) {
@@ -321,6 +341,8 @@ export default async function DashboardPage() {
           completedSteps,
           totalSteps: 12,
           latestNote: latestNoteBySponsee[sp.id] ?? null,
+          activeTasks: activeTasksBySponsee[sp.id] ?? 0,
+          overdueTasks: overdueTasksBySponsee[sp.id] ?? 0,
         }
       })
     }

@@ -21,12 +21,16 @@ export type NotificationType =
   | 'sponsee_submits_step_work'
   | 'sponsor_connection_request'
   | 'milestone_reminders'
+  | 'sponsor_assigns_task'
+  | 'sponsee_completes_task'
 
 type DataMap = {
   sponsor_feedback_on_step_work: { sponsorName: string; stepNumber: number | null; sectionTitle: string }
   sponsee_submits_step_work:     { sponseeName: string; stepNumber: number | null; sectionTitle: string }
   sponsor_connection_request:    { requesterName: string; fellowship: string | null }
   milestone_reminders:           Record<string, never>
+  sponsor_assigns_task:          { sponsorName: string; taskTitle: string; dueDate: string | null }
+  sponsee_completes_task:        { sponseeName: string; taskTitle: string }
 }
 
 // Column name in notification_preferences that gates each type
@@ -35,6 +39,8 @@ const PREF_COL: Record<NotificationType, string> = {
   sponsee_submits_step_work:     'sponsee_submits_step_work',
   sponsor_connection_request:    'sponsor_connection_request',
   milestone_reminders:           'milestone_reminders',
+  sponsor_assigns_task:          'sponsor_assigns_task',
+  sponsee_completes_task:        'sponsee_completes_task',
 }
 
 // ─── Email template ───────────────────────────────────────────────────────────
@@ -164,6 +170,40 @@ function buildEmail<T extends NotificationType>(
           p(`<strong>${escHtml(requesterName)}</strong> would like you to be their${fellowshipText} sponsor. Log in to accept or decline.`),
           'View request →',
           `${BASE}/dashboard`,
+        ),
+      }
+    }
+
+    case 'sponsor_assigns_task': {
+      const sponsorName = d.sponsorName as string
+      const taskTitle   = d.taskTitle   as string
+      const dueDate     = d.dueDate     as string | null
+      const dueLine     = dueDate ? ` due <strong>${escHtml(new Date(dueDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }))}</strong>` : ''
+      const subject = `${sponsorName} assigned you a task`
+      return {
+        subject,
+        html: layout(
+          subject,
+          h(`New task from ${escHtml(sponsorName)}`) +
+          p(`Your sponsor assigned you: <strong>${escHtml(taskTitle)}</strong>${dueLine}. Log in to view details and mark it complete.`),
+          'View tasks →',
+          `${BASE}/dashboard?tab=tasks`,
+        ),
+      }
+    }
+
+    case 'sponsee_completes_task': {
+      const sponseeName = d.sponseeName as string
+      const taskTitle   = d.taskTitle   as string
+      const subject = `${sponseeName} completed a task`
+      return {
+        subject,
+        html: layout(
+          subject,
+          h(`${escHtml(sponseeName)} completed a task`) +
+          p(`<strong>${escHtml(sponseeName)}</strong> marked <strong>${escHtml(taskTitle)}</strong> as complete.`),
+          'View sponsee →',
+          `${BASE}/my-recovery/sponsor/sponsee`,
         ),
       }
     }

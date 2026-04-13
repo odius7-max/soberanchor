@@ -10,6 +10,8 @@ interface NotifPrefs {
   milestone_reminders:           boolean
   weekly_recovery_summary:       boolean
   meeting_reminders:             boolean
+  sponsor_assigns_task:          boolean
+  sponsee_completes_task:        boolean
 }
 
 const DEFAULT_PREFS: NotifPrefs = {
@@ -19,6 +21,8 @@ const DEFAULT_PREFS: NotifPrefs = {
   milestone_reminders:           true,
   weekly_recovery_summary:       false,
   meeting_reminders:             false,
+  sponsor_assigns_task:          true,
+  sponsee_completes_task:        true,
 }
 
 const NOTIF_ITEMS: { key: keyof NotifPrefs; label: string }[] = [
@@ -26,6 +30,8 @@ const NOTIF_ITEMS: { key: keyof NotifPrefs; label: string }[] = [
   { key: 'sponsee_submits_step_work',     label: 'Sponsee submits step work for review'     },
   { key: 'sponsor_connection_request',    label: 'New sponsor/sponsee connection request'   },
   { key: 'milestone_reminders',           label: 'Sobriety milestone reminders'             },
+  { key: 'sponsor_assigns_task',          label: 'Sponsor assigns me a task'                },
+  { key: 'sponsee_completes_task',        label: 'Sponsee completes a task'                 },
 ]
 
 interface Props {
@@ -66,6 +72,8 @@ export default function SettingsForm({ email, userId }: Props) {
           milestone_reminders:           data.milestone_reminders           ?? DEFAULT_PREFS.milestone_reminders,
           weekly_recovery_summary:       data.weekly_recovery_summary       ?? DEFAULT_PREFS.weekly_recovery_summary,
           meeting_reminders:             data.meeting_reminders             ?? DEFAULT_PREFS.meeting_reminders,
+          sponsor_assigns_task:          data.sponsor_assigns_task          ?? DEFAULT_PREFS.sponsor_assigns_task,
+          sponsee_completes_task:        data.sponsee_completes_task        ?? DEFAULT_PREFS.sponsee_completes_task,
         })
       } else {
         // First time — insert default row
