@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef, useTransition } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { updateTaskStatus } from '@/app/actions/sponsorTasks'
 import type { SponsorTask } from '@/app/actions/sponsorTasks'
 
 interface ReadingAssignment { id: string; title: string; source: string | null; is_completed: boolean; due_date: string | null; created_at: string }
@@ -276,7 +275,6 @@ export default function TasksTab({ userId, readingAssignments, hasSponsor }: Pro
   const [sponsorTasks, setSponsorTasks] = useState<SponsorTask[]>([])
   const [loadingTasks, setLoadingTasks] = useState(true)
   const [toggling, setToggling]         = useState<string | null>(null)
-  const [, startTransition]             = useTransition()
 
   // Fetch sponsor_tasks assigned to this user (re-runs on every mount)
   useEffect(() => {
@@ -303,7 +301,7 @@ export default function TasksTab({ userId, readingAssignments, hasSponsor }: Pro
     setToggling(null)
   }
 
-  // Part 2 fix: check server action result and revert on error
+  // Direct client-side Supabase update — no server action to avoid POST 500s
   async function handleSponsorTaskUpdate(
     id: string,
     status: 'assigned' | 'in_progress' | 'completed',
@@ -323,22 +321,33 @@ export default function TasksTab({ userId, readingAssignments, hasSponsor }: Pro
         : t
     ))
 
-    const result = await updateTaskStatus({ taskId: id, status, sponseeNote: note })
+    const supabase = createClient()
+    const updates: Record<string, unknown> = {
+      status,
+      updated_at: new Date().toISOString(),
+    }
+    if (status === 'completed') {
+      updates.completed_at = new Date().toISOString()
+      if (note !== undefined) updates.sponsee_note = note.trim() || null
+    } else {
+      updates.completed_at = null
+    }
 
-    if (result.error) {
-      // Server action failed — revert by re-fetching fresh DB state
-      console.error('[TasksTab] updateTaskStatus failed:', result.error)
-      const supabase = createClient()
+    const { error } = await supabase
+      .from('sponsor_tasks')
+      .update(updates)
+      .eq('id', id)
+
+    if (error) {
+      // Write failed — revert by re-fetching fresh DB state
+      console.error('[TasksTab] task update failed:', error)
       const { data } = await supabase
         .from('sponsor_tasks')
         .select('*')
         .eq('sponsee_id', userId)
         .order('assigned_at', { ascending: false })
       if (data) setSponsorTasks(data as SponsorTask[])
-      return
     }
-
-    startTransition(() => { router.refresh() })
   }
 
   const hasTasks   = hasSponsor && (readingAssignments.length > 0 || sponsorTasks.length > 0)
