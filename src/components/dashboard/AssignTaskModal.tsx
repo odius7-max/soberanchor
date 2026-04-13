@@ -30,16 +30,18 @@ interface Props {
   relationshipId: string
   onClose: () => void
   onAssigned: (task: SponsorTask) => void
+  editTask?: SponsorTask  // when provided, modal is in edit mode
 }
 
-export default function AssignTaskModal({ sponseeId, sponseeName, relationshipId, onClose, onAssigned }: Props) {
-  const [title, setTitle]             = useState('')
-  const [description, setDescription] = useState('')
-  const [category, setCategory]       = useState('custom')
-  const [dueDate, setDueDate]         = useState('')
-  const [isRecurring, setIsRecurring] = useState(false)
-  const [recurrence, setRecurrence]   = useState('weekly')
-  const [sponsorNote, setSponsorNote] = useState('')
+export default function AssignTaskModal({ sponseeId, sponseeName, relationshipId, onClose, onAssigned, editTask }: Props) {
+  const isEdit = !!editTask
+  const [title, setTitle]             = useState(editTask?.title ?? '')
+  const [description, setDescription] = useState(editTask?.description ?? '')
+  const [category, setCategory]       = useState(editTask?.category ?? 'custom')
+  const [dueDate, setDueDate]         = useState(editTask?.due_date ?? '')
+  const [isRecurring, setIsRecurring] = useState(editTask?.is_recurring ?? false)
+  const [recurrence, setRecurrence]   = useState(editTask?.recurrence_interval ?? 'weekly')
+  const [sponsorNote, setSponsorNote] = useState(editTask?.sponsor_note ?? '')
   const [saving, setSaving]           = useState(false)
   const [error, setError]             = useState<string | null>(null)
 
@@ -65,34 +67,61 @@ export default function AssignTaskModal({ sponseeId, sponseeName, relationshipId
     setError(null)
     try {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { setError('Not authenticated'); return }
 
-      const { data: task, error: insertError } = await supabase
-        .from('sponsor_tasks')
-        .insert({
-          sponsor_relationship_id: relationshipId,
-          sponsor_id: user.id,
-          sponsee_id: sponseeId,
-          title: title.trim(),
-          description: description.trim() || null,
-          category,
-          status: 'assigned',
-          due_date: dueDate || null,
-          is_recurring: isRecurring,
-          recurrence_interval: isRecurring ? recurrence : null,
-          sponsor_note: sponsorNote.trim() || null,
-        })
-        .select('*')
-        .single()
+      if (isEdit && editTask) {
+        // ── Edit mode: UPDATE existing task ─────────────────────────────────
+        const { data: task, error: updateError } = await supabase
+          .from('sponsor_tasks')
+          .update({
+            title: title.trim(),
+            description: description.trim() || null,
+            category,
+            due_date: dueDate || null,
+            is_recurring: isRecurring,
+            recurrence_interval: isRecurring ? recurrence : null,
+            sponsor_note: sponsorNote.trim() || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', editTask.id)
+          .select('*')
+          .single()
 
-      if (insertError) { setError(insertError.message); return }
-      if (!task) { setError('Insert returned no data — check RLS policies on sponsor_tasks'); return }
+        if (updateError) { setError(updateError.message); return }
+        if (!task) { setError('Update returned no data — check RLS policies on sponsor_tasks'); return }
 
-      onAssigned(task as SponsorTask)
-      close()
+        onAssigned(task as SponsorTask)
+        close()
+      } else {
+        // ── Create mode: INSERT new task ────────────────────────────────────
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) { setError('Not authenticated'); return }
+
+        const { data: task, error: insertError } = await supabase
+          .from('sponsor_tasks')
+          .insert({
+            sponsor_relationship_id: relationshipId,
+            sponsor_id: user.id,
+            sponsee_id: sponseeId,
+            title: title.trim(),
+            description: description.trim() || null,
+            category,
+            status: 'assigned',
+            due_date: dueDate || null,
+            is_recurring: isRecurring,
+            recurrence_interval: isRecurring ? recurrence : null,
+            sponsor_note: sponsorNote.trim() || null,
+          })
+          .select('*')
+          .single()
+
+        if (insertError) { setError(insertError.message); return }
+        if (!task) { setError('Insert returned no data — check RLS policies on sponsor_tasks'); return }
+
+        onAssigned(task as SponsorTask)
+        close()
+      }
     } catch (err) {
-      console.error('[AssignTaskModal] insert threw:', err)
+      console.error('[AssignTaskModal] submit threw:', err)
       setError('Something went wrong. Please try again.')
     } finally {
       setSaving(false)
@@ -129,9 +158,11 @@ export default function AssignTaskModal({ sponseeId, sponseeName, relationshipId
         <div style={{ padding: '20px 24px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--navy)' }}>
-              Assign Task
+              {isEdit ? 'Edit Task' : 'Assign Task'}
             </div>
-            <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 2 }}>to {sponseeName}</div>
+            <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 2 }}>
+              {isEdit ? `for ${sponseeName}` : `to ${sponseeName}`}
+            </div>
           </div>
           <button onClick={close} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--mid)', lineHeight: 1, padding: 4 }}>×</button>
         </div>
@@ -291,7 +322,7 @@ export default function AssignTaskModal({ sponseeId, sponseeName, relationshipId
                 fontFamily: 'var(--font-body)',
               }}
             >
-              {saving ? 'Assigning…' : 'Assign Task'}
+              {saving ? (isEdit ? 'Saving…' : 'Assigning…') : (isEdit ? 'Save Changes' : 'Assign Task')}
             </button>
           </div>
         </form>

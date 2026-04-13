@@ -9,6 +9,13 @@ import { markActivityRead } from '@/app/dashboard/activity/actions'
 import { removeSponsorRelationship } from '@/app/dashboard/actions'
 import { useSponsorAccess } from '@/hooks/useSponsorAccess'
 import type { ActiveSponsor } from '@/components/dashboard/DashboardShell'
+import type { SponsorTask } from '@/app/actions/sponsorTasks'
+
+const TASK_ICONS: Record<string, string> = {
+  reading: '📖', writing: '✏️', action: '✅', meeting: '🤝',
+  amends: '💛', service: '🙌', prayer: '🙏', meditation: '🧘',
+  reflection: '💭', custom: '⭐',
+}
 
 const STEPS = [
   { n: 1, s: 'Powerlessness', desc: 'We admitted we were powerless over our addiction' },
@@ -57,9 +64,10 @@ interface Props {
   displayName?: string
   onCheckIn: () => void
   onJournal: () => void
+  onViewTasks: () => void
 }
 
-export default function OverviewTab({ userId, activeFellowshipId, currentStep, completedSteps, allStepsDone, journalCount, stepWorkCount, recentCheckIns, meetingsThisWeek, meetingsTotal, recentMeetings, readingAssignments, activeSponsors, isAvailableSponsor, activityItems, displayName, onCheckIn, onJournal }: Props) {
+export default function OverviewTab({ userId, activeFellowshipId, currentStep, completedSteps, allStepsDone, journalCount, stepWorkCount, recentCheckIns, meetingsThisWeek, meetingsTotal, recentMeetings, readingAssignments, activeSponsors, isAvailableSponsor, activityItems, displayName, onCheckIn, onJournal, onViewTasks }: Props) {
   const router = useRouter()
   const step = STEPS[currentStep - 1]
   const [toggling, setToggling] = useState<string | null>(null)
@@ -82,6 +90,20 @@ export default function OverviewTab({ userId, activeFellowshipId, currentStep, c
   const { trialAvailable, refresh: refreshAccess } = useSponsorAccess(userId)
 
   const unreadCount = activityItems.filter(i => !i.is_read).length
+
+  // Fetch active sponsor tasks for the Tasks card
+  const [sponsorTasks, setSponsorTasks] = useState<SponsorTask[]>([])
+  useEffect(() => {
+    const supabase = createClient()
+    supabase
+      .from('sponsor_tasks')
+      .select('*')
+      .eq('sponsee_id', userId)
+      .neq('status', 'completed')
+      .order('assigned_at', { ascending: false })
+      .then(({ data }) => setSponsorTasks((data ?? []) as SponsorTask[]))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId])
 
   // Mark all unread as read after rendering
   useEffect(() => {
@@ -438,6 +460,79 @@ export default function OverviewTab({ userId, activeFellowshipId, currentStep, c
           View all activity →
         </a>
       </div>
+
+      {/* Tasks from sponsor */}
+      {activeSponsors.length > 0 && (
+        <div className={card}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-navy" style={{ fontSize: '15px' }}>
+              📋 My Tasks
+              {sponsorTasks.length > 0 && (
+                <span style={{ marginLeft: 8, fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '20px', background: 'rgba(42,138,153,0.1)', color: 'var(--teal)', verticalAlign: 'middle' }}>
+                  {sponsorTasks.length} active
+                </span>
+              )}
+            </h3>
+            {sponsorTasks.length > 0 && (
+              <button
+                onClick={onViewTasks}
+                style={{ fontSize: '12px', padding: '5px 12px', borderRadius: '8px', background: 'var(--warm-gray)', border: '1px solid var(--border)', color: 'var(--dark)', cursor: 'pointer', fontFamily: 'var(--font-body)', fontWeight: 600 }}
+              >
+                All tasks
+              </button>
+            )}
+          </div>
+
+          {sponsorTasks.length === 0 ? (
+            <div className="text-center py-6">
+              <div style={{ fontSize: '28px', marginBottom: '8px' }}>📋</div>
+              <div style={{ fontSize: '14px', color: 'var(--mid)' }}>No tasks assigned yet.</div>
+              <div style={{ fontSize: '12px', color: 'var(--mid)', marginTop: '4px' }}>Your sponsor will assign tasks here.</div>
+            </div>
+          ) : (
+            <>
+              {sponsorTasks.slice(0, 3).map((task, i) => {
+                const overdue = task.due_date && task.status !== 'completed'
+                  ? new Date(task.due_date + 'T00:00:00') < new Date(new Date().toDateString())
+                  : false
+                return (
+                  <div
+                    key={task.id}
+                    className="flex items-start gap-3 py-3"
+                    style={{ borderTop: i > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}
+                  >
+                    <span style={{ fontSize: '18px', flexShrink: 0, marginTop: '1px' }}>{TASK_ICONS[task.category] ?? '⭐'}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--navy)' }}>{task.title}</span>
+                        {overdue && (
+                          <span style={{ fontSize: '10px', fontWeight: 700, padding: '1px 6px', borderRadius: '20px', background: 'rgba(192,57,43,0.1)', color: '#c0392b' }}>OVERDUE</span>
+                        )}
+                        {task.status === 'in_progress' && !overdue && (
+                          <span style={{ fontSize: '10px', fontWeight: 700, padding: '1px 6px', borderRadius: '20px', background: 'rgba(42,138,153,0.1)', color: 'var(--teal)' }}>IN PROGRESS</span>
+                        )}
+                      </div>
+                      {task.due_date && (
+                        <div style={{ fontSize: '11px', color: overdue ? '#c0392b' : 'var(--mid)', marginTop: '2px', fontWeight: overdue ? 700 : 400 }}>
+                          Due {fmtDate(task.due_date)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+              {sponsorTasks.length > 3 && (
+                <button
+                  onClick={onViewTasks}
+                  style={{ display: 'block', width: '100%', textAlign: 'center', fontSize: '13px', fontWeight: 600, color: 'var(--teal)', marginTop: '14px', paddingTop: '12px', borderTop: '1px solid rgba(0,0,0,0.06)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
+                >
+                  View all {sponsorTasks.length} tasks →
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      )}
 
     </div>
   )

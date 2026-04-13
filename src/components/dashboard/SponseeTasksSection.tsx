@@ -36,6 +36,7 @@ interface Props {
 
 export default function SponseeTasksSection({ sponseeId, sponseeName, relationshipId, initialTasks }: Props) {
   const [showModal, setShowModal]       = useState(false)
+  const [editingTask, setEditingTask]   = useState<SponsorTask | null>(null)
   const [tasks, setTasks]               = useState<SponsorTask[]>(initialTasks)
   const [deletingId, setDeletingId]     = useState<string | null>(null)
 
@@ -44,6 +45,11 @@ export default function SponseeTasksSection({ sponseeId, sponseeName, relationsh
 
   function handleAssigned(task: SponsorTask) {
     setTasks(prev => [task, ...prev])
+  }
+
+  function handleEdited(updated: SponsorTask) {
+    setTasks(prev => prev.map(t => t.id === updated.id ? updated : t))
+    setEditingTask(null)
   }
 
   async function handleDelete(id: string) {
@@ -140,18 +146,29 @@ export default function SponseeTasksSection({ sponseeId, sponseeName, relationsh
                     )}
                   </div>
                 </div>
-                <button
-                  onClick={() => handleDelete(task.id)}
-                  disabled={deletingId === task.id}
-                  title="Delete task"
-                  style={{
-                    background: 'none', border: 'none', cursor: deletingId === task.id ? 'wait' : 'pointer',
-                    color: 'var(--mid)', fontSize: 16, padding: 4, flexShrink: 0, opacity: 0.6,
-                    lineHeight: 1,
-                  }}
-                >
-                  ✕
-                </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
+                  <button
+                    onClick={() => setEditingTask(task)}
+                    title="Edit task"
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      color: 'var(--mid)', fontSize: 13, padding: 4, lineHeight: 1, opacity: 0.7,
+                    }}
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={() => handleDelete(task.id)}
+                    disabled={deletingId === task.id}
+                    title="Delete task"
+                    style={{
+                      background: 'none', border: 'none', cursor: deletingId === task.id ? 'wait' : 'pointer',
+                      color: 'var(--mid)', fontSize: 14, padding: 4, lineHeight: 1, opacity: 0.5,
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
             )
           })}
@@ -212,6 +229,17 @@ export default function SponseeTasksSection({ sponseeId, sponseeName, relationsh
           relationshipId={relationshipId}
           onClose={() => setShowModal(false)}
           onAssigned={handleAssigned}
+        />
+      )}
+
+      {editingTask && (
+        <AssignTaskModal
+          sponseeId={sponseeId}
+          sponseeName={sponseeName}
+          relationshipId={relationshipId}
+          editTask={editingTask}
+          onClose={() => setEditingTask(null)}
+          onAssigned={handleEdited}
         />
       )}
     </div>
