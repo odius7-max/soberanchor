@@ -133,16 +133,28 @@ function generateSamhsaId(name: string, street: string, city: string, state: str
 }
 
 /**
+ * Deterministic 6-char base-36 hash of a string.
+ * Uses a djb2-style multiply-and-XOR so every unique samhsa_id
+ * produces a unique-enough suffix regardless of shared zip/state tails.
+ */
+function slugSuffix(str: string): string {
+  let h = 5381
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(31, h) + str.charCodeAt(i) | 0
+  }
+  return Math.abs(h).toString(36).padStart(6, '0').slice(-6)
+}
+
+/**
  * Generate a URL-friendly slug for the facility detail page.
- * Appends the last 6 alphanumeric chars of samhsa_id to guarantee uniqueness
- * even when multiple locations share the same name, city, and state.
+ * Appends a 6-char hash of samhsa_id to guarantee uniqueness even when
+ * multiple facilities share the same name, city, state, and zip code.
  */
 function generateSlug(name: string, city: string, state: string, samhsaId: string): string {
   const n  = kebab(name).slice(0, 50)
   const c  = kebab(city).slice(0, 15)
   const st = state.toLowerCase().replace(/[^a-z]/g, '').slice(0, 2)
-  const suffix = samhsaId.replace(/[^a-z0-9]/gi, '').slice(-6).toLowerCase()
-  return [n, c, st, suffix].filter(Boolean).join('-')
+  return [n, c, st, slugSuffix(samhsaId)].filter(Boolean).join('-')
 }
 
 /**
