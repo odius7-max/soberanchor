@@ -372,7 +372,21 @@ async function queryMeetings(
   const { data: fellowships } = await supabase
     .from("fellowships").select("id, name, slug").in("slug", slugs);
 
-  if (!fellowships?.length) return [];
+  // If no fellowship matched but we have name keywords, fall back to a name-only
+  // search across all meetings (no fellowship filter) so "village" still finds
+  // meetings even when no fellowship slug was classified.
+  if (!fellowships?.length) {
+    if (!nameKeywords?.length) return [];
+    const MEETING_SELECT = "id, name, fellowship_id, city, state, format, day_of_week, start_time, meeting_url, slug";
+    function nameOnlyOrFilter(keywords: string[]): string {
+      return keywords.map((kw) => `name.ilike.%${kw.replace(/%/g, "")}%`).join(",");
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let qName: any = supabase.from("meetings").select(MEETING_SELECT).or(nameOnlyOrFilter(nameKeywords)).limit(limit);
+    if (location) qName = qName.ilike("city", `%${location}%`);
+    const { data: nameData } = await qName;
+    return ((nameData ?? []) as Record<string, unknown>[]).map((m) => toMeeting(m, {}));
+  }
 
   const idToFellowship = Object.fromEntries(
     fellowships.map((f) => [f.id, { name: f.name as string, slug: f.slug as string }])
@@ -438,26 +452,42 @@ async function queryMeetings(
   return results.slice(0, limit);
 }
 
-async function queryFacilities(types: string[], location: string | null, limit: number): Promise<FacilityResult[]> {
-  if (!types.length) return [];
+async function queryFacilities(
+  types: string[],
+  location: string | null,
+  limit: number,
+  nameKeywords?: string[] | null,
+): Promise<FacilityResult[]> {
+  // Need at least a type filter or a name keyword to run a meaningful query
+  if (!types.length && !nameKeywords?.length) return [];
 
   const FACILITY_SELECT = "id, name, facility_type, city, state, phone, website, accepts_insurance, slug, is_verified, is_featured";
 
-  let q = supabase.from("facilities").select(FACILITY_SELECT)
-    .in("facility_type", types)
+  function facilityNameOrFilter(keywords: string[]): string {
+    return keywords.map((kw) => `name.ilike.%${kw.replace(/%/g, "")}%`).join(",");
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let q: any = supabase.from("facilities").select(FACILITY_SELECT)
     .order("is_featured", { ascending: false })
     .order("is_verified",  { ascending: false })
     .limit(limit);
 
-  if (location) q = q.ilike("city", `%${location}%`);
+  if (types.length)           q = q.in("facility_type", types);
+  if (location)               q = q.ilike("city", `%${location}%`);
+  if (nameKeywords?.length)   q = q.or(facilityNameOrFilter(nameKeywords));
 
   const { data } = await q;
 
+  // Retry without location filter if no results
   if (!data?.length && location) {
-    const { data: fallback } = await supabase.from("facilities").select(FACILITY_SELECT)
-      .in("facility_type", types)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let qFallback: any = supabase.from("facilities").select(FACILITY_SELECT)
       .order("is_featured", { ascending: false })
       .limit(limit);
+    if (types.length)         qFallback = qFallback.in("facility_type", types);
+    if (nameKeywords?.length) qFallback = qFallback.or(facilityNameOrFilter(nameKeywords));
+    const { data: fallback } = await qFallback;
     return (fallback ?? []) as FacilityResult[];
   }
 
@@ -491,7 +521,8 @@ async function fetchFacilities(intent: SearchIntent, limit: number): Promise<Fac
     types = inferred;
   }
 
-  return queryFacilities(types, intent.location, limit);
+  const nameKeywords = intent.name_keywords?.length ? intent.name_keywords : null;
+  return queryFacilities(types, intent.location, limit, nameKeywords);
 }
 
 async function fetchArticles(intent: SearchIntent, context: SearchContext): Promise<ArticleResult[]> {
