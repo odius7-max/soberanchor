@@ -222,14 +222,23 @@ export default function DashboardBanner({
   const [fFellowshipId, setFFellowshipId] = useState('')
   const [fIsPrimary, setFIsPrimary] = useState(false)
 
+  // Track client-side mount. calcDays() uses new Date(dateStr+'T00:00:00') which Node.js
+  // parses as UTC midnight while browsers parse as local midnight — off by the timezone offset.
+  // Gating all time-dependent calculations on `mounted` ensures SSR and the initial client
+  // render both produce null (no mismatch), eliminating React hydration error #418.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+
   // ── Normal banner derived state ──
   const activeMilestone = milestones[activeIdx] ?? null
-  const daysClean = activeMilestone ? calcDays(activeMilestone.sobriety_date) : null
+  // Only compute after mount — avoids UTC vs local-timezone day-count mismatch
+  const daysClean = (mounted && activeMilestone) ? calcDays(activeMilestone.sobriety_date) : null
   const nextMDays = daysClean !== null ? getNextMilestone(daysClean) : null
   const daysToNext = nextMDays !== null && daysClean !== null ? nextMDays - daysClean : null
   const nextMLabel = nextMDays !== null ? fmtMilestoneLabel(nextMDays) : null
   const isMilestoneDay = daysClean !== null && checkIsMilestoneDay(daysClean)
-  const quote = QUOTES[(daysClean ?? 0) % QUOTES.length]
+  // Stable quote index (0) on SSR/initial render; correct index after mount.
+  const quote = QUOTES[mounted ? (daysClean ?? 0) % QUOTES.length : 0]
 
   function getFellowshipAbbr(fid: string | null): string | null {
     if (!fid) return null
@@ -431,7 +440,7 @@ export default function DashboardBanner({
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
               {milestones.map(m => {
                 const badge = getFellowshipAbbr(m.fellowship_id)
-                const days = calcDays(m.sobriety_date)
+                const days = mounted ? calcDays(m.sobriety_date) : 0
 
                 if (confirmDeleteId === m.id) {
                   return (
@@ -465,7 +474,7 @@ export default function DashboardBanner({
                           {m.is_primary && <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: 'rgba(212,165,116,0.2)', border: '1px solid rgba(212,165,116,0.35)', color: '#D4A574', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Primary</span>}
                           {badge && <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: 'rgba(42,138,153,0.2)', border: '1px solid rgba(42,138,153,0.25)', color: 'rgba(255,255,255,0.75)' }}>{badge}</span>}
                         </div>
-                        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>
+                        <div suppressHydrationWarning style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>
                           {fmtDate(m.sobriety_date)} · <strong style={{ color: 'rgba(255,255,255,0.8)', fontWeight: 700 }}>{days.toLocaleString()}</strong> days
                         </div>
                       </div>
@@ -549,7 +558,7 @@ export default function DashboardBanner({
                     {milestones.map((m, i) => {
                       const isActive = i === activeIdx
                       const abbr = getFellowshipAbbr(m.fellowship_id)
-                      const days = calcDays(m.sobriety_date)
+                      const days = mounted ? calcDays(m.sobriety_date) : 0
                       const dot = DOT_COLORS[i % DOT_COLORS.length]
 
                       return (
@@ -592,7 +601,7 @@ export default function DashboardBanner({
                               {fmtDateShort(m.sobriety_date)}
                             </span>
                             {/* Days */}
-                            <div style={{ textAlign: 'right' }}>
+                            <div suppressHydrationWarning style={{ textAlign: 'right' }}>
                               {isActive ? (
                                 <span style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: '#fff', letterSpacing: '-0.5px', lineHeight: 1 }}>
                                   {days.toLocaleString()}<span style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.5)', marginLeft: 3 }}>days</span>
@@ -629,7 +638,7 @@ export default function DashboardBanner({
                               {fmtDateShort(m.sobriety_date)}
                             </span>
                             {/* Days */}
-                            <div style={{ textAlign: 'right' }}>
+                            <div suppressHydrationWarning style={{ textAlign: 'right' }}>
                               {isActive ? (
                                 <span style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#fff', letterSpacing: '-0.5px' }}>
                                   {days.toLocaleString()}<span style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.5)', marginLeft: 2 }}>d</span>

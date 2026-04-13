@@ -70,6 +70,7 @@ interface Props {
 export default function OverviewTab({ userId, activeFellowshipId, currentStep, completedSteps, allStepsDone, journalCount, stepWorkCount, recentCheckIns, meetingsThisWeek, meetingsTotal, recentMeetings, readingAssignments, activeSponsors, isAvailableSponsor, activityItems, displayName, onCheckIn, onJournal, onViewTasks }: Props) {
   const router = useRouter()
   const step = STEPS[currentStep - 1]
+  const [mounted, setMounted] = useState(false)
   const [toggling, setToggling] = useState<string | null>(null)
   const [sponsorAvailable, setSponsorAvailable] = useState(isAvailableSponsor)
   const [togglingRole, setTogglingRole] = useState(false)
@@ -110,6 +111,10 @@ export default function OverviewTab({ userId, activeFellowshipId, currentStep, c
     if (unreadCount > 0) markActivityRead(userId)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Set mounted flag so time-dependent values (relTime, overdue) only compute
+  // on the client — prevents React hydration error #418 from UTC vs local-timezone drift.
+  useEffect(() => setMounted(true), [])
 
   async function toggleSponsorAvailability() {
     const next = !sponsorAvailable
@@ -285,7 +290,7 @@ export default function OverviewTab({ userId, activeFellowshipId, currentStep, c
               <span style={{ fontSize: '22px', flexShrink: 0 }}>{m?.emoji ?? '😶'}</span>
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-center">
-                  <span className="font-semibold text-navy" style={{ fontSize: '13px' }}>{fmtDate(ci.check_in_date)}</span>
+                  <span suppressHydrationWarning className="font-semibold text-navy" style={{ fontSize: '13px' }}>{fmtDate(ci.check_in_date)}</span>
                   {m && <span className="font-semibold" style={{ fontSize: '11px', color: m.color }}>{m.label}</span>}
                 </div>
                 <div className="text-mid truncate" style={{ fontSize: '13px', marginTop: '2px' }}>{ci.notes ?? <span style={{ color: '#ccc' }}>No notes</span>}</div>
@@ -319,7 +324,7 @@ export default function OverviewTab({ userId, activeFellowshipId, currentStep, c
               <div className="font-medium text-dark" style={{ fontSize: '13px' }}>{m.meeting_name}</div>
               {m.fellowship_name && <div style={{ fontSize: '11px', color: 'var(--mid)', marginTop: '1px' }}>{m.fellowship_name}</div>}
             </div>
-            <div style={{ fontSize: '12px', color: 'var(--mid)', flexShrink: 0, marginLeft: '8px' }}>{fmtDate(m.attended_at)}</div>
+            <div suppressHydrationWarning style={{ fontSize: '12px', color: 'var(--mid)', flexShrink: 0, marginLeft: '8px' }}>{fmtDate(m.attended_at)}</div>
           </div>
         ))}
       </div>
@@ -449,7 +454,7 @@ export default function OverviewTab({ userId, activeFellowshipId, currentStep, c
                   <div className="truncate" style={{ fontSize: '12px', color: 'var(--mid)', marginTop: '2px' }}>{item.description}</div>
                 )}
               </div>
-              <div style={{ fontSize: '11px', color: '#bbb', flexShrink: 0, marginLeft: '4px', paddingTop: '1px' }}>{relTime(item.created_at)}</div>
+              <div suppressHydrationWarning style={{ fontSize: '11px', color: '#bbb', flexShrink: 0, marginLeft: '4px', paddingTop: '1px' }}>{relTime(item.created_at)}</div>
             </div>
           )
         })}
@@ -492,7 +497,9 @@ export default function OverviewTab({ userId, activeFellowshipId, currentStep, c
           ) : (
             <>
               {sponsorTasks.slice(0, 3).map((task, i) => {
-                const overdue = task.due_date && task.status !== 'completed'
+                // Gate on mounted — new Date().toDateString() is timezone-sensitive;
+                // server (UTC) and client (local) can disagree on "today" near midnight.
+                const overdue = mounted && task.due_date && task.status !== 'completed'
                   ? new Date(task.due_date + 'T00:00:00') < new Date(new Date().toDateString())
                   : false
                 return (
