@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import AddCustomMeetingModal, { type FellowshipOption, type EditableMeeting } from './AddCustomMeetingModal'
+import { FINDER_BY_ABBR } from '@/components/find/findUtils'
 
 interface Meeting {
   id: string
@@ -489,17 +490,55 @@ export default function MeetingCheckin({ userId }: Props) {
                 {search.trim()
                   ? <>No meetings match &ldquo;{search}&rdquo;.</>
                   : filter !== 'All'
-                    ? (
-                      <div>
-                        <div style={{ marginBottom: '8px' }}>No {filter} meetings found.</div>
-                        <button
-                          onClick={() => setAddModalOpen(true)}
-                          style={{ fontSize: '13px', fontWeight: 600, color: '#2A8A99', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
-                        >
-                          Add a custom {filter} meeting
-                        </button>
-                      </div>
-                    )
+                    ? (() => {
+                        const finder = FINDER_BY_ABBR[filter] ?? null
+                        return (
+                          <div style={{ maxWidth: 420, margin: '0 auto' }}>
+                            {finder ? (
+                              <>
+                                <div style={{ marginBottom: '10px', fontWeight: 600, color: 'var(--navy)', fontSize: '15px' }}>
+                                  {filter} meetings coming soon
+                                </div>
+                                <div style={{ fontSize: '13px', color: 'var(--mid)', marginBottom: '16px', lineHeight: 1.6 }}>
+                                  We&apos;re working on bringing {filter} meetings directly to SoberAnchor.
+                                  In the meantime, find meetings at:
+                                </div>
+                                <a
+                                  href={finder.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{
+                                    display: 'inline-block', fontSize: '13px', fontWeight: 700,
+                                    padding: '9px 20px', borderRadius: '10px',
+                                    background: 'var(--navy)', color: '#fff',
+                                    textDecoration: 'none', marginBottom: '14px',
+                                  }}
+                                >
+                                  {finder.label} →
+                                </a>
+                                <div style={{ borderTop: '1px solid var(--border)', paddingTop: '14px', marginTop: '4px' }}>
+                                  <button
+                                    onClick={() => setAddModalOpen(true)}
+                                    style={{ fontSize: '13px', fontWeight: 600, color: '#2A8A99', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontFamily: 'var(--font-body)' }}
+                                  >
+                                    Or add a custom {filter} meeting
+                                  </button>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <div style={{ marginBottom: '8px' }}>No {filter} meetings found.</div>
+                                <button
+                                  onClick={() => setAddModalOpen(true)}
+                                  style={{ fontSize: '13px', fontWeight: 600, color: '#2A8A99', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                                >
+                                  Add a custom {filter} meeting
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )
+                      })()
                     : 'No meetings found.'}
               </div>
             ) : (

@@ -99,6 +99,61 @@ export const MEETING_SORT_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'alphabetical', label: 'A–Z' },
 ]
 
+// ---------------------------------------------------------------------------
+// Fellowship finder / external meeting locators
+// ---------------------------------------------------------------------------
+
+export interface FellowshipFinder {
+  /** Matches fellowships.slug in the DB and FELLOWSHIP_OPTIONS value */
+  slug: string
+  /** Short abbreviation for chip display */
+  abbreviation: string
+  /** Full fellowship name */
+  name: string
+  /** Official external meeting finder URL */
+  url: string
+  /** Button label, e.g. "Find NA Meetings" */
+  label: string
+}
+
+export const FELLOWSHIP_FINDERS: FellowshipFinder[] = [
+  { slug: 'na',                 abbreviation: 'NA',       name: 'Narcotics Anonymous',          url: 'https://www.na.org/meetingsearch/',                               label: 'NA World Services Meeting Search'   },
+  { slug: 'al-anon',            abbreviation: 'Al-Anon',  name: 'Al-Anon',                      url: 'https://al-anon.org/al-anon-meetings/find-an-al-anon-meeting/',   label: 'Al-Anon Meeting Finder'             },
+  { slug: 'ga',                 abbreviation: 'GA',       name: 'Gamblers Anonymous',            url: 'https://www.gamblersanonymous.org/ga/locations',                  label: 'GA Meeting Directory'               },
+  { slug: 'oa',                 abbreviation: 'OA',       name: 'Overeaters Anonymous',          url: 'https://oa.org/find-a-meeting/',                                 label: 'OA Meeting Finder'                  },
+  { slug: 'smart-recovery',     abbreviation: 'SMART',    name: 'SMART Recovery',               url: 'https://www.smartrecovery.org/community/calendar/',               label: 'SMART Recovery Meeting Calendar'    },
+  { slug: 'celebrate-recovery', abbreviation: 'CR',       name: 'Celebrate Recovery',            url: 'https://www.celebraterecovery.com/finder',                       label: 'Celebrate Recovery Group Finder'    },
+  { slug: 'coda',               abbreviation: 'CoDA',     name: 'Co-Dependents Anonymous',       url: 'https://coda.org/find-a-meeting/',                               label: 'CoDA Meeting Finder'                },
+  { slug: 'saa',                abbreviation: 'SAA',      name: 'Sex Addicts Anonymous',         url: 'https://saa-recovery.org/meetings/',                             label: 'SAA Meeting Finder'                 },
+  { slug: 'ca',                 abbreviation: 'CA',       name: 'Cocaine Anonymous',             url: 'https://ca.org/meetings/',                                       label: 'CA Meeting Finder'                  },
+  { slug: 'cma',                abbreviation: 'CMA',      name: 'Crystal Meth Anonymous',        url: 'https://www.crystalmeth.org/meetings/',                          label: 'CMA Meeting Finder'                 },
+  { slug: 'aca',                abbreviation: 'ACA',      name: 'Adult Children of Alcoholics',  url: 'https://adultchildren.org/meeting-search/',                      label: 'ACA Meeting Search'                 },
+  { slug: 'nar-anon',           abbreviation: 'Nar-Anon', name: 'Nar-Anon',                      url: 'https://www.nar-anon.org/find-a-meeting',                        label: 'Nar-Anon Meeting Finder'            },
+]
+
+/** Look up a finder by fellowship slug (matches fellowships.slug / FELLOWSHIP_OPTIONS value) */
+export const FINDER_BY_SLUG: Record<string, FellowshipFinder> = Object.fromEntries(
+  FELLOWSHIP_FINDERS.map(f => [f.slug, f])
+)
+
+/** Look up a finder by fellowship abbreviation (used in MeetingCheckin chips) */
+export const FINDER_BY_ABBR: Record<string, FellowshipFinder> = Object.fromEntries(
+  FELLOWSHIP_FINDERS.map(f => [f.abbreviation, f])
+)
+
+/** Quick-access fellowship chips for the meetings directory page */
+export const QUICK_FELLOWSHIP_CHIPS: Array<{ label: string; slug: string }> = [
+  { label: 'All',     slug: '' },
+  { label: 'AA',      slug: 'aa' },
+  { label: 'NA',      slug: 'na' },
+  { label: 'Al-Anon', slug: 'al-anon' },
+  { label: 'GA',      slug: 'ga' },
+  { label: 'OA',      slug: 'oa' },
+  { label: 'SMART',   slug: 'smart-recovery' },
+  { label: 'CR',      slug: 'celebrate-recovery' },
+  { label: 'CoDA',    slug: 'coda' },
+]
+
 export const FACILITY_SORT_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'featured', label: 'Featured' },
   { value: 'nearest', label: 'Nearest' },

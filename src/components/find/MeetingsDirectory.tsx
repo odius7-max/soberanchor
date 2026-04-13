@@ -10,6 +10,7 @@ import MultiSelectDropdown from './MultiSelectDropdown'
 import {
   FELLOWSHIP_OPTIONS, DAY_OPTIONS, TIME_OPTIONS, FORMAT_OPTIONS,
   MEETING_SPECIALTY_OPTIONS, LANGUAGE_OPTIONS, ACCESS_OPTIONS, MEETING_SORT_OPTIONS,
+  FELLOWSHIP_FINDERS, FINDER_BY_SLUG, QUICK_FELLOWSHIP_CHIPS,
   haversineMiles, isLiveNow, minutesUntilMeeting, formatCountdown,
   getTimeRange, fmt12h,
 } from './findUtils'
@@ -198,6 +199,11 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
   const paginated = filtered.slice(0, page * ITEMS_PER_PAGE)
   const hasMore = filtered.length > paginated.length
 
+  const selectedFinder = fellowship ? FINDER_BY_SLUG[fellowship] ?? null : null
+  const fellowshipLabel = fellowship
+    ? (FELLOWSHIP_OPTIONS.find(o => o.value === fellowship)?.label.split('–')[0]?.trim() ?? fellowship)
+    : null
+
   return (
     <div>
       <FilterAccordion
@@ -291,23 +297,114 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
         onRemoveFilter={removeFilter}
       />
 
+      {/* ── Quick fellowship chips ── */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+        {QUICK_FELLOWSHIP_CHIPS.map(chip => {
+          const active = fellowship === chip.slug
+          return (
+            <button
+              key={chip.slug}
+              onClick={() => { setFellowship(chip.slug); setPage(1) }}
+              style={{
+                fontSize: 13, fontWeight: 600, padding: '6px 14px', borderRadius: 20,
+                cursor: 'pointer', fontFamily: 'var(--font-body)',
+                background: active ? 'var(--navy)' : 'var(--warm-gray)',
+                border: `1.5px solid ${active ? 'var(--navy)' : 'var(--border)'}`,
+                color: active ? '#fff' : 'var(--dark)',
+              }}
+            >
+              {chip.label}
+            </button>
+          )
+        })}
+      </div>
+
       {loading ? (
         <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--mid)', fontSize: 14 }}>
           Loading meetings…
         </div>
       ) : filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--mid)' }}>
-          <div style={{ fontSize: 36, marginBottom: 12 }}>👥</div>
-          <p style={{ fontSize: 15 }}>No meetings match your filters.</p>
-          <button
-            onClick={() => { setFellowship(''); setDays([]); setTimes([]); setFormats([]); setSpecialties([]); setLanguages([]); setAccess(''); setPage(1) }}
-            style={{ marginTop: 12, fontSize: 13, color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: 'var(--font-body)' }}
-          >
-            Clear filters
-          </button>
+        <div style={{ padding: '40px 0' }}>
+          {selectedFinder ? (
+            /* Fellowship selected + has finder URL → special zero-state */
+            <div style={{ textAlign: 'center', maxWidth: 520, margin: '0 auto' }}>
+              <div style={{ fontSize: 36, marginBottom: 12 }}>🔍</div>
+              <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--navy)', marginBottom: 8 }}>
+                {fellowshipLabel} meetings coming soon
+              </p>
+              <p style={{ fontSize: 14, color: 'var(--mid)', lineHeight: 1.6, marginBottom: 20 }}>
+                We&apos;re working on bringing {fellowshipLabel} meetings directly to SoberAnchor.
+                In the meantime, find meetings at:
+              </p>
+              <a
+                href={selectedFinder.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-block', fontSize: 14, fontWeight: 700,
+                  padding: '11px 24px', borderRadius: 10,
+                  background: 'var(--navy)', color: '#fff',
+                  textDecoration: 'none', marginBottom: 16,
+                }}
+              >
+                {selectedFinder.label} →
+              </a>
+              <div>
+                <button
+                  onClick={() => { setFellowship(''); setDays([]); setTimes([]); setFormats([]); setSpecialties([]); setLanguages([]); setAccess(''); setPage(1) }}
+                  style={{ fontSize: 13, color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: 'var(--font-body)' }}
+                >
+                  ← Back to all meetings
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* Generic zero-state */
+            <div style={{ textAlign: 'center', color: 'var(--mid)' }}>
+              <div style={{ fontSize: 36, marginBottom: 12 }}>👥</div>
+              <p style={{ fontSize: 15 }}>No meetings match your filters.</p>
+              <button
+                onClick={() => { setFellowship(''); setDays([]); setTimes([]); setFormats([]); setSpecialties([]); setLanguages([]); setAccess(''); setPage(1) }}
+                style={{ marginTop: 12, fontSize: 13, color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: 'var(--font-body)' }}
+              >
+                Clear filters
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <>
+          {/* External finder banner — shown when a fellowship with a finder URL is selected */}
+          {selectedFinder && (
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              gap: 12, flexWrap: 'wrap',
+              background: 'rgba(42,138,153,0.06)', border: '1px solid rgba(42,138,153,0.2)',
+              borderRadius: 12, padding: '14px 18px', marginBottom: 16,
+            }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--teal)', marginBottom: 2 }}>
+                  Find more {fellowshipLabel} meetings
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--mid)' }}>
+                  Search the official {selectedFinder.name} meeting directory
+                </div>
+              </div>
+              <a
+                href={selectedFinder.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  fontSize: 13, fontWeight: 700, padding: '8px 16px', borderRadius: 8,
+                  background: 'var(--teal)', color: '#fff',
+                  textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0,
+                }}
+              >
+                {selectedFinder.label} →
+              </a>
+            </div>
+          )}
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {paginated.map(m => (
               <MeetingCard key={m.id} meeting={m} savedId={savedIds[m.id] ?? null} />
@@ -325,6 +422,60 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
           )}
         </>
       )}
+
+      {/* ── Meeting Finders section ── */}
+      <div style={{ marginTop: 48, borderTop: '1px solid var(--border)', paddingTop: 36 }}>
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--teal)', marginBottom: 6 }}>
+            External Resources
+          </div>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--navy)', margin: 0 }}>
+            Fellowship Meeting Finders
+          </h2>
+          <p style={{ fontSize: 14, color: 'var(--mid)', marginTop: 6, lineHeight: 1.6 }}>
+            Find meetings directly on each fellowship&apos;s official website.
+          </p>
+        </div>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+          gap: 12,
+        }}>
+          {FELLOWSHIP_FINDERS.map(finder => (
+            <a
+              key={finder.slug}
+              href={finder.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                background: '#fff', border: '1px solid var(--border)',
+                borderRadius: 12, padding: '14px 16px',
+                textDecoration: 'none', color: 'inherit',
+                transition: 'border-color 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--teal)')}
+              onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+            >
+              <span style={{
+                fontSize: 11, fontWeight: 800, padding: '3px 9px', borderRadius: 20,
+                background: 'rgba(42,138,153,0.08)', color: 'var(--teal)',
+                border: '1px solid rgba(42,138,153,0.2)', flexShrink: 0, whiteSpace: 'nowrap',
+              }}>
+                {finder.abbreviation}
+              </span>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)', lineHeight: 1.3 }}>
+                  {finder.name}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--teal)', marginTop: 2 }}>
+                  Find meetings →
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
