@@ -12,7 +12,7 @@ import {
   MEETING_SPECIALTY_OPTIONS, LANGUAGE_OPTIONS, ACCESS_OPTIONS, MEETING_SORT_OPTIONS,
   FELLOWSHIP_FINDERS, FINDER_BY_SLUG, QUICK_FELLOWSHIP_CHIPS,
   isLiveNow, minutesUntilMeeting, formatCountdown,
-  getTimeRange, fmt12h,
+  getTimeRange, fmt12h, timeToMinutes, geocodeLocation,
 } from './findUtils'
 
 type GeoStatus = 'idle' | 'requesting' | 'granted' | 'denied'
@@ -52,9 +52,12 @@ const APPROACH_STYLE: Record<string, { bg: string; color: string; border: string
 
 interface Props {
   savedIds?: Record<string, string>
+  /** From user_profiles — used as geo fallback when browser geo is denied */
+  userCity?: string | null
+  userState?: string | null
 }
 
-export default function MeetingsDirectory({ savedIds = {} }: Props) {
+export default function MeetingsDirectory({ savedIds = {}, userCity, userState }: Props) {
   const searchParams = useSearchParams()
 
   const [allMeetings, setAllMeetings] = useState<Meeting[]>([])
@@ -84,6 +87,12 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
   // Client-only day names — computed in useEffect to avoid UTC mismatch on server
   const [todayName,    setTodayName]    = useState<string>('')
   const [tomorrowName, setTomorrowName] = useState<string>('')
+
+  // Minutes since midnight in the client's local timezone — used for "from now" filter
+  const [clientNowMins, setClientNowMins] = useState<number | null>(null)
+
+  // Tracks whether we've already tried geocoding the user's profile city/state
+  const [profileGeoAttempted, setProfileGeoAttempted] = useState(false)
 
   // ── Auto-request geolocation on mount ──────────────────────────────────────
   useEffect(() => {
@@ -125,17 +134,37 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // ── Set today/tomorrow names client-side (browser timezone, never UTC) ───────
+  // ── Set today/tomorrow names + current time client-side (browser timezone) ───
   useEffect(() => {
     const d = new Date()
     const today    = DAY_NAMES[d.getDay()]
     const tomorrow = DAY_NAMES[(d.getDay() + 1) % 7]
     setTodayName(today)
     setTomorrowName(tomorrow)
+    setClientNowMins(d.getHours() * 60 + d.getMinutes())
     // Default the day filter to today — only on first mount; don't override user changes
     setDays(prev => prev.length === 0 ? [today] : prev)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // ── Profile city/state fallback geocoding — runs once when geo is denied ────
+  // Use locationLat/locationLng directly (not `hasGeo`, which is declared later) to avoid TDZ.
+  useEffect(() => {
+    const alreadyHasGeo = !!(locationLat && locationLng)
+    if (geoStatus !== 'denied' || alreadyHasGeo || profileGeoAttempted) return
+    if (!userCity && !userState) return
+    setProfileGeoAttempted(true)
+    const query = [userCity, userState].filter(Boolean).join(', ')
+    geocodeLocation(query).then(result => {
+      if (!result) return
+      setLocationLat(result.lat)
+      setLocationLng(result.lng)
+      const label = [userCity, userState].filter(Boolean).join(', ')
+      setLocationText(label)
+      setLocationDisplayName(label)
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geoStatus, locationLat, locationLng, profileGeoAttempted])
 
   // ── Load all meetings (with fellowship join) ────────────────────────────────
   useEffect(() => {
@@ -212,6 +241,9 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
   // hasGeo MUST be declared before `filtered` — the filter callback reads it synchronously
   const hasGeo = !!(locationLat && locationLng)
 
+  // True when the user has only "today" selected — enables the "from now" filter
+  const isOnlyTodayFilter = todayName !== '' && days.length === 1 && days[0] === todayName
+
   const filtered = allMeetings
     .filter(m => {
       if (fellowship) {
@@ -240,6 +272,14 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
         // nearbyDistances loaded from PostGIS nearby_meetings() function
         if (!nearbyDistances.has(m.id)) return false
       }
+      // "Today from now" — hide meetings that ended more than 15 min ago.
+      // Only applied when today is the sole selected day AND clientNowMins is ready
+      // (clientNowMins is null until the first useEffect fires, avoiding hydration mismatch).
+      if (isOnlyTodayFilter && clientNowMins !== null && m.day_of_week === todayName) {
+        const startMins = timeToMinutes(m.start_time)
+        const endMins = startMins + (m.duration_minutes ?? 60)
+        if (endMins < clientNowMins - 15) return false
+      }
       return true
     })
     .map(m => ({
@@ -255,10 +295,11 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
         return a._distance - b._distance
       }
       if (sort === 'alphabetical') return a.name.localeCompare(b.name)
-      // soonest: start_time ascending (HH:MM:SS string sort is correct), distance as tiebreaker
-      const aTm = a.start_time ?? ''
-      const bTm = b.start_time ?? ''
-      if (aTm !== bTm) return aTm < bTm ? -1 : 1
+      // soonest: sort by _minsUntil so meetings that already passed today sort to the bottom
+      // (they wrap to ~10080 mins = "next week"), with distance as tiebreaker
+      const aMins = a._minsUntil ?? Infinity
+      const bMins = b._minsUntil ?? Infinity
+      if (aMins !== bMins) return aMins - bMins
       if (a._distance !== undefined && b._distance !== undefined) return a._distance - b._distance
       if (a._distance !== undefined) return -1
       if (b._distance !== undefined) return 1
@@ -317,7 +358,11 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
     : DAY_OPTIONS.filter(o => o.value !== '')
 
   // ── "Today's meetings" banner — shown when only today's day is filtered ───────
-  const showTodayBanner = todayName !== '' && days.length === 1 && days[0] === todayName
+  const showTodayBanner = isOnlyTodayFilter
+
+  // True when geo is unavailable and profile geocoding either hasn't been tried yet or failed
+  const noLocationAvailable = !hasGeo && geoStatus !== 'requesting' && geoStatus !== 'granted'
+    && !(profileGeoAttempted && (userCity || userState))
 
   // Contextual result count label — only once PostGIS nearby data has loaded
   const resultLabel = loading
@@ -326,19 +371,22 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
       ? `${filtered.length.toLocaleString()} meeting${filtered.length !== 1 ? 's' : ''} within ${radiusMiles} mi`
       : undefined
 
-  // Location prompt shown when geo was denied and no manual location is set
-  const locationPrompt = geoStatus === 'denied' && !hasGeo ? (
-    <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
-      <span style={{ opacity: 0.6 }}>📍</span>
-      Allow location access to see meetings near you
-    </div>
-  ) : geoStatus === 'requesting' ? (
+  // Location prompt — shown in the filter slot
+  const locationPrompt = geoStatus === 'requesting' ? (
     <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 6 }}>
       Detecting your location…
     </div>
   ) : nearbyLoading ? (
     <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 6 }}>
       Finding meetings near you…
+    </div>
+  ) : geoStatus === 'denied' && !hasGeo ? (
+    <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
+      <span style={{ opacity: 0.6 }}>📍</span>
+      {profileGeoAttempted
+        ? `Showing results near ${[userCity, userState].filter(Boolean).join(', ')}`
+        : 'Enter a city or zip above to see meetings near you'
+      }
     </div>
   ) : null
 
@@ -437,7 +485,26 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
         onRemoveFilter={removeFilter}
       />
 
-      {/* ── Today's meetings banner ── */}
+      {/* ── No-location prompt — shown prominently when geo denied and no fallback ── */}
+      {noLocationAvailable && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+          padding: '12px 16px', borderRadius: 12, marginBottom: 14,
+          background: 'rgba(42,138,153,0.05)', border: '1px solid rgba(42,138,153,0.2)',
+        }}>
+          <span style={{ fontSize: 18 }}>📍</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)', marginBottom: 2 }}>
+              Enter your city or zip code to find meetings near you
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--mid)' }}>
+              Type in the Location field above — or allow browser location for automatic results.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Today's upcoming meetings banner ── */}
       {showTodayBanner && (
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -445,7 +512,7 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
           background: 'rgba(42,138,153,0.05)', border: '1px solid rgba(42,138,153,0.15)',
         }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)' }}>
-            {todayName} meetings{hasGeo ? ' near you' : ''}
+            Upcoming today{hasGeo ? ' near you' : ''} · {todayName}
           </span>
           <button
             onClick={() => { setDays([]); setPage(1) }}
@@ -520,14 +587,45 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
           ) : (
             /* Generic zero-state */
             <div style={{ textAlign: 'center', color: 'var(--mid)' }}>
-              <div style={{ fontSize: 36, marginBottom: 12 }}>👥</div>
-              <p style={{ fontSize: 15 }}>No meetings match your filters.</p>
-              <button
-                onClick={() => { setFellowship(''); setDays([]); setTimes([]); setFormats([]); setSpecialties([]); setLanguages([]); setAccess(''); setPage(1) }}
-                style={{ marginTop: 12, fontSize: 13, color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: 'var(--font-body)' }}
-              >
-                Clear filters
-              </button>
+              {isOnlyTodayFilter && tomorrowName ? (
+                <>
+                  <div style={{ fontSize: 36, marginBottom: 12 }}>🌙</div>
+                  <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--navy)', marginBottom: 6 }}>
+                    No more meetings today
+                  </p>
+                  <p style={{ fontSize: 13, marginBottom: 16 }}>
+                    {hasGeo ? 'Nothing coming up near you today.' : 'Nothing else scheduled for today.'}
+                  </p>
+                  <button
+                    onClick={() => { setDays([tomorrowName]); setPage(1) }}
+                    style={{
+                      padding: '9px 20px', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                      background: 'var(--navy)', border: 'none', color: '#fff', fontFamily: 'var(--font-body)',
+                    }}
+                  >
+                    See {tomorrowName}&apos;s meetings →
+                  </button>
+                  <div style={{ marginTop: 12 }}>
+                    <button
+                      onClick={() => { setDays([]); setPage(1) }}
+                      style={{ fontSize: 13, color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: 'var(--font-body)' }}
+                    >
+                      Or browse all days
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontSize: 36, marginBottom: 12 }}>👥</div>
+                  <p style={{ fontSize: 15 }}>No meetings match your filters.</p>
+                  <button
+                    onClick={() => { setFellowship(''); setDays([]); setTimes([]); setFormats([]); setSpecialties([]); setLanguages([]); setAccess(''); setPage(1) }}
+                    style={{ marginTop: 12, fontSize: 13, color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: 'var(--font-body)' }}
+                  >
+                    Clear filters
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>

@@ -14,13 +14,20 @@ export default async function MeetingsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Build a meetingId → savedListingId map for the current user
+  // Build a meetingId → savedListingId map, and grab profile city/state for geo fallback
   let savedIds: Record<string, string> = {}
+  let userCity: string | null = null
+  let userState: string | null = null
   if (user) {
-    const saved = await getUserSavedIds()
+    const [saved, profileRes] = await Promise.all([
+      getUserSavedIds(),
+      supabase.from('user_profiles').select('city, state').eq('id', user.id).maybeSingle(),
+    ])
     for (const s of saved) {
       if (s.meeting_id) savedIds[s.meeting_id] = s.id
     }
+    userCity = profileRes.data?.city ?? null
+    userState = profileRes.data?.state ?? null
   }
 
   return (
@@ -43,7 +50,7 @@ export default async function MeetingsPage() {
       </div>
 
       <Suspense>
-        <MeetingsDirectory savedIds={savedIds} />
+        <MeetingsDirectory savedIds={savedIds} userCity={userCity} userState={userState} />
       </Suspense>
     </div>
   )
