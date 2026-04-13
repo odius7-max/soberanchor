@@ -81,29 +81,33 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
     setGeoStatus('requesting')
     navigator.geolocation.getCurrentPosition(
       pos => {
-        const { latitude: lat, longitude: lng } = pos.coords
-        setGeoStatus('granted')
-        setSort('nearest')
-        fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
-          { headers: { 'User-Agent': 'SoberAnchor/1.0' } },
-        )
-          .then(r => r.json())
-          .then((data: { address?: { city?: string; town?: string; village?: string; county?: string; state_abbreviation?: string; state?: string } }) => {
-            const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || ''
-            const state = data.address?.state_abbreviation || data.address?.state || ''
-            const displayName = [city, state].filter(Boolean).join(', ') || 'Near you'
-            setLocationText(displayName)
-            setLocationDisplayName(displayName)
-            setLocationLat(lat)
-            setLocationLng(lng)
-          })
-          .catch(() => {
-            setLocationText('Near you')
-            setLocationDisplayName('Near you')
-            setLocationLat(lat)
-            setLocationLng(lng)
-          })
+        try {
+          const { latitude: lat, longitude: lng } = pos.coords
+          setGeoStatus('granted')
+          setSort('nearest')
+          // Set lat/lng immediately so the list updates without waiting for reverse geocode
+          setLocationLat(lat)
+          setLocationLng(lng)
+          setLocationText('Near you')
+          setLocationDisplayName('Near you')
+          // Then try to get a human-readable name
+          fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+            { headers: { 'User-Agent': 'SoberAnchor/1.0' } },
+          )
+            .then(r => r.json())
+            .then((data: { address?: { city?: string; town?: string; village?: string; county?: string; state_abbreviation?: string; state?: string } }) => {
+              const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || ''
+              const state = data.address?.state_abbreviation || data.address?.state || ''
+              const displayName = [city, state].filter(Boolean).join(', ') || 'Near you'
+              setLocationText(displayName)
+              setLocationDisplayName(displayName)
+            })
+            .catch(() => { /* keep 'Near you' — already set above */ })
+        } catch (err) {
+          console.error('[MeetingsDirectory] geo success callback threw:', err)
+          setGeoStatus('denied')
+        }
       },
       () => { setGeoStatus('denied') },
       { timeout: 10000, maximumAge: 300000 },
@@ -149,6 +153,9 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
     else if (field === 'language')  setLanguages(v => v.filter(x => x !== value))
     setPage(1)
   }
+
+  // hasGeo MUST be declared before `filtered` — the filter callback reads it synchronously
+  const hasGeo = !!(locationLat && locationLng)
 
   const filtered = allMeetings
     .filter(m => {
@@ -241,8 +248,6 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
   const fellowshipLabel = fellowship
     ? (FELLOWSHIP_OPTIONS.find(o => o.value === fellowship)?.label.split('–')[0]?.trim() ?? fellowship)
     : null
-
-  const hasGeo = !!(locationLat && locationLng)
 
   // Contextual result count label when geo is active
   const resultLabel = loading
