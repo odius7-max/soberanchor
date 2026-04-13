@@ -37,7 +37,7 @@ export default async function DashboardPage() {
     supabase.from('journal_entries').select('id,title,entry_date,excerpt,step_number,is_shared_with_sponsor').eq('user_id', userId).order('entry_date', { ascending: false }).limit(10),
     supabase.from('journal_entries').select('id', { count: 'exact', head: true }).eq('user_id', userId),
     supabase.from('step_work_entries').select('id', { count: 'exact', head: true }).eq('user_id', userId).neq('review_status', 'draft'),
-    supabase.from('meeting_attendance').select('id,meeting_name,fellowship_name,attended_at,checkin_method').eq('user_id', userId).order('attended_at', { ascending: false }).limit(20),
+    supabase.from('meeting_attendance').select('id,meeting_name,fellowship_name,location_name,attended_at,checkin_method,notes').eq('user_id', userId).order('attended_at', { ascending: false }).limit(20),
     supabase.from('meeting_attendance').select('id', { count: 'exact', head: true }).eq('user_id', userId),
     supabase.from('check_ins').select('id', { count: 'exact', head: true }).eq('user_id', userId),
     supabase.from('sponsor_relationships').select('id,sponsor_id,fellowship_id').eq('sponsee_id', userId).eq('status', 'active'),

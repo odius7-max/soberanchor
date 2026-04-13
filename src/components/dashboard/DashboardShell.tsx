@@ -22,7 +22,7 @@ type Tab = 'overview' | 'stepwork' | 'journal' | 'meetings' | 'tasks' | 'saved' 
 
 export interface CheckIn { id:string; check_in_date:string; mood:string|null; notes:string|null; sober_today:boolean; meetings_attended:number }
 export interface JournalEntry { id:string; title:string|null; entry_date:string; excerpt:string|null; step_number:number|null; is_shared_with_sponsor:boolean }
-export interface MeetingAttendance { id:string; meeting_name:string; fellowship_name:string|null; attended_at:string; checkin_method:string }
+export interface MeetingAttendance { id:string; meeting_name:string; fellowship_name:string|null; location_name:string|null; attended_at:string; checkin_method:string; notes:string|null }
 export interface ReadingAssignment { id:string; title:string; source:string|null; is_completed:boolean; due_date:string|null; created_at:string }
 export interface SponseeCheckIn { date:string; mood:string|null; notes:string|null; soberToday:boolean; meetingsAttended:number; calledSponsor:boolean|null }
 export interface ActiveSponsor { relationshipId:string; name:string; fellowshipId:string|null; fellowshipAbbr:string|null }
@@ -175,7 +175,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
             )}
             {activeTab === 'stepwork' && <StepWorkTab userId={userId} fellowshipId={activeFellowshipId} />}
             {activeTab === 'journal' && <JournalTab userId={userId} entries={journalEntries} />}
-            {activeTab === 'meetings' && <MeetingsTab userId={userId} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} meetingAttendance={meetingAttendance} />}
+            {activeTab === 'meetings' && <MeetingsTab userId={userId} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} meetingAttendance={meetingAttendance} fellowships={fellowships} />}
             {activeTab === 'tasks' && <TasksTab userId={userId} readingAssignments={readingAssignments} hasSponsor={activeSponsors.length > 0} />}
             {activeTab === 'saved' && <SavedTab userId={userId} />}
             {activeTab === 'privacy' && <PrivacyTab userId={userId} displayName={profile?.display_name ?? null} phone={phone} journalCount={journalCount} stepWorkCount={stepWorkCount} checkInsTotal={checkInsTotal} meetingsTotal={meetingsTotal} isAvailableSponsor={isSponsor} />}
