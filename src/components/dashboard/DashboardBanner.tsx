@@ -657,9 +657,9 @@ export default function DashboardBanner({
                 </button>
               </div>
 
-              {/* RIGHT (desktop) / BELOW (mobile): stat cards */}
+              {/* RIGHT (desktop) / BELOW (mobile): milestone stat cards — vertically centered */}
               <div
-                className="flex sm:flex-col gap-3"
+                className="flex sm:flex-col sm:justify-center gap-3"
                 style={{ flexShrink: 0 }}
               >
                 {daysClean !== null && (
@@ -687,60 +687,72 @@ export default function DashboardBanner({
                     )}
                   </>
                 )}
-
-                {/* Currently on step */}
-                {activeMilestone?.fellowship_id && (
-                  <div
-                    className="flex-1 sm:flex-none"
-                    style={{ background: 'rgba(212,165,116,0.15)', border: '1px solid rgba(212,165,116,0.25)', borderRadius: 12, padding: '14px 16px', minWidth: 0 }}
-                  >
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 6 }}>Currently On</div>
-                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, color: '#fff', lineHeight: 1, letterSpacing: '-0.5px' }}>Step {currentStep}</div>
-                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>{STEPS[currentStep - 1]?.s}</div>
-                  </div>
-                )}
               </div>
             </div>
 
             {/* ── Quote: thin divider, italic, muted ── */}
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: 18, paddingTop: 14, marginBottom: activeMilestone?.fellowship_id ? 16 : 0 }}>
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: 18, paddingTop: 14, marginBottom: activeMilestone?.fellowship_id ? 14 : 0 }}>
               <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13, fontStyle: 'italic', lineHeight: 1.65 }}>
                 &ldquo;{quote.text}&rdquo;
               </div>
               <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, marginTop: 5 }}>— {quote.attr}</div>
             </div>
 
-            {/* ── Step progress bar ── */}
+            {/* ── Step progress bar + Currently On label ── */}
             {activeMilestone?.fellowship_id && (
-              <div style={{ position: 'relative' }}>
-                {stepsFadeLeft && (
-                  <div aria-hidden style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 40, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to right, #002244, transparent)' }} />
-                )}
-                {stepsFadeRight && (
-                  <div aria-hidden style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 40, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to left, #002244, transparent)' }} />
-                )}
-                <div ref={stepsScrollRef} style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2, scrollbarWidth: 'none' as const }}>
-                  {STEPS.map(({ n, s }) => {
-                    const isDone = n < currentStep
-                    const isActivStep = n === currentStep
-                    return (
-                      <div key={n} ref={isActivStep ? activeStepRef : null} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flexShrink: 0, minWidth: 46 }}>
-                        <div style={{
-                          width: 38, height: 38, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: 13, fontWeight: 700,
-                          background: isDone ? '#D4A574' : isActivStep ? '#2A8A99' : 'rgba(255,255,255,0.1)',
-                          border: isDone ? '2px solid rgba(255,255,255,0.2)' : isActivStep ? '2.5px solid rgba(255,255,255,0.9)' : '1.5px solid rgba(255,255,255,0.15)',
-                          color: isDone || isActivStep ? '#fff' : 'rgba(255,255,255,0.3)',
-                          boxShadow: isActivStep ? '0 0 18px rgba(42,138,153,0.6)' : 'none',
-                        }}>
-                          {isDone ? '✓' : n}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+
+                {/* Scrollable step bubbles — flex-1 so it takes remaining width */}
+                <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
+                  {stepsFadeLeft && (
+                    <div aria-hidden style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 40, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to right, #002244, transparent)' }} />
+                  )}
+                  {stepsFadeRight && (
+                    <div aria-hidden style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 40, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to left, #002244, transparent)' }} />
+                  )}
+                  <div ref={stepsScrollRef} style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2, scrollbarWidth: 'none' as const }}>
+                    {STEPS.map(({ n, s }) => {
+                      const isDone = n < currentStep
+                      const isActivStep = n === currentStep
+                      return (
+                        <div key={n} ref={isActivStep ? activeStepRef : null} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flexShrink: 0, minWidth: 46 }}>
+                          <div style={{
+                            width: 38, height: 38, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 13, fontWeight: 700,
+                            background: isDone ? '#D4A574' : isActivStep ? '#2A8A99' : 'rgba(255,255,255,0.1)',
+                            border: isDone ? '2px solid rgba(255,255,255,0.2)' : isActivStep ? '2.5px solid rgba(255,255,255,0.9)' : '1.5px solid rgba(255,255,255,0.15)',
+                            color: isDone || isActivStep ? '#fff' : 'rgba(255,255,255,0.3)',
+                            boxShadow: isActivStep ? '0 0 18px rgba(42,138,153,0.6)' : 'none',
+                          }}>
+                            {isDone ? '✓' : n}
+                          </div>
+                          <span style={{ fontSize: 9, fontWeight: 600, maxWidth: 50, textAlign: 'center', lineHeight: 1.3, color: isDone ? 'rgba(255,255,255,0.5)' : isActivStep ? '#2A8A99' : 'rgba(255,255,255,0.25)' }}>
+                            {s}
+                          </span>
                         </div>
-                        <span style={{ fontSize: 9, fontWeight: 600, maxWidth: 50, textAlign: 'center', lineHeight: 1.3, color: isDone ? 'rgba(255,255,255,0.5)' : isActivStep ? '#2A8A99' : 'rgba(255,255,255,0.25)' }}>
-                          {s}
-                        </span>
-                      </div>
-                    )
-                  })}
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Currently On — anchored right of the step row */}
+                <div style={{
+                  flexShrink: 0,
+                  background: 'rgba(42,138,153,0.12)',
+                  border: '1px solid rgba(42,138,153,0.3)',
+                  borderRadius: 10,
+                  padding: '8px 14px',
+                  textAlign: 'center',
+                }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 4, whiteSpace: 'nowrap' }}>
+                    Currently On
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#2A8A99', lineHeight: 1, letterSpacing: '-0.3px' }}>
+                    Step {currentStep}
+                  </div>
+                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', marginTop: 3, whiteSpace: 'nowrap' }}>
+                    {STEPS[currentStep - 1]?.s}
+                  </div>
                 </div>
               </div>
             )}
