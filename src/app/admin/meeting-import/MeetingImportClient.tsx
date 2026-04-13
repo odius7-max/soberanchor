@@ -221,67 +221,69 @@ export default function MeetingImportClient({ initialFeeds }: { initialFeeds: Fe
             No feed sources configured. Add a feed to get started.
           </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ background: 'var(--off-white)' }}>
-                {['Name', 'Region', 'Feed URL', 'Last Synced', 'Count', 'Errors', 'Status', '', ''].map(h => (
-                  <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--mid)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {feeds.map((feed, i) => (
-                <tr key={feed.id} style={{ borderTop: i > 0 ? '1px solid var(--border)' : undefined }}>
-                  <td style={{ padding: '14px 16px', fontWeight: 600, color: 'var(--navy)', fontSize: 14, whiteSpace: 'nowrap' }}>{feed.name}</td>
-                  <td style={{ padding: '14px 16px', fontSize: 13, color: 'var(--mid)', whiteSpace: 'nowrap' }}>{feed.region ?? '—'}</td>
-                  <td style={{ padding: '14px 16px', fontSize: 12, color: 'var(--mid)', fontFamily: 'monospace', maxWidth: 260 }}>
-                    <a href={feed.feed_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal)', textDecoration: 'none' }}>
-                      {truncate(feed.feed_url)}
-                    </a>
-                  </td>
-                  <td style={{ padding: '14px 16px', fontSize: 13, color: 'var(--mid)', whiteSpace: 'nowrap' }}>
-                    {feed.last_synced_at ? timeAgo(feed.last_synced_at) : <span style={{ color: '#aaa' }}>Never</span>}
-                  </td>
-                  <td style={{ padding: '14px 16px', fontSize: 14, fontWeight: 600, color: 'var(--navy)', textAlign: 'right' }}>
-                    {feed.last_sync_count != null ? feed.last_sync_count.toLocaleString() : '—'}
-                  </td>
-                  <td style={{ padding: '14px 16px', fontSize: 13, textAlign: 'center' }}>
-                    {feed.last_sync_errors != null && feed.last_sync_errors > 0
-                      ? <span style={{ color: '#C0392B', fontWeight: 600 }}>{feed.last_sync_errors}</span>
-                      : feed.last_synced_at ? <span style={{ color: '#27AE60' }}>0</span> : <span style={{ color: '#aaa' }}>—</span>
-                    }
-                  </td>
-                  <td style={{ padding: '14px 16px' }}>
-                    <span style={{
-                      display: 'inline-block', fontSize: 11, fontWeight: 700, letterSpacing: '0.5px',
-                      padding: '3px 9px', borderRadius: 20,
-                      background: feed.is_active ? 'rgba(39,174,96,0.10)' : 'rgba(0,0,0,0.06)',
-                      color: feed.is_active ? '#27AE60' : '#999',
-                    }}>
-                      {feed.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                    <button
-                      onClick={() => runImport(feed.id)}
-                      disabled={isAnyImporting || !feed.is_active}
-                      style={{ background: 'var(--navy)', color: '#fff', border: 'none', borderRadius: 7, padding: '7px 16px', fontSize: 12, fontWeight: 600, cursor: isAnyImporting || !feed.is_active ? 'not-allowed' : 'pointer', opacity: isAnyImporting || !feed.is_active ? 0.5 : 1, fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>
-                      {importing === feed.id ? '⟳ Importing…' : 'Import'}
-                    </button>
-                  </td>
-                  <td style={{ padding: '14px 8px 14px 4px' }}>
-                    <button
-                      onClick={() => handleClearFeed(feed.id, feed.name)}
-                      disabled={clearing !== null || (feed.last_sync_count ?? 0) === 0}
-                      title="Delete all imported meetings for this feed"
-                      style={{ background: 'none', border: '1px solid #ddd', color: '#999', borderRadius: 7, padding: '6px 12px', fontSize: 12, cursor: clearing !== null || (feed.last_sync_count ?? 0) === 0 ? 'not-allowed' : 'pointer', opacity: clearing !== null || (feed.last_sync_count ?? 0) === 0 ? 0.4 : 1, fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>
-                      {clearing === feed.id ? 'Clearing…' : 'Clear'}
-                    </button>
-                  </td>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 780 }}>
+              <thead>
+                <tr style={{ background: 'var(--off-white)' }}>
+                  {['Name', 'Region', 'Feed URL', 'Last Synced', 'Count', 'Errors', 'Status', '', ''].map(h => (
+                    <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: 'var(--mid)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {feeds.map((feed, i) => (
+                  <tr key={feed.id} style={{ borderTop: i > 0 ? '1px solid var(--border)' : undefined }}>
+                    <td style={{ padding: '13px 14px', fontWeight: 600, color: 'var(--navy)', fontSize: 14, whiteSpace: 'nowrap' }}>{feed.name}</td>
+                    <td style={{ padding: '13px 14px', fontSize: 13, color: 'var(--mid)', whiteSpace: 'nowrap' }}>{feed.region ?? '—'}</td>
+                    <td style={{ padding: '13px 14px', fontSize: 12, color: 'var(--mid)', fontFamily: 'monospace' }}>
+                      <a href={feed.feed_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal)', textDecoration: 'none' }}>
+                        {truncate(feed.feed_url, 45)}
+                      </a>
+                    </td>
+                    <td style={{ padding: '13px 14px', fontSize: 13, color: 'var(--mid)', whiteSpace: 'nowrap' }}>
+                      {feed.last_synced_at ? timeAgo(feed.last_synced_at) : <span style={{ color: '#aaa' }}>Never</span>}
+                    </td>
+                    <td style={{ padding: '13px 14px', fontSize: 14, fontWeight: 600, color: 'var(--navy)', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      {feed.last_sync_count != null ? feed.last_sync_count.toLocaleString() : '—'}
+                    </td>
+                    <td style={{ padding: '13px 14px', fontSize: 13, textAlign: 'center', whiteSpace: 'nowrap' }}>
+                      {feed.last_sync_errors != null && feed.last_sync_errors > 0
+                        ? <span style={{ color: '#C0392B', fontWeight: 600 }}>{feed.last_sync_errors}</span>
+                        : feed.last_synced_at ? <span style={{ color: '#27AE60' }}>0</span> : <span style={{ color: '#aaa' }}>—</span>
+                      }
+                    </td>
+                    <td style={{ padding: '13px 14px', whiteSpace: 'nowrap' }}>
+                      <span style={{
+                        display: 'inline-block', fontSize: 11, fontWeight: 700, letterSpacing: '0.5px',
+                        padding: '3px 9px', borderRadius: 20,
+                        background: feed.is_active ? 'rgba(39,174,96,0.10)' : 'rgba(0,0,0,0.06)',
+                        color: feed.is_active ? '#27AE60' : '#999',
+                      }}>
+                        {feed.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '13px 8px 13px 14px', whiteSpace: 'nowrap' }}>
+                      <button
+                        onClick={() => runImport(feed.id)}
+                        disabled={isAnyImporting || !feed.is_active}
+                        style={{ background: 'var(--navy)', color: '#fff', border: 'none', borderRadius: 7, padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: isAnyImporting || !feed.is_active ? 'not-allowed' : 'pointer', opacity: isAnyImporting || !feed.is_active ? 0.5 : 1, fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>
+                        {importing === feed.id ? '⟳ Importing…' : 'Import'}
+                      </button>
+                    </td>
+                    <td style={{ padding: '13px 14px 13px 4px', whiteSpace: 'nowrap' }}>
+                      <button
+                        onClick={() => handleClearFeed(feed.id, feed.name)}
+                        disabled={clearing !== null || (feed.last_sync_count ?? 0) === 0}
+                        title="Delete all imported meetings for this feed"
+                        style={{ background: 'none', border: '1px solid #ddd', color: '#999', borderRadius: 7, padding: '6px 12px', fontSize: 12, cursor: clearing !== null || (feed.last_sync_count ?? 0) === 0 ? 'not-allowed' : 'pointer', opacity: clearing !== null || (feed.last_sync_count ?? 0) === 0 ? 0.4 : 1, fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>
+                        {clearing === feed.id ? 'Clearing…' : 'Clear'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
