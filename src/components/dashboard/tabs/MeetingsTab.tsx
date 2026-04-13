@@ -342,12 +342,6 @@ export default function MeetingsTab({ userId, meetingsThisWeek, meetingsTotal, m
   const [deleteRecord, setDeleteRecord] = useState<MeetingAttendance | null>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
 
-  // Close kebab menu on any outside click
-  useEffect(() => {
-    function handleClick() { setOpenMenuId(null) }
-    document.addEventListener('click', handleClick)
-    return () => document.removeEventListener('click', handleClick)
-  }, [])
 
   function showToast(msg: string, ok: boolean) {
     setToast({ msg, ok })
@@ -515,6 +509,14 @@ export default function MeetingsTab({ userId, meetingsThisWeek, meetingsTotal, m
         </div>
       )}
 
+      {/* Fullscreen overlay — closes the kebab menu when clicking outside */}
+      {openMenuId && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 49 }}
+          onClick={() => setOpenMenuId(null)}
+        />
+      )}
+
       {/* Meeting list */}
       {records.length === 0 ? (
         <div className="text-center py-16 text-mid">
@@ -528,7 +530,7 @@ export default function MeetingsTab({ userId, meetingsThisWeek, meetingsTotal, m
             <div
               key={m.id}
               className="card-hover rounded-[14px] flex items-center gap-4 px-4 py-3.5 bg-white border border-[var(--border)]"
-              style={{ position: 'relative' }}
+              style={{ position: 'relative', zIndex: openMenuId === m.id ? 1 : 'auto' }}
             >
               <span style={{ fontSize: '18px' }}>{methodIcon[m.checkin_method] ?? '📍'}</span>
               <div className="flex-1 min-w-0">
@@ -542,7 +544,7 @@ export default function MeetingsTab({ userId, meetingsThisWeek, meetingsTotal, m
               {/* Kebab menu */}
               <div style={{ position: 'relative', flexShrink: 0 }}>
                 <button
-                  onClick={e => { e.stopPropagation(); setOpenMenuId(openMenuId === m.id ? null : m.id) }}
+                  onClick={() => setOpenMenuId(openMenuId === m.id ? null : m.id)}
                   aria-label="Meeting options"
                   style={{
                     background: 'none', border: 'none', cursor: 'pointer',
@@ -554,7 +556,6 @@ export default function MeetingsTab({ userId, meetingsThisWeek, meetingsTotal, m
                 </button>
                 {openMenuId === m.id && (
                   <div
-                    onClick={e => e.stopPropagation()}
                     style={{
                       position: 'absolute', right: 0, top: 'calc(100% + 4px)',
                       background: '#fff', borderRadius: '10px',
