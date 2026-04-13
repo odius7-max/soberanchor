@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/context/AuthContext'
 
@@ -244,11 +245,13 @@ export default function AuthModal() {
                       position: 'absolute', right: 0, top: 0, bottom: 0,
                       width: 48, display: 'flex', alignItems: 'center', justifyContent: 'center',
                       background: 'none', border: 'none', cursor: 'pointer',
-                      color: '#888', fontSize: 18, zIndex: 2,
+                      color: '#888', opacity: 0.6, zIndex: 2,
                       // Min 44px touch target baked in (the full height of the input)
                     }}
+                    onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+                    onMouseLeave={e => (e.currentTarget.style.opacity = '0.6')}
                   >
-                    {showPassword ? '🙈' : '👁️'}
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
               </div>
@@ -304,9 +307,11 @@ export default function AuthModal() {
                   <button
                     type="button" onClick={() => setShowPassword(v => !v)} tabIndex={-1}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: 18, zIndex: 2 }}
+                    style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#888', opacity: 0.6, zIndex: 2 }}
+                    onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+                    onMouseLeave={e => (e.currentTarget.style.opacity = '0.6')}
                   >
-                    {showPassword ? '🙈' : '👁️'}
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
               </div>
@@ -325,9 +330,11 @@ export default function AuthModal() {
                   <button
                     type="button" onClick={() => setShowConfirm(v => !v)} tabIndex={-1}
                     aria-label={showConfirm ? 'Hide password' : 'Show password'}
-                    style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: 18, zIndex: 2 }}
+                    style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', color: '#888', opacity: 0.6, zIndex: 2 }}
+                    onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+                    onMouseLeave={e => (e.currentTarget.style.opacity = '0.6')}
                   >
-                    {showConfirm ? '🙈' : '👁️'}
+                    {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
               </div>
