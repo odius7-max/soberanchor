@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -21,21 +21,60 @@ export default function MeetingsTab({ userId, meetingsThisWeek, meetingsTotal, m
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [successToast, setSuccessToast] = useState(false)
+  const [localTotal, setLocalTotal] = useState(meetingsTotal)
+  const [localThisWeek, setLocalThisWeek] = useState(meetingsThisWeek)
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function openForm() {
+    setSaving(false)
+    setError(null)
+    setMeetingName('')
+    setFellowshipName('')
+    setNotes('')
+    setShowForm(true)
+  }
+
+  function toggleForm() {
+    if (showForm) { setShowForm(false) } else { openForm() }
+  }
 
   async function handleLog() {
     if (!meetingName.trim()) { setError('Please enter the meeting name.'); return }
     setSaving(true); setError(null)
     const supabase = createClient()
-    const { error: err } = await supabase.from('meeting_attendance').insert({
-      user_id: userId,
-      meeting_name: meetingName.trim(),
-      fellowship_name: fellowshipName.trim() || null,
-      notes: notes.trim() || null,
-      checkin_method: 'manual',
-    })
-    if (err) { setError('Failed to log. Please try again.'); setSaving(false); return }
-    setShowForm(false); setMeetingName(''); setFellowshipName(''); setNotes('')
-    router.refresh()
+    try {
+      const { error: err } = await supabase.from('meeting_attendance').insert({
+        user_id: userId,
+        meeting_name: meetingName.trim(),
+        fellowship_name: fellowshipName.trim() || null,
+        notes: notes.trim() || null,
+        checkin_method: 'manual',
+      }).select()
+      if (err) {
+        console.error('meeting_attendance insert error:', err)
+        setError('Failed to log. Please try again.')
+        return
+      }
+      setShowForm(false)
+      setMeetingName('')
+      setFellowshipName('')
+      setNotes('')
+      setLocalTotal(t => t + 1)
+      const now = new Date()
+      const dow = now.getDay()
+      const daysSinceMonday = dow === 0 ? 6 : dow - 1
+      const monday = new Date(now)
+      monday.setDate(now.getDate() - daysSinceMonday)
+      monday.setHours(0, 0, 0, 0)
+      if (now >= monday) setLocalThisWeek(w => w + 1)
+      setSuccessToast(true)
+      if (toastTimer.current) clearTimeout(toastTimer.current)
+      toastTimer.current = setTimeout(() => setSuccessToast(false), 2500)
+      router.refresh()
+    } finally {
+      setSaving(false)
+    }
   }
 
   function fmtDate(s: string) {
@@ -48,20 +87,25 @@ export default function MeetingsTab({ userId, meetingsThisWeek, meetingsTotal, m
     <div>
       <div className="flex gap-4 mb-5 flex-wrap">
         <div className="rounded-xl text-center" style={{ background: 'var(--teal-10)', padding: '16px 32px' }}>
-          <div className="font-bold text-navy" style={{ fontFamily: 'var(--font-display)', fontSize: '32px', letterSpacing: '-0.75px' }}>{meetingsThisWeek}</div>
+          <div className="font-bold text-navy" style={{ fontFamily: 'var(--font-display)', fontSize: '32px', letterSpacing: '-0.75px' }}>{localThisWeek}</div>
           <div style={{ fontSize: '12px', color: 'var(--mid)' }}>This Week</div>
         </div>
         <div className="rounded-xl text-center" style={{ background: 'var(--gold-10)', padding: '16px 32px' }}>
-          <div className="font-bold text-navy" style={{ fontFamily: 'var(--font-display)', fontSize: '32px' }}>{meetingsTotal}</div>
+          <div className="font-bold text-navy" style={{ fontFamily: 'var(--font-display)', fontSize: '32px' }}>{localTotal}</div>
           <div style={{ fontSize: '12px', color: 'var(--mid)' }}>Total Logged</div>
         </div>
       </div>
 
       <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
         <p style={{ fontSize: '13px', color: 'var(--mid)' }}>Auto-logged when you check in from the Meeting Finder, or add manually.</p>
-        <button onClick={() => setShowForm(v => !v)} className="font-semibold text-white rounded-lg hover:bg-navy-dark transition-colors" style={{ fontSize: '13px', padding: '8px 16px', background: 'var(--navy)', border: 'none', cursor: 'pointer' }}>
-          {showForm ? '✕ Cancel' : '+ Log Meeting'}
-        </button>
+        <div className="flex items-center gap-3">
+          {successToast && (
+            <span style={{ fontSize: '12px', fontWeight: 600, color: '#27AE60' }}>Meeting logged!</span>
+          )}
+          <button onClick={toggleForm} className="font-semibold text-white rounded-lg hover:bg-navy-dark transition-colors" style={{ fontSize: '13px', padding: '8px 16px', background: 'var(--navy)', border: 'none', cursor: 'pointer' }}>
+            {showForm ? '✕ Cancel' : '+ Log Meeting'}
+          </button>
+        </div>
       </div>
 
       {showForm && (
