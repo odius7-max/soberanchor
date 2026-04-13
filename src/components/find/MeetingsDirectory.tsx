@@ -17,6 +17,8 @@ import {
 
 type GeoStatus = 'idle' | 'requesting' | 'granted' | 'denied'
 
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
 interface Meeting {
   id: string
   name: string
@@ -75,6 +77,10 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
   const [access,     setAccess]     = useState('')
   const [sort, setSort] = useState('soonest')
 
+  // Client-only day names — computed in useEffect to avoid UTC mismatch on server
+  const [todayName,    setTodayName]    = useState<string>('')
+  const [tomorrowName, setTomorrowName] = useState<string>('')
+
   // ── Auto-request geolocation on mount ──────────────────────────────────────
   useEffect(() => {
     if (!navigator.geolocation) return
@@ -112,6 +118,18 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
       () => { setGeoStatus('denied') },
       { timeout: 10000, maximumAge: 300000 },
     )
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // ── Set today/tomorrow names client-side (browser timezone, never UTC) ───────
+  useEffect(() => {
+    const d = new Date()
+    const today    = DAY_NAMES[d.getDay()]
+    const tomorrow = DAY_NAMES[(d.getDay() + 1) % 7]
+    setTodayName(today)
+    setTomorrowName(tomorrow)
+    // Default the day filter to today — only on first mount; don't override user changes
+    setDays(prev => prev.length === 0 ? [today] : prev)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -203,10 +221,14 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
         return a._distance - b._distance
       }
       if (sort === 'alphabetical') return a.name.localeCompare(b.name)
-      // soonest
-      const aMins = a._minsUntil ?? Infinity
-      const bMins = b._minsUntil ?? Infinity
-      return aMins - bMins
+      // soonest: start_time ascending (HH:MM:SS string sort is correct), distance as tiebreaker
+      const aTm = a.start_time ?? ''
+      const bTm = b.start_time ?? ''
+      if (aTm !== bTm) return aTm < bTm ? -1 : 1
+      if (a._distance !== undefined && b._distance !== undefined) return a._distance - b._distance
+      if (a._distance !== undefined) return -1
+      if (b._distance !== undefined) return 1
+      return 0
     })
 
   const activeFilters: ActiveFilter[] = []
@@ -248,6 +270,20 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
   const fellowshipLabel = fellowship
     ? (FELLOWSHIP_OPTIONS.find(o => o.value === fellowship)?.label.split('–')[0]?.trim() ?? fellowship)
     : null
+
+  // ── Dynamic day options: Today/Tomorrow first, then remaining days ───────────
+  const dynamicDayOptions = todayName
+    ? [
+        { value: todayName,    label: `Today · ${todayName}` },
+        { value: tomorrowName, label: `Tomorrow · ${tomorrowName}` },
+        ...DAY_NAMES
+          .filter(d => d !== todayName && d !== tomorrowName)
+          .map(d => ({ value: d, label: d })),
+      ]
+    : DAY_OPTIONS.filter(o => o.value !== '')
+
+  // ── "Today's meetings" banner — shown when only today's day is filtered ───────
+  const showTodayBanner = todayName !== '' && days.length === 1 && days[0] === todayName
 
   // Contextual result count label when geo is active
   const resultLabel = loading
@@ -293,7 +329,7 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
             </select>
             {/* Day */}
             <MultiSelectDropdown
-              options={DAY_OPTIONS.filter(o => o.value !== '')}
+              options={dynamicDayOptions}
               selected={days}
               onChange={v => { setDays(v); setPage(1) }}
               defaultLabel="Any Day"
@@ -362,6 +398,25 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
         activeFilters={activeFilters}
         onRemoveFilter={removeFilter}
       />
+
+      {/* ── Today's meetings banner ── */}
+      {showTodayBanner && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '10px 16px', borderRadius: 10, marginBottom: 12,
+          background: 'rgba(42,138,153,0.05)', border: '1px solid rgba(42,138,153,0.15)',
+        }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)' }}>
+            {todayName} meetings{hasGeo ? ' near you' : ''}
+          </span>
+          <button
+            onClick={() => { setDays([]); setPage(1) }}
+            style={{ fontSize: 12, color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: 'var(--font-body)', padding: 0 }}
+          >
+            Show all days →
+          </button>
+        </div>
+      )}
 
       {/* ── Quick fellowship chips ── */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
