@@ -29,6 +29,8 @@ interface Props {
   filterSlot: ReactNode       // type-specific dropdowns
   // Results row
   resultCount: number | null
+  /** When provided, replaces the auto-generated "X results" count text */
+  resultLabel?: string
   sortValue: string
   sortOptions: Array<{ value: string; label: string }>
   onSortChange: (v: string) => void
@@ -51,7 +53,7 @@ export default function FilterAccordion({
   locationText, locationDisplayName, locationLat, locationLng, radiusMiles,
   onLocationChange,
   filterHint, filterSummary, filterSlot,
-  resultCount, sortValue, sortOptions, onSortChange,
+  resultCount, resultLabel, sortValue, sortOptions, onSortChange,
   activeFilters, onRemoveFilter,
 }: Props) {
   const [locOpen, setLocOpen] = useState(true)
@@ -270,7 +272,7 @@ export default function FilterAccordion({
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
         {/* Result count */}
         <span style={{ fontSize: 13, color: 'var(--mid)', marginRight: 4, whiteSpace: 'nowrap' }}>
-          {resultCount === null ? 'Loading…' : `${resultCount.toLocaleString()} result${resultCount !== 1 ? 's' : ''}`}
+          {resultCount === null ? 'Loading…' : (resultLabel ?? `${resultCount.toLocaleString()} result${resultCount !== 1 ? 's' : ''}`)}
         </span>
 
         {/* Active filter pills */}

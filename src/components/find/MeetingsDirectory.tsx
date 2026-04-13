@@ -15,6 +15,8 @@ import {
   getTimeRange, fmt12h,
 } from './findUtils'
 
+type GeoStatus = 'idle' | 'requesting' | 'granted' | 'denied'
+
 interface Meeting {
   id: string
   name: string
@@ -56,6 +58,7 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
   const [allMeetings, setAllMeetings] = useState<Meeting[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
+  const [geoStatus, setGeoStatus] = useState<GeoStatus>('idle')
 
   const [locationText, setLocationText] = useState('')
   const [locationDisplayName, setLocationDisplayName] = useState<string | null>(null)
@@ -72,6 +75,43 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
   const [access,     setAccess]     = useState('')
   const [sort, setSort] = useState('soonest')
 
+  // ── Auto-request geolocation on mount ──────────────────────────────────────
+  useEffect(() => {
+    if (!navigator.geolocation) return
+    setGeoStatus('requesting')
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const { latitude: lat, longitude: lng } = pos.coords
+        setGeoStatus('granted')
+        setSort('nearest')
+        fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+          { headers: { 'User-Agent': 'SoberAnchor/1.0' } },
+        )
+          .then(r => r.json())
+          .then((data: { address?: { city?: string; town?: string; village?: string; county?: string; state_abbreviation?: string; state?: string } }) => {
+            const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || ''
+            const state = data.address?.state_abbreviation || data.address?.state || ''
+            const displayName = [city, state].filter(Boolean).join(', ') || 'Near you'
+            setLocationText(displayName)
+            setLocationDisplayName(displayName)
+            setLocationLat(lat)
+            setLocationLng(lng)
+          })
+          .catch(() => {
+            setLocationText('Near you')
+            setLocationDisplayName('Near you')
+            setLocationLat(lat)
+            setLocationLng(lng)
+          })
+      },
+      () => { setGeoStatus('denied') },
+      { timeout: 10000, maximumAge: 300000 },
+    )
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // ── Load all meetings (with fellowship join) ────────────────────────────────
   useEffect(() => {
     const supabase = createClient()
     supabase
@@ -109,8 +149,6 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
     else if (field === 'language')  setLanguages(v => v.filter(x => x !== value))
     setPage(1)
   }
-
-  const hasGeo = !!(locationLat && locationLng)
 
   const filtered = allMeetings
     .filter(m => {
@@ -204,6 +242,27 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
     ? (FELLOWSHIP_OPTIONS.find(o => o.value === fellowship)?.label.split('–')[0]?.trim() ?? fellowship)
     : null
 
+  const hasGeo = !!(locationLat && locationLng)
+
+  // Contextual result count label when geo is active
+  const resultLabel = loading
+    ? undefined
+    : hasGeo
+      ? `${filtered.length.toLocaleString()} meeting${filtered.length !== 1 ? 's' : ''} within ${radiusMiles} mi`
+      : undefined
+
+  // Location prompt shown when geo was denied and no manual location is set
+  const locationPrompt = geoStatus === 'denied' && !hasGeo ? (
+    <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
+      <span style={{ opacity: 0.6 }}>📍</span>
+      Allow location access to see meetings near you
+    </div>
+  ) : geoStatus === 'requesting' ? (
+    <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 6 }}>
+      Detecting your location…
+    </div>
+  ) : null
+
   return (
     <div>
       <FilterAccordion
@@ -213,11 +272,12 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
         locationLat={locationLat}
         locationLng={locationLng}
         radiusMiles={radiusMiles}
-        onLocationChange={handleLocationChange}
+        onLocationChange={v => { handleLocationChange(v); if (v.lat) setSort('nearest') }}
         filterHint="(fellowship, day, time, format, type, language, access)"
         filterSummary={filterSummary}
         filterSlot={
           <>
+            {locationPrompt}
             {/* Fellowship */}
             <select
               value={fellowship}
@@ -290,6 +350,7 @@ export default function MeetingsDirectory({ savedIds = {} }: Props) {
           </>
         }
         resultCount={loading ? null : filtered.length}
+        resultLabel={resultLabel}
         sortValue={sort}
         sortOptions={MEETING_SORT_OPTIONS}
         onSortChange={v => { setSort(v); setPage(1) }}

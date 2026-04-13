@@ -1,13 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import FilterAccordion, { type ActiveFilter } from './FilterAccordion'
 import HeartButton from './HeartButton'
 import {
   FACILITY_SORT_OPTIONS,
-  haversineMiles,
   buildFilterSummary,
 } from './findUtils'
 
@@ -99,10 +98,13 @@ interface Facility {
   accepts_insurance: boolean | null
   avg_rating: number | null
   review_count: number | null
+  /** Pre-populated from RPC distance_miles, or undefined when loaded via regular query */
   _distance?: number
 }
 
 type FacilityType = 'treatment' | 'sober_living' | 'therapist' | 'venue' | 'outpatient'
+
+type GeoStatus = 'idle' | 'requesting' | 'granted' | 'denied'
 
 const TYPE_META: Record<FacilityType, { icon: string; bg: string; hint: string }> = {
   treatment:    { icon: '🏥', bg: 'var(--teal-10)',           hint: '(type, substance, insurance)' },
@@ -125,41 +127,111 @@ export default function FacilitiesDirectory({ facilityType, savedIds = {} }: Pro
   const [page, setPage] = useState(1)
   const ITEMS_PER_PAGE = 20
 
-  const [locationText, setLocationText] = useState('')
+  const [locationText, setLocationText]               = useState('')
   const [locationDisplayName, setLocationDisplayName] = useState<string | null>(null)
-  const [locationLat, setLocationLat] = useState<number | null>(null)
-  const [locationLng, setLocationLng] = useState<number | null>(null)
-  const [radiusMiles, setRadiusMiles] = useState(
+  const [locationLat, setLocationLat]                 = useState<number | null>(null)
+  const [locationLng, setLocationLng]                 = useState<number | null>(null)
+  const [radiusMiles, setRadiusMiles]                 = useState(
     facilityType === 'treatment' ? 50 : facilityType === 'sober_living' || facilityType === 'therapist' ? 25 : 15
   )
+  const [geoStatus, setGeoStatus] = useState<GeoStatus>('idle')
 
   // Type-specific filter state
-  const [treatmentType, setTreatmentType] = useState('')
-  const [substanceType, setSubstanceType] = useState('')
-  const [insuranceOnly, setInsuranceOnly] = useState(false)
-  const [gender, setGender] = useState('')
-  const [priceRange, setPriceRange] = useState('')
-  const [twelveStepOnly, setTwelveStepOnly] = useState(false)
-  const [petFriendly, setPetFriendly] = useState(false)
-  const [therapySpecialty, setTherapySpecialty] = useState('')
-  const [licenseType, setLicenseType] = useState('')
+  const [treatmentType, setTreatmentType]               = useState('')
+  const [substanceType, setSubstanceType]               = useState('')
+  const [insuranceOnly, setInsuranceOnly]               = useState(false)
+  const [gender, setGender]                             = useState('')
+  const [priceRange, setPriceRange]                     = useState('')
+  const [twelveStepOnly, setTwelveStepOnly]             = useState(false)
+  const [petFriendly, setPetFriendly]                   = useState(false)
+  const [therapySpecialty, setTherapySpecialty]         = useState('')
+  const [licenseType, setLicenseType]                   = useState('')
   const [insuranceOnlyTherapist, setInsuranceOnlyTherapist] = useState(false)
-  const [telehealthOnly, setTelehealthOnly] = useState(false)
-  const [venueType, setVenueType] = useState('')
-  const [sort, setSort] = useState('featured')
+  const [telehealthOnly, setTelehealthOnly]             = useState(false)
+  const [venueType, setVenueType]                       = useState('')
+  const [sort, setSort]                                 = useState('featured')
 
+  // Track load generation to prevent stale responses from overwriting newer ones
+  const loadGenRef = useRef(0)
+
+  // ── Auto-request geolocation on mount ──────────────────────────────────────
   useEffect(() => {
+    if (!navigator.geolocation) return
+    setGeoStatus('requesting')
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const { latitude: lat, longitude: lng } = pos.coords
+        setGeoStatus('granted')
+        setSort('nearest')
+        // Reverse-geocode for a display name (best-effort)
+        fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+          { headers: { 'User-Agent': 'SoberAnchor/1.0' } },
+        )
+          .then(r => r.json())
+          .then((data: { address?: { city?: string; town?: string; village?: string; county?: string; state_abbreviation?: string; state?: string } }) => {
+            const city = data.address?.city || data.address?.town || data.address?.village || data.address?.county || ''
+            const state = data.address?.state_abbreviation || data.address?.state || ''
+            const displayName = [city, state].filter(Boolean).join(', ') || 'Near you'
+            setLocationText(displayName)
+            setLocationDisplayName(displayName)
+            setLocationLat(lat)
+            setLocationLng(lng)
+          })
+          .catch(() => {
+            setLocationText('Near you')
+            setLocationDisplayName('Near you')
+            setLocationLat(lat)
+            setLocationLng(lng)
+          })
+      },
+      () => { setGeoStatus('denied') },
+      { timeout: 10000, maximumAge: 300000 },
+    )
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // ── Data fetch: RPC when geo available, regular query otherwise ─────────────
+  useEffect(() => {
+    const gen = ++loadGenRef.current
+    setLoading(true)
     const supabase = createClient()
-    supabase
-      .from('facilities')
-      .select('id, name, city, state, facility_type, description, is_featured, is_verified, listing_tier, latitude, longitude, phone, website, accepts_insurance, avg_rating, review_count')
-      .eq('facility_type', facilityType)
-      .then(({ data, error }) => {
-        if (error) console.error('FacilitiesDirectory fetch error:', error.message)
-        setAllFacilities((data ?? []) as unknown as Facility[])
-        setLoading(false)
-      })
-  }, [facilityType])
+
+    if (locationLat !== null && locationLng !== null) {
+      // Server-side geo filter via PostGIS RPC
+      supabase
+        .rpc('nearby_facilities', {
+          user_lat: locationLat,
+          user_lng: locationLng,
+          radius_miles: radiusMiles,
+          result_limit: 200,
+          p_facility_type: facilityType,
+        })
+        .then(({ data, error }) => {
+          if (gen !== loadGenRef.current) return // stale
+          if (error) console.error('nearby_facilities RPC error:', error.message)
+          setAllFacilities(
+            ((data ?? []) as Array<Facility & { distance_miles: number }>).map(f => ({
+              ...f,
+              _distance: f.distance_miles,
+            }))
+          )
+          setLoading(false)
+        })
+    } else {
+      // No geo — load all facilities for this type
+      supabase
+        .from('facilities')
+        .select('id, name, city, state, facility_type, description, is_featured, is_verified, listing_tier, latitude, longitude, phone, website, accepts_insurance, avg_rating, review_count')
+        .eq('facility_type', facilityType)
+        .then(({ data, error }) => {
+          if (gen !== loadGenRef.current) return // stale
+          if (error) console.error('FacilitiesDirectory fetch error:', error.message)
+          setAllFacilities((data ?? []) as unknown as Facility[])
+          setLoading(false)
+        })
+    }
+  }, [facilityType, locationLat, locationLng, radiusMiles])
 
   function handleLocationChange(v: { text: string; displayName: string | null; lat: number | null; lng: number | null; radius: number }) {
     setLocationText(v.text)
@@ -187,34 +259,25 @@ export default function FacilitiesDirectory({ facilityType, savedIds = {} }: Pro
   }
 
   const hasGeo = !!(locationLat && locationLng)
+  // When loaded via RPC, facilities already have _distance set — skip client-side geo filter
+  const usingRpc = hasGeo
 
   const filtered = allFacilities
     .filter(f => {
-      // Geo filter
-      if (hasGeo) {
+      // Geo filter: skip when using RPC (server already filtered by radius)
+      if (!usingRpc && hasGeo) {
         if (!f.latitude || !f.longitude) return false
-        const dist = haversineMiles(locationLat!, locationLng!, f.latitude, f.longitude)
-        if (dist > radiusMiles) return false
+        // (haversine fallback omitted — usingRpc is always true when hasGeo here)
       }
-      // Insurance filter (accepts_insurance is a real column)
       if (insuranceOnly && !f.accepts_insurance) return false
       if (insuranceOnlyTherapist && !f.accepts_insurance) return false
-      // Other type-specific filters (substance, gender, price, etc.) will filter here
-      // once those columns are added to the facilities schema.
       return true
     })
-    .map(f => ({
-      ...f,
-      _distance: hasGeo && f.latitude && f.longitude
-        ? haversineMiles(locationLat!, locationLng!, f.latitude, f.longitude)
-        : undefined,
-    }))
     .sort((a, b) => {
       if (sort === 'nearest') {
-        if (a._distance === undefined && b._distance === undefined) return 0
-        if (a._distance === undefined) return 1
-        if (b._distance === undefined) return -1
-        return a._distance - b._distance
+        const da = a._distance ?? Infinity
+        const db = b._distance ?? Infinity
+        return da - db
       }
       if (sort === 'alphabetical') return a.name.localeCompare(b.name)
       // featured: premium first, then enhanced, then featured flag, then basic
@@ -267,6 +330,25 @@ export default function FacilitiesDirectory({ facilityType, savedIds = {} }: Pro
   const meta = TYPE_META[facilityType]
   const paginated = filtered.slice(0, page * ITEMS_PER_PAGE)
   const hasMore = filtered.length > paginated.length
+
+  // Result count label — contextual when geo is active
+  const resultLabel = loading
+    ? undefined
+    : hasGeo
+      ? `${filtered.length.toLocaleString()} facilit${filtered.length !== 1 ? 'ies' : 'y'} within ${radiusMiles} mi`
+      : undefined  // fall back to default "X results"
+
+  // Location prompt — shown when user denied geo and hasn't manually set a location
+  const locationPrompt = geoStatus === 'denied' && !hasGeo ? (
+    <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
+      <span style={{ opacity: 0.6 }}>📍</span>
+      Allow location access to see facilities near you
+    </div>
+  ) : geoStatus === 'requesting' ? (
+    <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 6 }}>
+      Detecting your location…
+    </div>
+  ) : null
 
   // Build the type-specific filter slot
   let filterSlot: React.ReactNode = null
@@ -346,11 +428,17 @@ export default function FacilitiesDirectory({ facilityType, savedIds = {} }: Pro
         locationLat={locationLat}
         locationLng={locationLng}
         radiusMiles={radiusMiles}
-        onLocationChange={handleLocationChange}
+        onLocationChange={v => { handleLocationChange(v); if (v.lat) setSort('nearest') }}
         filterHint={meta.hint}
         filterSummary={filterSummary}
-        filterSlot={filterSlot}
+        filterSlot={
+          <>
+            {filterSlot}
+            {locationPrompt}
+          </>
+        }
         resultCount={loading ? null : filtered.length}
+        resultLabel={resultLabel}
         sortValue={sort}
         sortOptions={FACILITY_SORT_OPTIONS}
         onSortChange={v => { setSort(v); setPage(1) }}
@@ -360,7 +448,7 @@ export default function FacilitiesDirectory({ facilityType, savedIds = {} }: Pro
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--mid)', fontSize: 14 }}>
-          Loading listings…
+          {geoStatus === 'requesting' ? 'Getting your location…' : 'Loading listings…'}
         </div>
       ) : filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--mid)' }}>
@@ -431,7 +519,7 @@ function ToggleButton({ active, onClick, children }: { active: boolean; onClick:
 }
 
 function FacilityCard({ facility: f, icon, bg, savedId }: {
-  facility: Facility & { _distance?: number }
+  facility: Facility
   icon: string
   bg: string
   savedId: string | null
@@ -462,7 +550,9 @@ function FacilityCard({ facility: f, icon, bg, savedId }: {
                 <p style={{ fontSize: 12, color: 'var(--mid)', marginTop: 3 }}>
                   📍 {[f.city, f.state].filter(Boolean).join(', ')}
                   {f._distance !== undefined && (
-                    <span style={{ color: 'var(--teal)' }}> · {f._distance.toFixed(1)} mi</span>
+                    <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 600, padding: '1px 7px', borderRadius: 20, background: 'rgba(42,138,153,0.07)', border: '1px solid rgba(42,138,153,0.15)', color: 'var(--teal)' }}>
+                      {f._distance.toFixed(1)} mi
+                    </span>
                   )}
                 </p>
               )}
