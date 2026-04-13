@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import AddCustomMeetingModal, { type FellowshipOption, type EditableMeeting } from './AddCustomMeetingModal'
 
 interface Meeting {
   id: string
@@ -11,6 +12,9 @@ interface Meeting {
   format: string
   location_name: string | null
   city: string | null
+  fellowship_id: string | null
+  source: string
+  created_by: string | null
   fellowships: { abbreviation: string | null } | null
 }
 
@@ -42,20 +46,30 @@ function fmtTime(t: string | null) {
 interface Props { userId: string }
 
 export default function MeetingCheckin({ userId }: Props) {
-  const [allMeetings, setAllMeetings]     = useState<Meeting[]>([])
-  const [savedMeetings, setSavedMeetings] = useState<Meeting[]>([])
+  const [allMeetings, setAllMeetings]       = useState<Meeting[]>([])
+  const [savedMeetings, setSavedMeetings]   = useState<Meeting[]>([])
   const [recentMeetings, setRecentMeetings] = useState<Meeting[]>([])
-  const [loggedToday, setLoggedToday]     = useState<Set<string>>(new Set())
-  const [logging, setLogging]             = useState<string | null>(null)
-  const [filter, setFilter]               = useState('All')
-  const [searchInput, setSearchInput]     = useState('')
-  const [search, setSearch]               = useState('')
-  const [shownCount, setShownCount]       = useState(PAGE_SIZE)
-  const [loading, setLoading]             = useState(true)
+  const [loggedToday, setLoggedToday]       = useState<Set<string>>(new Set())
+  const [logging, setLogging]               = useState<string | null>(null)
+  const [filter, setFilter]                 = useState('All')
+  const [searchInput, setSearchInput]       = useState('')
+  const [search, setSearch]                 = useState('')
+  const [shownCount, setShownCount]         = useState(PAGE_SIZE)
+  const [loading, setLoading]               = useState(true)
+  const [fellowships, setFellowships]       = useState<FellowshipOption[]>([])
+  const [addModalOpen, setAddModalOpen]     = useState(false)
+  const [editMeeting, setEditMeeting]       = useState<EditableMeeting | null>(null)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  const [deleting, setDeleting]             = useState(false)
+  const [refreshKey, setRefreshKey]         = useState(0)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const firstLoadRef = useRef(true)
+
+  const reload = useCallback(() => setRefreshKey(k => k + 1), [])
 
   useEffect(() => {
     async function load() {
+      if (firstLoadRef.current) setLoading(true)
       const supabase = createClient()
       const todayStart = new Date()
       todayStart.setHours(0, 0, 0, 0)
@@ -65,10 +79,11 @@ export default function MeetingCheckin({ userId }: Props) {
         { data: savedData },
         { data: recentData },
         { data: todayData },
+        { data: fellowshipData },
       ] = await Promise.all([
         supabase
           .from('meetings')
-          .select('id,name,day_of_week,start_time,format,location_name,city,fellowships(abbreviation)')
+          .select('id,name,day_of_week,start_time,format,location_name,city,fellowship_id,source,created_by,fellowships(abbreviation)')
           .order('name'),
         supabase
           .from('saved_listings')
@@ -88,19 +103,27 @@ export default function MeetingCheckin({ userId }: Props) {
           .eq('user_id', userId)
           .not('meeting_id', 'is', null)
           .gte('attended_at', todayStart.toISOString()),
+        supabase
+          .from('fellowships')
+          .select('id,name,abbreviation')
+          .order('name'),
       ])
 
-      // Sort meetings by day-of-week then start time
+      // Sort meetings: custom meetings first (by name), then the rest by day → time
       const meetings = (allData as unknown as Meeting[]) ?? []
       meetings.sort((a, b) => {
+        const aCustom = a.source === 'user' ? 0 : 1
+        const bCustom = b.source === 'user' ? 0 : 1
+        if (aCustom !== bCustom) return aCustom - bCustom
         const da = DAY_ORDER[a.day_of_week?.toLowerCase() ?? ''] ?? 7
         const db = DAY_ORDER[b.day_of_week?.toLowerCase() ?? ''] ?? 7
         if (da !== db) return da - db
         return (a.start_time ?? '').localeCompare(b.start_time ?? '')
       })
       setAllMeetings(meetings)
+      setFellowships((fellowshipData ?? []) as FellowshipOption[])
 
-      // Saved meetings (both favorites and watchlist)
+      // Saved meetings
       const savedMeetingIds = new Set(
         (savedData ?? []).map(s => s.meeting_id).filter(Boolean) as string[]
       )
@@ -125,9 +148,10 @@ export default function MeetingCheckin({ userId }: Props) {
       ))
 
       setLoading(false)
+      firstLoadRef.current = false
     }
     load()
-  }, [userId])
+  }, [userId, refreshKey])
 
   function handleSearchInput(val: string) {
     setSearchInput(val)
@@ -147,19 +171,44 @@ export default function MeetingCheckin({ userId }: Props) {
     setLogging(m.id)
     const supabase = createClient()
     await supabase.from('meeting_attendance').insert({
-      user_id: userId,
-      meeting_id: m.id,
-      meeting_name: m.name,
+      user_id:         userId,
+      meeting_id:      m.id,
+      meeting_name:    m.name,
       fellowship_name: m.fellowships?.abbreviation ?? null,
-      location_name: m.location_name,
-      checkin_method: 'directory',
+      location_name:   m.location_name,
+      checkin_method:  'directory',
     })
     setLoggedToday(prev => new Set([...prev, m.id]))
     setLogging(null)
   }
 
+  async function handleDelete(id: string) {
+    setDeleting(true)
+    const supabase = createClient()
+    await supabase.from('meetings').delete().eq('id', id)
+    setDeleteConfirmId(null)
+    setDeleting(false)
+    reload()
+  }
+
+  function handleEdit(m: Meeting) {
+    setEditMeeting({
+      id:            m.id,
+      name:          m.name,
+      fellowship_id: m.fellowship_id,
+      day_of_week:   m.day_of_week,
+      start_time:    m.start_time,
+      location_name: m.location_name,
+      format:        m.format,
+    })
+  }
+
+  function closeModal() {
+    setAddModalOpen(false)
+    setEditMeeting(null)
+  }
+
   function applyFilter(list: Meeting[]): Meeting[] {
-    // Apply fellowship chip filter first
     const afterChip = filter === 'All'
       ? list
       : list.filter(m => (m.fellowships?.abbreviation ?? '') === filter)
@@ -168,28 +217,21 @@ export default function MeetingCheckin({ userId }: Props) {
 
     const words = search.trim().toLowerCase().split(/\s+/).filter(Boolean)
 
-    // Tier 1 (primary): ALL words must appear in the meeting name
     const nameMatches = afterChip.filter(m =>
       words.every(w => m.name.toLowerCase().includes(w))
     )
-
-    // Tier 2 (secondary): ALL words must appear in address/city
-    // Excludes tier-1 results and the fellowship abbreviation field
     const tier1Ids = new Set(nameMatches.map(m => m.id))
     const addrMatches = afterChip.filter(m => {
       if (tier1Ids.has(m.id)) return false
       const addr = `${m.location_name ?? ''} ${m.city ?? ''}`.toLowerCase()
       return words.every(w => addr.includes(w))
     })
-
-    // Name matches rank first, address matches second
     return [...nameMatches, ...addrMatches]
   }
 
   const filteredSaved  = applyFilter(savedMeetings)
   const filteredRecent = applyFilter(recentMeetings)
 
-  // "All meetings" excludes anything already shown in the two sections above
   const alreadyShownIds = new Set([
     ...savedMeetings.map(m => m.id),
     ...recentMeetings.map(m => m.id),
@@ -199,62 +241,123 @@ export default function MeetingCheckin({ userId }: Props) {
   const hasMore     = shownCount < filteredAll.length
 
   function renderCard(m: Meeting, saved = false) {
-    const abbr = m.fellowships?.abbreviation ?? null
-    const fc   = abbr ? (FC[abbr] ?? { bg: 'rgba(136,136,136,0.07)', color: '#888' }) : { bg: 'rgba(136,136,136,0.07)', color: '#888' }
+    const abbr       = m.fellowships?.abbreviation ?? null
+    const fc         = abbr ? (FC[abbr] ?? { bg: 'rgba(136,136,136,0.07)', color: '#888' }) : { bg: 'rgba(136,136,136,0.07)', color: '#888' }
     const isLogged   = loggedToday.has(m.id)
     const isLogging  = logging === m.id
+    const isCustom   = m.source === 'user'
+    const isConfirming = deleteConfirmId === m.id
     const fmtBadge =
-      m.format === 'online'  ? { label: 'Online',    bg: 'rgba(39,174,96,0.08)',   color: '#27AE60' } :
-      m.format === 'hybrid'  ? { label: 'Hybrid',    bg: 'rgba(212,165,116,0.1)',  color: '#9A7B54' } :
-                               { label: 'In-Person', bg: 'rgba(42,138,153,0.08)',  color: '#2A8A99' }
+      m.format === 'online' ? { label: 'Online',    bg: 'rgba(39,174,96,0.08)',   color: '#27AE60' } :
+      m.format === 'hybrid' ? { label: 'Hybrid',    bg: 'rgba(212,165,116,0.1)',  color: '#9A7B54' } :
+                              { label: 'In-Person', bg: 'rgba(42,138,153,0.08)',  color: '#2A8A99' }
 
     return (
       <div
         key={m.id}
-        className="card-hover rounded-[16px] p-5 flex items-start gap-4 bg-white"
+        className="rounded-[16px] p-5 bg-white"
         style={{
-          border: '1px solid var(--border)',
-          borderLeft: saved ? '3px solid #D4A574' : '1px solid var(--border)',
-          paddingLeft: saved ? '18px' : '20px',
+          border:      '1px solid var(--border)',
+          borderLeft:  isCustom ? '3px solid #2A8A99' : saved ? '3px solid #D4A574' : '1px solid var(--border)',
+          paddingLeft: (isCustom || saved) ? '18px' : '20px',
         }}
       >
-        <div className="flex-1 min-w-0">
-          <div className="font-bold text-navy mb-1" style={{ fontSize: '15px' }}>{m.name}</div>
-          <div className="flex gap-2 flex-wrap mb-2">
-            {abbr && (
-              <span className="rounded-full font-bold" style={{ fontSize: '11px', padding: '2px 9px', background: fc.bg, color: fc.color }}>
-                {abbr}
-              </span>
-            )}
-            <span className="rounded-full font-semibold" style={{ fontSize: '11px', padding: '2px 9px', background: fmtBadge.bg, color: fmtBadge.color }}>
-              {fmtBadge.label}
-            </span>
-          </div>
-          <div className="text-mid" style={{ fontSize: '13px' }}>
-            {m.day_of_week && <span style={{ textTransform: 'capitalize' }}>{m.day_of_week}</span>}
-            {m.start_time  && <span>{m.day_of_week ? ' · ' : ''}{fmtTime(m.start_time)}</span>}
-            {(m.location_name || m.city) && (
-              <span>{(m.day_of_week || m.start_time) ? ' · ' : ''}{m.location_name ?? m.city}</span>
-            )}
-          </div>
-        </div>
+        <div className="flex items-start gap-4">
+          <div className="flex-1 min-w-0">
+            {/* Name row */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '6px' }}>
+              <span className="font-bold text-navy" style={{ fontSize: '15px' }}>{m.name}</span>
+              {isCustom && (
+                <span style={{
+                  fontSize: '10px', fontWeight: 700, padding: '2px 7px',
+                  borderRadius: '20px', letterSpacing: '0.5px', textTransform: 'uppercase',
+                  background: 'rgba(42,138,153,0.1)', color: '#2A8A99',
+                  border: '1px solid rgba(42,138,153,0.25)',
+                }}>
+                  Custom
+                </span>
+              )}
+            </div>
 
-        <button
-          onClick={() => !isLogged && handleCheckin(m)}
-          disabled={isLogging || isLogged}
-          className="rounded-xl font-semibold flex-shrink-0 transition-all"
-          style={{
-            fontSize: '13px', padding: '8px 16px',
-            cursor: isLogged ? 'default' : isLogging ? 'wait' : 'pointer',
-            background: isLogged ? 'rgba(39,174,96,0.1)' : 'var(--navy)',
-            border:     isLogged ? '1.5px solid rgba(39,174,96,0.3)' : '1.5px solid var(--navy)',
-            color:      isLogged ? '#27AE60' : '#fff',
-            opacity:    isLogging ? 0.7 : 1,
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {isLogged ? '✓ Logged' : isLogging ? '…' : 'I Was Here'}
-        </button>
+            {/* Badges */}
+            <div className="flex gap-2 flex-wrap mb-2">
+              {abbr && (
+                <span className="rounded-full font-bold" style={{ fontSize: '11px', padding: '2px 9px', background: fc.bg, color: fc.color }}>
+                  {abbr}
+                </span>
+              )}
+              <span className="rounded-full font-semibold" style={{ fontSize: '11px', padding: '2px 9px', background: fmtBadge.bg, color: fmtBadge.color }}>
+                {fmtBadge.label}
+              </span>
+            </div>
+
+            {/* Details */}
+            <div className="text-mid" style={{ fontSize: '13px' }}>
+              {m.day_of_week && <span style={{ textTransform: 'capitalize' }}>{m.day_of_week}</span>}
+              {m.start_time  && <span>{m.day_of_week ? ' · ' : ''}{fmtTime(m.start_time)}</span>}
+              {(m.location_name || m.city) && (
+                <span>{(m.day_of_week || m.start_time) ? ' · ' : ''}{m.location_name ?? m.city}</span>
+              )}
+            </div>
+
+            {/* Edit / Delete for custom meetings */}
+            {isCustom && (
+              <div style={{ marginTop: '10px' }}>
+                {isConfirming ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '13px', color: 'var(--dark)' }}>Delete this meeting?</span>
+                    <button
+                      onClick={() => handleDelete(m.id)}
+                      disabled={deleting}
+                      style={actionBtn('#E74C3C')}
+                    >
+                      {deleting ? '…' : 'Yes, delete'}
+                    </button>
+                    <button
+                      onClick={() => setDeleteConfirmId(null)}
+                      style={actionBtn('var(--mid)')}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', gap: '16px' }}>
+                    <button
+                      onClick={() => handleEdit(m)}
+                      style={actionBtn('#2A8A99')}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => setDeleteConfirmId(m.id)}
+                      style={actionBtn('#E74C3C')}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Check-in button */}
+          <button
+            onClick={() => !isLogged && handleCheckin(m)}
+            disabled={isLogging || isLogged}
+            className="rounded-xl font-semibold flex-shrink-0 transition-all"
+            style={{
+              fontSize: '13px', padding: '8px 16px',
+              cursor:     isLogged ? 'default' : isLogging ? 'wait' : 'pointer',
+              background: isLogged ? 'rgba(39,174,96,0.1)' : 'var(--navy)',
+              border:     isLogged ? '1.5px solid rgba(39,174,96,0.3)' : '1.5px solid var(--navy)',
+              color:      isLogged ? '#27AE60' : '#fff',
+              opacity:    isLogging ? 0.7 : 1,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {isLogged ? '✓ Logged' : isLogging ? '…' : 'I Was Here'}
+          </button>
+        </div>
       </div>
     )
   }
@@ -287,8 +390,8 @@ export default function MeetingCheckin({ userId }: Props) {
         </div>
       </div>
 
-      {/* ── Fellowship chips ── */}
-      <div className="flex gap-2 flex-wrap mb-5">
+      {/* ── Fellowship chips + Add meeting button ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
         {CHIPS.map(f => (
           <button
             key={f}
@@ -304,6 +407,20 @@ export default function MeetingCheckin({ userId }: Props) {
             {f}
           </button>
         ))}
+
+        <button
+          onClick={() => setAddModalOpen(true)}
+          className="rounded-full font-semibold transition-colors"
+          style={{
+            fontSize: '13px', padding: '6px 16px', cursor: 'pointer',
+            background: 'var(--warm-gray)',
+            border: '1.5px dashed var(--border)',
+            color: 'var(--mid)',
+            marginLeft: 'auto',
+          }}
+        >
+          + Add meeting
+        </button>
       </div>
 
       {loading ? (
@@ -339,7 +456,6 @@ export default function MeetingCheckin({ userId }: Props) {
 
           {/* ── All Meetings ── */}
           <div>
-            {/* Section header + search bar */}
             <div
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -372,7 +488,19 @@ export default function MeetingCheckin({ userId }: Props) {
               <div className="text-center py-10 text-mid" style={{ fontSize: '14px' }}>
                 {search.trim()
                   ? <>No meetings match &ldquo;{search}&rdquo;.</>
-                  : 'No meetings found for this filter.'}
+                  : filter !== 'All'
+                    ? (
+                      <div>
+                        <div style={{ marginBottom: '8px' }}>No {filter} meetings found.</div>
+                        <button
+                          onClick={() => setAddModalOpen(true)}
+                          style={{ fontSize: '13px', fontWeight: 600, color: '#2A8A99', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                        >
+                          Add a custom {filter} meeting
+                        </button>
+                      </div>
+                    )
+                    : 'No meetings found.'}
               </div>
             ) : (
               <>
@@ -404,6 +532,26 @@ export default function MeetingCheckin({ userId }: Props) {
           </div>
         </>
       )}
+
+      {/* ── Add / Edit modal ── */}
+      {(addModalOpen || editMeeting !== null) && (
+        <AddCustomMeetingModal
+          userId={userId}
+          fellowships={fellowships}
+          editMeeting={editMeeting}
+          onClose={closeModal}
+          onSaved={() => { closeModal(); reload() }}
+        />
+      )}
     </div>
   )
+}
+
+function actionBtn(color: string): React.CSSProperties {
+  return {
+    fontSize: '13px', fontWeight: 600,
+    color, background: 'none', border: 'none',
+    cursor: 'pointer', padding: 0,
+    fontFamily: 'var(--font-body)',
+  }
 }
