@@ -3,7 +3,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendNotification } from '@/lib/notifications'
-import { revalidatePath } from 'next/cache'
 
 export interface SponsorTask {
   id: string
@@ -148,7 +147,8 @@ export async function updateTaskStatus(input: {
     })
   }
 
-  revalidatePath('/dashboard')
+  // No revalidatePath — client calls router.refresh() after this returns,
+  // avoiding a server-side RSC re-render that can 500 if the dashboard page throws.
   return {}
 }
 
