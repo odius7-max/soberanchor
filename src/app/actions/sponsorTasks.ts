@@ -90,7 +90,7 @@ export async function assignTask(input: {
     }
   })
 
-  revalidatePath(`/my-recovery/sponsor/sponsee/${input.sponseeId}`)
+  // No revalidatePath — caller manages local state to avoid triggering a server re-render
   return {}
 }
 
@@ -166,6 +166,6 @@ export async function deleteTask(taskId: string): Promise<{ error?: string }> {
 
   if (error) return { error: error.message }
 
-  revalidatePath('/my-recovery/sponsor/sponsee')
+  // No revalidatePath — SponseeTasksSection manages local state after delete
   return {}
 }

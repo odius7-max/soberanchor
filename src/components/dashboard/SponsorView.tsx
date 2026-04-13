@@ -85,6 +85,12 @@ function calcStreak(history: SponseeCheckIn[]): { current: number; longest: numb
   return { current, longest }
 }
 
+function fmtMilestoneLabel(days: number): string {
+  if (days < 365) return `${days} Days`
+  const years = Math.round(days / 365)
+  return `${years} Year${years !== 1 ? 's' : ''}`
+}
+
 function getNextMilestone(sobrietyDate: string | null) {
   const days = calcDays(sobrietyDate)
   if (days === null) return null
@@ -94,7 +100,7 @@ function getNextMilestone(sobrietyDate: string | null) {
   const target = new Date()
   target.setDate(target.getDate() + daysAway)
   return {
-    label: `${next} Days`,
+    label: fmtMilestoneLabel(next),
     daysAway,
     targetDate: target.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
   }

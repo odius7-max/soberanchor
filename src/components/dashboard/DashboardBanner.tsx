@@ -505,8 +505,9 @@ export default function DashboardBanner({
           // NORMAL BANNER VIEW — redesigned table layout
           // ════════════════════════════════════════════════
           <>
-            {/* Greeting */}
-            <div style={{ fontSize: 22, fontWeight: 500, color: '#fff', marginBottom: 16, letterSpacing: '-0.3px' }}>
+            {/* Greeting — suppressHydrationWarning because getGreeting() uses the local hour,
+                which differs between server (UTC) and client (user's timezone). */}
+            <div suppressHydrationWarning style={{ fontSize: 22, fontWeight: 500, color: '#fff', marginBottom: 16, letterSpacing: '-0.3px' }}>
               {getGreeting()}, {displayName} 👋
               {isMilestoneDay && (
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#D4A574', marginLeft: 10 }}>🎉 Milestone day!</span>
