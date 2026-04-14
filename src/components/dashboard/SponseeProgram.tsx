@@ -140,30 +140,22 @@ export default function SponseeProgram({
 
   async function saveUncompletion() {
     if (uncheckStep === null || !fellowshipId) return
+    const stepBeingUnchecked = uncheckStep
     setSaving(true)
-    await supabase.from('step_completions').upsert(
-      {
-        user_id: sponseeId,
-        sponsor_relationship_id: relationshipId,
-        fellowship_id: fellowshipId,
-        step_number: uncheckStep,
-        is_completed: false,
-        completed_at: null,
-        completed_method: null,
-        sponsor_note: null,
-        sponsor_approved: false,
-        sponsor_approved_at: null,
-      },
-      { onConflict: 'user_id,fellowship_id,step_number' }
-    )
-    setCompletions(prev => [
-      ...prev.filter(c => c.step_number !== uncheckStep),
-      { step_number: uncheckStep, is_completed: false, completed_method: null, sponsor_note: null, completed_at: null },
-    ])
-    await syncSponseeCurrentStep(sponseeId, fellowshipId)
-    writeStepActivityEvent({ sponseeId, stepNumber: uncheckStep, isCompleted: false })
-    setUncheckStep(null)
-    setSaving(false)
+    try {
+      const { error } = await supabase
+        .from('step_completions')
+        .delete()
+        .match({ user_id: sponseeId, step_number: stepBeingUnchecked, fellowship_id: fellowshipId })
+      if (error) throw error
+      setCompletions(prev => prev.filter(c => c.step_number !== stepBeingUnchecked))
+      writeStepActivityEvent({ sponseeId, stepNumber: stepBeingUnchecked, isCompleted: false })
+    } catch (err) {
+      console.error('[SponseeProgram] saveUncompletion failed:', err)
+    } finally {
+      setSaving(false)
+      setUncheckStep(null)
+    }
   }
 
   function closeModal() {
