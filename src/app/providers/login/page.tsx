@@ -34,6 +34,7 @@ export default function ProviderLoginPage() {
     if (!user) { setError('Authentication failed.'); setLoading(false); return }
     const { data: existing } = await supabase
       .from('provider_accounts').select('id').eq('auth_user_id', user.id).maybeSingle()
+    setLoading(false)
     router.push(existing ? '/providers/dashboard' : '/providers/claim')
   }
 

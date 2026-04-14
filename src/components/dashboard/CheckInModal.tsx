@@ -46,6 +46,7 @@ export default function CheckInModal({ userId, onClose }: Props) {
     })
     if (err) { setError('Failed to save. Please try again.'); setSubmitting(false); return }
     logCheckInActivity({ userId, mood }) // fire-and-forget
+    setSubmitting(false)
     router.refresh()
     onClose()
   }

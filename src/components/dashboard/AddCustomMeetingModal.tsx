@@ -96,6 +96,7 @@ export default function AddCustomMeetingModal({ userId, fellowships, editMeeting
       if (err) { setError(err.message); setSaving(false); return }
     }
 
+    setSaving(false)
     onSaved()
   }
 

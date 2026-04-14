@@ -42,6 +42,7 @@ export default function JournalTab({ userId, entries }: Props) {
       is_shared_with_sponsor: isShared,
     })
     if (err) { setError('Failed to save. Please try again.'); setSaving(false); return }
+    setSaving(false)
     setShowForm(false); setTitle(''); setBody(''); setStepNumber(''); setIsShared(false)
     router.refresh()
   }

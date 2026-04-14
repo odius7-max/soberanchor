@@ -120,6 +120,7 @@ export default function ClaimFlow({ userId, preselectedFacility = null }: Props)
       updated_at: new Date().toISOString(),
     }).eq('id', facility.id)
 
+    setSubmitting(false)
     router.push('/providers/dashboard')
   }
 
@@ -178,6 +179,7 @@ export default function ClaimFlow({ userId, preselectedFacility = null }: Props)
       })
 
     if (facilityErr) { setSubmitting(false); setError(facilityErr.message); return }
+    setSubmitting(false)
     router.push('/providers/dashboard')
   }
 

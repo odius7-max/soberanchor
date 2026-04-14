@@ -46,29 +46,32 @@ export default function SobrietyMilestonesSection({ userId }: { userId: string }
   async function addMilestone() {
     if (!label.trim() || !date) return
     setSaving(true)
-    const { data } = await supabase.from('sobriety_milestones').insert({
-      user_id: userId,
-      label: label.trim(),
-      sobriety_date: date,
-      fellowship_id: fellowshipId || null,
-      notes: notes.trim() || null,
-      is_primary: milestones.length === 0, // first one is primary
-    }).select('id, label, sobriety_date, fellowship_id, is_primary, notes').single()
+    try {
+      const { data } = await supabase.from('sobriety_milestones').insert({
+        user_id: userId,
+        label: label.trim(),
+        sobriety_date: date,
+        fellowship_id: fellowshipId || null,
+        notes: notes.trim() || null,
+        is_primary: milestones.length === 0, // first one is primary
+      }).select('id, label, sobriety_date, fellowship_id, is_primary, notes').single()
 
-    if (data) {
-      setMilestones(prev => [...prev, data])
-      // If this is the first milestone, sync to user_profiles
-      if (milestones.length === 0) {
-        await supabase.from('user_profiles').update({
-          sobriety_date: date,
-          primary_fellowship_id: fellowshipId || null,
-        }).eq('id', userId)
-        router.refresh()
+      if (data) {
+        setMilestones(prev => [...prev, data])
+        // If this is the first milestone, sync to user_profiles
+        if (milestones.length === 0) {
+          await supabase.from('user_profiles').update({
+            sobriety_date: date,
+            primary_fellowship_id: fellowshipId || null,
+          }).eq('id', userId)
+          router.refresh()
+        }
       }
+      setLabel(''); setDate(''); setFellowshipId(''); setNotes('')
+      setShowForm(false)
+    } finally {
+      setSaving(false)
     }
-    setLabel(''); setDate(''); setFellowshipId(''); setNotes('')
-    setShowForm(false)
-    setSaving(false)
   }
 
   async function setPrimary(id: string, date: string, fellowship_id: string | null) {

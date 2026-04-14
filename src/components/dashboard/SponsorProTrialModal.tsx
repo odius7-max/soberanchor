@@ -38,6 +38,7 @@ export default function SponsorProTrialModal({ userId, onClose, onTrialStarted }
       const { data, error: rpcErr } = await supabase.rpc('start_sponsor_trial', { p_user_id: userId })
       if (rpcErr) throw new Error(rpcErr.message)
       if (!data?.success) throw new Error(data?.error ?? 'Could not start trial.')
+      setLoading(false)
       onTrialStarted()
       onClose()
     } catch (e: unknown) {

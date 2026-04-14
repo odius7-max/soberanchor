@@ -123,6 +123,7 @@ export default function OnboardingCard({ userId }: { userId: string }) {
       return
     }
 
+    setSaving(false)
     setDismissed(true)
     router.refresh()
   }
