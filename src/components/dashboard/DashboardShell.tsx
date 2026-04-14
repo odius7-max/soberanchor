@@ -146,7 +146,6 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
             <DashboardBanner
               userId={userId}
               displayName={displayName}
-              currentStep={currentStep}
               initialMilestones={initialMilestones}
               fellowships={fellowships}
               onActiveFellowshipChange={handleActiveFellowshipChange}

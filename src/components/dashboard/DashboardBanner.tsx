@@ -98,7 +98,6 @@ export interface Fellowship { id: string; name: string; abbreviation: string | n
 interface Props {
   userId: string
   displayName: string
-  currentStep: number
   initialMilestones: SobrietyMilestone[]
   fellowships: Fellowship[]
   onActiveFellowshipChange: (fellowshipId: string | null) => void
@@ -190,7 +189,7 @@ function MilestoneForm({
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function DashboardBanner({
-  userId, displayName, currentStep,
+  userId, displayName,
   initialMilestones, fellowships, onActiveFellowshipChange,
 }: Props) {
   const router = useRouter()
@@ -198,16 +197,47 @@ export default function DashboardBanner({
   const { ref: stepsScrollRef, fadeLeft: stepsFadeLeft, fadeRight: stepsFadeRight } = useScrollFade()
   const activeStepRef = useRef<HTMLDivElement>(null)
 
+  // Active row in the fellowship table
+  const initPrimaryIdx = initialMilestones.findIndex(m => m.is_primary)
+  const [activeIdx, setActiveIdx] = useState(initPrimaryIdx >= 0 ? initPrimaryIdx : 0)
+
+  // ── Step completions — fetched client-side from step_completions (single source of truth) ──
+  // Uses is_completed directly per step_number rather than n < currentStep, so out-of-order
+  // completions (e.g. steps 1-10 + 12 done, 11 not) display correctly.
+  const [completedStepNums, setCompletedStepNums] = useState<Set<number>>(new Set())
+
+  // Active fellowship for the currently-selected milestone row
+  const activeFellowshipId = milestones[activeIdx]?.fellowship_id ?? null
+
+  useEffect(() => {
+    if (!activeFellowshipId) { setCompletedStepNums(new Set()); return }
+    createClient()
+      .from('step_completions')
+      .select('step_number')
+      .eq('user_id', userId)
+      .eq('fellowship_id', activeFellowshipId)
+      .eq('is_completed', true)
+      .then(({ data }) => {
+        setCompletedStepNums(new Set((data ?? []).map(r => r.step_number as number)))
+      })
+  }, [userId, activeFellowshipId])
+
+  // Derive current step from completedStepNums — first step not yet done, or 13 when all complete
+  const localCurrentStep = (() => {
+    for (let i = 1; i <= 12; i++) {
+      if (!completedStepNums.has(i)) return i
+    }
+    return 13
+  })()
+  const allStepsDone = localCurrentStep > 12
+  const scrollToStep = allStepsDone ? 12 : localCurrentStep
+
   // Scroll active step circle into view on load / step change
   useEffect(() => {
     if (activeStepRef.current) {
       activeStepRef.current.scrollIntoView({ behavior: 'instant' as ScrollBehavior, block: 'nearest', inline: 'center' })
     }
-  }, [currentStep])
-
-  // Active row in the fellowship table
-  const initPrimaryIdx = initialMilestones.findIndex(m => m.is_primary)
-  const [activeIdx, setActiveIdx] = useState(initPrimaryIdx >= 0 ? initPrimaryIdx : 0)
+  }, [scrollToStep])
 
   // Management panel
   const [showPanel, setShowPanel] = useState(false)
@@ -722,10 +752,10 @@ export default function DashboardBanner({
                   )}
                   <div ref={stepsScrollRef} style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2, scrollbarWidth: 'none' as const }}>
                     {STEPS.map(({ n, s }) => {
-                      const isDone = n < currentStep
-                      const isActivStep = n === currentStep
+                      const isDone = completedStepNums.has(n)
+                      const isActivStep = !allStepsDone && n === localCurrentStep
                       return (
-                        <div key={n} ref={isActivStep ? activeStepRef : null} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flexShrink: 0, minWidth: 46 }}>
+                        <div key={n} ref={n === scrollToStep ? activeStepRef : null} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flexShrink: 0, minWidth: 46 }}>
                           <div style={{
                             width: 38, height: 38, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: 13, fontWeight: 700,
@@ -748,20 +778,20 @@ export default function DashboardBanner({
                 {/* Currently On — anchored right of the step row */}
                 <div style={{
                   flexShrink: 0,
-                  background: 'rgba(42,138,153,0.12)',
-                  border: '1px solid rgba(42,138,153,0.3)',
+                  background: allStepsDone ? 'rgba(39,174,96,0.12)' : 'rgba(42,138,153,0.12)',
+                  border: `1px solid ${allStepsDone ? 'rgba(39,174,96,0.3)' : 'rgba(42,138,153,0.3)'}`,
                   borderRadius: 10,
                   padding: '8px 14px',
                   textAlign: 'center',
                 }}>
                   <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 4, whiteSpace: 'nowrap' }}>
-                    Currently On
+                    {allStepsDone ? 'Progress' : 'Currently On'}
                   </div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#2A8A99', lineHeight: 1, letterSpacing: '-0.3px' }}>
-                    Step {currentStep}
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: allStepsDone ? '#27AE60' : '#2A8A99', lineHeight: 1, letterSpacing: '-0.3px' }}>
+                    {allStepsDone ? 'All Done' : `Step ${localCurrentStep}`}
                   </div>
                   <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', marginTop: 3, whiteSpace: 'nowrap' }}>
-                    {STEPS[currentStep - 1]?.s}
+                    {allStepsDone ? '12 of 12 ✓' : STEPS[localCurrentStep - 1]?.s}
                   </div>
                 </div>
               </div>
