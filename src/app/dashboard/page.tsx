@@ -292,8 +292,9 @@ export default async function DashboardPage() {
         }
       }
 
-      // Latest sponsor note per sponsee
+      // Latest sponsor note + total count per sponsee
       const latestNoteBySponsee: Record<string, { text: string; createdAt: string }> = {}
+      const noteCountBySponsee: Record<string, number> = {}
       for (const note of (sponsorNotesRes.data ?? [])) {
         if (!latestNoteBySponsee[note.sponsee_id]) {
           latestNoteBySponsee[note.sponsee_id] = {
@@ -301,6 +302,7 @@ export default async function DashboardPage() {
             createdAt: note.created_at as string,
           }
         }
+        noteCountBySponsee[note.sponsee_id] = (noteCountBySponsee[note.sponsee_id] ?? 0) + 1
       }
 
       // Active + overdue task counts per sponsee
@@ -341,6 +343,7 @@ export default async function DashboardPage() {
           completedSteps,
           totalSteps: 12,
           latestNote: latestNoteBySponsee[sp.id] ?? null,
+          noteCount: noteCountBySponsee[sp.id] ?? 0,
           activeTasks: activeTasksBySponsee[sp.id] ?? 0,
           overdueTasks: overdueTasksBySponsee[sp.id] ?? 0,
         }

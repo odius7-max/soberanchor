@@ -26,7 +26,7 @@ export interface MeetingAttendance { id:string; meeting_name:string; fellowship_
 export interface ReadingAssignment { id:string; title:string; source:string|null; is_completed:boolean; due_date:string|null; created_at:string }
 export interface SponseeCheckIn { date:string; mood:string|null; notes:string|null; soberToday:boolean; meetingsAttended:number; calledSponsor:boolean|null }
 export interface ActiveSponsor { relationshipId:string; name:string; fellowshipId:string|null; fellowshipAbbr:string|null }
-export interface SponseeFull { id:string; name:string; fellowshipAbbr:string|null; fellowshipAbbrs:string[]; relationships:{ id:string; fellowshipId:string|null; fellowshipAbbr:string|null }[]; sobrietyDate:string|null; checkInHistory:SponseeCheckIn[]; lastStepWork:{ date:string; title:string; stepNumber:number|null }|null; pendingReviews:number; lastMeeting:{ date:string; name:string }|null; completedSteps:number; totalSteps:number; latestNote:{ text:string; createdAt:string }|null; activeTasks:number; overdueTasks:number }
+export interface SponseeFull { id:string; name:string; fellowshipAbbr:string|null; fellowshipAbbrs:string[]; relationships:{ id:string; fellowshipId:string|null; fellowshipAbbr:string|null }[]; sobrietyDate:string|null; checkInHistory:SponseeCheckIn[]; lastStepWork:{ date:string; title:string; stepNumber:number|null }|null; pendingReviews:number; lastMeeting:{ date:string; name:string }|null; completedSteps:number; totalSteps:number; latestNote:{ text:string; createdAt:string }|null; noteCount:number; activeTasks:number; overdueTasks:number }
 export interface ActivityItem { id:string; event_type:string; title:string; description:string|null; is_read:boolean; created_at:string }
 export type { SobrietyMilestone, Fellowship }
 

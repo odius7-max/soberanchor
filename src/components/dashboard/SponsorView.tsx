@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useTransition, useMemo, useRef, useEffect, useCallback } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import AddSponseeModal from './AddSponseeModal'
 import PendingRequests from './PendingRequests'
 import type { PendingRequest } from './PendingRequests'
-import { addSponsorNote } from '@/app/dashboard/actions'
 import { createClient } from '@/lib/supabase/client'
 import type { SponseeFull, SponseeCheckIn } from './DashboardShell'
 import { useSponsorAccess } from '@/hooks/useSponsorAccess'
@@ -265,7 +264,7 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
   const [showStepWorkReport, setShowStepWorkReport] = useState(false)
   const [showMeetingReport, setShowMeetingReport] = useState(false)
   const [noteText, setNoteText] = useState('')
-  const [isPending, startTransition] = useTransition()
+  const [isSaving, setIsSaving] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [localNote, setLocalNote] = useState(sponsee.latestNote)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -306,19 +305,28 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
     if (showNote) textareaRef.current?.focus()
   }, [showNote])
 
-  function handleSaveNote() {
-    if (!noteText.trim()) return
-    startTransition(async () => {
-      try {
-        await addSponsorNote(sponsee.id, noteText.trim())
-        setLocalNote({ text: noteText.trim(), createdAt: new Date().toISOString() })
-        setNoteText('')
-        setShowNote(false)
-        showToast('Note saved')
-      } catch {
-        showToast('Failed to save note')
-      }
-    })
+  async function handleSaveNote() {
+    if (!noteText.trim() || isSaving) return
+    setIsSaving(true)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Unauthorized')
+      const { error } = await supabase.from('sponsor_notes').insert({
+        sponsor_id: user.id,
+        sponsee_id: sponsee.id,
+        note_text: noteText.trim(),
+      })
+      if (error) throw new Error(error.message)
+      setLocalNote({ text: noteText.trim(), createdAt: new Date().toISOString() })
+      setNoteText('')
+      setShowNote(false)
+      showToast('Note saved')
+    } catch {
+      showToast('Failed to save note')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   async function handleSendReminder() {
@@ -613,8 +621,11 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
       {/* ── Latest sponsor note ── */}
       {localNote && !showNote && (
         <div style={{ borderLeft: '3px solid var(--teal)', paddingLeft: 12, marginBottom: 14 }}>
-          <div style={{ fontSize: 10, color: 'var(--mid)', marginBottom: 3, fontWeight: 600, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-            Your Note · {new Date(localNote.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+          <div style={{ fontSize: 10, color: 'var(--mid)', marginBottom: 3, fontWeight: 600, letterSpacing: '0.5px', textTransform: 'uppercase', display: 'flex', gap: 6, alignItems: 'center' }}>
+            <span>Your Note · {new Date(localNote.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+            {sponsee.noteCount > 1 && (
+              <span style={{ fontWeight: 500, opacity: 0.7, textTransform: 'none', letterSpacing: 0 }}>· {sponsee.noteCount} notes</span>
+            )}
           </div>
           <div style={{ fontSize: 13, color: 'var(--dark)', lineHeight: 1.6, fontStyle: 'italic' }}>
             &ldquo;{localNote.text}&rdquo;
@@ -653,16 +664,16 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
             </button>
             <button
               onClick={handleSaveNote}
-              disabled={isPending || !noteText.trim()}
+              disabled={isSaving || !noteText.trim()}
               style={{
                 background: 'var(--navy)', color: '#fff', border: 'none', borderRadius: 7,
                 padding: '6px 18px', fontSize: 12, fontWeight: 600,
-                cursor: isPending || !noteText.trim() ? 'not-allowed' : 'pointer',
-                opacity: isPending || !noteText.trim() ? 0.6 : 1,
+                cursor: isSaving || !noteText.trim() ? 'not-allowed' : 'pointer',
+                opacity: isSaving || !noteText.trim() ? 0.6 : 1,
                 fontFamily: 'var(--font-body)',
               }}
             >
-              {isPending ? 'Saving…' : 'Save Note'}
+              {isSaving ? 'Saving…' : 'Save Note'}
             </button>
           </div>
         </div>
@@ -705,7 +716,7 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
             cursor: 'pointer', fontFamily: 'var(--font-body)',
           }}
         >
-          Add Note
+          Add Note{sponsee.noteCount > 0 && !localNote ? ` · ${sponsee.noteCount}` : ''}
         </button>
 
         {(() => {

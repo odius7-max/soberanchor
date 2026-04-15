@@ -66,6 +66,7 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
     fellowshipsRes,
     completionsRes,
     tasksRes,
+    sponsorNotesRes,
   ] = await Promise.all([
     admin.from('user_profiles').select('display_name, sobriety_date, current_step').eq('id', sponseeId).single(),
     admin.from('check_ins').select('id, check_in_date, mood, notes, sober_today, meetings_attended').eq('user_id', sponseeId).order('check_in_date', { ascending: false }).limit(5),
@@ -84,6 +85,12 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
       .eq('sponsor_id', user.id)
       .eq('sponsee_id', sponseeId)
       .order('assigned_at', { ascending: false }),
+    // Sponsor's private notes about this sponsee — most recent first
+    supabase.from('sponsor_notes')
+      .select('id, note_text, created_at')
+      .eq('sponsor_id', user.id)
+      .eq('sponsee_id', sponseeId)
+      .order('created_at', { ascending: false }),
   ])
 
   if (!profileRes.data) notFound()
@@ -95,6 +102,7 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
   const fellowships = (fellowshipsRes.data ?? []) as { id: string; name: string; abbreviation: string | null; slug: string }[]
   const initialCompletions = (completionsRes.data ?? []) as { step_number: number; is_completed: boolean | null; completed_method: string | null; sponsor_note: string | null; completed_at: string | null }[]
   const sponsorTasks = (tasksRes.data ?? []) as SponsorTask[]
+  const sponsorNotes = (sponsorNotesRes.data ?? []) as { id: string; note_text: string; created_at: string }[]
 
   const sobrietyDays = calcDays(profile.sobriety_date)
   const submittedEntries = stepEntries.filter(e => e.review_status === 'submitted')
@@ -273,6 +281,47 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
           </div>
         ))}
       </div>
+
+      {/* Sponsor Notes — private, only visible to the sponsor */}
+      <details style={{ ...card, cursor: 'default' }}>
+        <summary style={{
+          cursor: 'pointer', listStyle: 'none', WebkitAppearance: 'none',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+        }}>
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--navy)', margin: 0 }}>
+            🔒 Sponsor Notes
+          </h2>
+          <span style={{ fontSize: 12, color: 'var(--mid)', fontWeight: 500, flexShrink: 0 }}>
+            {sponsorNotes.length === 0
+              ? 'No notes yet'
+              : `${sponsorNotes.length} note${sponsorNotes.length !== 1 ? 's' : ''}`} · tap to expand
+          </span>
+        </summary>
+
+        <div style={{ marginTop: 14 }}>
+          <p style={{ fontSize: 12, color: 'var(--mid)', margin: '0 0 14px', fontStyle: 'italic' }}>
+            Private — only you can see these notes. Your sponsee never sees them.
+          </p>
+          {sponsorNotes.length === 0 ? (
+            <div style={{ fontSize: 14, color: 'var(--mid)', textAlign: 'center', padding: '16px 0' }}>
+              No notes yet. Add notes from the sponsee card on your dashboard.
+            </div>
+          ) : sponsorNotes.map((note, i) => (
+            <div key={note.id} style={{ padding: '12px 0', borderTop: i > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--mid)', marginBottom: 5, letterSpacing: '0.3px' }}>
+                {new Date(note.created_at).toLocaleDateString('en-US', {
+                  month: 'short', day: 'numeric', year: 'numeric',
+                })}{' '}
+                at{' '}
+                {new Date(note.created_at).toLocaleTimeString('en-US', {
+                  hour: 'numeric', minute: '2-digit',
+                })}
+              </div>
+              <div style={{ fontSize: 14, color: 'var(--dark)', lineHeight: 1.65 }}>{note.note_text}</div>
+            </div>
+          ))}
+        </div>
+      </details>
     </div>
   )
 }
