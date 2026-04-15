@@ -19,18 +19,6 @@ type GeoStatus = 'idle' | 'requesting' | 'granted' | 'denied'
 // Day order for sorting online meetings when no distance is available
 const DAY_ORDER = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
-// Returns true if the meeting is currently in session (purely client-side time comparison)
-function isInProgress(startTime: string | null, durationMinutes: number | null, today: string, dayOfWeek: string | null): boolean {
-  if (!startTime || dayOfWeek !== today) return false
-  const [h, m] = startTime.split(':').map(Number)
-  if (isNaN(h) || isNaN(m)) return false
-  const now = new Date()
-  const nowMins  = now.getHours() * 60 + now.getMinutes()
-  const startMins = h * 60 + m
-  const endMins   = startMins + (durationMinutes ?? 60)
-  return nowMins >= startMins && nowMins < endMins
-}
-
 interface Meeting {
   id: string
   name: string
@@ -48,7 +36,6 @@ interface Meeting {
   types: string[] | null
   fellowship_id: string | null
   distance_miles: number | null
-  duration_minutes: number | null
 }
 
 type FellowshipInfo = { name: string; abbreviation: string; slug: string; approach: string }
@@ -71,12 +58,10 @@ interface Props {
 export default function MeetingsDirectory({ savedIds = {}, userCity, userState }: Props) {
   const searchParams = useSearchParams()
 
-  const [allMeetings,      setAllMeetings]      = useState<Meeting[]>([])
-  const [tomorrowMeetings, setTomorrowMeetings] = useState<Meeting[]>([])
-  const [loading,          setLoading]          = useState(true)
-  const [loadingTomorrow,  setLoadingTomorrow]  = useState(false)
-  const [page,             setPage]             = useState(1)
-  const [geoStatus,        setGeoStatus]        = useState<GeoStatus>('idle')
+  const [allMeetings,   setAllMeetings]   = useState<Meeting[]>([])
+  const [loading,       setLoading]       = useState(true)
+  const [page,          setPage]          = useState(1)
+  const [geoStatus,     setGeoStatus]     = useState<GeoStatus>('idle')
 
   const [locationText,        setLocationText]        = useState('')
   const [locationDisplayName, setLocationDisplayName] = useState<string | null>(null)
@@ -97,12 +82,6 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
   const [sort,        setSort]        = useState('nearest')
 
   const [profileGeoAttempted, setProfileGeoAttempted] = useState(false)
-
-  // Time filter passed to RPC — set to "now" on initial load so only upcoming meetings
-  // are returned; cleared to null whenever the user explicitly picks a day.
-  const [rpcStartTime, setRpcStartTime] = useState<string | null>(() =>
-    new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
-  )
 
   // ── Default to today's day (client-side only, avoids SSR timezone mismatch) ─
   useEffect(() => {
@@ -189,83 +168,26 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
       })
   }, [])
 
-  // ── RPC — nearby_meetings when geo is available, online_meetings fallback otherwise ─
+  // ── nearby_meetings RPC — single source of truth for all meeting data ─────
   useEffect(() => {
     if (!locationLat || !locationLng) {
-      // Still waiting for geo resolution — don't do anything yet
-      if (geoStatus === 'idle' || geoStatus === 'requesting') return
-
-      // Geo denied and no profile fallback resolved — show online meetings instead
-      setLoading(true)
-      setTomorrowMeetings([])
-
-      const onlineParams: Record<string, unknown> = { result_limit: 50 }
-      if (days.length === 1) {
-        onlineParams.filter_day = days[0]
-        if (rpcStartTime) onlineParams.filter_start_time = rpcStartTime
+      // Geo not yet available — stop spinner once status is resolved
+      if (geoStatus !== 'idle' && geoStatus !== 'requesting') {
+        setAllMeetings([])
+        setLoading(false)
       }
-
-      createClient()
-        .rpc('online_meetings', onlineParams)
-        .then(({ data, error }) => {
-          if (error) console.error('[MeetingsDirectory] online_meetings RPC error:', error)
-          setAllMeetings((data ?? []) as unknown as Meeting[])
-          setLoading(false)
-        })
       return
     }
     setLoading(true)
-    setTomorrowMeetings([])  // clear stale tomorrow data on every primary refetch
-
-    // When a single day is selected, delegate day (and optionally time) filtering to Postgres.
-    // Multi-day or no-day selections fetch without a day filter and rely on client-side filtering.
-    const rpcParams: Record<string, unknown> = {
-      user_lat: locationLat,
-      user_lng: locationLng,
-      radius_miles: radiusMiles,
-      result_limit: 200,
-    }
-    if (days.length === 1) {
-      rpcParams.filter_day = days[0]
-      // rpcStartTime is set to "now" on initial load so only upcoming meetings are shown.
-      // It is cleared to null when the user explicitly picks a day, so all-day results are returned.
-      if (rpcStartTime) rpcParams.filter_start_time = rpcStartTime
-    }
-
-    // Track whether this is the initial today+time query so we know whether to fetch tomorrow
-    const isInitialTodayQuery = days.length === 1 && !!rpcStartTime
-
-    const supabase = createClient()
-    supabase
-      .rpc('nearby_meetings', rpcParams)
+    createClient()
+      .rpc('nearby_meetings', { user_lat: locationLat, user_lng: locationLng, radius_miles: radiusMiles, result_limit: 500 })
       .then(({ data, error }) => {
         if (error) console.error('[MeetingsDirectory] nearby_meetings RPC error:', error)
-        const todayResults = (data ?? []) as unknown as Meeting[]
-        setAllMeetings(todayResults)
+        setAllMeetings((data ?? []) as unknown as Meeting[])
         setLoading(false)
-
-        // If the initial today query returns fewer than 5 results, supplement with tomorrow
-        if (isInitialTodayQuery && todayResults.length < 5) {
-          const tomorrow = new Date(Date.now() + 86400000)
-            .toLocaleDateString('en-US', { weekday: 'long' })
-          setLoadingTomorrow(true)
-          supabase
-            .rpc('nearby_meetings', {
-              user_lat: locationLat,
-              user_lng: locationLng,
-              radius_miles: radiusMiles,
-              result_limit: 200,
-              filter_day: tomorrow,
-            })
-            .then(({ data: tmData, error: tmError }) => {
-              if (tmError) console.error('[MeetingsDirectory] tomorrow RPC error:', tmError)
-              setTomorrowMeetings((tmData ?? []) as unknown as Meeting[])
-              setLoadingTomorrow(false)
-            })
-        }
       })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [locationLat, locationLng, radiusMiles, geoStatus, days, rpcStartTime])
+  }, [locationLat, locationLng, radiusMiles, geoStatus])
 
   function handleLocationChange(v: { text: string; displayName: string | null; lat: number | null; lng: number | null; radius: number }) {
     setLocationText(v.text); setLocationDisplayName(v.displayName)
@@ -298,8 +220,7 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
 
   const filtered: Meeting[] = allMeetings.filter(m => {
     if (fellowship && m.fellowship_id !== selectedFellowshipId)               return false
-    // Single-day filter is handled server-side; only apply client-side when multiple days are selected.
-    if (days.length > 1 && !days.includes(m.day_of_week ?? ''))              return false
+    if (days.length    && !days.includes(m.day_of_week ?? ''))                return false
     if (formats.length && !formats.includes(m.format ?? ''))                  return false
     if (times.length) { const b = getTimeRange(m.start_time); if (!times.includes(b ?? '')) return false }
     if (specialties.length && !specialties.some(s => (m.types ?? []).includes(s))) return false
@@ -338,38 +259,8 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
     return (a.start_time ?? '').localeCompare(b.start_time ?? '')
   })
 
-  // ── In-progress detection ────────────────────────────────────────────────
-  const inProgressIds = new Set(
-    sorted
-      .filter(m => isInProgress(m.start_time, m.duration_minutes, today, m.day_of_week))
-      .map(m => m.id)
-  )
-
-  // Float in-progress meetings to the top, preserve existing sort order within each group
-  const finalSorted: Meeting[] = [
-    ...sorted.filter(m => inProgressIds.has(m.id)),
-    ...sorted.filter(m => !inProgressIds.has(m.id)),
-  ]
-
-  const paginated = finalSorted.slice(0, page * ITEMS_PER_PAGE)
-  const hasMore   = finalSorted.length > paginated.length
-
-  // ── Tomorrow section (only when isTodayOnly and today had < 5 results) ────
-  const tomorrow = new Date(Date.now() + 86400000).toLocaleDateString('en-US', { weekday: 'long' })
-
-  const filteredTomorrow: Meeting[] = tomorrowMeetings.filter(m => {
-    if (fellowship && m.fellowship_id !== selectedFellowshipId)                    return false
-    if (formats.length && !formats.includes(m.format ?? ''))                       return false
-    if (times.length) { const b = getTimeRange(m.start_time); if (!times.includes(b ?? '')) return false }
-    if (specialties.length && !specialties.some(s => (m.types ?? []).includes(s))) return false
-    if (languages.length   && !languages.some(l => (m.types ?? []).includes(l)))   return false
-    if (access && !(m.types ?? []).includes(access))                               return false
-    return true
-  })
-
-  const sortedTomorrow: Meeting[] = [...filteredTomorrow].sort((a, b) =>
-    (a.start_time ?? '').localeCompare(b.start_time ?? '')
-  )
+  const paginated = sorted.slice(0, page * ITEMS_PER_PAGE)
+  const hasMore   = sorted.length > paginated.length
 
   // ── Active filter pills ───────────────────────────────────────────────────
   const activeFilters: ActiveFilter[] = []
@@ -404,18 +295,13 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
   const isTodayOnly = days.length === 1 && days[0] === today
 
-  // True when we have no geo and are showing online_meetings results
-  const isOnlineFallback = !hasGeo && geoStatus === 'denied'
-
-  const sectionHeader = isOnlineFallback
-    ? 'Online meetings — today'
-    : isTodayOnly
-      ? hasGeo
-        ? `${today} meetings near ${locationDisplayName ?? 'you'}`
-        : `${today} online meetings`
-      : hasGeo
-      ? `Meetings near ${locationDisplayName ?? 'you'}`
-      : 'Online meetings'
+  const sectionHeader = isTodayOnly
+    ? hasGeo
+      ? `${today} meetings near ${locationDisplayName ?? 'you'}`
+      : `${today} online meetings`
+    : hasGeo
+    ? `Meetings near ${locationDisplayName ?? 'you'}`
+    : 'Online meetings'
 
   const locationPrompt = geoStatus === 'requesting' ? (
     <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 6 }}>Detecting your location…</div>
@@ -429,7 +315,7 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
   ) : null
 
   function clearAll() {
-    setFellowship(''); setDays([]); setRpcStartTime(null); setTimes([]); setFormats([])
+    setFellowship(''); setDays([]); setTimes([]); setFormats([])
     setSpecialties([]); setLanguages([]); setAccess(''); setSort('nearest'); setPage(1)
   }
 
@@ -458,7 +344,7 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
               {FELLOWSHIP_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
             {/* Day */}
-            <MultiSelectDropdown options={DAY_OPTIONS.filter(o => o.value !== '')} selected={days} onChange={v => { setDays(v); setRpcStartTime(null); setPage(1) }} defaultLabel="Any Day" fieldLabel="Day" />
+            <MultiSelectDropdown options={DAY_OPTIONS.filter(o => o.value !== '')} selected={days} onChange={v => { setDays(v); setPage(1) }} defaultLabel="Any Day" fieldLabel="Day" />
             {/* Time */}
             <MultiSelectDropdown options={TIME_OPTIONS.filter(o => o.value !== '')} selected={times} onChange={v => { setTimes(v); setPage(1) }} defaultLabel="Any Time" fieldLabel="Time" />
             {/* Format */}
@@ -495,12 +381,13 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
         onRemoveFilter={removeFilter}
       />
 
-      {/* ── Online-fallback message ── */}
-      {isOnlineFallback && (
+      {/* ── No-location banner ── */}
+      {!hasGeo && geoStatus !== 'idle' && geoStatus !== 'requesting' && (
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 16px', borderRadius: 12, marginBottom: 14, background: 'rgba(42,138,153,0.05)', border: '1px solid rgba(42,138,153,0.2)' }}>
           <span style={{ fontSize: 18, lineHeight: 1.4 }}>📍</span>
           <div style={{ fontSize: 13, color: 'var(--mid)', lineHeight: 1.5 }}>
-            Allow location access or enter a city to also see in-person meetings near you.
+            Enter a city or zip code above, or allow location access to find in-person meetings near you.
+            <span style={{ display: 'block', marginTop: 2, color: 'var(--navy)', fontWeight: 600 }}>Showing online meetings below.</span>
           </div>
         </div>
       )}
@@ -518,11 +405,18 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
         })}
       </div>
 
+      {/* ── Section header ── */}
+      {!loading && (
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)', marginBottom: 12 }}>
+          {sectionHeader}
+        </div>
+      )}
+
       {loading ? (
         <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--mid)', fontSize: 14 }}>
           Loading meetings…
         </div>
-      ) : sorted.length === 0 && !loadingTomorrow && sortedTomorrow.length === 0 ? (
+      ) : sorted.length === 0 ? (
         /* ── Empty states ── */
         <div style={{ padding: '40px 0' }}>
           {selectedFinder ? (
@@ -577,64 +471,30 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
             </div>
           )}
 
-          {/* ── In-progress banner ── */}
-          {inProgressIds.size > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', borderRadius: 10, marginBottom: 12, background: 'rgba(39,174,96,0.08)', border: '1.5px solid rgba(39,174,96,0.25)' }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#16a34a', flexShrink: 0, boxShadow: '0 0 0 3px rgba(22,163,74,0.2)' }} />
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#15803d' }}>
-                {inProgressIds.size} meeting{inProgressIds.size !== 1 ? 's' : ''} in progress
-              </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {paginated.map(m => <MeetingCard key={m.id} meeting={m} savedId={savedIds[m.id] ?? null} fellowshipsMap={fellowshipsMap} />)}
+          </div>
+
+          {isTodayOnly && !hasMore && sorted.length < 5 && (
+            <div style={{ marginTop: 16, padding: '12px 16px', borderRadius: 10, background: 'rgba(42,138,153,0.05)', border: '1px solid rgba(42,138,153,0.18)', fontSize: 13, color: 'var(--mid)', lineHeight: 1.5 }}>
+              Showing {sorted.length} meeting{sorted.length !== 1 ? 's' : ''} today.{' '}
+              <button
+                type="button"
+                onClick={() => { setDays([]); setSort('nearest'); setPage(1) }}
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 13, color: 'var(--teal)', fontWeight: 600, fontFamily: 'var(--font-body)', textDecoration: 'underline', textUnderlineOffset: 2 }}
+              >
+                View all days for more options.
+              </button>
             </div>
           )}
 
-          {/* ── Today's section header + cards (only when today has results) ── */}
-          {sorted.length > 0 && (
-            <>
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)', marginBottom: 12 }}>
-                {sectionHeader}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {paginated.map(m => <MeetingCard key={m.id} meeting={m} savedId={savedIds[m.id] ?? null} fellowshipsMap={fellowshipsMap} inProgress={inProgressIds.has(m.id)} />)}
-              </div>
-              {hasMore && (
-                <div style={{ textAlign: 'center', marginTop: 24 }}>
-                  <button onClick={() => setPage(p => p + 1)}
-                    style={{ padding: '10px 28px', borderRadius: 8, border: '1.5px solid var(--border)', background: '#fff', color: 'var(--navy)', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
-                    Load more ({finalSorted.length - paginated.length} remaining)
-                  </button>
-                </div>
-              )}
-              {/* "View all days" hint — only when tomorrow has no extra results to show */}
-              {isTodayOnly && !hasMore && sorted.length < 5 && sortedTomorrow.length === 0 && !loadingTomorrow && (
-                <div style={{ marginTop: 16, padding: '12px 16px', borderRadius: 10, background: 'rgba(42,138,153,0.05)', border: '1px solid rgba(42,138,153,0.18)', fontSize: 13, color: 'var(--mid)', lineHeight: 1.5 }}>
-                  Showing {sorted.length} meeting{sorted.length !== 1 ? 's' : ''} today.{' '}
-                  <button
-                    type="button"
-                    onClick={() => { setDays([]); setRpcStartTime(null); setSort('nearest'); setPage(1) }}
-                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 13, color: 'var(--teal)', fontWeight: 600, fontFamily: 'var(--font-body)', textDecoration: 'underline', textUnderlineOffset: 2 }}
-                  >
-                    View all days for more options.
-                  </button>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* ── Tomorrow section ── */}
-          {isTodayOnly && loadingTomorrow && (
-            <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--mid)', fontSize: 13 }}>
-              Checking tomorrow's meetings…
+          {hasMore && (
+            <div style={{ textAlign: 'center', marginTop: 24 }}>
+              <button onClick={() => setPage(p => p + 1)}
+                style={{ padding: '10px 28px', borderRadius: 8, border: '1.5px solid var(--border)', background: '#fff', color: 'var(--navy)', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
+                Load more ({sorted.length - paginated.length} remaining)
+              </button>
             </div>
-          )}
-          {isTodayOnly && !loadingTomorrow && sortedTomorrow.length > 0 && (
-            <>
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)', marginTop: sorted.length > 0 ? 28 : 0, marginBottom: 12, paddingTop: sorted.length > 0 ? 20 : 0, borderTop: sorted.length > 0 ? '1px solid var(--border)' : 'none' }}>
-                Tomorrow — {tomorrow}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {sortedTomorrow.map(m => <MeetingCard key={m.id} meeting={m} savedId={savedIds[m.id] ?? null} fellowshipsMap={fellowshipsMap} inProgress={false} />)}
-              </div>
-            </>
           )}
         </>
       )}
@@ -667,7 +527,7 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
 
 // ── Meeting card ─────────────────────────────────────────────────────────────
 
-function MeetingCard({ meeting: m, savedId, fellowshipsMap, inProgress = false }: { meeting: Meeting; savedId: string | null; fellowshipsMap: Map<string, FellowshipInfo>; inProgress?: boolean }) {
+function MeetingCard({ meeting: m, savedId, fellowshipsMap }: { meeting: Meeting; savedId: string | null; fellowshipsMap: Map<string, FellowshipInfo> }) {
   const fellowship = m.fellowship_id ? (fellowshipsMap.get(m.fellowship_id) ?? null) : null
   const appStyle = APPROACH_STYLE[fellowship?.approach ?? ''] ?? APPROACH_STYLE.twelve_step
   const isOnline = m.format === 'online'
@@ -684,12 +544,6 @@ function MeetingCard({ meeting: m, savedId, fellowshipsMap, inProgress = false }
               {fellowship && (
                 <span style={{ fontSize: 10, fontWeight: 700, borderRadius: 20, padding: '2px 7px', background: appStyle.bg, color: appStyle.color, border: `1px solid ${appStyle.border}`, whiteSpace: 'nowrap' }}>
                   {fellowship.abbreviation}
-                </span>
-              )}
-              {inProgress && (
-                <span style={{ fontSize: 10, fontWeight: 700, borderRadius: 20, padding: '2px 8px', background: 'rgba(22,163,74,0.1)', color: '#15803d', border: '1px solid rgba(22,163,74,0.3)', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#16a34a', flexShrink: 0 }} />
-                  In progress
                 </span>
               )}
             </div>
