@@ -83,6 +83,12 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
 
   const [profileGeoAttempted, setProfileGeoAttempted] = useState(false)
 
+  // ── Default to today's day (client-side only, avoids SSR timezone mismatch) ─
+  useEffect(() => {
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
+    setDays([today])
+  }, [])
+
   // ── Geolocation — tries localStorage cache first, then browser prompt ───────
   useEffect(() => {
     try {
@@ -230,7 +236,14 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
       return a.name.localeCompare(b.name)
     }
     // nearest (default): in-person by distance, then online by day+time
-    if (a._distance !== undefined && b._distance !== undefined) return a._distance - b._distance
+    if (a._distance !== undefined && b._distance !== undefined) {
+      if (a._distance !== b._distance) return a._distance - b._distance
+      // tie-break equal distances by day then start_time so days interleave
+      const da = DAY_ORDER.indexOf(a.day_of_week ?? '')
+      const db = DAY_ORDER.indexOf(b.day_of_week ?? '')
+      if (da !== db) return (da === -1 ? 7 : da) - (db === -1 ? 7 : db)
+      return (a.start_time ?? '').localeCompare(b.start_time ?? '')
+    }
     if (a._distance !== undefined) return -1  // in-person before online
     if (b._distance !== undefined) return 1
     // both online (no distance): sort by day then start_time
