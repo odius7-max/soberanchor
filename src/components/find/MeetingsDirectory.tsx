@@ -73,13 +73,13 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
 
   // All filters default to "all" / unselected
   const [fellowship,  setFellowship]  = useState(() => searchParams.get('fellowship') ?? '')
-  const [days,        setDays]        = useState<string[]>(() => [new Date().toLocaleDateString('en-US', { weekday: 'long' })])
+  const [days,        setDays]        = useState<string[]>([])
   const [times,       setTimes]       = useState<string[]>([])
   const [formats,     setFormats]     = useState<string[]>([])
   const [specialties, setSpecialties] = useState<string[]>([])
   const [languages,   setLanguages]   = useState<string[]>([])
   const [access,      setAccess]      = useState('')
-  const [sort,        setSort]        = useState('time')
+  const [sort,        setSort]        = useState('nearest')
 
   const [profileGeoAttempted, setProfileGeoAttempted] = useState(false)
 
@@ -156,6 +156,10 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
       .order('day_of_week').order('start_time')
       .then(({ data, error }) => {
         if (error) console.error('MeetingsDirectory fetch error:', error.message)
+        console.log('Meetings sample:', data?.slice(0, 5).map(m => ({
+          name: (m as unknown as Meeting).name,
+          day: (m as unknown as Meeting).day_of_week,
+        })))
         setAllMeetings((data ?? []) as unknown as Meeting[])
         setLoading(false)
       })
