@@ -83,6 +83,12 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
 
   const [profileGeoAttempted, setProfileGeoAttempted] = useState(false)
 
+  // Time filter passed to RPC — set to "now" on initial load so only upcoming meetings
+  // are returned; cleared to null whenever the user explicitly picks a day.
+  const [rpcStartTime, setRpcStartTime] = useState<string | null>(() =>
+    new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
+  )
+
   // ── Default to today's day (client-side only, avoids SSR timezone mismatch) ─
   useEffect(() => {
     const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
@@ -179,15 +185,31 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
       return
     }
     setLoading(true)
+
+    // When a single day is selected, delegate day (and optionally time) filtering to Postgres.
+    // Multi-day or no-day selections fetch without a day filter and rely on client-side filtering.
+    const rpcParams: Record<string, unknown> = {
+      user_lat: locationLat,
+      user_lng: locationLng,
+      radius_miles: radiusMiles,
+      result_limit: 200,
+    }
+    if (days.length === 1) {
+      rpcParams.filter_day = days[0]
+      // rpcStartTime is set to "now" on initial load so only upcoming meetings are shown.
+      // It is cleared to null when the user explicitly picks a day, so all-day results are returned.
+      if (rpcStartTime) rpcParams.filter_start_time = rpcStartTime
+    }
+
     createClient()
-      .rpc('nearby_meetings', { user_lat: locationLat, user_lng: locationLng, radius_miles: radiusMiles, result_limit: 500 })
+      .rpc('nearby_meetings', rpcParams)
       .then(({ data, error }) => {
         if (error) console.error('[MeetingsDirectory] nearby_meetings RPC error:', error)
         setAllMeetings((data ?? []) as unknown as Meeting[])
         setLoading(false)
       })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [locationLat, locationLng, radiusMiles, geoStatus])
+  }, [locationLat, locationLng, radiusMiles, geoStatus, days, rpcStartTime])
 
   function handleLocationChange(v: { text: string; displayName: string | null; lat: number | null; lng: number | null; radius: number }) {
     setLocationText(v.text); setLocationDisplayName(v.displayName)
@@ -220,7 +242,8 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
 
   const filtered: Meeting[] = allMeetings.filter(m => {
     if (fellowship && m.fellowship_id !== selectedFellowshipId)               return false
-    if (days.length    && !days.includes(m.day_of_week ?? ''))                return false
+    // Single-day filter is handled server-side; only apply client-side when multiple days are selected.
+    if (days.length > 1 && !days.includes(m.day_of_week ?? ''))              return false
     if (formats.length && !formats.includes(m.format ?? ''))                  return false
     if (times.length) { const b = getTimeRange(m.start_time); if (!times.includes(b ?? '')) return false }
     if (specialties.length && !specialties.some(s => (m.types ?? []).includes(s))) return false
@@ -315,7 +338,7 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
   ) : null
 
   function clearAll() {
-    setFellowship(''); setDays([]); setTimes([]); setFormats([])
+    setFellowship(''); setDays([]); setRpcStartTime(null); setTimes([]); setFormats([])
     setSpecialties([]); setLanguages([]); setAccess(''); setSort('nearest'); setPage(1)
   }
 
@@ -344,7 +367,7 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
               {FELLOWSHIP_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
             {/* Day */}
-            <MultiSelectDropdown options={DAY_OPTIONS.filter(o => o.value !== '')} selected={days} onChange={v => { setDays(v); setPage(1) }} defaultLabel="Any Day" fieldLabel="Day" />
+            <MultiSelectDropdown options={DAY_OPTIONS.filter(o => o.value !== '')} selected={days} onChange={v => { setDays(v); setRpcStartTime(null); setPage(1) }} defaultLabel="Any Day" fieldLabel="Day" />
             {/* Time */}
             <MultiSelectDropdown options={TIME_OPTIONS.filter(o => o.value !== '')} selected={times} onChange={v => { setTimes(v); setPage(1) }} defaultLabel="Any Time" fieldLabel="Time" />
             {/* Format */}
@@ -480,7 +503,7 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
               Showing {sorted.length} meeting{sorted.length !== 1 ? 's' : ''} today.{' '}
               <button
                 type="button"
-                onClick={() => { setDays([]); setSort('nearest'); setPage(1) }}
+                onClick={() => { setDays([]); setRpcStartTime(null); setSort('nearest'); setPage(1) }}
                 style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 13, color: 'var(--teal)', fontWeight: 600, fontFamily: 'var(--font-body)', textDecoration: 'underline', textUnderlineOffset: 2 }}
               >
                 View all days for more options.
