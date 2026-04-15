@@ -19,6 +19,18 @@ type GeoStatus = 'idle' | 'requesting' | 'granted' | 'denied'
 // Day order for sorting online meetings when no distance is available
 const DAY_ORDER = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
+// Returns true if the meeting is currently in session (purely client-side time comparison)
+function isInProgress(startTime: string | null, durationMinutes: number | null, today: string, dayOfWeek: string | null): boolean {
+  if (!startTime || dayOfWeek !== today) return false
+  const [h, m] = startTime.split(':').map(Number)
+  if (isNaN(h) || isNaN(m)) return false
+  const now = new Date()
+  const nowMins  = now.getHours() * 60 + now.getMinutes()
+  const startMins = h * 60 + m
+  const endMins   = startMins + (durationMinutes ?? 60)
+  return nowMins >= startMins && nowMins < endMins
+}
+
 interface Meeting {
   id: string
   name: string
@@ -36,6 +48,7 @@ interface Meeting {
   types: string[] | null
   fellowship_id: string | null
   distance_miles: number | null
+  duration_minutes: number | null
 }
 
 type FellowshipInfo = { name: string; abbreviation: string; slug: string; approach: string }
@@ -282,8 +295,21 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
     return (a.start_time ?? '').localeCompare(b.start_time ?? '')
   })
 
-  const paginated = sorted.slice(0, page * ITEMS_PER_PAGE)
-  const hasMore   = sorted.length > paginated.length
+  // ── In-progress detection ────────────────────────────────────────────────
+  const inProgressIds = new Set(
+    sorted
+      .filter(m => isInProgress(m.start_time, m.duration_minutes, today, m.day_of_week))
+      .map(m => m.id)
+  )
+
+  // Float in-progress meetings to the top, preserve existing sort order within each group
+  const finalSorted: Meeting[] = [
+    ...sorted.filter(m => inProgressIds.has(m.id)),
+    ...sorted.filter(m => !inProgressIds.has(m.id)),
+  ]
+
+  const paginated = finalSorted.slice(0, page * ITEMS_PER_PAGE)
+  const hasMore   = finalSorted.length > paginated.length
 
   // ── Active filter pills ───────────────────────────────────────────────────
   const activeFilters: ActiveFilter[] = []
@@ -494,8 +520,18 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
             </div>
           )}
 
+          {/* ── In-progress banner ── */}
+          {inProgressIds.size > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', borderRadius: 10, marginBottom: 12, background: 'rgba(39,174,96,0.08)', border: '1.5px solid rgba(39,174,96,0.25)' }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#16a34a', flexShrink: 0, boxShadow: '0 0 0 3px rgba(22,163,74,0.2)' }} />
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#15803d' }}>
+                {inProgressIds.size} meeting{inProgressIds.size !== 1 ? 's' : ''} in progress
+              </span>
+            </div>
+          )}
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {paginated.map(m => <MeetingCard key={m.id} meeting={m} savedId={savedIds[m.id] ?? null} fellowshipsMap={fellowshipsMap} />)}
+            {paginated.map(m => <MeetingCard key={m.id} meeting={m} savedId={savedIds[m.id] ?? null} fellowshipsMap={fellowshipsMap} inProgress={inProgressIds.has(m.id)} />)}
           </div>
 
           {isTodayOnly && !hasMore && sorted.length < 5 && (
@@ -515,7 +551,7 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
             <div style={{ textAlign: 'center', marginTop: 24 }}>
               <button onClick={() => setPage(p => p + 1)}
                 style={{ padding: '10px 28px', borderRadius: 8, border: '1.5px solid var(--border)', background: '#fff', color: 'var(--navy)', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
-                Load more ({sorted.length - paginated.length} remaining)
+                Load more ({finalSorted.length - paginated.length} remaining)
               </button>
             </div>
           )}
@@ -550,7 +586,7 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
 
 // ── Meeting card ─────────────────────────────────────────────────────────────
 
-function MeetingCard({ meeting: m, savedId, fellowshipsMap }: { meeting: Meeting; savedId: string | null; fellowshipsMap: Map<string, FellowshipInfo> }) {
+function MeetingCard({ meeting: m, savedId, fellowshipsMap, inProgress = false }: { meeting: Meeting; savedId: string | null; fellowshipsMap: Map<string, FellowshipInfo>; inProgress?: boolean }) {
   const fellowship = m.fellowship_id ? (fellowshipsMap.get(m.fellowship_id) ?? null) : null
   const appStyle = APPROACH_STYLE[fellowship?.approach ?? ''] ?? APPROACH_STYLE.twelve_step
   const isOnline = m.format === 'online'
@@ -567,6 +603,12 @@ function MeetingCard({ meeting: m, savedId, fellowshipsMap }: { meeting: Meeting
               {fellowship && (
                 <span style={{ fontSize: 10, fontWeight: 700, borderRadius: 20, padding: '2px 7px', background: appStyle.bg, color: appStyle.color, border: `1px solid ${appStyle.border}`, whiteSpace: 'nowrap' }}>
                   {fellowship.abbreviation}
+                </span>
+              )}
+              {inProgress && (
+                <span style={{ fontSize: 10, fontWeight: 700, borderRadius: 20, padding: '2px 8px', background: 'rgba(22,163,74,0.1)', color: '#15803d', border: '1px solid rgba(22,163,74,0.3)', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#16a34a', flexShrink: 0 }} />
+                  In progress
                 </span>
               )}
             </div>
