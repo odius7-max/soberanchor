@@ -25,19 +25,20 @@ interface Meeting {
   slug: string | null
   day_of_week: string | null
   start_time: string | null
-  duration_minutes: number | null
   format: string | null
   location_name: string | null
+  address: string | null
   city: string | null
   state: string | null
   latitude: number | null
   longitude: number | null
   meeting_url: string | null
   types: string[] | null
-  is_verified: boolean
-  fellowships: { name: string; abbreviation: string; slug: string; approach: string } | null
-  _distance?: number
+  fellowship_id: string | null
+  distance_miles: number | null
 }
+
+type FellowshipInfo = { name: string; abbreviation: string; slug: string; approach: string }
 
 const ITEMS_PER_PAGE = 25
 
@@ -68,8 +69,7 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
   const [locationLng,         setLocationLng]         = useState<number | null>(null)
   const [radiusMiles,         setRadiusMiles]         = useState(15)
 
-  const [nearbyDistances, setNearbyDistances] = useState<Map<string, number> | null>(null)
-  const [nearbyLoading,   setNearbyLoading]   = useState(false)
+  const [fellowshipsMap, setFellowshipsMap] = useState<Map<string, FellowshipInfo>>(new Map())
 
   // All filters default to "all" / unselected
   const [fellowship,  setFellowship]  = useState(() => searchParams.get('fellowship') ?? '')
@@ -154,37 +154,40 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geoStatus, locationLat, locationLng, profileGeoAttempted])
 
-  // ── Fetch all meetings ────────────────────────────────────────────────────
+  // ── Fetch fellowships lookup once (for name/abbreviation/approach by id) ──
   useEffect(() => {
     createClient()
-      .from('meetings')
-      .select('id, name, slug, day_of_week, start_time, duration_minutes, format, location_name, city, state, latitude, longitude, meeting_url, types, is_verified, fellowships(name, abbreviation, slug, approach)')
-      .order('day_of_week').order('start_time')
-      .then(({ data, error }) => {
-        if (error) console.error('MeetingsDirectory fetch error:', error.message)
-        console.log('Meetings sample:', data?.slice(0, 5).map(m => ({
-          name: (m as unknown as Meeting).name,
-          day: (m as unknown as Meeting).day_of_week,
-        })))
-        setAllMeetings((data ?? []) as unknown as Meeting[])
-        setLoading(false)
+      .from('fellowships')
+      .select('id, name, abbreviation, slug, approach')
+      .then(({ data }) => {
+        const map = new Map<string, FellowshipInfo>()
+        for (const f of (data ?? []) as Array<{ id: string } & FellowshipInfo>) {
+          map.set(f.id, { name: f.name, abbreviation: f.abbreviation, slug: f.slug, approach: f.approach })
+        }
+        setFellowshipsMap(map)
       })
   }, [])
 
-  // ── PostGIS nearby_meetings RPC ───────────────────────────────────────────
+  // ── nearby_meetings RPC — single source of truth for all meeting data ─────
   useEffect(() => {
-    if (!locationLat || !locationLng) { setNearbyDistances(null); setNearbyLoading(false); return }
-    setNearbyLoading(true)
+    if (!locationLat || !locationLng) {
+      // Geo not yet available — stop spinner once status is resolved
+      if (geoStatus !== 'idle' && geoStatus !== 'requesting') {
+        setAllMeetings([])
+        setLoading(false)
+      }
+      return
+    }
+    setLoading(true)
     createClient()
       .rpc('nearby_meetings', { user_lat: locationLat, user_lng: locationLng, radius_miles: radiusMiles, result_limit: 500 })
       .then(({ data, error }) => {
-        if (error) { console.error('[MeetingsDirectory] nearby_meetings RPC error:', error); setNearbyDistances(new Map()); setNearbyLoading(false); return }
-        const map = new Map<string, number>()
-        for (const row of (data ?? []) as Array<{ id: string; distance_miles?: number }>) map.set(row.id, row.distance_miles ?? 0)
-        setNearbyDistances(map); setNearbyLoading(false)
+        if (error) console.error('[MeetingsDirectory] nearby_meetings RPC error:', error)
+        setAllMeetings((data ?? []) as unknown as Meeting[])
+        setLoading(false)
       })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [locationLat, locationLng, radiusMiles])
+  }, [locationLat, locationLng, radiusMiles, geoStatus])
 
   function handleLocationChange(v: { text: string; displayName: string | null; lat: number | null; lng: number | null; radius: number }) {
     setLocationText(v.text); setLocationDisplayName(v.displayName)
@@ -210,27 +213,21 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
   const hasGeo = !!(locationLat && locationLng)
 
   // ── Filter ────────────────────────────────────────────────────────────────
-  console.log('Raw meetings count:', allMeetings.length)
-  console.log('Sample day values:', allMeetings.slice(0, 5).map(m => m.day_of_week))
-  console.log('Selected days state:', days)
-  console.log('Type of days[0]:', typeof days[0])
-  console.log('Type of meeting day:', typeof allMeetings[0]?.day_of_week)
-  console.log('Exact comparison:', allMeetings[0]?.day_of_week === days[0])
-  console.log('Meeting keys:', Object.keys(allMeetings[0] || {}))
+  // Map selected fellowship slug → id for comparison against m.fellowship_id
+  const selectedFellowshipId = fellowship
+    ? [...fellowshipsMap.entries()].find(([, f]) => f.slug === fellowship)?.[0] ?? null
+    : null
+
   const filtered: Meeting[] = allMeetings.filter(m => {
-    if (fellowship && (!m.fellowships || m.fellowships.slug !== fellowship)) return false
-    if (days.length    && !days.includes(m.day_of_week ?? ''))              return false
-    if (formats.length && !formats.includes(m.format ?? ''))                return false
+    if (fellowship && m.fellowship_id !== selectedFellowshipId)               return false
+    if (days.length    && !days.includes(m.day_of_week ?? ''))                return false
+    if (formats.length && !formats.includes(m.format ?? ''))                  return false
     if (times.length) { const b = getTimeRange(m.start_time); if (!times.includes(b ?? '')) return false }
     if (specialties.length && !specialties.some(s => (m.types ?? []).includes(s))) return false
     if (languages.length   && !languages.some(l => (m.types ?? []).includes(l)))   return false
-    if (access && !(m.types ?? []).includes(access))                         return false
-    // With location: in-person meetings must be within radius
-    if (hasGeo && m.format !== 'online' && nearbyDistances !== null && !nearbyDistances.has(m.id)) return false
-    // Without location: show only online meetings
-    if (!hasGeo && m.format !== 'online') return false
+    if (access && !(m.types ?? []).includes(access))                           return false
     return true
-  }).map(m => ({ ...m, _distance: nearbyDistances?.get(m.id) }))
+  })
 
   // ── Sort ──────────────────────────────────────────────────────────────────
   const sorted: Meeting[] = [...filtered].sort((a, b) => {
@@ -242,18 +239,20 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
       if (ta !== tb) return ta.localeCompare(tb)
       return a.name.localeCompare(b.name)
     }
-    // nearest (default): in-person by distance, then online by day+time
-    if (a._distance !== undefined && b._distance !== undefined) {
-      if (a._distance !== b._distance) return a._distance - b._distance
+    // nearest (default): sort by distance_miles, tie-break by day then start_time
+    const ad = a.distance_miles
+    const bd = b.distance_miles
+    if (ad !== null && bd !== null) {
+      if (ad !== bd) return ad - bd
       // tie-break equal distances by day then start_time so days interleave
       const da = DAY_ORDER.indexOf(a.day_of_week ?? '')
       const db = DAY_ORDER.indexOf(b.day_of_week ?? '')
       if (da !== db) return (da === -1 ? 7 : da) - (db === -1 ? 7 : db)
       return (a.start_time ?? '').localeCompare(b.start_time ?? '')
     }
-    if (a._distance !== undefined) return -1  // in-person before online
-    if (b._distance !== undefined) return 1
-    // both online (no distance): sort by day then start_time
+    if (ad !== null) return -1
+    if (bd !== null) return 1
+    // both lack distance: sort by day then start_time
     const da = DAY_ORDER.indexOf(a.day_of_week ?? '')
     const db = DAY_ORDER.indexOf(b.day_of_week ?? '')
     if (da !== db) return (da === -1 ? 7 : da) - (db === -1 ? 7 : db)
@@ -289,7 +288,7 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
   const selectedFinder  = fellowship ? FINDER_BY_SLUG[fellowship] ?? null : null
   const fellowshipLabel = fellowship ? (FELLOWSHIP_OPTIONS.find(o => o.value === fellowship)?.label.split('–')[0]?.trim() ?? fellowship) : null
 
-  const resultLabel = (hasGeo && nearbyDistances !== null && !nearbyLoading)
+  const resultLabel = (hasGeo && !loading)
     ? `${sorted.length.toLocaleString()} meeting${sorted.length !== 1 ? 's' : ''} within ${radiusMiles} mi`
     : undefined
 
@@ -306,8 +305,6 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
 
   const locationPrompt = geoStatus === 'requesting' ? (
     <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 6 }}>Detecting your location…</div>
-  ) : nearbyLoading ? (
-    <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 6 }}>Finding meetings near you…</div>
   ) : geoStatus === 'denied' && !hasGeo ? (
     <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 6 }}>
       {profileGeoAttempted
@@ -409,15 +406,15 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
       </div>
 
       {/* ── Section header ── */}
-      {!loading && !nearbyLoading && (
+      {!loading && (
         <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)', marginBottom: 12 }}>
           {sectionHeader}
         </div>
       )}
 
-      {loading || (hasGeo && nearbyLoading) ? (
+      {loading ? (
         <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--mid)', fontSize: 14 }}>
-          {loading ? 'Loading meetings…' : 'Finding meetings near you…'}
+          Loading meetings…
         </div>
       ) : sorted.length === 0 ? (
         /* ── Empty states ── */
@@ -475,7 +472,7 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {paginated.map(m => <MeetingCard key={m.id} meeting={m} savedId={savedIds[m.id] ?? null} />)}
+            {paginated.map(m => <MeetingCard key={m.id} meeting={m} savedId={savedIds[m.id] ?? null} fellowshipsMap={fellowshipsMap} />)}
           </div>
 
           {isTodayOnly && !hasMore && sorted.length < 5 && (
@@ -530,8 +527,8 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
 
 // ── Meeting card ─────────────────────────────────────────────────────────────
 
-function MeetingCard({ meeting: m, savedId }: { meeting: Meeting; savedId: string | null }) {
-  const fellowship = m.fellowships
+function MeetingCard({ meeting: m, savedId, fellowshipsMap }: { meeting: Meeting; savedId: string | null; fellowshipsMap: Map<string, FellowshipInfo> }) {
+  const fellowship = m.fellowship_id ? (fellowshipsMap.get(m.fellowship_id) ?? null) : null
   const appStyle = APPROACH_STYLE[fellowship?.approach ?? ''] ?? APPROACH_STYLE.twelve_step
   const isOnline = m.format === 'online'
   const isHybrid = m.format === 'hybrid'
@@ -557,8 +554,8 @@ function MeetingCard({ meeting: m, savedId }: { meeting: Meeting; savedId: strin
                 ? <span style={{ color: '#6D28D9' }}>{isHybrid ? ' · Hybrid' : ' · Online'}</span>
                 : m.city ? ` · ${m.city}${m.state ? `, ${m.state}` : ''}` : ''
               }
-              {m._distance !== undefined && !isOnline && (
-                <span style={{ color: 'var(--teal)' }}> · {m._distance.toFixed(1)} mi</span>
+              {m.distance_miles !== null && !isOnline && (
+                <span style={{ color: 'var(--teal)' }}> · {m.distance_miles.toFixed(1)} mi</span>
               )}
             </div>
             {m.types && m.types.length > 0 && (
