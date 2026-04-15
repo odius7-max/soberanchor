@@ -342,16 +342,16 @@ export async function getSponseeCheckInReport(sponseeId: string, days: number): 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  // Verify active sponsor relationship
+  // Verify sponsor relationship (active or pending — consistent with sponsee list query)
   const { data: rel } = await supabase
     .from('sponsor_relationships')
     .select('id')
     .eq('sponsor_id', user.id)
     .eq('sponsee_id', sponseeId)
-    .eq('status', 'active')
+    .in('status', ['active', 'pending'])
     .maybeSingle()
 
-  if (!rel) throw new Error('No active sponsor relationship found.')
+  if (!rel) throw new Error('No sponsor relationship found.')
 
   const rangeStart = new Date()
   rangeStart.setDate(rangeStart.getDate() - days + 1)
