@@ -189,15 +189,29 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
       })
   }, [])
 
-  // ── nearby_meetings RPC — single source of truth for all meeting data ─────
+  // ── RPC — nearby_meetings when geo is available, online_meetings fallback otherwise ─
   useEffect(() => {
     if (!locationLat || !locationLng) {
-      // Geo not yet available — stop spinner once status is resolved
-      if (geoStatus !== 'idle' && geoStatus !== 'requesting') {
-        setAllMeetings([])
-        setTomorrowMeetings([])
-        setLoading(false)
+      // Still waiting for geo resolution — don't do anything yet
+      if (geoStatus === 'idle' || geoStatus === 'requesting') return
+
+      // Geo denied and no profile fallback resolved — show online meetings instead
+      setLoading(true)
+      setTomorrowMeetings([])
+
+      const onlineParams: Record<string, unknown> = { result_limit: 50 }
+      if (days.length === 1) {
+        onlineParams.filter_day = days[0]
+        if (rpcStartTime) onlineParams.filter_start_time = rpcStartTime
       }
+
+      createClient()
+        .rpc('online_meetings', onlineParams)
+        .then(({ data, error }) => {
+          if (error) console.error('[MeetingsDirectory] online_meetings RPC error:', error)
+          setAllMeetings((data ?? []) as unknown as Meeting[])
+          setLoading(false)
+        })
       return
     }
     setLoading(true)
@@ -390,13 +404,18 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
   const isTodayOnly = days.length === 1 && days[0] === today
 
-  const sectionHeader = isTodayOnly
-    ? hasGeo
-      ? `${today} meetings near ${locationDisplayName ?? 'you'}`
-      : `${today} online meetings`
-    : hasGeo
-    ? `Meetings near ${locationDisplayName ?? 'you'}`
-    : 'Online meetings'
+  // True when we have no geo and are showing online_meetings results
+  const isOnlineFallback = !hasGeo && geoStatus === 'denied'
+
+  const sectionHeader = isOnlineFallback
+    ? 'Online meetings — today'
+    : isTodayOnly
+      ? hasGeo
+        ? `${today} meetings near ${locationDisplayName ?? 'you'}`
+        : `${today} online meetings`
+      : hasGeo
+      ? `Meetings near ${locationDisplayName ?? 'you'}`
+      : 'Online meetings'
 
   const locationPrompt = geoStatus === 'requesting' ? (
     <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 6 }}>Detecting your location…</div>
@@ -476,13 +495,12 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
         onRemoveFilter={removeFilter}
       />
 
-      {/* ── No-location banner ── */}
-      {!hasGeo && geoStatus !== 'idle' && geoStatus !== 'requesting' && (
+      {/* ── Online-fallback message ── */}
+      {isOnlineFallback && (
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 16px', borderRadius: 12, marginBottom: 14, background: 'rgba(42,138,153,0.05)', border: '1px solid rgba(42,138,153,0.2)' }}>
           <span style={{ fontSize: 18, lineHeight: 1.4 }}>📍</span>
           <div style={{ fontSize: 13, color: 'var(--mid)', lineHeight: 1.5 }}>
-            Enter a city or zip code above, or allow location access to find in-person meetings near you.
-            <span style={{ display: 'block', marginTop: 2, color: 'var(--navy)', fontWeight: 600 }}>Showing online meetings below.</span>
+            Allow location access or enter a city to also see in-person meetings near you.
           </div>
         </div>
       )}
