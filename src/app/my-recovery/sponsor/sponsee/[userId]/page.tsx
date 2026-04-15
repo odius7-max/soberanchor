@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import Link from 'next/link'
 import SponseeProgram from '@/components/dashboard/SponseeProgram'
 import SponseeTasksSection from '@/components/dashboard/SponseeTasksSection'
+import SponsorNotesSection from '@/components/dashboard/SponsorNotesSection'
 import type { SponsorTask } from '@/app/actions/sponsorTasks'
 
 const MOOD_META: Record<string, { emoji: string; label: string; color: string }> = {
@@ -283,45 +284,7 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
       </div>
 
       {/* Sponsor Notes — private, only visible to the sponsor */}
-      <details style={{ ...card, cursor: 'default' }}>
-        <summary style={{
-          cursor: 'pointer', listStyle: 'none', WebkitAppearance: 'none',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-        }}>
-          <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--navy)', margin: 0 }}>
-            🔒 Sponsor Notes
-          </h2>
-          <span style={{ fontSize: 12, color: 'var(--mid)', fontWeight: 500, flexShrink: 0 }}>
-            {sponsorNotes.length === 0
-              ? 'No notes yet'
-              : `${sponsorNotes.length} note${sponsorNotes.length !== 1 ? 's' : ''}`} · tap to expand
-          </span>
-        </summary>
-
-        <div style={{ marginTop: 14 }}>
-          <p style={{ fontSize: 12, color: 'var(--mid)', margin: '0 0 14px', fontStyle: 'italic' }}>
-            Private — only you can see these notes. Your sponsee never sees them.
-          </p>
-          {sponsorNotes.length === 0 ? (
-            <div style={{ fontSize: 14, color: 'var(--mid)', textAlign: 'center', padding: '16px 0' }}>
-              No notes yet. Add notes from the sponsee card on your dashboard.
-            </div>
-          ) : sponsorNotes.map((note, i) => (
-            <div key={note.id} style={{ padding: '12px 0', borderTop: i > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--mid)', marginBottom: 5, letterSpacing: '0.3px' }}>
-                {new Date(note.created_at).toLocaleDateString('en-US', {
-                  month: 'short', day: 'numeric', year: 'numeric',
-                })}{' '}
-                at{' '}
-                {new Date(note.created_at).toLocaleTimeString('en-US', {
-                  hour: 'numeric', minute: '2-digit',
-                })}
-              </div>
-              <div style={{ fontSize: 14, color: 'var(--dark)', lineHeight: 1.65 }}>{note.note_text}</div>
-            </div>
-          ))}
-        </div>
-      </details>
+      <SponsorNotesSection initialNotes={sponsorNotes} />
     </div>
   )
 }
