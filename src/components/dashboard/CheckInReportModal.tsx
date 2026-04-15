@@ -1,9 +1,17 @@
 'use client'
 
-import { useState, useEffect, useTransition, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { getSponseeCheckInReport } from '@/app/dashboard/actions'
-import type { CheckInReportEntry } from '@/app/dashboard/actions'
+import { createClient } from '@/lib/supabase/client'
+
+interface CheckInReportEntry {
+  check_in_date: string
+  mood: string | null
+  sober_today: boolean
+  meetings_attended: number | null
+  called_sponsor: boolean | null
+  notes: string | null
+}
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -198,22 +206,42 @@ interface ContentProps {
 
 function ModalBody({ sponseeId, sponseeName, onClose }: ContentProps) {
   const [range, setRange] = useState<Range>(30)
-  const [data, setData] = useState<CheckInReportEntry[]>([])
-  const [isPending, startTransition] = useTransition()
+  const [allData, setAllData] = useState<CheckInReportEntry[]>([])
+  const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<CalDay | null>(null)
 
-  // Fetch when range changes or on mount
+  // Fetch all check-ins once on mount; range filtering is client-side
   useEffect(() => {
-    startTransition(async () => {
-      try {
-        const result = await getSponseeCheckInReport(sponseeId, range)
-        setData(result)
-      } catch {
-        setData([])
-      }
-      setSelected(null)
-    })
-  }, [sponseeId, range])
+    let cancelled = false
+    setLoading(true)
+    const supabase = createClient()
+    supabase
+      .from('check_ins')
+      .select('check_in_date,mood,sober_today,meetings_attended,called_sponsor,notes')
+      .eq('user_id', sponseeId)
+      .order('check_in_date', { ascending: true })
+      .then(({ data }) => {
+        if (!cancelled) {
+          setAllData((data ?? []) as CheckInReportEntry[])
+          setLoading(false)
+        }
+      })
+    return () => { cancelled = true }
+  }, [sponseeId])
+
+  // Derive range-filtered slice for stats
+  const rangeStartStr = useMemo(() => {
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    d.setDate(d.getDate() - range + 1)
+    return d.toISOString().slice(0, 10)
+  }, [range])
+  const data = useMemo(
+    () => allData.filter(ci => ci.check_in_date >= rangeStartStr),
+    [allData, rangeStartStr]
+  )
+
+  const isPending = loading
 
   // Body scroll lock + Escape
   useEffect(() => {
@@ -227,8 +255,8 @@ function ModalBody({ sponseeId, sponseeName, onClose }: ContentProps) {
     }
   }, [onClose])
 
-  const calendar = useMemo(() => buildCalendar(data, range), [data, range])
-  const bestStreak = useMemo(() => calcBestStreak(data, range), [data, range])
+  const calendar = useMemo(() => buildCalendar(allData, range), [allData, range])
+  const bestStreak = useMemo(() => calcBestStreak(allData, range), [allData, range])
   const soberNo = data.filter(ci => !ci.sober_today).length
   const rate = Math.round((data.length / range) * 100)
 

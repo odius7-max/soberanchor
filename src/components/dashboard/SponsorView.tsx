@@ -700,6 +700,7 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
         <StepWorkReportModal
           sponseeId={sponsee.id}
           sponseeName={sponsee.name}
+          fellowshipId={sponsee.relationships[0]?.fellowshipId ?? null}
           onClose={() => setShowStepWorkReport(false)}
         />
       )}

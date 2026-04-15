@@ -3,7 +3,17 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
-import { getSponseeMeetingReport, type MeetingReportEntry } from '@/app/dashboard/actions'
+import { createClient } from '@/lib/supabase/client'
+
+export interface MeetingReportEntry {
+  id: string
+  meetingId: string | null
+  meetingName: string
+  fellowshipName: string | null
+  meetingSlug: string | null
+  attendedAt: string
+  checkinMethod: string
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -357,9 +367,32 @@ export default function MeetingReportModal({ sponseeId, sponseeName, onClose }: 
 
   useEffect(() => {
     setMounted(true)
-    getSponseeMeetingReport(sponseeId)
-      .then(data => { setAllEntries(data); setLoading(false) })
-      .catch(e => { setFetchError((e as Error).message ?? 'Failed to load'); setLoading(false) })
+    let cancelled = false
+    const supabase = createClient()
+    supabase
+      .from('meeting_attendance')
+      .select('id,meeting_id,meeting_name,fellowship_name,attended_at,checkin_method,meetings(slug)')
+      .eq('user_id', sponseeId)
+      .order('attended_at', { ascending: true })
+      .then(({ data, error }) => {
+        if (cancelled) return
+        if (error) { setFetchError(error.message); setLoading(false); return }
+        const entries: MeetingReportEntry[] = (data ?? []).map(e => {
+          const m = e.meetings as unknown as { slug: string } | null
+          return {
+            id: e.id as string,
+            meetingId: e.meeting_id as string | null,
+            meetingName: e.meeting_name as string,
+            fellowshipName: e.fellowship_name as string | null,
+            meetingSlug: m?.slug ?? null,
+            attendedAt: e.attended_at as string,
+            checkinMethod: e.checkin_method as string,
+          }
+        })
+        setAllEntries(entries)
+        setLoading(false)
+      })
+    return () => { cancelled = true }
   }, [sponseeId])
 
   if (!mounted) return null

@@ -3,8 +3,30 @@
 import { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
-import { getSponseeStepWorkReport } from '@/app/dashboard/actions'
-import type { StepWorkReportEntry, StepWorkReportData } from '@/app/dashboard/actions'
+import { createClient } from '@/lib/supabase/client'
+
+interface StepWorkReportEntry {
+  id: string
+  sectionTitle: string
+  stepNumber: number | null
+  slug: string
+  reviewStatus: string | null
+  submittedAt: string | null
+  reviewedAt: string | null
+  updatedAt: string
+  createdAt: string
+  responses: Record<string, unknown> | null
+  totalPrompts: number
+}
+
+interface StepWorkReportData {
+  entries: StepWorkReportEntry[]
+  completedSteps: number
+  totalSteps: number
+  fellowshipName: string | null
+  awaitingReview: number
+  lastActivityDate: string | null
+}
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -190,10 +212,11 @@ function TimelineEntry({
 interface ContentProps {
   sponseeId: string
   sponseeName: string
+  fellowshipId: string | null
   onClose: () => void
 }
 
-function ModalBody({ sponseeId, sponseeName, onClose }: ContentProps) {
+function ModalBody({ sponseeId, sponseeName, fellowshipId, onClose }: ContentProps) {
   const router = useRouter()
   const [range, setRange] = useState<Range>(30)
   const [data, setData] = useState<StepWorkReportData | null>(null)
@@ -205,11 +228,88 @@ function ModalBody({ sponseeId, sponseeName, onClose }: ContentProps) {
     let cancelled = false
     setLoading(true)
     setError(null)
-    getSponseeStepWorkReport(sponseeId)
-      .then(result => { if (!cancelled) { setData(result); setLoading(false) } })
-      .catch(e => { if (!cancelled) { setError(e.message); setLoading(false) } })
+
+    async function load() {
+      const supabase = createClient()
+      const ninetyDaysAgo = new Date()
+      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 89)
+      ninetyDaysAgo.setHours(0, 0, 0, 0)
+
+      const [entriesRes, completionsRes, awaitingRes, lastActivityRes] = await Promise.all([
+        supabase
+          .from('step_work_entries')
+          .select('id,responses,review_status,submitted_at,reviewed_at,updated_at,created_at,program_workbooks(title,step_number,slug,prompts)')
+          .eq('user_id', sponseeId)
+          .gte('updated_at', ninetyDaysAgo.toISOString())
+          .order('updated_at', { ascending: false }),
+        fellowshipId
+          ? supabase.from('step_completions').select('step_number').eq('user_id', sponseeId).eq('fellowship_id', fellowshipId).eq('is_completed', true)
+          : supabase.from('step_completions').select('step_number').eq('user_id', sponseeId).eq('is_completed', true),
+        supabase
+          .from('step_work_entries')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', sponseeId)
+          .eq('review_status', 'submitted'),
+        supabase
+          .from('step_work_entries')
+          .select('updated_at')
+          .eq('user_id', sponseeId)
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ])
+
+      let totalSteps = 12
+      let fellowshipName: string | null = null
+      if (fellowshipId) {
+        const [totalStepsRes, fellowshipRes] = await Promise.all([
+          supabase.from('program_workbooks').select('step_number').eq('fellowship_id', fellowshipId).not('step_number', 'is', null).eq('is_active', true),
+          supabase.from('fellowships').select('name').eq('id', fellowshipId).single(),
+        ])
+        const distinctSteps = new Set(
+          (totalStepsRes.data ?? []).map((w: { step_number: number }) => w.step_number)
+        ).size
+        totalSteps = distinctSteps || 12
+        fellowshipName = (fellowshipRes.data as { name: string } | null)?.name ?? null
+      }
+
+      if (cancelled) return
+
+      const entries: StepWorkReportEntry[] = (entriesRes.data ?? []).map(e => {
+        const wb = e.program_workbooks as unknown as { title: string; step_number: number | null; slug: string; prompts: unknown[] | null } | null
+        return {
+          id: e.id as string,
+          sectionTitle: wb?.title ?? 'Step work',
+          stepNumber: (wb?.step_number ?? null) as number | null,
+          slug: wb?.slug ?? '',
+          reviewStatus: e.review_status as string | null,
+          submittedAt: e.submitted_at as string | null,
+          reviewedAt: e.reviewed_at as string | null,
+          updatedAt: e.updated_at as string,
+          createdAt: e.created_at as string,
+          responses: e.responses as Record<string, unknown> | null,
+          totalPrompts: Array.isArray(wb?.prompts) ? wb!.prompts!.length : 0,
+        }
+      })
+
+      const completedSteps = new Set(
+        (completionsRes.data ?? []).map((c: { step_number: number }) => c.step_number)
+      ).size
+
+      setData({
+        entries,
+        completedSteps,
+        totalSteps,
+        fellowshipName,
+        awaitingReview: awaitingRes.count ?? 0,
+        lastActivityDate: (lastActivityRes.data as { updated_at: string } | null)?.updated_at ?? null,
+      })
+      setLoading(false)
+    }
+
+    load().catch(e => { if (!cancelled) { setError((e as Error).message); setLoading(false) } })
     return () => { cancelled = true }
-  }, [sponseeId])
+  }, [sponseeId, fellowshipId])
 
   // Body scroll lock + Escape
   useEffect(() => {
@@ -402,15 +502,16 @@ function ModalBody({ sponseeId, sponseeName, onClose }: ContentProps) {
 interface Props {
   sponseeId: string
   sponseeName: string
+  fellowshipId: string | null
   onClose: () => void
 }
 
-export default function StepWorkReportModal({ sponseeId, sponseeName, onClose }: Props) {
+export default function StepWorkReportModal({ sponseeId, sponseeName, fellowshipId, onClose }: Props) {
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
   if (!mounted) return null
   return createPortal(
-    <ModalBody sponseeId={sponseeId} sponseeName={sponseeName} onClose={onClose} />,
+    <ModalBody sponseeId={sponseeId} sponseeName={sponseeName} fellowshipId={fellowshipId} onClose={onClose} />,
     document.body
   )
 }
