@@ -71,10 +71,12 @@ interface Props {
 export default function MeetingsDirectory({ savedIds = {}, userCity, userState }: Props) {
   const searchParams = useSearchParams()
 
-  const [allMeetings,   setAllMeetings]   = useState<Meeting[]>([])
-  const [loading,       setLoading]       = useState(true)
-  const [page,          setPage]          = useState(1)
-  const [geoStatus,     setGeoStatus]     = useState<GeoStatus>('idle')
+  const [allMeetings,      setAllMeetings]      = useState<Meeting[]>([])
+  const [tomorrowMeetings, setTomorrowMeetings] = useState<Meeting[]>([])
+  const [loading,          setLoading]          = useState(true)
+  const [loadingTomorrow,  setLoadingTomorrow]  = useState(false)
+  const [page,             setPage]             = useState(1)
+  const [geoStatus,        setGeoStatus]        = useState<GeoStatus>('idle')
 
   const [locationText,        setLocationText]        = useState('')
   const [locationDisplayName, setLocationDisplayName] = useState<string | null>(null)
@@ -193,11 +195,13 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
       // Geo not yet available — stop spinner once status is resolved
       if (geoStatus !== 'idle' && geoStatus !== 'requesting') {
         setAllMeetings([])
+        setTomorrowMeetings([])
         setLoading(false)
       }
       return
     }
     setLoading(true)
+    setTomorrowMeetings([])  // clear stale tomorrow data on every primary refetch
 
     // When a single day is selected, delegate day (and optionally time) filtering to Postgres.
     // Multi-day or no-day selections fetch without a day filter and rely on client-side filtering.
@@ -214,12 +218,37 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
       if (rpcStartTime) rpcParams.filter_start_time = rpcStartTime
     }
 
-    createClient()
+    // Track whether this is the initial today+time query so we know whether to fetch tomorrow
+    const isInitialTodayQuery = days.length === 1 && !!rpcStartTime
+
+    const supabase = createClient()
+    supabase
       .rpc('nearby_meetings', rpcParams)
       .then(({ data, error }) => {
         if (error) console.error('[MeetingsDirectory] nearby_meetings RPC error:', error)
-        setAllMeetings((data ?? []) as unknown as Meeting[])
+        const todayResults = (data ?? []) as unknown as Meeting[]
+        setAllMeetings(todayResults)
         setLoading(false)
+
+        // If the initial today query returns fewer than 5 results, supplement with tomorrow
+        if (isInitialTodayQuery && todayResults.length < 5) {
+          const tomorrow = new Date(Date.now() + 86400000)
+            .toLocaleDateString('en-US', { weekday: 'long' })
+          setLoadingTomorrow(true)
+          supabase
+            .rpc('nearby_meetings', {
+              user_lat: locationLat,
+              user_lng: locationLng,
+              radius_miles: radiusMiles,
+              result_limit: 200,
+              filter_day: tomorrow,
+            })
+            .then(({ data: tmData, error: tmError }) => {
+              if (tmError) console.error('[MeetingsDirectory] tomorrow RPC error:', tmError)
+              setTomorrowMeetings((tmData ?? []) as unknown as Meeting[])
+              setLoadingTomorrow(false)
+            })
+        }
       })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locationLat, locationLng, radiusMiles, geoStatus, days, rpcStartTime])
@@ -310,6 +339,23 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
 
   const paginated = finalSorted.slice(0, page * ITEMS_PER_PAGE)
   const hasMore   = finalSorted.length > paginated.length
+
+  // ── Tomorrow section (only when isTodayOnly and today had < 5 results) ────
+  const tomorrow = new Date(Date.now() + 86400000).toLocaleDateString('en-US', { weekday: 'long' })
+
+  const filteredTomorrow: Meeting[] = tomorrowMeetings.filter(m => {
+    if (fellowship && m.fellowship_id !== selectedFellowshipId)                    return false
+    if (formats.length && !formats.includes(m.format ?? ''))                       return false
+    if (times.length) { const b = getTimeRange(m.start_time); if (!times.includes(b ?? '')) return false }
+    if (specialties.length && !specialties.some(s => (m.types ?? []).includes(s))) return false
+    if (languages.length   && !languages.some(l => (m.types ?? []).includes(l)))   return false
+    if (access && !(m.types ?? []).includes(access))                               return false
+    return true
+  })
+
+  const sortedTomorrow: Meeting[] = [...filteredTomorrow].sort((a, b) =>
+    (a.start_time ?? '').localeCompare(b.start_time ?? '')
+  )
 
   // ── Active filter pills ───────────────────────────────────────────────────
   const activeFilters: ActiveFilter[] = []
@@ -454,18 +500,11 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
         })}
       </div>
 
-      {/* ── Section header ── */}
-      {!loading && (
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)', marginBottom: 12 }}>
-          {sectionHeader}
-        </div>
-      )}
-
       {loading ? (
         <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--mid)', fontSize: 14 }}>
           Loading meetings…
         </div>
-      ) : sorted.length === 0 ? (
+      ) : sorted.length === 0 && !loadingTomorrow && sortedTomorrow.length === 0 ? (
         /* ── Empty states ── */
         <div style={{ padding: '40px 0' }}>
           {selectedFinder ? (
@@ -530,30 +569,54 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
             </div>
           )}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {paginated.map(m => <MeetingCard key={m.id} meeting={m} savedId={savedIds[m.id] ?? null} fellowshipsMap={fellowshipsMap} inProgress={inProgressIds.has(m.id)} />)}
-          </div>
-
-          {isTodayOnly && !hasMore && sorted.length < 5 && (
-            <div style={{ marginTop: 16, padding: '12px 16px', borderRadius: 10, background: 'rgba(42,138,153,0.05)', border: '1px solid rgba(42,138,153,0.18)', fontSize: 13, color: 'var(--mid)', lineHeight: 1.5 }}>
-              Showing {sorted.length} meeting{sorted.length !== 1 ? 's' : ''} today.{' '}
-              <button
-                type="button"
-                onClick={() => { setDays([]); setRpcStartTime(null); setSort('nearest'); setPage(1) }}
-                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 13, color: 'var(--teal)', fontWeight: 600, fontFamily: 'var(--font-body)', textDecoration: 'underline', textUnderlineOffset: 2 }}
-              >
-                View all days for more options.
-              </button>
-            </div>
+          {/* ── Today's section header + cards (only when today has results) ── */}
+          {sorted.length > 0 && (
+            <>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)', marginBottom: 12 }}>
+                {sectionHeader}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {paginated.map(m => <MeetingCard key={m.id} meeting={m} savedId={savedIds[m.id] ?? null} fellowshipsMap={fellowshipsMap} inProgress={inProgressIds.has(m.id)} />)}
+              </div>
+              {hasMore && (
+                <div style={{ textAlign: 'center', marginTop: 24 }}>
+                  <button onClick={() => setPage(p => p + 1)}
+                    style={{ padding: '10px 28px', borderRadius: 8, border: '1.5px solid var(--border)', background: '#fff', color: 'var(--navy)', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
+                    Load more ({finalSorted.length - paginated.length} remaining)
+                  </button>
+                </div>
+              )}
+              {/* "View all days" hint — only when tomorrow has no extra results to show */}
+              {isTodayOnly && !hasMore && sorted.length < 5 && sortedTomorrow.length === 0 && !loadingTomorrow && (
+                <div style={{ marginTop: 16, padding: '12px 16px', borderRadius: 10, background: 'rgba(42,138,153,0.05)', border: '1px solid rgba(42,138,153,0.18)', fontSize: 13, color: 'var(--mid)', lineHeight: 1.5 }}>
+                  Showing {sorted.length} meeting{sorted.length !== 1 ? 's' : ''} today.{' '}
+                  <button
+                    type="button"
+                    onClick={() => { setDays([]); setRpcStartTime(null); setSort('nearest'); setPage(1) }}
+                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 13, color: 'var(--teal)', fontWeight: 600, fontFamily: 'var(--font-body)', textDecoration: 'underline', textUnderlineOffset: 2 }}
+                  >
+                    View all days for more options.
+                  </button>
+                </div>
+              )}
+            </>
           )}
 
-          {hasMore && (
-            <div style={{ textAlign: 'center', marginTop: 24 }}>
-              <button onClick={() => setPage(p => p + 1)}
-                style={{ padding: '10px 28px', borderRadius: 8, border: '1.5px solid var(--border)', background: '#fff', color: 'var(--navy)', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
-                Load more ({finalSorted.length - paginated.length} remaining)
-              </button>
+          {/* ── Tomorrow section ── */}
+          {isTodayOnly && loadingTomorrow && (
+            <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--mid)', fontSize: 13 }}>
+              Checking tomorrow's meetings…
             </div>
+          )}
+          {isTodayOnly && !loadingTomorrow && sortedTomorrow.length > 0 && (
+            <>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)', marginTop: sorted.length > 0 ? 28 : 0, marginBottom: 12, paddingTop: sorted.length > 0 ? 20 : 0, borderTop: sorted.length > 0 ? '1px solid var(--border)' : 'none' }}>
+                Tomorrow — {tomorrow}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {sortedTomorrow.map(m => <MeetingCard key={m.id} meeting={m} savedId={savedIds[m.id] ?? null} fellowshipsMap={fellowshipsMap} inProgress={false} />)}
+              </div>
+            </>
           )}
         </>
       )}
