@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import AddSponseeModal from './AddSponseeModal'
 import PendingRequests from './PendingRequests'
 import type { PendingRequest } from './PendingRequests'
-import { addSponsorNote, sendSponsorReminder } from '@/app/dashboard/actions'
+import { addSponsorNote } from '@/app/dashboard/actions'
+import { createClient } from '@/lib/supabase/client'
 import type { SponseeFull, SponseeCheckIn } from './DashboardShell'
 import { useSponsorAccess } from '@/hooks/useSponsorAccess'
 import Link from 'next/link'
@@ -324,15 +325,59 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
     if (isSendingReminder || (reminderDisabledUntil !== null && Date.now() < reminderDisabledUntil)) return
     setIsSendingReminder(true)
     try {
-      await sendSponsorReminder(sponsee.id)
+      const supabase = createClient()
+
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Unauthorized')
+
+      // Get sponsor's display name
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('display_name')
+        .eq('id', user.id)
+        .single()
+      const sponsorName = (profile?.display_name as string | null) ?? 'Your sponsor'
+
+      // Rate limit: one reminder per sponsor per sponsee per 24 hours
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+      const { data: recent } = await supabase
+        .from('activity_feed')
+        .select('id')
+        .eq('user_id', sponsee.id)
+        .eq('event_type', 'reminder')
+        .gte('created_at', since)
+        .filter('metadata->>sponsor_id', 'eq', user.id)
+        .limit(1)
+
+      if ((recent ?? []).length > 0) {
+        showToast('Already sent today')
+        return
+      }
+
+      const { error } = await supabase
+        .from('activity_feed')
+        .insert({
+          user_id: sponsee.id,
+          event_type: 'reminder',
+          title: `${sponsorName} sent you a reminder`,
+          description: 'Your sponsor is checking in — how are you doing today?',
+          is_read: false,
+          metadata: {
+            sponsor_id: user.id,
+            sponsor_name: sponsorName,
+            message: 'Your sponsor is checking in — how are you doing today?',
+          },
+        })
+
+      if (error) throw new Error(error.message)
+
       const until = Date.now() + 24 * 60 * 60 * 1000
       localStorage.setItem(`sober_reminder_${sponsee.id}`, String(until))
       setReminderDisabledUntil(until)
       showToast('Reminder sent')
     } catch (e) {
       const msg = (e as Error).message
-      if (msg === 'RATE_LIMITED') showToast('Already sent today')
-      else showToast('Failed to send reminder')
+      if (msg !== 'Unauthorized') showToast('Failed to send reminder')
     } finally {
       setIsSendingReminder(false)
     }
