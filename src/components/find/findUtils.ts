@@ -96,6 +96,7 @@ export const DAY_ORDER: Record<string, number> = {
 export const MEETING_SORT_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'soonest', label: 'Soonest' },
   { value: 'nearest', label: 'Nearest' },
+  { value: 'time', label: 'Start time' },
   { value: 'alphabetical', label: 'A–Z' },
 ]
 

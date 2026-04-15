@@ -73,13 +73,13 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
 
   // All filters default to "all" / unselected
   const [fellowship,  setFellowship]  = useState(() => searchParams.get('fellowship') ?? '')
-  const [days,        setDays]        = useState<string[]>([])
+  const [days,        setDays]        = useState<string[]>(() => [new Date().toLocaleDateString('en-US', { weekday: 'long' })])
   const [times,       setTimes]       = useState<string[]>([])
   const [formats,     setFormats]     = useState<string[]>([])
   const [specialties, setSpecialties] = useState<string[]>([])
   const [languages,   setLanguages]   = useState<string[]>([])
   const [access,      setAccess]      = useState('')
-  const [sort,        setSort]        = useState('nearest')
+  const [sort,        setSort]        = useState('time')
 
   const [profileGeoAttempted, setProfileGeoAttempted] = useState(false)
 
@@ -218,6 +218,13 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
   // ── Sort ──────────────────────────────────────────────────────────────────
   const sorted: Meeting[] = [...filtered].sort((a, b) => {
     if (sort === 'alphabetical') return a.name.localeCompare(b.name)
+    // time: sort purely by start_time ASC (for day-filtered views)
+    if (sort === 'time') {
+      const ta = a.start_time ?? ''
+      const tb = b.start_time ?? ''
+      if (ta !== tb) return ta.localeCompare(tb)
+      return a.name.localeCompare(b.name)
+    }
     // nearest (default): in-person by distance, then online by day+time
     if (a._distance !== undefined && b._distance !== undefined) return a._distance - b._distance
     if (a._distance !== undefined) return -1  // in-person before online
@@ -262,7 +269,14 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
     ? `${sorted.length.toLocaleString()} meeting${sorted.length !== 1 ? 's' : ''} within ${radiusMiles} mi`
     : undefined
 
-  const sectionHeader = hasGeo
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
+  const isTodayOnly = days.length === 1 && days[0] === today
+
+  const sectionHeader = isTodayOnly
+    ? hasGeo
+      ? `${today} meetings near ${locationDisplayName ?? 'you'}`
+      : `${today} online meetings`
+    : hasGeo
     ? `Meetings near ${locationDisplayName ?? 'you'}`
     : 'Online meetings'
 
@@ -281,7 +295,7 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
 
   function clearAll() {
     setFellowship(''); setDays([]); setTimes([]); setFormats([])
-    setSpecialties([]); setLanguages([]); setAccess(''); setPage(1)
+    setSpecialties([]); setLanguages([]); setAccess(''); setSort('nearest'); setPage(1)
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -439,6 +453,19 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {paginated.map(m => <MeetingCard key={m.id} meeting={m} savedId={savedIds[m.id] ?? null} />)}
           </div>
+
+          {isTodayOnly && !hasMore && sorted.length < 5 && (
+            <div style={{ marginTop: 16, padding: '12px 16px', borderRadius: 10, background: 'rgba(42,138,153,0.05)', border: '1px solid rgba(42,138,153,0.18)', fontSize: 13, color: 'var(--mid)', lineHeight: 1.5 }}>
+              Showing {sorted.length} meeting{sorted.length !== 1 ? 's' : ''} today.{' '}
+              <button
+                type="button"
+                onClick={() => { setDays([]); setSort('nearest'); setPage(1) }}
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 13, color: 'var(--teal)', fontWeight: 600, fontFamily: 'var(--font-body)', textDecoration: 'underline', textUnderlineOffset: 2 }}
+              >
+                View all days for more options.
+              </button>
+            </div>
+          )}
 
           {hasMore && (
             <div style={{ textAlign: 'center', marginTop: 24 }}>
