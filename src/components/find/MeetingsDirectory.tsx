@@ -210,6 +210,13 @@ export default function MeetingsDirectory({ savedIds = {}, userCity, userState }
   const hasGeo = !!(locationLat && locationLng)
 
   // ── Filter ────────────────────────────────────────────────────────────────
+  console.log('Raw meetings count:', allMeetings.length)
+  console.log('Sample day values:', allMeetings.slice(0, 5).map(m => m.day_of_week))
+  console.log('Selected days state:', days)
+  console.log('Type of days[0]:', typeof days[0])
+  console.log('Type of meeting day:', typeof allMeetings[0]?.day_of_week)
+  console.log('Exact comparison:', allMeetings[0]?.day_of_week === days[0])
+  console.log('Meeting keys:', Object.keys(allMeetings[0] || {}))
   const filtered: Meeting[] = allMeetings.filter(m => {
     if (fellowship && (!m.fellowships || m.fellowships.slug !== fellowship)) return false
     if (days.length    && !days.includes(m.day_of_week ?? ''))              return false
