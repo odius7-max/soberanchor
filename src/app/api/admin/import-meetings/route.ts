@@ -221,13 +221,15 @@ async function importFeed(
     }
   }
 
-  // Upsert in batches of 50
+  // Insert in batches of 50.
+  // ON CONFLICT DO NOTHING silently skips rows that violate either the
+  // existing UNIQUE(source, source_id) constraint or the new
+  // meetings_unique_identity index (same name + day + time + lat/lng).
   const BATCH = 50
   for (let i = 0; i < transformed.length; i += BATCH) {
     const batch = transformed.slice(i, i + BATCH)
     const { error } = await admin.from('meetings').upsert(batch, {
-      onConflict: 'source,source_id',
-      ignoreDuplicates: false,
+      ignoreDuplicates: true,
     })
 
     if (!error) {
@@ -236,8 +238,7 @@ async function importFeed(
       // Batch failed — try individually to isolate bad records
       for (const meeting of batch) {
         const { error: rowErr } = await admin.from('meetings').upsert(meeting, {
-          onConflict: 'source,source_id',
-          ignoreDuplicates: false,
+          ignoreDuplicates: true,
         })
         if (!rowErr) {
           stats.imported++
