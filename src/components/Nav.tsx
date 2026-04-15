@@ -65,9 +65,8 @@ export default function Nav() {
   }
 
   const coreLinks = [
-    { href: '/find',          label: 'Find Help'  },
-    { href: '/find/meetings', label: 'Meetings'   },
-    { href: '/resources',     label: 'Resources'  },
+    { href: '/find',         label: 'Find Help'    },
+    { href: '/resources',    label: 'Resources'    },
   ]
 
   const isActive = (href: string) =>
