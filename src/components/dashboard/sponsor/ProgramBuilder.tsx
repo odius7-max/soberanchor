@@ -10,6 +10,7 @@ import {
   deleteLibraryTask,
   reorderTasks,
   ungroupSubsection,
+  setSubsection,
   addFromExamples,
   addFromLibrary,
 } from '@/app/dashboard/sponsees/program/actions'
@@ -159,6 +160,12 @@ export default function ProgramBuilder({ programId, fellowshipId, steps, initial
     await ungroupSubsection(programId, stepNumber, subsection)
   }, [programId])
 
+  const handleSetSubsection = useCallback(async (taskId: string, subsectionName: string | null) => {
+    // Optimistic
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, subsection: subsectionName } : t))
+    await setSubsection([taskId], subsectionName)
+  }, [])
+
   const handleAddFromExamples = useCallback(async (
     stepNumber: number,
     examples: { title: string; description: string | null; category: string }[]
@@ -269,6 +276,7 @@ export default function ProgramBuilder({ programId, fellowshipId, steps, initial
           onAddFromExamples={(examples) => handleAddFromExamples(step.step_number, examples)}
           onAddFromLibrary={(items) => handleAddFromLibrary(step.step_number, items)}
           onUngroupSubsection={handleUngroupSubsection}
+          onSetSubsection={handleSetSubsection}
         />
       ))}
     </div>

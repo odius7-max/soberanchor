@@ -24,19 +24,22 @@ interface Props {
   onAddFromExamples: (examples: { title: string; description: string | null; category: string }[]) => void
   onAddFromLibrary: (tasks: { title: string; description: string | null; category: string }[]) => void
   onUngroupSubsection: (stepNumber: number, subsection: string) => void
+  onSetSubsection: (taskId: string, subsection: string | null) => void
 }
 
 export default function StepAccordion({
   stepNumber, stepName, tasks, examples, libraryTasks, existingTitles,
   isActive, isExpanded, onToggle,
   onEditTask, onDeleteTask, onReorder, onCreateTask,
-  onAddFromExamples, onAddFromLibrary, onUngroupSubsection,
+  onAddFromExamples, onAddFromLibrary, onUngroupSubsection, onSetSubsection,
 }: Props) {
   const contentRef = useRef<HTMLDivElement>(null)
   const [dragIdx, setDragIdx] = useState<number | null>(null)
   const [showAddZone, setShowAddZone] = useState(false)
   const [showAddSubsection, setShowAddSubsection] = useState(false)
   const [newSubsectionName, setNewSubsectionName] = useState('')
+  // Track empty sub-sections that have been created but have no tasks yet
+  const [emptySubsections, setEmptySubsections] = useState<string[]>([])
 
   // Separate tasks into ungrouped and grouped by subsection
   const ungroupedTasks = tasks.filter(t => !t.subsection)
@@ -46,6 +49,12 @@ export default function StepAccordion({
       const list = subsections.get(t.subsection) ?? []
       list.push(t)
       subsections.set(t.subsection, list)
+    }
+  }
+  // Merge in empty sub-sections so they render even with 0 tasks
+  for (const name of emptySubsections) {
+    if (!subsections.has(name)) {
+      subsections.set(name, [])
     }
   }
 
@@ -74,9 +83,30 @@ export default function StepAccordion({
   }
 
   function handleAddSubsection() {
-    if (!newSubsectionName.trim()) return
+    const name = newSubsectionName.trim()
+    if (!name) return
+    // Don't allow duplicate names
+    if (subsections.has(name)) {
+      setNewSubsectionName('')
+      setShowAddSubsection(false)
+      return
+    }
+    setEmptySubsections(prev => [...prev, name])
     setNewSubsectionName('')
     setShowAddSubsection(false)
+  }
+
+  // When a sub-section is ungrouped, also remove it from emptySubsections
+  function handleUngroupSubsection(sub: string) {
+    setEmptySubsections(prev => prev.filter(s => s !== sub))
+    onUngroupSubsection(stepNumber, sub)
+  }
+
+  // Move a task into a sub-section
+  function handleMoveToSubsection(taskId: string, subsection: string) {
+    onSetSubsection(taskId, subsection)
+    // Clean up empty subsections list if a task is now in it
+    setEmptySubsections(prev => prev.filter(s => s !== subsection))
   }
 
   return (
@@ -151,7 +181,7 @@ export default function StepAccordion({
                   <div
                     key={task.id}
                     draggable
-                    onDragStart={() => handleDragStart(idx)}
+                    onDragStart={(e) => { e.dataTransfer.setData('text/task-id', task.id); handleDragStart(idx) }}
                     onDragOver={e => handleDragOver(e, idx)}
                     onDragEnd={handleDragEnd}
                   >
@@ -168,7 +198,7 @@ export default function StepAccordion({
                     tasks={subTasks}
                     onEditTask={onEditTask}
                     onDeleteTask={onDeleteTask}
-                    onUngroup={sub => onUngroupSubsection(stepNumber, sub)}
+                    onUngroup={handleUngroupSubsection}
                     onReorder={ids => onReorder(stepNumber, [
                       ...ungroupedTasks.map(t => t.id),
                       ...ids,
@@ -176,6 +206,8 @@ export default function StepAccordion({
                         .filter(([n]) => n !== name)
                         .flatMap(([, t]) => t.map(tt => tt.id)),
                     ])}
+                    onDrop={taskId => handleMoveToSubsection(taskId, name)}
+                    onAddTask={(title, desc, cat) => onCreateTask(stepNumber, title, desc, cat, name)}
                   />
                 </div>
               ))}
