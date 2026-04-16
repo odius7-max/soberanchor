@@ -67,11 +67,11 @@ export default function TaskCard({ task, onEdit, onDelete, flash }: Props) {
     return (
       <div
         style={{
-          borderLeft: `4px solid ${CATEGORY_COLORS[editCategory]?.border ?? cat.border}`,
           borderRadius: 12,
-          border: `1.5px solid var(--teal)`,
-          borderLeftWidth: 4,
-          borderLeftColor: CATEGORY_COLORS[editCategory]?.border ?? cat.border,
+          borderTop: '1.5px solid var(--teal)',
+          borderRight: '1.5px solid var(--teal)',
+          borderBottom: '1.5px solid var(--teal)',
+          borderLeft: `4px solid ${CATEGORY_COLORS[editCategory]?.border ?? cat.border}`,
           background: '#fff',
           padding: '14px 16px',
         }}
@@ -152,11 +152,11 @@ export default function TaskCard({ task, onEdit, onDelete, flash }: Props) {
     return (
       <div
         style={{
-          borderLeft: `4px solid #C0392B`,
           borderRadius: 12,
-          border: '1.5px solid rgba(192,57,43,0.3)',
-          borderLeftWidth: 4,
-          borderLeftColor: '#C0392B',
+          borderTop: '1.5px solid rgba(192,57,43,0.3)',
+          borderRight: '1.5px solid rgba(192,57,43,0.3)',
+          borderBottom: '1.5px solid rgba(192,57,43,0.3)',
+          borderLeft: '4px solid #C0392B',
           background: 'rgba(192,57,43,0.03)',
           padding: '14px 16px',
         }}
@@ -193,11 +193,11 @@ export default function TaskCard({ task, onEdit, onDelete, flash }: Props) {
   return (
     <div
       style={{
-        borderLeft: `4px solid ${cat.border}`,
         borderRadius: 12,
-        border: '1px solid var(--border)',
-        borderLeftWidth: 4,
-        borderLeftColor: cat.border,
+        borderTop: '1px solid var(--border)',
+        borderRight: '1px solid var(--border)',
+        borderBottom: '1px solid var(--border)',
+        borderLeft: `4px solid ${cat.border}`,
         background: '#fff',
         padding: '12px 14px',
         display: 'flex',

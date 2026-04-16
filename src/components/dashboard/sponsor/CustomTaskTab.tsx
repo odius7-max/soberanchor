@@ -240,8 +240,12 @@ export default function CustomTaskTab({
 
           {/* Preview card */}
           <div style={{
-            borderRadius: 12, border: '1px solid var(--border)',
-            borderLeft: `3px solid ${cat.color}`, background: '#fff',
+            borderRadius: 12,
+            borderTop: '1px solid var(--border)',
+            borderRight: '1px solid var(--border)',
+            borderBottom: '1px solid var(--border)',
+            borderLeft: `3px solid ${cat.color}`,
+            background: '#fff',
             padding: '14px 16px', marginBottom: 14,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' as const, marginBottom: 4 }}>

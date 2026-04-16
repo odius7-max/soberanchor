@@ -12,6 +12,7 @@ import Link from 'next/link'
 import CheckInReportModal from './CheckInReportModal'
 import StepWorkReportModal from './StepWorkReportModal'
 import MeetingReportModal from './MeetingReportModal'
+import SponsorNavTabs from './sponsor/SponsorNavTabs'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -706,6 +707,7 @@ export default function SponsorView({ sponsees, pendingRequests, displayName, us
   // ─── Reusable inner content ───────────────────────────────────────────────
   const dashboardContent = (
     <>
+      <SponsorNavTabs active="sponsees" />
       <PendingRequests requests={pendingRequests} perspective="as_sponsor" />
 
       {/* ── Summary stats row ── */}

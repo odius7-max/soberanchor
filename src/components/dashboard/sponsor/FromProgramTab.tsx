@@ -138,13 +138,25 @@ export default function FromProgramTab({
     )
   }
 
-  const stepsWithTasks = steps.filter(s => tasksByStep.has(s.step_number))
+  // Always include the sponsee's current step (even if empty) + any step with library tasks.
+  // Current step is pinned to the top so it's the first thing the sponsor sees.
+  const stepsToRender = (() => {
+    const withTasks = steps.filter(s => tasksByStep.has(s.step_number))
+    const currentStepInfo = currentStep ? steps.find(s => s.step_number === currentStep) : null
+    const alreadyIncluded = currentStepInfo && withTasks.some(s => s.step_number === currentStep)
+    const base = alreadyIncluded || !currentStepInfo ? withTasks : [currentStepInfo, ...withTasks]
+    return base.sort((a, b) => {
+      if (a.step_number === currentStep) return -1
+      if (b.step_number === currentStep) return 1
+      return a.step_number - b.step_number
+    })
+  })()
 
   return (
     <div style={{ padding: '14px 24px 20px' }}>
       {/* Step accordions */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {stepsWithTasks.map(step => {
+        {stepsToRender.map(step => {
           const tasks = tasksByStep.get(step.step_number) ?? []
           const isCurrent = step.step_number === currentStep
           const isExpanded = expandedSteps.has(step.step_number)
@@ -187,7 +199,28 @@ export default function FromProgramTab({
                 </span>
               </button>
 
-              {isExpanded && (
+              {isExpanded && tasks.length === 0 && (
+                <div style={{ padding: '4px 16px 16px' }}>
+                  <div style={{
+                    borderRadius: 10,
+                    border: '1px dashed var(--border)',
+                    background: 'rgba(42,157,143,0.03)',
+                    padding: '14px 16px',
+                    fontSize: 12, color: 'var(--mid)', lineHeight: 1.55,
+                  }}>
+                    You haven&apos;t created any tasks for Step {step.step_number} yet.{' '}
+                    <a
+                      href="/dashboard/sponsees/program"
+                      style={{ color: 'var(--teal)', fontWeight: 600, textDecoration: 'none' }}
+                    >
+                      Build tasks in the Program Builder
+                    </a>
+                    {' '}or use the <strong style={{ color: 'var(--navy)' }}>Custom Task</strong> tab to create one on the fly.
+                  </div>
+                </div>
+              )}
+
+              {isExpanded && tasks.length > 0 && (
                 <div style={{ padding: '0 14px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {tasks.map(task => {
                     const alreadyAssigned = assignedLibraryIds.has(task.id)
@@ -201,7 +234,9 @@ export default function FromProgramTab({
                           display: 'flex', gap: 10, alignItems: 'flex-start',
                           padding: '10px 12px', borderRadius: 10,
                           background: alreadyAssigned ? 'var(--warm-gray)' : isSelected ? 'rgba(42,157,143,0.06)' : '#fff',
-                          border: isSelected ? '1.5px solid var(--teal)' : '1px solid var(--border)',
+                          borderTop: isSelected ? '1.5px solid var(--teal)' : '1px solid var(--border)',
+                          borderRight: isSelected ? '1.5px solid var(--teal)' : '1px solid var(--border)',
+                          borderBottom: isSelected ? '1.5px solid var(--teal)' : '1px solid var(--border)',
                           borderLeft: `3px solid ${cat.color}`,
                           cursor: alreadyAssigned ? 'default' : 'pointer',
                           opacity: alreadyAssigned ? 0.55 : 1,

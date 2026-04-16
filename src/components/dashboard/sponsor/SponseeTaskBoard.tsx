@@ -105,7 +105,9 @@ function TaskRow({
     <div
       style={{
         borderRadius: 12,
-        border: dueStyle?.urgent ? '1.5px solid rgba(192,57,43,0.25)' : '1px solid var(--border)',
+        borderTop: dueStyle?.urgent ? '1.5px solid rgba(192,57,43,0.25)' : '1px solid var(--border)',
+        borderRight: dueStyle?.urgent ? '1.5px solid rgba(192,57,43,0.25)' : '1px solid var(--border)',
+        borderBottom: dueStyle?.urgent ? '1.5px solid rgba(192,57,43,0.25)' : '1px solid var(--border)',
         borderLeft: `3px solid ${cat.color}`,
         background: isCompleted ? 'var(--warm-gray)' : dueStyle?.urgent ? 'rgba(192,57,43,0.02)' : '#fff',
         padding: '13px 15px',

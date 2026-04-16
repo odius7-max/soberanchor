@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import ProgramBuilder from '@/components/dashboard/sponsor/ProgramBuilder'
+import SponsorNavTabs from '@/components/dashboard/sponsor/SponsorNavTabs'
 import { getOrCreateProgram, getLibraryTasks } from './actions'
 
 // Step names from AA Big Book — used as fallback when program_workbooks is empty
@@ -102,6 +103,7 @@ export default async function SponsorProgramPage() {
   return (
     <div style={{ padding: '28px 24px 72px' }}>
       <div className="max-w-[940px] mx-auto">
+        <SponsorNavTabs active="library" />
         <ProgramBuilder
           programId={program.id}
           fellowshipId={fellowshipId}
