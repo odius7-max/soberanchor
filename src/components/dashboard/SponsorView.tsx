@@ -268,20 +268,6 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
   const [toast, setToast] = useState<string | null>(null)
   const [localNote, setLocalNote] = useState(sponsee.latestNote)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const [isSendingReminder, setIsSendingReminder] = useState(false)
-  const [reminderDisabledUntil, setReminderDisabledUntil] = useState<number | null>(null)
-
-  // Restore rate-limit state from localStorage on mount
-  useEffect(() => {
-    const key = `sober_reminder_${sponsee.id}`
-    const stored = localStorage.getItem(key)
-    if (stored) {
-      const until = parseInt(stored, 10)
-      if (Date.now() < until) setReminderDisabledUntil(until)
-      else localStorage.removeItem(key)
-    }
-  }, [sponsee.id])
-
   const lastCheckIn = sponsee.checkInHistory[0] ?? null
   const mood = lastCheckIn?.mood ? MOOD_META[lastCheckIn.mood] : null
   const days = calcDays(sponsee.sobrietyDate)
@@ -326,68 +312,6 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
       showToast('Failed to save note')
     } finally {
       setIsSaving(false)
-    }
-  }
-
-  async function handleSendReminder() {
-    if (isSendingReminder || (reminderDisabledUntil !== null && Date.now() < reminderDisabledUntil)) return
-    setIsSendingReminder(true)
-    try {
-      const supabase = createClient()
-
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Unauthorized')
-
-      // Get sponsor's display name
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('display_name')
-        .eq('id', user.id)
-        .single()
-      const sponsorName = (profile?.display_name as string | null) ?? 'Your sponsor'
-
-      // Rate limit: one reminder per sponsor per sponsee per 24 hours
-      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-      const { data: recent } = await supabase
-        .from('activity_feed')
-        .select('id')
-        .eq('user_id', sponsee.id)
-        .eq('event_type', 'reminder')
-        .gte('created_at', since)
-        .filter('metadata->>sponsor_id', 'eq', user.id)
-        .limit(1)
-
-      if ((recent ?? []).length > 0) {
-        showToast('Already sent today')
-        return
-      }
-
-      const { error } = await supabase
-        .from('activity_feed')
-        .insert({
-          user_id: sponsee.id,
-          event_type: 'reminder',
-          title: `${sponsorName} sent you a reminder`,
-          description: 'Your sponsor is checking in — how are you doing today?',
-          is_read: false,
-          metadata: {
-            sponsor_id: user.id,
-            sponsor_name: sponsorName,
-            message: 'Your sponsor is checking in — how are you doing today?',
-          },
-        })
-
-      if (error) throw new Error(error.message)
-
-      const until = Date.now() + 24 * 60 * 60 * 1000
-      localStorage.setItem(`sober_reminder_${sponsee.id}`, String(until))
-      setReminderDisabledUntil(until)
-      showToast('Reminder sent')
-    } catch (e) {
-      const msg = (e as Error).message
-      if (msg !== 'Unauthorized') showToast('Failed to send reminder')
-    } finally {
-      setIsSendingReminder(false)
     }
   }
 
@@ -719,27 +643,6 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
           Add Note{sponsee.noteCount > 0 && !localNote ? ` · ${sponsee.noteCount}` : ''}
         </button>
 
-        {(() => {
-          const isDisabled = isSendingReminder || (reminderDisabledUntil !== null && Date.now() < reminderDisabledUntil)
-          return (
-            <button
-              onClick={handleSendReminder}
-              disabled={isDisabled}
-              title={isDisabled && !isSendingReminder ? 'Reminder sent today' : undefined}
-              style={{
-                background: 'none',
-                color: isDisabled ? 'var(--border)' : 'var(--mid)',
-                border: '1.5px solid var(--border)',
-                borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600,
-                cursor: isDisabled ? 'not-allowed' : 'pointer',
-                opacity: isDisabled ? 0.55 : 1,
-                fontFamily: 'var(--font-body)',
-              }}
-            >
-              {isSendingReminder ? 'Sending…' : isDisabled ? 'Sent Today' : 'Send Reminder'}
-            </button>
-          )
-        })()}
       </div>
 
       {/* Check-in report modal (portal) */}
