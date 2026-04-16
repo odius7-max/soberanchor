@@ -553,11 +553,11 @@ export default function DashboardBanner({
               )}
             </div>
 
-            {/* ── Main body: fellowship table + stat cards ── */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-0">
+            {/* ── Main body: fellowship table (single column) ── */}
+            <div className="mb-0">
 
-              {/* LEFT: fellowship table */}
-              <div className="flex-1 min-w-0">
+              {/* Fellowship table */}
+              <div>
                 {milestones.length === 0 ? (
                   <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 14, paddingBottom: 8 }}>
                     No milestones yet.
@@ -601,8 +601,8 @@ export default function DashboardBanner({
                             cursor: isActive ? 'default' : 'pointer',
                             borderBottom: i < milestones.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
                           }}
-                          onMouseEnter={e => { if (!isActive) e.currentTarget.style.opacity = '0.8' }}
-                          onMouseLeave={e => { if (!isActive) e.currentTarget.style.opacity = String(isActive ? 1 : 0.5) }}
+                          onMouseEnter={e => { if (!isActive) e.currentTarget.style.opacity = '0.85' }}
+                          onMouseLeave={e => { if (!isActive) e.currentTarget.style.opacity = '1' }}
                         >
                           {/* Desktop row (4-col) */}
                           <div
@@ -611,23 +611,22 @@ export default function DashboardBanner({
                               gridTemplateColumns: '1fr 52px 120px 90px',
                               alignItems: 'center',
                               padding: isActive ? '11px 0' : '8px 0',
-                              opacity: isActive ? 1 : 0.5,
                               transition: 'opacity 0.15s',
                             }}
                           >
                             {/* Label + dot */}
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                               <div style={{ width: 7, height: 7, borderRadius: '50%', background: dot, flexShrink: 0 }} />
-                              <span style={{ fontSize: isActive ? 15 : 13, fontWeight: isActive ? 700 : 500, color: '#fff', lineHeight: 1.2 }}>
+                              <span style={{ fontSize: isActive ? 15 : 13, fontWeight: isActive ? 700 : 500, color: isActive ? '#fff' : '#9badc4', lineHeight: 1.2 }}>
                                 {m.label}
                               </span>
                             </div>
                             {/* Program */}
-                            <span style={{ fontSize: 12, color: isActive ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.4)', fontWeight: 600 }}>
+                            <span style={{ fontSize: 12, color: isActive ? 'rgba(255,255,255,0.6)' : '#9badc4', fontWeight: 600 }}>
                               {abbr ?? '—'}
                             </span>
                             {/* Sobriety date */}
-                            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', textAlign: 'right' }}>
+                            <span style={{ fontSize: 12, color: isActive ? 'rgba(255,255,255,0.45)' : '#9badc4', textAlign: 'right' }}>
                               {fmtDateShort(m.sobriety_date)}
                             </span>
                             {/* Days */}
@@ -651,7 +650,6 @@ export default function DashboardBanner({
                               gridTemplateColumns: '1fr 110px 76px',
                               alignItems: 'center',
                               padding: isActive ? '11px 0' : '8px 0',
-                              opacity: isActive ? 1 : 0.5,
                               transition: 'opacity 0.15s',
                             }}
                           >
@@ -659,12 +657,12 @@ export default function DashboardBanner({
                             <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                               <div style={{ width: 7, height: 7, borderRadius: '50%', background: dot, flexShrink: 0 }} />
                               <div>
-                                <div style={{ fontSize: isActive ? 14 : 12, fontWeight: isActive ? 700 : 500, color: '#fff', lineHeight: 1.2 }}>{m.label}</div>
-                                {abbr && <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 1 }}>{abbr}</div>}
+                                <div style={{ fontSize: isActive ? 14 : 12, fontWeight: isActive ? 700 : 500, color: isActive ? '#fff' : '#9badc4', lineHeight: 1.2 }}>{m.label}</div>
+                                {abbr && <div style={{ fontSize: 10, color: isActive ? 'rgba(255,255,255,0.4)' : '#9badc4', marginTop: 1 }}>{abbr}</div>}
                               </div>
                             </div>
                             {/* Sobriety date */}
-                            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', textAlign: 'right' }}>
+                            <span style={{ fontSize: 11, color: isActive ? 'rgba(255,255,255,0.4)' : '#9badc4', textAlign: 'right' }}>
                               {fmtDateShort(m.sobriety_date)}
                             </span>
                             {/* Days */}
@@ -697,45 +695,24 @@ export default function DashboardBanner({
                 </button>
               </div>
 
-              {/* RIGHT (desktop) / BELOW (mobile): milestone stat cards — vertically centered */}
-              <div
-                className="flex sm:flex-col sm:justify-center gap-3"
-                style={{ flexShrink: 0 }}
-              >
-                {daysClean !== null && (
-                  <>
-                    {/* Total Days */}
-                    <div
-                      className="flex-1 sm:flex-none"
-                      style={{ background: 'rgba(212,165,116,0.15)', border: '1px solid rgba(212,165,116,0.25)', borderRadius: 12, padding: '14px 16px', minWidth: 0 }}
-                    >
-                      <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 6 }}>Total Days</div>
-                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, color: '#D4A574', lineHeight: 1, letterSpacing: '-0.5px' }}>{daysClean.toLocaleString()}</div>
-                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 4 }}>days sober</div>
-                    </div>
-
-                    {/* Next Milestone — always present, annual milestones never end */}
-                    {nextMLabel !== null && daysToNext !== null && (
-                      <div
-                        className="flex-1 sm:flex-none"
-                        style={{ background: 'rgba(42,138,153,0.12)', border: '1px solid rgba(42,138,153,0.25)', borderRadius: 12, padding: '14px 16px', minWidth: 0 }}
-                      >
-                        <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 6 }}>Next Milestone</div>
-                        <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, color: '#fff', lineHeight: 1, letterSpacing: '-0.5px' }}>{nextMLabel}</div>
-                        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>{daysToNext} day{daysToNext !== 1 ? 's' : ''} away</div>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
             </div>
+
+            {/* Inline Next Milestone bar */}
+            {nextMLabel !== null && daysToNext !== null && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255, 255, 255, 0.06)', borderRadius: 10, padding: '10px 16px', marginTop: 12 }}>
+                <span style={{ fontSize: 16, flexShrink: 0 }}>🎯</span>
+                <span style={{ fontSize: 13, color: '#9badc4', fontWeight: 500 }}>
+                  <strong style={{ color: '#fff', fontWeight: 700 }}>{nextMLabel}</strong> — {daysToNext} day{daysToNext !== 1 ? 's' : ''} away
+                </span>
+              </div>
+            )}
 
             {/* ── Quote: thin divider, italic, muted ── */}
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: 18, paddingTop: 14, marginBottom: activeMilestone?.fellowship_id ? 14 : 0 }}>
-              <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13, fontStyle: 'italic', lineHeight: 1.65 }}>
+              <div style={{ color: '#9badc4', fontSize: 13, fontStyle: 'italic', lineHeight: 1.65 }}>
                 &ldquo;{quote.text}&rdquo;
               </div>
-              <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, marginTop: 5 }}>— {quote.attr}</div>
+              <div style={{ color: '#6b7a8d', fontSize: 11, marginTop: 5 }}>— {quote.attr}</div>
             </div>
 
             {/* ── Step progress bar + Currently On label ── */}
@@ -759,14 +736,14 @@ export default function DashboardBanner({
                           <div style={{
                             width: 38, height: 38, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: 13, fontWeight: 700,
-                            background: isDone ? '#D4A574' : isActivStep ? '#2A8A99' : 'rgba(255,255,255,0.1)',
+                            background: isDone ? 'linear-gradient(135deg, #3a7ca5, #2a9d8f)' : isActivStep ? '#f0c040' : 'rgba(255,255,255,0.06)',
                             border: isDone ? '2px solid rgba(255,255,255,0.2)' : isActivStep ? '2.5px solid rgba(255,255,255,0.9)' : '1.5px solid rgba(255,255,255,0.15)',
-                            color: isDone || isActivStep ? '#fff' : 'rgba(255,255,255,0.3)',
-                            boxShadow: isActivStep ? '0 0 18px rgba(42,138,153,0.6)' : 'none',
+                            color: isDone ? '#fff' : isActivStep ? '#1a2332' : '#9badc4',
+                            boxShadow: isActivStep ? '0 0 0 3px rgba(240, 192, 64, 0.3)' : 'none',
                           }}>
                             {isDone ? '✓' : n}
                           </div>
-                          <span style={{ fontSize: 9, fontWeight: 600, maxWidth: 50, textAlign: 'center', lineHeight: 1.3, color: isDone ? 'rgba(255,255,255,0.5)' : isActivStep ? '#2A8A99' : 'rgba(255,255,255,0.25)' }}>
+                          <span style={{ fontSize: 9, fontWeight: 600, maxWidth: 50, textAlign: 'center', lineHeight: 1.3, color: isDone ? 'rgba(255,255,255,0.5)' : isActivStep ? '#f0c040' : '#9badc4' }}>
                             {s}
                           </span>
                         </div>

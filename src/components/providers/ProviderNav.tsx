@@ -17,7 +17,7 @@ export default function ProviderNav({ facilityName, initials }: Props) {
   async function signOut() {
     const supabase = createClient()
     await supabase.auth.signOut()
-    router.push('/providers/login')
+    router.push('/')
   }
 
   return (
@@ -57,7 +57,7 @@ export default function ProviderNav({ facilityName, initials }: Props) {
                       <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--dark)' }}>{facilityName}</div>
                     </div>
                   )}
-                  <Link href="/providers/dashboard" onClick={() => setMenuOpen(false)}
+                  <Link href="/dashboard" onClick={() => setMenuOpen(false)}
                     style={{ display: 'block', padding: '9px 16px', fontSize: 14, color: 'var(--dark)', textDecoration: 'none' }}>
                     Dashboard
                   </Link>

@@ -8,7 +8,7 @@ export default async function ProviderDashboardPage() {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/providers/login')
+  if (!user) redirect('/?auth=required')
 
   // Get provider account
   const { data: providerAccount } = await supabase
