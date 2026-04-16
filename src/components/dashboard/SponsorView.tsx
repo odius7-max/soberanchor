@@ -16,8 +16,8 @@ import MeetingReportModal from './MeetingReportModal'
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const MOOD_META: Record<string, { emoji: string; label: string; color: string }> = {
-  great:      { emoji: '😊', label: 'Great',      color: '#27AE60' },
-  good:       { emoji: '🙂', label: 'Good',       color: '#2A8A99' },
+  great:      { emoji: '😊', label: 'Great',      color: '#38a169' },
+  good:       { emoji: '🙂', label: 'Good',       color: '#38a169' },
   okay:       { emoji: '😐', label: 'Okay',       color: '#D4A574' },
   struggling: { emoji: '😔', label: 'Struggling', color: '#E67E22' },
   crisis:     { emoji: '😰', label: 'Crisis',     color: '#C0392B' },

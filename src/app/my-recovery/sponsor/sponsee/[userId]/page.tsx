@@ -8,8 +8,8 @@ import SponsorNotesSection from '@/components/dashboard/SponsorNotesSection'
 import type { SponsorTask } from '@/app/actions/sponsorTasks'
 
 const MOOD_META: Record<string, { emoji: string; label: string; color: string }> = {
-  great:      { emoji: '😊', label: 'great',      color: '#27AE60' },
-  good:       { emoji: '🙂', label: 'good',       color: '#2A8A99' },
+  great:      { emoji: '😊', label: 'great',      color: '#38a169' },
+  good:       { emoji: '🙂', label: 'good',       color: '#38a169' },
   okay:       { emoji: '😐', label: 'okay',       color: '#D4A574' },
   struggling: { emoji: '😔', label: 'struggling', color: '#E67E22' },
   crisis:     { emoji: '😰', label: 'crisis',     color: '#C0392B' },

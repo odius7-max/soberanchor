@@ -7,7 +7,6 @@ import OverviewTab from './tabs/OverviewTab'
 import JournalTab from './tabs/JournalTab'
 import MeetingsTab from './tabs/MeetingsTab'
 import TasksTab from './tabs/TasksTab'
-import PrivacyTab from './tabs/PrivacyTab'
 import SavedTab from './tabs/SavedTab'
 import StepWorkTab from './tabs/StepWorkTab'
 import SponsorView from './SponsorView'
@@ -18,7 +17,7 @@ import PendingRequests from './PendingRequests'
 import type { PendingRequest } from './PendingRequests'
 
 type Role = 'my' | 'sponsees' | 'meetings'
-type Tab = 'overview' | 'stepwork' | 'journal' | 'meetings' | 'tasks' | 'saved' | 'privacy'
+type Tab = 'overview' | 'stepwork' | 'journal' | 'meetings' | 'tasks' | 'saved'
 
 export interface CheckIn { id:string; check_in_date:string; mood:string|null; notes:string|null; sober_today:boolean; meetings_attended:number }
 export interface JournalEntry { id:string; title:string|null; entry_date:string; excerpt:string|null; step_number:number|null; is_shared_with_sponsor:boolean }
@@ -63,7 +62,6 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'meetings',  label: '👥 Meetings' },
   { id: 'tasks',     label: '📋 Tasks' },
   { id: 'saved',     label: '❤️ Saved' },
-  { id: 'privacy',   label: '🔒 Privacy' },
 ]
 
 export default function DashboardShell({ userId, phone, onboardingCompleted, profile, stepCompletions, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsors, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships }: Props) {
@@ -177,7 +175,6 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
             {activeTab === 'meetings' && <MeetingsTab userId={userId} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} meetingAttendance={meetingAttendance} fellowships={fellowships} />}
             {activeTab === 'tasks' && <TasksTab userId={userId} readingAssignments={readingAssignments} hasSponsor={activeSponsors.length > 0} />}
             {activeTab === 'saved' && <SavedTab userId={userId} />}
-            {activeTab === 'privacy' && <PrivacyTab userId={userId} displayName={profile?.display_name ?? null} phone={phone} journalCount={journalCount} stepWorkCount={stepWorkCount} checkInsTotal={checkInsTotal} meetingsTotal={meetingsTotal} isAvailableSponsor={isSponsor} />}
           </>
         )}
 
