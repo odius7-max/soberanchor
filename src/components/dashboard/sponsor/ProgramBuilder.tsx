@@ -10,6 +10,8 @@ import {
   deleteLibraryTask,
   reorderTasks,
   ungroupSubsection,
+  addFromExamples,
+  addFromLibrary,
 } from '@/app/dashboard/sponsees/program/actions'
 
 interface StepDef {
@@ -29,15 +31,24 @@ interface LibraryTask {
   source: string
 }
 
+interface ExampleTaskData {
+  id: string
+  step_number: number
+  title: string
+  description: string | null
+  category: string
+}
+
 interface Props {
   programId: string
   fellowshipId: string
   steps: StepDef[]
   initialTasks: LibraryTask[]
+  initialExamples: ExampleTaskData[]
   activeStep: number | null
 }
 
-export default function ProgramBuilder({ programId, fellowshipId, steps, initialTasks, activeStep }: Props) {
+export default function ProgramBuilder({ programId, fellowshipId, steps, initialTasks, initialExamples, activeStep }: Props) {
   const router = useRouter()
   const [tasks, setTasks] = useState<LibraryTask[]>(initialTasks)
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(() => {
@@ -140,7 +151,6 @@ export default function ProgramBuilder({ programId, fellowshipId, steps, initial
   }, [programId])
 
   const handleUngroupSubsection = useCallback(async (stepNumber: number, subsection: string) => {
-    // Optimistic
     setTasks(prev => prev.map(t =>
       t.step_number === stepNumber && t.subsection === subsection
         ? { ...t, subsection: null }
@@ -148,6 +158,50 @@ export default function ProgramBuilder({ programId, fellowshipId, steps, initial
     ))
     await ungroupSubsection(programId, stepNumber, subsection)
   }, [programId])
+
+  const handleAddFromExamples = useCallback(async (
+    stepNumber: number,
+    examples: { title: string; description: string | null; category: string }[]
+  ) => {
+    const result = await addFromExamples({ programId, stepNumber, examples })
+    if (result.tasks.length > 0) {
+      setTasks(prev => [...prev, ...result.tasks])
+      setFlashTaskId(result.tasks[0].id)
+    }
+  }, [programId])
+
+  const handleAddFromLibrary = useCallback(async (
+    stepNumber: number,
+    libraryItems: { title: string; description: string | null; category: string }[]
+  ) => {
+    const result = await addFromLibrary({ programId, targetStepNumber: stepNumber, tasks: libraryItems })
+    if (result.tasks.length > 0) {
+      setTasks(prev => [...prev, ...result.tasks])
+      setFlashTaskId(result.tasks[0].id)
+    }
+  }, [programId])
+
+  // Examples for each step
+  function examplesForStep(stepNum: number) {
+    return initialExamples
+      .filter(e => e.step_number === stepNum)
+      .map(e => ({ id: e.id, title: e.title, description: e.description, category: e.category }))
+  }
+
+  // Library tasks NOT in the current step (available for cross-step reuse)
+  function libraryForStep(stepNum: number) {
+    return tasks
+      .filter(t => t.step_number !== stepNum)
+      .map(t => ({
+        id: t.id, title: t.title, description: t.description,
+        category: t.category, step_number: t.step_number,
+      }))
+  }
+
+  // Titles already in a step (to detect duplicates from examples)
+  function existingTitlesForStep(stepNum: number): Set<string> {
+    return new Set(tasks.filter(t => t.step_number === stepNum).map(t => t.title))
+  }
 
   const totalTasks = tasks.length
 
@@ -202,6 +256,9 @@ export default function ProgramBuilder({ programId, fellowshipId, steps, initial
           stepNumber={step.step_number}
           stepName={step.name}
           tasks={tasksByStep(step.step_number)}
+          examples={examplesForStep(step.step_number)}
+          libraryTasks={libraryForStep(step.step_number)}
+          existingTitles={existingTitlesForStep(step.step_number)}
           isActive={step.step_number === activeStep}
           isExpanded={expandedSteps.has(step.step_number)}
           onToggle={() => toggleStep(step.step_number)}
@@ -209,6 +266,8 @@ export default function ProgramBuilder({ programId, fellowshipId, steps, initial
           onDeleteTask={handleDeleteTask}
           onReorder={handleReorder}
           onCreateTask={handleCreateTask}
+          onAddFromExamples={(examples) => handleAddFromExamples(step.step_number, examples)}
+          onAddFromLibrary={(items) => handleAddFromLibrary(step.step_number, items)}
           onUngroupSubsection={handleUngroupSubsection}
         />
       ))}

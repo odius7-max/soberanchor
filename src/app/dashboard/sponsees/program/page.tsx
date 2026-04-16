@@ -62,8 +62,19 @@ export default async function SponsorProgramPage() {
     .sort(([a], [b]) => a - b)
     .map(([step_number, name]) => ({ step_number, name }))
 
-  // Fetch library tasks
-  const libraryTasks = await getLibraryTasks(program.id)
+  // Fetch library tasks and example tasks in parallel
+  const [libraryTasks, examplesRes] = await Promise.all([
+    getLibraryTasks(program.id),
+    supabase
+      .from('soberanchor_example_tasks')
+      .select('id, step_number, title, description, category')
+      .eq('fellowship_id', fellowshipId)
+      .eq('is_active', true)
+      .order('step_number')
+      .order('sort_order'),
+  ])
+
+  const allExamples = (examplesRes.data ?? []) as { id: string; step_number: number; title: string; description: string | null; category: string }[]
 
   // Determine active step for the first sponsee (if any)
   const { data: sponseeRels } = await supabase
@@ -96,6 +107,7 @@ export default async function SponsorProgramPage() {
           fellowshipId={fellowshipId}
           steps={steps}
           initialTasks={libraryTasks}
+          initialExamples={allExamples}
           activeStep={activeStep}
         />
       </div>

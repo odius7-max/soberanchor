@@ -1,13 +1,19 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import TaskCard, { type TaskCardData } from './TaskCard'
 import SubSection from './SubSection'
+import AddTaskZone from './AddTaskZone'
+import type { ExampleTask } from './ExampleTaskPicker'
+import type { LibraryPickerTask } from './LibraryTaskPicker'
 
 interface Props {
   stepNumber: number
   stepName: string
   tasks: TaskCardData[]
+  examples: ExampleTask[]
+  libraryTasks: LibraryPickerTask[]
+  existingTitles: Set<string>
   isActive: boolean
   isExpanded: boolean
   onToggle: () => void
@@ -15,19 +21,20 @@ interface Props {
   onDeleteTask: (id: string) => void
   onReorder: (stepNumber: number, orderedIds: string[]) => void
   onCreateTask: (stepNumber: number, title: string, description: string | null, category: string, subsection: string | null) => void
+  onAddFromExamples: (examples: { title: string; description: string | null; category: string }[]) => void
+  onAddFromLibrary: (tasks: { title: string; description: string | null; category: string }[]) => void
   onUngroupSubsection: (stepNumber: number, subsection: string) => void
 }
 
 export default function StepAccordion({
-  stepNumber, stepName, tasks, isActive, isExpanded, onToggle,
-  onEditTask, onDeleteTask, onReorder, onCreateTask, onUngroupSubsection,
+  stepNumber, stepName, tasks, examples, libraryTasks, existingTitles,
+  isActive, isExpanded, onToggle,
+  onEditTask, onDeleteTask, onReorder, onCreateTask,
+  onAddFromExamples, onAddFromLibrary, onUngroupSubsection,
 }: Props) {
   const contentRef = useRef<HTMLDivElement>(null)
   const [dragIdx, setDragIdx] = useState<number | null>(null)
-  const [showAddForm, setShowAddForm] = useState(false)
-  const [newTitle, setNewTitle] = useState('')
-  const [newDesc, setNewDesc] = useState('')
-  const [newCategory, setNewCategory] = useState('reflection')
+  const [showAddZone, setShowAddZone] = useState(false)
   const [showAddSubsection, setShowAddSubsection] = useState(false)
   const [newSubsectionName, setNewSubsectionName] = useState('')
 
@@ -54,7 +61,6 @@ export default function StepAccordion({
     const reordered = [...ungroupedTasks]
     const [moved] = reordered.splice(dragIdx, 1)
     reordered.splice(idx, 0, moved)
-    // Include subsection tasks at the end (they keep their own order)
     const allIds = [...reordered.map(t => t.id)]
     for (const [, subTasks] of subsections) {
       allIds.push(...subTasks.map(t => t.id))
@@ -67,19 +73,8 @@ export default function StepAccordion({
     setDragIdx(null)
   }
 
-  function handleAddTask() {
-    if (!newTitle.trim()) return
-    onCreateTask(stepNumber, newTitle.trim(), newDesc.trim() || null, newCategory, null)
-    setNewTitle('')
-    setNewDesc('')
-    setNewCategory('reflection')
-    setShowAddForm(false)
-  }
-
   function handleAddSubsection() {
     if (!newSubsectionName.trim()) return
-    // Subsections are virtual — we just need the name. It'll show up when tasks are assigned to it.
-    // For now, create a placeholder task in the subsection.
     setNewSubsectionName('')
     setShowAddSubsection(false)
   }
@@ -104,7 +99,6 @@ export default function StepAccordion({
           cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-body)',
         }}
       >
-        {/* Chevron */}
         <span style={{
           fontSize: 12, color: isActive ? 'var(--teal)' : 'var(--mid)',
           transition: 'transform 0.2s', display: 'inline-block',
@@ -113,13 +107,9 @@ export default function StepAccordion({
         }}>
           ▶
         </span>
-
-        {/* Step name */}
         <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--navy)', flex: 1, minWidth: 0 }}>
           Step {stepNumber}: {stepName}
         </span>
-
-        {/* Active badge */}
         {isActive && (
           <span style={{
             fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
@@ -130,16 +120,12 @@ export default function StepAccordion({
             Active
           </span>
         )}
-
-        {/* Task count */}
         <span style={{
           fontSize: 12, fontWeight: 600, flexShrink: 0,
           color: taskCount > 0 ? 'var(--teal)' : 'var(--mid)',
         }}>
           {taskCount} task{taskCount !== 1 ? 's' : ''}
         </span>
-
-        {/* Teal dots for steps with tasks */}
         {!isExpanded && taskCount > 0 && (
           <div style={{ display: 'flex', gap: 3, flexShrink: 0 }}>
             {Array.from({ length: Math.min(taskCount, 5) }).map((_, i) => (
@@ -153,7 +139,7 @@ export default function StepAccordion({
       {/* Body */}
       {isExpanded && (
         <div ref={contentRef} style={{ padding: '0 18px 16px' }}>
-          {taskCount === 0 && !showAddForm ? (
+          {taskCount === 0 && !showAddZone ? (
             <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--mid)', fontSize: 13 }}>
               No tasks for this step yet.
             </div>
@@ -250,87 +236,27 @@ export default function StepAccordion({
             </button>
           )}
 
-          {/* Add task form */}
-          {showAddForm ? (
-            <div style={{
-              marginTop: 12, border: '1.5px dashed var(--teal)', borderRadius: 12,
-              padding: '14px 16px', background: 'rgba(42,157,143,0.02)',
-            }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                + Add task to Step {stepNumber}
-              </div>
-              <div style={{ marginBottom: 8 }}>
-                <input
-                  type="text"
-                  value={newTitle}
-                  onChange={e => setNewTitle(e.target.value)}
-                  placeholder="Task title (required)"
-                  autoFocus
-                  onKeyDown={e => { if (e.key === 'Enter' && newTitle.trim()) handleAddTask() }}
-                  style={{
-                    width: '100%', fontSize: 14, fontWeight: 600, color: 'var(--navy)',
-                    padding: '9px 12px', borderRadius: 8, border: '1.5px solid var(--border)',
-                    background: '#fff', fontFamily: 'var(--font-body)', outline: 'none', boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-              <div style={{ marginBottom: 8 }}>
-                <textarea
-                  value={newDesc}
-                  onChange={e => setNewDesc(e.target.value)}
-                  placeholder="Instructions for sponsee (optional)"
-                  rows={2}
-                  style={{
-                    width: '100%', fontSize: 13, color: 'var(--dark)',
-                    padding: '9px 12px', borderRadius: 8, border: '1.5px solid var(--border)',
-                    background: '#fff', fontFamily: 'var(--font-body)', outline: 'none',
-                    boxSizing: 'border-box', resize: 'vertical',
-                  }}
-                />
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <select
-                  value={newCategory}
-                  onChange={e => setNewCategory(e.target.value)}
-                  style={{
-                    fontSize: 13, padding: '7px 10px', borderRadius: 8,
-                    border: '1px solid var(--border)', background: '#fff',
-                    fontFamily: 'var(--font-body)', cursor: 'pointer',
-                  }}
-                >
-                  <option value="reading">📖 Reading</option>
-                  <option value="writing">✏️ Writing</option>
-                  <option value="reflection">💭 Reflection</option>
-                  <option value="action">✅ Action</option>
-                </select>
-                <div style={{ flex: 1 }} />
-                <button
-                  onClick={() => { setShowAddForm(false); setNewTitle(''); setNewDesc('') }}
-                  style={{
-                    fontSize: 12, fontWeight: 600, padding: '7px 14px', borderRadius: 8,
-                    border: '1px solid var(--border)', background: '#fff', color: 'var(--mid)',
-                    cursor: 'pointer', fontFamily: 'var(--font-body)',
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleAddTask}
-                  disabled={!newTitle.trim()}
-                  style={{
-                    fontSize: 12, fontWeight: 700, padding: '7px 16px', borderRadius: 8,
-                    border: 'none', background: newTitle.trim() ? 'var(--teal)' : '#ccc',
-                    color: '#fff', cursor: newTitle.trim() ? 'pointer' : 'default',
-                    fontFamily: 'var(--font-body)',
-                  }}
-                >
-                  Add to Step {stepNumber}
-                </button>
-              </div>
-            </div>
+          {/* Add Task Zone (Phase 2: three source accordions) */}
+          {showAddZone ? (
+            <AddTaskZone
+              stepNumber={stepNumber}
+              examples={examples}
+              libraryTasks={libraryTasks}
+              existingTitles={existingTitles}
+              onClose={() => setShowAddZone(false)}
+              onAddFromExamples={(exs) => {
+                onAddFromExamples(exs.map(e => ({ title: e.title, description: e.description, category: e.category })))
+              }}
+              onAddFromLibrary={(items) => {
+                onAddFromLibrary(items.map(t => ({ title: t.title, description: t.description, category: t.category })))
+              }}
+              onCreateNew={(task) => {
+                onCreateTask(stepNumber, task.title, task.description, task.category, null)
+              }}
+            />
           ) : (
             <button
-              onClick={() => setShowAddForm(true)}
+              onClick={() => setShowAddZone(true)}
               style={{
                 display: 'block', width: '100%', marginTop: 12,
                 padding: '10px', borderRadius: 10,

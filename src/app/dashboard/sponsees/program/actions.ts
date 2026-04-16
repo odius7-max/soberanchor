@@ -200,6 +200,124 @@ export async function createSubsection(
   return {}
 }
 
+// ── Fetch example tasks for a fellowship + step ───────────────────────────
+
+export interface ExampleTask {
+  id: string
+  title: string
+  description: string | null
+  category: string
+}
+
+export async function getExampleTasks(
+  fellowshipId: string,
+  stepNumber: number
+): Promise<ExampleTask[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('soberanchor_example_tasks')
+    .select('id, title, description, category')
+    .eq('fellowship_id', fellowshipId)
+    .eq('step_number', stepNumber)
+    .eq('is_active', true)
+    .order('sort_order')
+
+  return (data ?? []) as ExampleTask[]
+}
+
+// ── Add tasks from examples (copies into library) ──────────────────────────
+
+export async function addFromExamples(input: {
+  programId: string
+  stepNumber: number
+  examples: { title: string; description: string | null; category: string }[]
+}): Promise<{ tasks: LibraryTask[]; error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { tasks: [], error: 'Not authenticated' }
+
+  // Get max sort_order for this step
+  const { data: maxRow } = await supabase
+    .from('sponsor_task_library')
+    .select('sort_order')
+    .eq('program_id', input.programId)
+    .eq('step_number', input.stepNumber)
+    .order('sort_order', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  let nextSort = (maxRow?.sort_order ?? -1) + 1
+  const results: LibraryTask[] = []
+
+  for (const ex of input.examples) {
+    const { data, error } = await supabase
+      .from('sponsor_task_library')
+      .insert({
+        program_id: input.programId,
+        sponsor_id: user.id,
+        step_number: input.stepNumber,
+        title: ex.title,
+        description: ex.description,
+        category: ex.category,
+        sort_order: nextSort++,
+        source: 'example',
+      })
+      .select('id, program_id, sponsor_id, step_number, title, description, category, sort_order, subsection, source')
+      .single()
+
+    if (error) return { tasks: results, error: error.message }
+    if (data) results.push(data as LibraryTask)
+  }
+
+  return { tasks: results }
+}
+
+// ── Add task from library (duplicate into a different step) ────────────────
+
+export async function addFromLibrary(input: {
+  programId: string
+  targetStepNumber: number
+  tasks: { title: string; description: string | null; category: string }[]
+}): Promise<{ tasks: LibraryTask[]; error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { tasks: [], error: 'Not authenticated' }
+
+  const { data: maxRow } = await supabase
+    .from('sponsor_task_library')
+    .select('sort_order')
+    .eq('program_id', input.programId)
+    .eq('step_number', input.targetStepNumber)
+    .order('sort_order', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  let nextSort = (maxRow?.sort_order ?? -1) + 1
+  const results: LibraryTask[] = []
+
+  for (const t of input.tasks) {
+    const { data, error } = await supabase
+      .from('sponsor_task_library')
+      .insert({
+        program_id: input.programId,
+        sponsor_id: user.id,
+        step_number: input.targetStepNumber,
+        title: t.title,
+        description: t.description,
+        category: t.category,
+        sort_order: nextSort++,
+        source: 'custom',
+      })
+      .select('id, program_id, sponsor_id, step_number, title, description, category, sort_order, subsection, source')
+      .single()
+
+    if (error) return { tasks: results, error: error.message }
+    if (data) results.push(data as LibraryTask)
+  }
+
+  return { tasks: results }
+}
+
 // ── Ungroup a subsection (move tasks back to main step) ────────────────────
 
 export async function ungroupSubsection(
