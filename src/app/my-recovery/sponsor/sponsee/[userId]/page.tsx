@@ -166,6 +166,10 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
           sponseeId={sponseeId}
           sponseeName={profile.display_name ?? 'your sponsee'}
           relationshipId={rel.id}
+          fellowshipId={rel.fellowship_id ?? null}
+          currentStep={nextStep}
+          completedTasksCount={sponsorTasks.filter(t => t.status === 'completed').length}
+          lastSubmittedAt={submittedEntries[0]?.submitted_at ?? null}
           initialTasks={sponsorTasks}
         />
       </div>

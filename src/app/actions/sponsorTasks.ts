@@ -16,10 +16,15 @@ export interface SponsorTask {
   due_date: string | null
   assigned_at: string
   completed_at: string | null
+  reviewed_at: string | null
   sponsor_note: string | null
   sponsee_note: string | null
   is_recurring: boolean
   recurrence_interval: string | null
+  library_task_id: string | null
+  step_number: number | null
+  sort_order: number
+  subsection: string | null
   created_at: string
   updated_at: string
 }
@@ -167,5 +172,230 @@ export async function deleteTask(taskId: string): Promise<{ error?: string }> {
   if (error) return { error: error.message }
 
   // No revalidatePath — SponseeTasksSection manages local state after delete
+  return {}
+}
+
+// ── Phase 3: bulk-assign tasks from the sponsor's library to a sponsee ────────
+// Copies the library rows into sponsor_tasks, linked via library_task_id.
+// Skips duplicates (same library_task_id already assigned to this sponsee).
+export async function assignFromLibrary(input: {
+  sponseeId: string
+  relationshipId: string
+  libraryTaskIds: string[]
+  dueDate?: string | null
+  sponsorNote?: string | null
+}): Promise<{ tasks: SponsorTask[]; error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { tasks: [], error: 'Not authenticated' }
+
+  if (input.libraryTaskIds.length === 0) return { tasks: [] }
+
+  // Verify relationship
+  const { data: rel } = await supabase
+    .from('sponsor_relationships')
+    .select('id')
+    .eq('id', input.relationshipId)
+    .eq('sponsor_id', user.id)
+    .eq('sponsee_id', input.sponseeId)
+    .eq('status', 'active')
+    .maybeSingle()
+  if (!rel) return { tasks: [], error: 'Relationship not found' }
+
+  // Fetch the library tasks
+  const { data: libraryRows } = await supabase
+    .from('sponsor_task_library')
+    .select('id, title, description, category, step_number, subsection')
+    .in('id', input.libraryTaskIds)
+    .eq('sponsor_id', user.id)
+
+  if (!libraryRows || libraryRows.length === 0) {
+    return { tasks: [], error: 'Library tasks not found' }
+  }
+
+  // Skip already-assigned (same library_task_id for this sponsee, any status)
+  const { data: existing } = await supabase
+    .from('sponsor_tasks')
+    .select('library_task_id')
+    .eq('sponsee_id', input.sponseeId)
+    .eq('sponsor_id', user.id)
+    .in('library_task_id', input.libraryTaskIds)
+
+  const alreadyAssigned = new Set((existing ?? []).map(r => r.library_task_id as string))
+  const toAssign = libraryRows.filter(r => !alreadyAssigned.has(r.id))
+
+  if (toAssign.length === 0) return { tasks: [] }
+
+  const rows = toAssign.map(r => ({
+    sponsor_relationship_id: input.relationshipId,
+    sponsor_id: user.id,
+    sponsee_id: input.sponseeId,
+    title: r.title,
+    description: r.description,
+    category: r.category,
+    status: 'assigned' as const,
+    due_date: input.dueDate || null,
+    sponsor_note: input.sponsorNote?.trim() || null,
+    library_task_id: r.id,
+    step_number: r.step_number,
+    subsection: r.subsection,
+  }))
+
+  const { data: inserted, error } = await supabase
+    .from('sponsor_tasks')
+    .insert(rows)
+    .select('*')
+
+  if (error) return { tasks: [], error: error.message }
+  const tasks = (inserted ?? []) as SponsorTask[]
+
+  // Fire-and-forget notification
+  Promise.resolve().then(async () => {
+    try {
+      const admin = createAdminClient()
+      const { data: sponsorProfile } = await admin
+        .from('user_profiles').select('display_name').eq('id', user.id).maybeSingle()
+      for (const t of tasks) {
+        await sendNotification(input.sponseeId, 'sponsor_assigns_task', {
+          sponsorName: sponsorProfile?.display_name ?? 'Your sponsor',
+          taskTitle: t.title,
+          dueDate: t.due_date,
+        })
+      }
+    } catch (err) {
+      console.error('[assignFromLibrary] notification failed (non-fatal):', err)
+    }
+  })
+
+  return { tasks }
+}
+
+// ── Phase 3: create a custom task and assign it, optionally saving to library ─
+export async function createAndAssignCustomTask(input: {
+  sponseeId: string
+  relationshipId: string
+  programId: string | null   // null = don't save to library
+  title: string
+  description: string | null
+  category: string
+  stepNumber: number | null
+  dueDate: string | null
+  sponsorNote: string | null
+  saveToLibrary: boolean
+}): Promise<{ task?: SponsorTask; error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  // Verify relationship
+  const { data: rel } = await supabase
+    .from('sponsor_relationships')
+    .select('id')
+    .eq('id', input.relationshipId)
+    .eq('sponsor_id', user.id)
+    .eq('sponsee_id', input.sponseeId)
+    .eq('status', 'active')
+    .maybeSingle()
+  if (!rel) return { error: 'Relationship not found' }
+
+  let libraryTaskId: string | null = null
+
+  // Optionally save to library first so we can link the assigned task to it
+  if (input.saveToLibrary && input.programId && input.stepNumber) {
+    const { data: maxRow } = await supabase
+      .from('sponsor_task_library')
+      .select('sort_order')
+      .eq('program_id', input.programId)
+      .eq('step_number', input.stepNumber)
+      .order('sort_order', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    const nextSort = (maxRow?.sort_order ?? -1) + 1
+
+    const { data: libRow, error: libError } = await supabase
+      .from('sponsor_task_library')
+      .insert({
+        program_id: input.programId,
+        sponsor_id: user.id,
+        step_number: input.stepNumber,
+        title: input.title.trim(),
+        description: input.description?.trim() || null,
+        category: input.category,
+        sort_order: nextSort,
+        source: 'custom',
+      })
+      .select('id')
+      .single()
+
+    if (libError) return { error: libError.message }
+    libraryTaskId = libRow?.id ?? null
+  }
+
+  const { data: task, error } = await supabase
+    .from('sponsor_tasks')
+    .insert({
+      sponsor_relationship_id: input.relationshipId,
+      sponsor_id: user.id,
+      sponsee_id: input.sponseeId,
+      title: input.title.trim(),
+      description: input.description?.trim() || null,
+      category: input.category,
+      status: 'assigned',
+      due_date: input.dueDate || null,
+      sponsor_note: input.sponsorNote?.trim() || null,
+      library_task_id: libraryTaskId,
+      step_number: input.stepNumber,
+    })
+    .select('*')
+    .single()
+
+  if (error) return { error: error.message }
+  if (!task) return { error: 'Insert returned no data' }
+
+  // Fire-and-forget notification
+  Promise.resolve().then(async () => {
+    try {
+      const admin = createAdminClient()
+      const { data: sponsorProfile } = await admin
+        .from('user_profiles').select('display_name').eq('id', user.id).maybeSingle()
+      await sendNotification(input.sponseeId, 'sponsor_assigns_task', {
+        sponsorName: sponsorProfile?.display_name ?? 'Your sponsor',
+        taskTitle: input.title.trim(),
+        dueDate: input.dueDate || null,
+      })
+    } catch (err) {
+      console.error('[createAndAssignCustomTask] notification failed (non-fatal):', err)
+    }
+  })
+
+  return { task: task as SponsorTask }
+}
+
+// ── Phase 3: sponsor marks a completed task as reviewed ──────────────────────
+export async function reviewTask(input: {
+  taskId: string
+  sponsorNote?: string | null
+}): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const updates: Record<string, unknown> = {
+    reviewed_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }
+  if (input.sponsorNote !== undefined) {
+    updates.sponsor_note = input.sponsorNote?.trim() || null
+  }
+
+  const { error } = await supabase
+    .from('sponsor_tasks')
+    .update(updates)
+    .eq('id', input.taskId)
+    .eq('sponsor_id', user.id)
+    .eq('status', 'completed')
+
+  if (error) return { error: error.message }
   return {}
 }
