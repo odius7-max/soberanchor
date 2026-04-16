@@ -113,26 +113,14 @@ export default function Nav() {
               </Link>
             ))}
 
-            {/* Our Story — logged-out only */}
-            {!loading && !user && (
-              <Link
-                href="/our-story"
-                className={`px-3.5 py-2 rounded-lg text-[13.5px] font-medium transition-colors whitespace-nowrap ${
-                  pathname === '/our-story' ? 'text-teal bg-[var(--teal-10)]' : 'text-dark hover:bg-warm-gray'
-                }`}
-              >
-                Our Story
-              </Link>
-            )}
-
-            {/* For Providers — muted, always shown */}
+            {/* Our Story — shown to all users */}
             <Link
-              href="/for-providers"
+              href="/our-story"
               className={`px-3.5 py-2 rounded-lg text-[13.5px] font-medium transition-colors whitespace-nowrap ${
-                pathname === '/for-providers' ? 'text-teal font-semibold' : 'text-mid hover:text-dark hover:bg-warm-gray'
+                pathname === '/our-story' ? 'text-teal bg-[var(--teal-10)]' : 'text-dark hover:bg-warm-gray'
               }`}
             >
-              For Providers
+              Our Story
             </Link>
           </div>
 
@@ -157,7 +145,7 @@ export default function Nav() {
                     onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,51,102,0.07)')}
                   >
                     <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)', whiteSpace: 'nowrap' }}>
-                      My Recovery{displayName ? ` | ${displayName}` : ''} ▾
+                      {displayName || 'Account'} ▾
                     </span>
                   </button>
 
@@ -286,26 +274,14 @@ export default function Nav() {
             </Link>
           ))}
 
-          {!loading && !user && (
-            <Link
-              href="/our-story"
-              onClick={() => setMobileOpen(false)}
-              className={`block py-3.5 text-[15px] font-medium border-b border-[var(--border)] ${
-                pathname === '/our-story' ? 'text-teal' : 'text-dark'
-              }`}
-            >
-              Our Story
-            </Link>
-          )}
-
           <Link
-            href="/for-providers"
+            href="/our-story"
             onClick={() => setMobileOpen(false)}
             className={`block py-3.5 text-[15px] font-medium border-b border-[var(--border)] ${
-              pathname === '/for-providers' ? 'text-teal' : 'text-mid'
+              pathname === '/our-story' ? 'text-teal' : 'text-dark'
             }`}
           >
-            For Providers
+            Our Story
           </Link>
 
           {!loading && (

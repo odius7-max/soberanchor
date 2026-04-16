@@ -16,7 +16,7 @@ import CheckInModal from './CheckInModal'
 import PendingRequests from './PendingRequests'
 import type { PendingRequest } from './PendingRequests'
 
-type Role = 'my' | 'sponsees' | 'meetings'
+type Mode = 'my' | 'sponsees' | 'checkin'
 type Tab = 'overview' | 'stepwork' | 'journal' | 'meetings' | 'tasks' | 'saved'
 
 export interface CheckIn { id:string; check_in_date:string; mood:string|null; notes:string|null; sober_today:boolean; meetings_attended:number }
@@ -65,10 +65,10 @@ const TABS: { id: Tab; label: string }[] = [
 ]
 
 export default function DashboardShell({ userId, phone, onboardingCompleted, profile, stepCompletions, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsors, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships }: Props) {
-  const [role, setRole] = useState<Role>('my')
+  const [mode, setMode] = useState<Mode>('my')
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [checkInOpen, setCheckInOpen] = useState(false)
-  const { ref: roleScrollRef,  fadeLeft: roleFadeLeft,  fadeRight: roleFadeRight  } = useScrollFade()
+  const { ref: modeScrollRef,  fadeLeft: modeFadeLeft,  fadeRight: modeFadeRight  } = useScrollFade()
   const { ref: tabsScrollRef,  fadeLeft: tabsFadeLeft,  fadeRight: tabsFadeRight  } = useScrollFade()
 
   const displayName = profile?.display_name ?? 'Friend'
@@ -77,7 +77,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('tab') === 'sponsees' && isSponsor) {
-      setRole('sponsees')
+      setMode('sponsees')
       const url = new URL(window.location.href)
       url.searchParams.delete('tab')
       window.history.replaceState({}, '', url.toString())
@@ -108,36 +108,70 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
   const allStepsDone = completedSteps >= 12
   const currentStep = allStepsDone ? 12 : Math.max(1, completedSteps + 1)
 
-  const roles = [
-    { id: 'my'       as Role, label: '⚓ My Recovery'     },
-    ...(isSponsor ? [{ id: 'sponsees' as Role, label: '👥 My Sponsees' }] : []),
-    { id: 'meetings' as Role, label: '📍 Meeting Check-in' },
+  const modes: { id: Mode; label: string }[] = [
+    { id: 'my', label: '✨ My Recovery' },
+    ...(isSponsor ? [{ id: 'sponsees' as Mode, label: '👥 My Sponsees' }] : []),
   ]
 
   return (
-    <div style={{ padding: '28px 24px 72px' }}>
+    <div style={{ padding: '0 24px 72px' }}>
       <div className="max-w-[940px] mx-auto">
 
-        {/* Role toggle */}
-        <div className="relative rounded-xl mb-6" style={{ background: 'var(--warm-gray)', border: '1px solid var(--border)' }}>
-          {roleFadeLeft && (
-            <div aria-hidden style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 40, zIndex: 1, pointerEvents: 'none', borderRadius: '12px 0 0 12px', background: 'linear-gradient(to right, var(--warm-gray), transparent)' }} />
+        {/* Underline mode bar */}
+        <div className="relative" style={{ background: '#fff', borderBottom: '2px solid #e8e4df' }}>
+          {modeFadeLeft && (
+            <div aria-hidden style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 40, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to right, #fff, transparent)' }} />
           )}
-          {roleFadeRight && (
-            <div aria-hidden style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 40, zIndex: 1, pointerEvents: 'none', borderRadius: '0 12px 12px 0', background: 'linear-gradient(to left, var(--warm-gray), transparent)' }} />
+          {modeFadeRight && (
+            <div aria-hidden style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 40, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to left, #fff, transparent)' }} />
           )}
-          <div ref={roleScrollRef} className="flex p-1 overflow-x-auto" style={{ scrollbarWidth: 'none', gap: '2px' }}>
-            {roles.map(r => (
-              <button key={r.id} onClick={() => setRole(r.id)} className="flex-shrink-0 rounded-lg font-semibold transition-all"
-                style={{ padding: '9px 18px', fontSize: '14px', cursor: 'pointer', whiteSpace: 'nowrap', background: role === r.id ? '#fff' : 'transparent', color: role === r.id ? 'var(--navy)' : 'var(--mid)', border: 'none', boxShadow: role === r.id ? '0 1px 4px rgba(0,51,102,0.1)' : 'none' }}>
-                {r.label}
+          <div ref={modeScrollRef} className="flex items-center overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+            {modes.map(m => (
+              <button
+                key={m.id}
+                onClick={() => setMode(m.id)}
+                className="flex-shrink-0 font-semibold transition-colors"
+                style={{
+                  padding: '14px 20px',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  background: 'none',
+                  border: 'none',
+                  borderBottom: mode === m.id ? '3px solid #2a9d8f' : '3px solid transparent',
+                  marginBottom: '-2px',
+                  color: mode === m.id ? '#1a2332' : '#6b7a8d',
+                }}
+              >
+                {m.label}
               </button>
             ))}
+            {/* Check In — right-aligned action button, not a mode */}
+            <button
+              onClick={() => setMode('checkin')}
+              className="flex-shrink-0 font-semibold transition-colors"
+              style={{
+                marginLeft: 'auto',
+                padding: '10px 18px',
+                fontSize: '14px',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                background: mode === 'checkin' ? 'rgba(42, 157, 143, 0.1)' : 'rgba(42, 157, 143, 0.06)',
+                color: '#2a9d8f',
+                border: 'none',
+                borderRadius: '8px 8px 0 0',
+              }}
+            >
+              📍 Check In
+            </button>
           </div>
         </div>
 
+        {/* Spacer below mode bar */}
+        <div style={{ paddingTop: 24 }} />
+
         {/* ── My Recovery ── */}
-        {role === 'my' && (
+        {mode === 'my' && (
           <>
             {!onboardingCompleted && <OnboardingCard userId={userId} />}
             <PendingRequests requests={pendingRequests} perspective="as_sponsee" />
@@ -178,8 +212,8 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
           </>
         )}
 
-        {role === 'meetings' && <MeetingCheckin userId={userId} />}
-        {role === 'sponsees' && isSponsor && <SponsorView sponsees={sponsees} pendingRequests={sponsorPendingRequests} displayName={displayName} userId={userId} />}
+        {mode === 'checkin' && <MeetingCheckin userId={userId} />}
+        {mode === 'sponsees' && isSponsor && <SponsorView sponsees={sponsees} pendingRequests={sponsorPendingRequests} displayName={displayName} userId={userId} />}
       </div>
 
       {checkInOpen && <CheckInModal userId={userId} onClose={() => setCheckInOpen(false)} />}
