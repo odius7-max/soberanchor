@@ -2,8 +2,10 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import DashboardShell from '@/components/dashboard/DashboardShell'
-import type { CheckIn, JournalEntry, MeetingAttendance, ReadingAssignment, SponseeFull, SponseeCheckIn, ActivityItem, SobrietyMilestone, Fellowship, ActiveSponsor } from '@/components/dashboard/DashboardShell'
+import type { CheckIn, JournalEntry, MeetingAttendance, ReadingAssignment, SponseeFull, SponseeCheckIn, ActivityItem, SobrietyMilestone, Fellowship, ActiveSponsor, ProviderData } from '@/components/dashboard/DashboardShell'
 import type { PendingRequest } from '@/components/dashboard/PendingRequests'
+import type { FacilityData } from '@/components/providers/ListingTab'
+import type { Lead } from '@/components/providers/LeadsTab'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -351,6 +353,50 @@ export default async function DashboardPage() {
     }
   }
 
+  // ── Provider data (if user has a provider account) ──
+  let isProviderUser = false
+  let providerData: ProviderData | null = null
+
+  const { data: providerAccount } = await supabase
+    .from('provider_accounts')
+    .select('id, subscription_tier')
+    .eq('auth_user_id', userId)
+    .eq('is_active', true)
+    .maybeSingle()
+
+  if (providerAccount) {
+    isProviderUser = true
+    const { data: facilitiesRaw } = await supabase
+      .from('facilities')
+      .select('id,name,description,phone,email,website,address_line1,city,state,zip,facility_type,listing_tier,is_verified,is_claimed,is_featured,avg_rating,review_count')
+      .eq('provider_account_id', providerAccount.id)
+      .order('created_at', { ascending: true })
+      .limit(1)
+
+    if (facilitiesRaw && facilitiesRaw.length > 0) {
+      const facility = facilitiesRaw[0] as FacilityData
+      const [amenitiesRes2, insuranceRes2, leadsRes2] = await Promise.all([
+        supabase.from('facility_amenities').select('amenity_name').eq('facility_id', facility.id),
+        supabase.from('facility_insurance').select('insurance_name').eq('facility_id', facility.id),
+        supabase.from('leads').select('id,first_name,phone,insurance_provider,seeking,who_for,notes,status,created_at')
+          .eq('facility_id', facility.id)
+          .order('created_at', { ascending: false })
+          .limit(100),
+      ])
+      const provLeads: Lead[] = (leadsRes2.data ?? []) as Lead[]
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+      const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+      providerData = {
+        facility,
+        amenities: (amenitiesRes2.data ?? []).map(r => r.amenity_name as string),
+        insurance: (insuranceRes2.data ?? []).map(r => r.insurance_name as string),
+        leads: provLeads,
+        leadsThisMonth: provLeads.filter(l => new Date(l.created_at) >= startOfMonth).length,
+        leadsLastMonth: provLeads.filter(l => { const d = new Date(l.created_at); return d >= startOfLastMonth && d < startOfMonth }).length,
+      }
+    }
+  }
+
   return (
     <DashboardShell
       userId={userId}
@@ -358,6 +404,8 @@ export default async function DashboardPage() {
       profile={profile}
       stepCompletions={stepCompletions}
       onboardingCompleted={profile?.onboarding_completed ?? false}
+      isProvider={isProviderUser}
+      providerData={providerData}
       recentCheckIns={recentCheckIns}
       journalEntries={journalEntries}
       journalCount={journalCount}

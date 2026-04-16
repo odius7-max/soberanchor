@@ -10,7 +10,7 @@ export default async function ProviderClaimPage({
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) redirect('/providers/login')
+  if (!user) redirect('/?auth=required')
 
   // If they already have a provider account with a facility, go to dashboard
   const { data: providerAccount } = await supabase
@@ -26,7 +26,7 @@ export default async function ProviderClaimPage({
       .eq('provider_account_id', providerAccount.id)
       .limit(1)
 
-    if (facilities && facilities.length > 0) redirect('/providers/dashboard')
+    if (facilities && facilities.length > 0) redirect('/dashboard')
   }
 
   // Pre-populate from ?facility= query param

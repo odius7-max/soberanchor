@@ -46,10 +46,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/?auth=required', request.url))
   }
 
-  // Auth-gate /providers/dashboard and /providers/claim
+  // Auth-gate /providers/dashboard and /providers/claim — use main auth modal
   const providerAuthRoutes = ['/providers/dashboard', '/providers/claim']
   if (!user && providerAuthRoutes.some(r => request.nextUrl.pathname.startsWith(r))) {
-    return NextResponse.redirect(new URL('/providers/login', request.url))
+    return NextResponse.redirect(new URL('/?auth=required', request.url))
   }
 
   return response

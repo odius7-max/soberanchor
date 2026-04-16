@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useScrollFade } from '@/hooks/useScrollFade'
 import DashboardBanner, { type SobrietyMilestone, type Fellowship } from './DashboardBanner'
 import OverviewTab from './tabs/OverviewTab'
@@ -15,8 +16,11 @@ import MeetingCheckin from './MeetingCheckin'
 import CheckInModal from './CheckInModal'
 import PendingRequests from './PendingRequests'
 import type { PendingRequest } from './PendingRequests'
+import ProviderDashboardShell from '@/components/providers/ProviderDashboardShell'
+import type { FacilityData } from '@/components/providers/ListingTab'
+import type { Lead } from '@/components/providers/LeadsTab'
 
-type Mode = 'my' | 'sponsees' | 'checkin'
+type Mode = 'my' | 'sponsees' | 'checkin' | 'facility'
 type Tab = 'overview' | 'stepwork' | 'journal' | 'meetings' | 'tasks' | 'saved'
 
 export interface CheckIn { id:string; check_in_date:string; mood:string|null; notes:string|null; sober_today:boolean; meetings_attended:number }
@@ -31,10 +35,21 @@ export type { SobrietyMilestone, Fellowship }
 
 interface StepCompletion { step_number: number; fellowship_id: string | null }
 
+export interface ProviderData {
+  facility: FacilityData
+  amenities: string[]
+  insurance: string[]
+  leads: Lead[]
+  leadsThisMonth: number
+  leadsLastMonth: number
+}
+
 interface Props {
   userId: string
   phone: string | null
   onboardingCompleted: boolean
+  isProvider: boolean
+  providerData: ProviderData | null
   profile: { display_name:string|null; sobriety_date:string|null; primary_fellowship_id:string|null; current_step:number; is_available_sponsor:boolean } | null
   initialMilestones: SobrietyMilestone[]
   fellowships: Fellowship[]
@@ -64,15 +79,26 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'saved',     label: '❤️ Saved' },
 ]
 
-export default function DashboardShell({ userId, phone, onboardingCompleted, profile, stepCompletions, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsors, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships }: Props) {
-  const [mode, setMode] = useState<Mode>('my')
+export default function DashboardShell({ userId, phone, onboardingCompleted, isProvider, providerData, profile, stepCompletions, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsors, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships }: Props) {
+  const router = useRouter()
+  // Provider-only users (no recovery onboarding) default to facility mode
+  const defaultMode: Mode = (isProvider && !onboardingCompleted) ? 'facility' : 'my'
+  const [mode, setMode] = useState<Mode>(defaultMode)
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [checkInOpen, setCheckInOpen] = useState(false)
+  const [recoveryNudgeDismissed, setRecoveryNudgeDismissed] = useState(false)
   const { ref: modeScrollRef,  fadeLeft: modeFadeLeft,  fadeRight: modeFadeRight  } = useScrollFade()
   const { ref: tabsScrollRef,  fadeLeft: tabsFadeLeft,  fadeRight: tabsFadeRight  } = useScrollFade()
 
   const displayName = profile?.display_name ?? 'Friend'
   const isSponsor = profile?.is_available_sponsor ?? false
+
+  // Check localStorage for dismissed recovery nudge
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setRecoveryNudgeDismissed(localStorage.getItem('provider_recovery_nudge_dismissed') === 'true')
+    }
+  }, [])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -109,9 +135,19 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
   const currentStep = allStepsDone ? 12 : Math.max(1, completedSteps + 1)
 
   const modes: { id: Mode; label: string }[] = [
-    { id: 'my', label: '✨ My Recovery' },
+    // Only show My Recovery if user has completed onboarding (has recovery data)
+    ...(onboardingCompleted ? [{ id: 'my' as Mode, label: '✨ My Recovery' }] : []),
     ...(isSponsor ? [{ id: 'sponsees' as Mode, label: '👥 My Sponsees' }] : []),
+    ...(isProvider ? [{ id: 'facility' as Mode, label: '🏥 My Facility' }] : []),
   ]
+
+  // Show recovery nudge for provider-only users who haven't onboarded
+  const showRecoveryNudge = isProvider && !onboardingCompleted && !recoveryNudgeDismissed
+
+  function dismissRecoveryNudge() {
+    setRecoveryNudgeDismissed(true)
+    localStorage.setItem('provider_recovery_nudge_dismissed', 'true')
+  }
 
   return (
     <div style={{ padding: '0 24px 72px' }}>
@@ -146,24 +182,58 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
                 {m.label}
               </button>
             ))}
+            {/* Recovery nudge for provider-only users */}
+            {showRecoveryNudge && (
+              <div className="flex items-center flex-shrink-0 gap-2" style={{ marginLeft: modes.length > 1 ? '12px' : '0', padding: '8px 0' }}>
+                <button
+                  onClick={() => router.push('/dashboard?intent=onboard')}
+                  className="flex-shrink-0 transition-colors"
+                  style={{
+                    padding: '6px 14px',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    background: 'none',
+                    color: '#6b7a8d',
+                    border: 'none',
+                    fontWeight: 500,
+                  }}
+                >
+                  ✨ Start your recovery journey →
+                </button>
+                <button
+                  onClick={dismissRecoveryNudge}
+                  aria-label="Dismiss recovery nudge"
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    fontSize: '14px', color: '#6b7a8d', padding: '2px 6px',
+                    lineHeight: 1,
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+            )}
             {/* Check In — right-aligned action button, not a mode */}
-            <button
-              onClick={() => setMode('checkin')}
-              className="flex-shrink-0 font-semibold transition-colors"
-              style={{
-                marginLeft: 'auto',
-                padding: '10px 18px',
-                fontSize: '14px',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                background: mode === 'checkin' ? 'rgba(42, 157, 143, 0.1)' : 'rgba(42, 157, 143, 0.06)',
-                color: '#2a9d8f',
-                border: 'none',
-                borderRadius: '8px 8px 0 0',
-              }}
-            >
-              📍 Check In
-            </button>
+            {onboardingCompleted && (
+              <button
+                onClick={() => setMode('checkin')}
+                className="flex-shrink-0 font-semibold transition-colors"
+                style={{
+                  marginLeft: 'auto',
+                  padding: '10px 18px',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  background: mode === 'checkin' ? 'rgba(42, 157, 143, 0.1)' : 'rgba(42, 157, 143, 0.06)',
+                  color: '#2a9d8f',
+                  border: 'none',
+                  borderRadius: '8px 8px 0 0',
+                }}
+              >
+                📍 Check In
+              </button>
+            )}
           </div>
         </div>
 
@@ -214,6 +284,32 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, pro
 
         {mode === 'checkin' && <MeetingCheckin userId={userId} />}
         {mode === 'sponsees' && isSponsor && <SponsorView sponsees={sponsees} pendingRequests={sponsorPendingRequests} displayName={displayName} userId={userId} />}
+        {mode === 'facility' && isProvider && providerData && (
+          <ProviderDashboardShell
+            facility={providerData.facility}
+            amenities={providerData.amenities}
+            insurance={providerData.insurance}
+            leads={providerData.leads}
+            leadsThisMonth={providerData.leadsThisMonth}
+            leadsLastMonth={providerData.leadsLastMonth}
+          />
+        )}
+        {mode === 'facility' && isProvider && !providerData && (
+          <div className="text-center py-12">
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🏥</div>
+            <h3 className="font-bold text-navy" style={{ fontSize: 18, marginBottom: 8 }}>No facility linked yet</h3>
+            <p className="text-mid" style={{ fontSize: 14, marginBottom: 16, maxWidth: 400, margin: '0 auto 16px' }}>
+              Claim a facility listing to manage it from your dashboard.
+            </p>
+            <a
+              href="/providers/claim"
+              className="font-semibold text-white rounded-lg inline-block"
+              style={{ fontSize: 14, padding: '10px 24px', background: 'var(--teal)', textDecoration: 'none' }}
+            >
+              Claim a Listing →
+            </a>
+          </div>
+        )}
       </div>
 
       {checkInOpen && <CheckInModal userId={userId} onClose={() => setCheckInOpen(false)} />}
