@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SoberAnchor · Today Dashboard Wireframe</title>
+<style>
+  :root {
+    --navy: #003366;
+    --navy-dark: #002244;
+    --teal: #2A8A99;
+    --teal-light: #3AA5B6;
+    --teal-10: rgba(42,138,153,0.08);
+    --teal-20: rgba(42,138,153,0.15);
+    --gold: #D4A574;
+    --gold-hero: #f0c040;
+    --gold-10: rgba(212,165,116,0.1);
+    --red-alert: #B3261E;
+    --red-alert-bg: rgba(179,38,30,0.08);
+    --green-ok: #27AE60;
+    --green-bg: rgba(39,174,96,0.08);
+    --off-white: #FAFAF8;
+    --warm-gray: #F5F3F0;
+    --border: rgba(0,0,0,0.08);
+    --border-warm: #E8E4DF;
+    --mid: #888;
+    --dark: #2C2C2C;
+    --shadow-card: 0 4px 18px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.027);
+    --shadow-feature: 0 8px 30px rgba(0,51,102,0.08);
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+    background: var(--warm-gray);
+    color: var(--dark);
+    padding: 32px 24px 80px;
+    line-height: 1.5;
+  }
+  .doc-wrap { max-width: 1280px; margin: 0 auto; }
+  .doc-header {
+    background: var(--navy);
+    color: white;
+    padding: 28px 32px;
+    border-radius: var(--radius);
+    margin-bottom: 32px;
+  }
+  .doc-header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+  .doc-header p { opacity: 0.9; margin-top: 8px; max-width: 760px; }
+  .doc-header small { opacity: 0.65; display: block; margin-top: 16px; font-size: 13px; }
+  .principles {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    margin-bottom: 48px;
+  }
+  .principle {
+    background: white; border: 1px solid var(--border-warm); border-radius: 10px;
+    padding: 18px; font-size: 14px;
+  }
+  .principle strong { display: block; color: var(--navy); font-size: 15px; margin-bottom: 6px; }
+
+  /* Section frame for each state */
+  .state-section { margin-bottom: 56px; }
+  .state-header {
+    display: flex; align-items: baseline; gap: 16px;
+    margin-bottom: 16px; padding-bottom: 10px;
+    border-bottom: 2px solid var(--navy);
+  }
+  .state-header h2 { font-size: 22px; font-weight: 700; color: var(--navy); letter-spacing: -0.3px; }
+  .state-header .tag {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+    padding: 4px 10px; border-radius: 20px;
+    background: var(--teal-20); color: var(--teal);
+  }
+  .state-note { color: var(--mid); font-size: 14px; margin-bottom: 20px; max-width: 820px; }
+
+  /* App frame — simulates the actual product */
+  .app-frame {
+    background: white; border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow-card); overflow: hidden;
+  }
+  .app-frame.mobile { max-width: 390px; margin: 0 auto; }
+
+  /* Top nav */
+  .top-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 22px; border-bottom: 1px solid var(--border);
+    background: white;
+  }
+  .logo { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 18px; }
+  .logo .anchor { color: var(--navy); }
+  .logo .com { color: var(--teal); }
+  .nav-links { display: flex; gap: 22px; font-size: 14px; color: var(--navy); font-weight: 500; }
+  .nav-links a { color: inherit; text-decoration: none; }
+  .nav-user {
+    padding: 6px 14px; border: 1px solid var(--border); border-radius: 20px;
+    font-size: 13px; font-weight: 500;
+  }
+
+  /* Sub-nav (My Journey / My Sponsees) — warm-gray band separates from top-nav */
+  .subnav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 22px;
+    background: var(--warm-gray);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    box-shadow: inset 0 1px 0 rgba(0,0,0,0.015);
+  }
+  .subnav-left { display: flex; gap: 28px; }
+  .subnav-item {
+    padding: 12px 0; font-size: 14px; font-weight: 600; color: var(--mid);
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+  .subnav-item:hover { color: var(--navy); }
+  .subnav-item.active { color: var(--navy); border-bottom-color: var(--teal); }
+  .subnav-checkin {
+    padding: 6px 14px; border-radius: 20px;
+    background: var(--green-bg); color: var(--green-ok); font-size: 13px; font-weight: 600;
+  }
+
+  /* Hero — slightly more breathing room, fuller labels */
+  .hero {
+    padding: 22px 24px 20px;
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);
+    color: white;
+  }
+  .hero-row1 {
+    display: flex; align-items: baseline; gap: 20px; flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .hero-greeting { font-size: 22px; font-weight: 600; letter-spacing: -0.3px; }
+  .hero-stat {
+    font-size: 14px; color: rgba(255,255,255,0.72);
+    display: inline-flex; align-items: baseline; gap: 6px;
+  }
+  .hero-stat strong {
+    color: var(--gold-hero); font-weight: 700;
+    font-size: 22px; letter-spacing: -0.4px;
+  }
+  .hero-row2 {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    margin-top: 12px; padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.12);
+    font-size: 13px;
+  }
+  .hero-milestone {
+    display: inline-flex; align-items: center; gap: 8px;
+    color: white;
+  }
+  .hero-milestone .label {
+    color: var(--gold-hero); font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; font-size: 11px;
+  }
+  .hero-milestone .value { font-weight: 600; color: white; }
+  .hero-divider { width: 1px; height: 14px; background: rgba(255,255,255,0.18); }
+  .hero-stepband {
+    color: rgba(255,255,255,0.7); font-size: 13px;
+  }
+  .hero-stepband strong { color: var(--gold-hero); font-weight: 600; }
+  .hero-quote {
+    margin-top: 16px; padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    font-size: 15px; font-style: italic; color: rgba(255,255,255,0.82);
+    line-height: 1.55;
+  }
+  .hero-quote .attr { font-style: normal; color: rgba(255,255,255,0.5); font-size: 12px; margin-left: 4px; }
+
+  /* Recurrence selector inside custom meeting form */
+  .recurs-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .recurs-chip {
+    padding: 6px 11px; border: 1px solid var(--border); border-radius: 14px;
+    font-size: 11px; color: var(--mid); background: white; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .recurs-chip.selected {
+    border-color: var(--teal); color: var(--teal); background: var(--teal-10); font-weight: 600;
+  }
+  .recurs-chip .auto-badge {
+    font-size: 9px; padding: 1px 5px; border-radius: 6px;
+    background: var(--gold); color: white; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.3px;
+  }
+
+  /* Post-checkin celebration */
+  .celebrate {
+    position: relative; padding: 48px 32px 40px;
+    text-align: center; overflow: hidden;
+    background: linear-gradient(180deg, rgba(240,192,64,0.08) 0%, white 70%);
+  }
+  .celebrate .big-emoji {
+    font-size: 54px; display: block; margin-bottom: 8px;
+    filter: drop-shadow(0 4px 12px rgba(212,165,116,0.35));
+  }
+  .celebrate h3 {
+    font-size: 24px; font-weight: 700; color: var(--navy);
+    letter-spacing: -0.5px; margin-bottom: 6px;
+  }
+  .celebrate .streak {
+    display: inline-block; padding: 5px 12px; border-radius: 20px;
+    background: var(--gold-10); color: var(--gold);
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; margin-bottom: 14px;
+  }
+  .celebrate .summary-line {
+    font-size: 14px; color: var(--mid); max-width: 380px; margin: 0 auto 20px;
+    line-height: 1.6;
+  }
+  .celebrate .summary-line strong { color: var(--navy); font-weight: 600; }
+  .celebrate .done-btn {
+    padding: 12px 28px; border-radius: 24px; background: var(--navy); color: white;
+    font-weight: 600; font-size: 14px; display: inline-block;
+  }
+  .celebrate .close-x {
+    position: absolute; top: 14px; right: 16px;
+    width: 30px; height: 30px; border-radius: 50%;
+    background: rgba(0,0,0,0.05); color: var(--mid);
+    font-size: 18px; line-height: 30px; text-align: center;
+    cursor: pointer; z-index: 3; font-weight: 500;
+    transition: background 0.15s, color 0.15s;
+  }
+  .celebrate .close-x:hover { background: rgba(0,0,0,0.1); color: var(--dark); }
+  .celebrate .callout-soft {
+    max-width: 380px; margin: 0 auto 22px;
+    padding: 14px 18px; border-radius: 10px;
+    background: var(--teal-10); border-left: 3px solid var(--teal);
+    font-size: 13px; color: var(--dark); line-height: 1.6;
+    text-align: left; font-style: italic;
+  }
+  .celebrate .callout-soft .attr {
+    display: block; margin-top: 6px; font-style: normal;
+    font-size: 11px; color: var(--mid); font-weight: 500;
+  }
+  .celebrate .secondary-btn {
+    padding: 10px 20px; border-radius: 22px;
+    background: transparent; color: var(--mid);
+    border: 1px solid var(--border);
+    font-weight: 500; font-size: 13px; display: inline-block;
+    margin-left: 8px;
+  }
+  .celebrate .auto-dismiss-note {
+    display: block; margin-top: 14px; font-size: 11px; color: var(--mid);
+  }
+  /* Confetti particles — CSS-drawn, no JS */
+  .confetti {
+    position: absolute; top: 0; left: 0; right: 0; height: 100%;
+    pointer-events: none; overflow: hidden;
+  }
+  .confetti span {
+    position: absolute; width: 8px; height: 12px;
+    border-radius: 2px; opacity: 0.85;
+    animation: fall 2.4s ease-out forwards;
+  }
+  @keyframes fall {
+    0%   { transform: translateY(-20px) rotate(0deg);   opacity: 0; }
+    10%  { opacity: 0.9; }
+    100% { transform: translateY(260px) rotate(360deg); opacity: 0; }
+  }
+  .confetti span:nth-child(1)  { left: 10%; background: var(--gold);       animation-delay: 0.0s; }
+  .confetti span:nth-child(2)  { left: 22%; background: var(--gold-hero);  animation-delay: 0.15s; }
+  .confetti span:nth-child(3)  { left: 35%; background: var(--teal-light); animation-delay: 0.05s; }
+  .confetti span:nth-child(4)  { left: 48%; background: var(--gold);       animation-delay: 0.25s; }
+  .confetti span:nth-child(5)  { left: 55%; background: var(--gold-hero);  animation-delay: 0.1s; }
+  .confetti span:nth-child(6)  { left: 68%; background: var(--teal);       animation-delay: 0.3s; }
+  .confetti span:nth-child(7)  { left: 78%; background: var(--gold);       animation-delay: 0.2s; }
+  .confetti span:nth-child(8)  { left: 88%; background: var(--gold-hero);  animation-delay: 0.35s; }
+  .confetti span:nth-child(9)  { left: 16%; background: var(--teal-light); animation-delay: 0.4s; }
+  .confetti span:nth-child(10) { left: 62%; background: var(--gold);       animation-delay: 0.5s; }
+  .confetti span:nth-child(11) { left: 30%; background: var(--gold-hero);  animation-delay: 0.6s; }
+  .confetti span:nth-child(12) { left: 72%; background: var(--teal);       animation-delay: 0.55s; }
+
+  /* Add-person persistent CTA inside People card */
+  .add-person-btn {
+    display: flex; align-items: center; justify-content: center;
+    gap: 6px; padding: 8px 12px; margin-top: 10px;
+    border: 1.5px dashed var(--border); border-radius: 8px;
+    font-size: 13px; color: var(--teal); font-weight: 600;
+    cursor: pointer;
+  }
+  .add-person-btn + .add-person-btn { margin-top: 6px; }
+
+  /* Main content */
+  .main {
+    padding: 24px 22px; background: var(--warm-gray);
+    display: grid; grid-template-columns: 2fr 1fr; gap: 24px;
+  }
+  .main.single { grid-template-columns: 1fr; }
+  .col-primary { display: flex; flex-direction: column; gap: 20px; }
+  .col-secondary { display: flex; flex-direction: column; gap: 16px; }
+
+  /* Today queue — the headline pattern */
+  .today-card {
+    background: white; border-radius: var(--radius);
+    border: 1px solid var(--border-warm);
+    box-shadow: var(--shadow-feature);
+    overflow: hidden;
+  }
+  .today-head {
+    padding: 20px 22px 6px;
+    display: flex; align-items: baseline; justify-content: space-between;
+  }
+  .today-label {
+    font-size: 22px; font-weight: 700;
+    color: var(--navy); letter-spacing: -0.4px;
+  }
+  .today-date { font-size: 13px; color: var(--mid); font-weight: 500; }
+  .today-title {
+    padding: 0 20px 6px; font-size: 20px; font-weight: 700;
+    color: var(--navy); letter-spacing: -0.3px;
+  }
+  .today-subtitle {
+    padding: 0 20px 16px; font-size: 13px; color: var(--mid);
+  }
+  .today-items { border-top: 1px solid var(--border); }
+
+  .today-item {
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    gap: 14px; align-items: center;
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+  }
+  .today-item:last-child { border-bottom: none; }
+  .today-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: var(--teal-20); color: var(--teal);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .today-icon.alert { background: var(--red-alert-bg); color: var(--red-alert); }
+  .today-icon.done  { background: var(--green-bg); color: var(--green-ok); }
+  .today-icon.gold  { background: var(--gold-10); color: var(--gold); }
+  .today-text { min-width: 0; }
+  .today-text .label { font-weight: 600; color: var(--navy); font-size: 15px; margin-bottom: 2px; }
+  .today-text .label.alert { color: var(--red-alert); }
+  .today-text .sub { font-size: 13px; color: var(--mid); }
+  .today-cta {
+    padding: 8px 14px; border-radius: 8px; background: var(--navy); color: white;
+    font-size: 13px; font-weight: 600; text-decoration: none;
+    white-space: nowrap;
+  }
+  .today-cta.secondary { background: white; color: var(--navy); border: 1px solid var(--navy); }
+  .today-cta.alert { background: var(--red-alert); }
+  .today-item.done { opacity: 0.55; }
+  .today-item.done .label { text-decoration: line-through; }
+  .today-footer {
+    padding: 14px 20px; background: var(--warm-gray); font-size: 12px; color: var(--mid);
+    text-align: center;
+  }
+
+  /* Unified check-in modal */
+  .checkin-modal {
+    background: white; border: 1px solid var(--border-warm); border-radius: var(--radius);
+    box-shadow: var(--shadow-feature); overflow: hidden;
+    max-width: 480px; margin: 0 auto;
+  }
+  .checkin-head {
+    padding: 18px 20px 4px;
+    display: flex; align-items: baseline; justify-content: space-between;
+  }
+  .checkin-head h3 { font-size: 18px; font-weight: 700; color: var(--navy); }
+  .checkin-head .x { color: var(--mid); font-size: 18px; }
+  .checkin-sub { padding: 0 20px 16px; font-size: 13px; color: var(--mid); }
+  .checkin-block { padding: 16px 20px; border-top: 1px solid var(--border); }
+  .checkin-block .q {
+    font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 10px;
+  }
+  .mood-row { display: flex; gap: 6px; }
+  .mood-chip {
+    flex: 1; padding: 12px 4px; border: 1.5px solid var(--border);
+    border-radius: 12px; text-align: center; cursor: pointer;
+    font-size: 12px; color: var(--dark); font-weight: 500;
+    background: white; min-width: 0;
+  }
+  .mood-chip .emoji { font-size: 22px; display: block; margin-bottom: 4px; line-height: 1; }
+  .mood-chip .label-mood { display: block; white-space: nowrap; }
+  .mood-chip.selected {
+    border-color: var(--teal); background: var(--teal-10);
+    color: var(--teal); font-weight: 700;
+  }
+  .mood-chip.struggling.selected {
+    border-color: var(--red-alert); background: var(--red-alert-bg);
+    color: var(--red-alert);
+  }
+  .mood-chip.great.selected {
+    border-color: var(--gold); background: var(--gold-10);
+    color: var(--gold);
+  }
+  /* Custom meeting inline form */
+  .custom-meeting-form {
+    padding: 12px 14px; margin-top: 6px;
+    background: var(--warm-gray); border-radius: 10px;
+    border: 1px dashed var(--border);
+  }
+  .custom-meeting-form .cm-label {
+    font-size: 12px; color: var(--mid); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+  .custom-meeting-form input[type="text"] {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--border);
+    border-radius: 7px; font-family: inherit; font-size: 13px;
+    background: white; margin-bottom: 8px;
+  }
+  .custom-meeting-form .type-row {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px;
+  }
+  .type-chip {
+    padding: 5px 10px; border: 1px solid var(--border); border-radius: 14px;
+    font-size: 11px; color: var(--mid); background: white; cursor: pointer;
+  }
+  .type-chip.selected { border-color: var(--teal); color: var(--teal); background: var(--teal-10); font-weight: 600; }
+  .save-toggle {
+    display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--dark);
+    padding: 6px 0;
+  }
+  .save-toggle input { margin: 0; }
+  .cm-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .cm-btn {
+    flex: 1; padding: 8px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;
+    text-align: center; cursor: pointer;
+  }
+  .cm-btn.primary { background: var(--navy); color: white; }
+  .cm-btn.secondary { background: white; color: var(--mid); border: 1px solid var(--border); }
+  /* Custom meeting chip badge */
+  .meeting-chip .personal-badge {
+    font-size: 10px; color: var(--gold); background: var(--gold-10);
+    padding: 2px 6px; border-radius: 8px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-left: 6px;
+  }
+  .meeting-chip {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 10px;
+    cursor: pointer; margin-bottom: 8px;
+    background: white;
+  }
+  .meeting-chip.usual { border-color: var(--teal); background: var(--teal-10); }
+  .meeting-chip .dot {
+    width: 8px; height: 8px; border-radius: 4px; background: var(--teal); flex-shrink: 0;
+  }
+  .meeting-chip .title { font-size: 14px; font-weight: 600; color: var(--navy); }
+  .meeting-chip .meta { font-size: 12px; color: var(--mid); margin-left: auto; }
+  .meeting-chip.muted { border-style: dashed; color: var(--mid); }
+  .meeting-chip.muted .dot { background: var(--mid); }
+  textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+    border-radius: 8px; font-family: inherit; font-size: 14px; color: var(--dark);
+    resize: none; min-height: 44px;
+  }
+  textarea::placeholder { color: var(--mid); }
+  .checkin-save {
+    padding: 14px 20px; background: var(--navy); color: white;
+    text-align: center; font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+
+  /* Supporting cards */
+  .sup-card {
+    background: white; border: 1px solid var(--border-warm); border-radius: var(--radius);
+    padding: 16px 20px; box-shadow: var(--shadow-card);
+  }
+  .sup-card h4 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--mid); font-weight: 700; margin-bottom: 12px;
+  }
+  .sup-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; font-size: 14px;
+  }
+  .sup-row + .sup-row { border-top: 1px solid var(--border); }
+  .sup-row .left { color: var(--navy); font-weight: 500; }
+  .sup-row .right { color: var(--mid); font-size: 13px; }
+  .sup-link {
+    display: block; margin-top: 10px; font-size: 13px; color: var(--teal);
+    font-weight: 600; text-decoration: none;
+  }
+
+  /* Caught up state */
+  .caught-up {
+    padding: 56px 24px; text-align: center;
+  }
+  .caught-up .emoji { font-size: 46px; display: block; margin-bottom: 12px; }
+  .caught-up h3 {
+    font-size: 22px; font-weight: 700; color: var(--navy); margin-bottom: 8px;
+  }
+  .caught-up p { color: var(--mid); max-width: 360px; margin: 0 auto; font-size: 14px; }
+  .caught-up .divider { height: 1px; background: var(--border); margin: 24px auto; max-width: 200px; }
+  .caught-up .summary { font-size: 13px; color: var(--mid); }
+  .caught-up .summary strong { color: var(--navy); }
+
+  /* Mobile mini-column */
+  .mobile-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .mobile-label { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--mid); letter-spacing: 1px; margin-bottom: 10px; text-align: center; }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .main { grid-template-columns: 1fr; }
+    .principles { grid-template-columns: 1fr 1fr; }
+    .mobile-row { grid-template-columns: 1fr; }
+  }
+
+  /* Callout blocks between sections */
+  .callout {
+    background: white; border-left: 3px solid var(--teal);
+    padding: 14px 18px; font-size: 14px; color: var(--dark);
+    border-radius: 4px; margin-top: 12px;
+  }
+  .callout strong { color: var(--navy); }
+
+  /* Small reset for the mobile check-in example */
+  .app-frame.mobile .hero { padding: 14px 16px; }
+  .app-frame.mobile .main { padding: 16px 14px; }
+  .app-frame.mobile .today-title { font-size: 18px; }
+  .app-frame.mobile .today-item { padding: 14px 16px; }
+  .app-frame.mobile .today-cta { padding: 8px 12px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div class="doc-wrap">
+
+  <!-- DOC HEADER -->
+  <div class="doc-header">
+    <h1>SoberAnchor · Dashboard Today Wireframe</h1>
+    <p>
+      Reframes the dashboard from a catalog of cards into a daily action queue.
+      Introduces a unified check-in that captures mood, meeting attendance, and a short note in one flow.
+      Adds cross-role alerts so sponsors see struggling sponsees in their own Today queue.
+    </p>
+    <small>v5.1 iteration · "My Journey" subnav (was "My Recovery") on a warm-gray band for clean separation from top-nav, hero gold hierarchy rebalanced (days sober bumped to 22px bright gold, NEXT MILESTONE label full-opacity), "Today's practice" promoted from tiny uppercase label to 22px navy headline, hero quote enlarged from 13px → 15px · Apr 17, 2026</small>
+  </div>
+
+  <!-- DESIGN PRINCIPLES -->
+  <div class="principles">
+    <div class="principle">
+      <strong>1 · Today first</strong>
+      The primary surface is what needs action now, not an inventory of everything that exists.
+    </div>
+    <div class="principle">
+      <strong>2 · Collapse overlapping intents</strong>
+      Check-in + meeting + daily note are one moment, one flow, one save.
+    </div>
+    <div class="principle">
+      <strong>3 · Smart defaults from rhythm</strong>
+      Past attendance predicts today's meeting. Suggest it; don't make them search.
+    </div>
+    <div class="principle">
+      <strong>4 · Role pull-through</strong>
+      A struggling sponsee surfaces in the sponsor's Today queue. The wall between roles is only in detail views.
+    </div>
+  </div>
+
+  <!-- STATE 1 — MEMBER DEFAULT -->
+  <div class="state-section">
+    <div class="state-header">
+      <h2>State 1 — Default member view (Travis, morning)</h2>
+      <span class="tag">Desktop</span>
+    </div>
+    <div class="state-note">
+      Travis hasn't checked in yet. He has one step-work prompt in progress. No meetings logged this week. One sponsor action is optional (not urgent).
+      The hero is compressed to a single row so the Today card is above the fold.
+    </div>
+
+    <div class="app-frame">
+      <div class="top-nav">
+        <div class="logo">⚓ <span class="anchor">SoberAnchor</span><span class="com">.com</span></div>
+        <div class="nav-links">
+          <a>Find Help</a><a>Meetings</a><a>Resources</a><a>Our Story</a>
+        </div>
+        <div class="nav-user">Travis ▾</div>
+      </div>
+      <div class="subnav">
+        <div class="subnav-left">
+          <div class="subnav-item active">⚓ My Journey</div>
+          <div class="subnav-item">👥 My Sponsees</div>
+        </div>
+      </div>
+      <div class="hero">
+        <div class="hero-row1">
+          <span class="hero-greeting">Good morning, Travis 👋</span>
+          <span class="hero-stat"><strong>936 days</strong> sober · Alcohol / AA</span>
+          <span class="hero-stat"><strong>105 days</strong> · co-dependent / CoDA</span>
+        </div>
+        <div class="hero-row2">
+          <span class="hero-milestone">
+            <span class="label">Next Milestone</span>
+            <span class="value">3 Years · 159 days away</span>
+          </span>
+          <span class="hero-divider"></span>
+          <span class="hero-stepband">Currently on <strong>Step 1 · Powerlessness</strong></span>
+        </div>
+        <div class="hero-quote">
+          "You are not your addiction. You are so much more." <span class="attr">— Unknown</span>
+        </div>
+      </div>
+
+      <div class="main">
+        <div class="col-primary">
+
+          <!-- THE TODAY CARD -->
+          <div class="today-card">
+            <div class="today-head">
+              <span class="today-label">Today's practice</span>
+              <span class="today-date">Thursday, April 16</span>
+            </div>
+            <div class="today-subtitle" style="padding: 0 20px 16px;">Small things that keep you grounded. Your pace, your order — skip what doesn't fit today.</div>
+
+            <div class="today-items">
+              <div class="today-item">
+                <div class="today-icon gold">⚓</div>
+                <div class="today-text">
+                  <div class="label">Log today's check-in</div>
+                  <div class="sub">Mood · meeting · a note — takes 30 seconds</div>
+                </div>
+                <a class="today-cta">Check in →</a>
+              </div>
+              <div class="today-item">
+                <div class="today-icon">📝</div>
+                <div class="today-text">
+                  <div class="label">Continue Step 1: Powerlessness</div>
+                  <div class="sub">1 prompt in progress · started yesterday</div>
+                </div>
+                <a class="today-cta secondary">Continue →</a>
+              </div>
+              <div class="today-item">
+                <div class="today-icon">📍</div>
+                <div class="today-text">
+                  <div class="label">Log a meeting this week</div>
+                  <div class="sub">0 of 3 weekly target · or adjust your goal</div>
+                </div>
+                <a class="today-cta secondary">Log →</a>
+              </div>
+              <div class="today-item">
+                <div class="today-icon">💡</div>
+                <div class="today-text">
+                  <div class="label">Read: "What Powerlessness actually means"</div>
+                  <div class="sub">Recommended for Step 1 · 4 min read</div>
+                </div>
+                <a class="today-cta secondary">Open →</a>
+              </div>
+            </div>
+
+            <div class="today-footer">Come back tomorrow — practice updates daily.</div>
+          </div>
+
+          <div class="callout">
+            <strong>What changed vs. current:</strong> Six equal-weight cards collapsed into one priority queue. Each item has one verb and one CTA. Nothing here is past-tense — that lives in a separate History tab.
+          </div>
+        </div>
+
+        <div class="col-secondary">
+          <div class="sup-card">
+            <h4>Progress</h4>
+            <div class="sup-row"><span class="left">Step 1 of 12</span><span class="right">In progress</span></div>
+            <div class="sup-row"><span class="left">Journal entries</span><span class="right">0 this week</span></div>
+            <div class="sup-row"><span class="left">Meetings logged</span><span class="right">0 this week</span></div>
+            <a class="sup-link">See full progress →</a>
+          </div>
+          <div class="sup-card">
+            <h4>People</h4>
+            <div class="sup-row"><span class="left">Sponsor: Angel</span><span class="right">AA</span></div>
+            <div class="sup-row"><span class="left">Sponsees</span><span class="right">Accepting · 0</span></div>
+            <div class="add-person-btn">+ Add a sponsor</div>
+            <div class="add-person-btn">+ Invite a sponsee</div>
+            <a class="sup-link">Manage relationships →</a>
+          </div>
+          <div class="sup-card">
+            <h4>Recent</h4>
+            <div class="sup-row"><span class="left">Apr 17 · struggling</span><span class="right">23h</span></div>
+            <div class="sup-row"><span class="left">Apr 16 · okay</span><span class="right">1d</span></div>
+            <div class="sup-row"><span class="left">Apr 12 · great</span><span class="right">5d</span></div>
+            <a class="sup-link">See history →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATE 2 — UNIFIED CHECK-IN MODAL -->
+  <div class="state-section">
+    <div class="state-header">
+      <h2>State 2 — Unified check-in modal (the new daily flow)</h2>
+      <span class="tag">Modal</span>
+    </div>
+    <div class="state-note">
+      Opens from any "Check in" CTA. Mood is a 5-point scale (struggling / hard / okay / good / great) — preserves "struggling" as the existing alert-trigger value and adds "hard" and "good" for resolution. Mood is the only required field.
+      Meetings surface as smart chips — public meetings the user attends frequently <em>and</em> any custom meetings they've saved (like "Coffee with sister" below, tagged <strong>personal</strong>). Step-work is intentionally absent — it has its own flow because the prompts are long-form.
+    </div>
+
+    <div class="checkin-modal">
+      <div class="checkin-head">
+        <h3>Check in · Thursday, April 16</h3>
+        <span class="x">×</span>
+      </div>
+      <div class="checkin-sub">Quick snapshot of how today is going. Only mood is required.</div>
+
+      <div class="checkin-block">
+        <div class="q">How are you today?</div>
+        <div class="mood-row">
+          <div class="mood-chip struggling"><span class="emoji">😖</span><span class="label-mood">Struggling</span></div>
+          <div class="mood-chip"><span class="emoji">😕</span><span class="label-mood">Hard</span></div>
+          <div class="mood-chip selected"><span class="emoji">😐</span><span class="label-mood">Okay</span></div>
+          <div class="mood-chip"><span class="emoji">🙂</span><span class="label-mood">Good</span></div>
+          <div class="mood-chip great"><span class="emoji">😊</span><span class="label-mood">Great</span></div>
+        </div>
+      </div>
+
+      <div class="checkin-block">
+        <div class="q">Attend a meeting today?</div>
+        <div class="meeting-chip usual">
+          <span class="dot"></span>
+          <span class="title">Tuesday 7pm · Lambda Nexus AA</span>
+          <span class="meta">usual</span>
+        </div>
+        <div class="meeting-chip">
+          <span class="dot"></span>
+          <span class="title">Monday 12pm · Fresh Start NA</span>
+          <span class="meta">last week</span>
+        </div>
+        <!-- Custom meeting chip — saved from a previous custom entry -->
+        <div class="meeting-chip">
+          <span class="dot" style="background: var(--gold);"></span>
+          <span class="title">Sunday 10am · Coffee with sister<span class="personal-badge">personal</span></span>
+          <span class="meta">weekly</span>
+        </div>
+        <div class="meeting-chip muted">
+          <span class="dot"></span>
+          <span class="title">+ Log a different meeting</span>
+        </div>
+        <div class="meeting-chip muted">
+          <span class="dot"></span>
+          <span class="title">No meeting today</span>
+        </div>
+      </div>
+
+      <div class="checkin-block">
+        <div class="q">Anything on your mind? <span style="color:var(--mid); font-weight:400;">(optional)</span></div>
+        <textarea placeholder="One line is plenty — e.g. 'concrete anchor bolts are my nemesis'"></textarea>
+      </div>
+
+      <div class="checkin-save">Save check-in</div>
+    </div>
+
+    <div class="callout" style="max-width: 480px; margin: 16px auto 0;">
+      <strong>Smart chip logic:</strong> union public meetings from <code>meeting_attendance</code> with user's saved custom meetings. Cluster by meeting_id + day_of_week, rank by recency × frequency, surface top 2–3 as chips. Pre-select the usual one only if today's day_of_week matches. Personal/custom meetings get a subtle gold "personal" badge so they're visually distinct from public meetings.
+    </div>
+
+    <!-- STATE 2A — CUSTOM MEETING INLINE EXPANSION -->
+    <div style="margin-top: 36px;">
+      <div class="state-header" style="border-bottom-color: var(--teal);">
+        <h2 style="color: var(--teal);">State 2a — Add a custom meeting (inline expansion)</h2>
+        <span class="tag">Expanded</span>
+      </div>
+      <div class="state-note">
+        When the user taps "+ Log a different meeting," a compact form expands <em>inline inside the modal</em> — no new screen, no modal-on-modal. Name, type, and a "save to my meetings" checkbox so next time this meeting shows up as a chip. Angel logging coffee with her sister gets saved once and becomes a first-class recurring chip after that.
+      </div>
+
+      <div class="checkin-modal">
+        <div class="checkin-head">
+          <h3>Check in · Thursday, April 16</h3>
+          <span class="x">×</span>
+        </div>
+        <div class="checkin-sub">Only mood is required.</div>
+
+        <div class="checkin-block">
+          <div class="q">How are you today?</div>
+          <div class="mood-row">
+            <div class="mood-chip struggling"><span class="emoji">😖</span><span class="label-mood">Struggling</span></div>
+            <div class="mood-chip"><span class="emoji">😕</span><span class="label-mood">Hard</span></div>
+            <div class="mood-chip selected"><span class="emoji">😐</span><span class="label-mood">Okay</span></div>
+            <div class="mood-chip"><span class="emoji">🙂</span><span class="label-mood">Good</span></div>
+            <div class="mood-chip great"><span class="emoji">😊</span><span class="label-mood">Great</span></div>
+          </div>
+        </div>
+
+        <div class="checkin-block">
+          <div class="q">Attend a meeting today?</div>
+          <div class="meeting-chip">
+            <span class="dot"></span>
+            <span class="title">Tuesday 7pm · Lambda Nexus AA</span>
+            <span class="meta">usual</span>
+          </div>
+          <div class="meeting-chip">
+            <span class="dot"></span>
+            <span class="title">Monday 12pm · Fresh Start NA</span>
+            <span class="meta">last week</span>
+          </div>
+          <div class="meeting-chip muted" style="opacity: 0.6;">
+            <span class="dot"></span>
+            <span class="title">+ Log a different meeting</span>
+            <span class="meta">↓ expanded</span>
+          </div>
+
+          <!-- EXPANDED CUSTOM MEETING FORM -->
+          <div class="custom-meeting-form">
+            <div class="cm-label">Custom meeting</div>
+            <input type="text" placeholder="Name · e.g. 'Coffee with sister' or 'Church group'" value="Coffee with sister" />
+            <div class="type-row">
+              <span class="type-chip">Public meeting</span>
+              <span class="type-chip selected">Personal / family</span>
+              <span class="type-chip">Sponsor / sponsee</span>
+              <span class="type-chip">Other</span>
+            </div>
+
+            <div class="cm-label" style="margin-top: 6px;">Recurs</div>
+            <div class="recurs-row">
+              <span class="recurs-chip">Just today</span>
+              <span class="recurs-chip selected">Weekly on Sundays <span class="auto-badge">auto</span></span>
+              <span class="recurs-chip">Daily</span>
+              <span class="recurs-chip">Custom…</span>
+            </div>
+            <div style="font-size: 11px; color: var(--mid); margin-top: -2px; margin-bottom: 10px;">
+              Pre-selected because today is Sunday and this looks like a weekly pattern. One tap to change.
+            </div>
+
+            <label class="save-toggle">
+              <input type="checkbox" checked />
+              Save to my meetings — show as a chip next time
+            </label>
+            <label class="save-toggle" style="font-size: 11px; color: var(--mid);">
+              <input type="checkbox" />
+              Private — don't share content with my sponsor (count only)
+            </label>
+            <div class="cm-actions">
+              <span class="cm-btn secondary">Cancel</span>
+              <span class="cm-btn primary">Add meeting</span>
+            </div>
+          </div>
+
+          <div style="margin-top: 14px; padding: 12px 14px; background: var(--teal-10); border-radius: 8px; font-size: 12px; color: var(--navy);">
+            <strong>Smart recurrence detection:</strong> if the user has logged this meeting 3+ times in a row on the same day-of-week → "Weekly" auto-selected. Logged 4+ consecutive days → "Daily" auto-selected (Angel's "It Takes AA Village"). Otherwise defaults to "Just today." User can always change with one tap.
+          </div>
+
+          <div class="meeting-chip muted" style="margin-top: 8px;">
+            <span class="dot"></span>
+            <span class="title">No meeting today</span>
+          </div>
+        </div>
+
+        <div class="checkin-block">
+          <div class="q">Anything on your mind? <span style="color:var(--mid); font-weight:400;">(optional)</span></div>
+          <textarea placeholder="One line is plenty"></textarea>
+        </div>
+
+        <div class="checkin-save">Save check-in</div>
+      </div>
+
+      <div class="callout" style="max-width: 480px; margin: 16px auto 0;">
+        <strong>Data model note:</strong> this requires a new <code>user_custom_meetings</code> table. Suggested shape: <code>id, user_id, name, type (enum: family / sponsor / church / other), day_of_week, time, is_recurring, is_active, created_at</code>. When user saves with "show as chip next time" checked, a row is written. The chip query then unions public + custom. If they leave the checkbox unchecked, the meeting is logged for today's check-in only (single-use) and no row is persisted.
+      </div>
+    </div>
+
+    <!-- POST-SAVE CELEBRATION -->
+    <div style="margin-top: 36px;">
+      <div class="state-header" style="border-bottom-color: var(--gold);">
+        <h2 style="color: var(--gold);">State 2b — Just-checked-in celebration</h2>
+        <span class="tag" style="background: var(--gold-10); color: var(--gold);">Confetti moment</span>
+      </div>
+      <div class="state-note">
+        Immediately after save, the modal swaps to a warm, quiet celebration — gold + teal confetti (small, not manic), streak badge, a summary line of what was logged, and a Done button. This is the gamification hook that makes the daily routine feel rewarding without pushing streaks too aggressively.
+      </div>
+
+      <div class="checkin-modal">
+        <div class="celebrate">
+          <div class="close-x" title="Close — return to today's practice">×</div>
+          <div class="confetti">
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <span class="big-emoji">⚓</span>
+          <span class="streak">Day 937 · +1 streak</span>
+          <h3>Anchored in for today.</h3>
+          <div class="summary-line">
+            You logged <strong>"okay"</strong>, attended <strong>Lambda Nexus AA</strong>, and noted <em>"concrete anchor bolts are my nemesis."</em>
+          </div>
+          <div>
+            <div class="done-btn">Keep going</div>
+            <div class="secondary-btn">Done for today</div>
+          </div>
+          <span class="auto-dismiss-note">Auto-closes in 8s · or press × to return to your day</span>
+        </div>
+      </div>
+
+      <div class="callout" style="max-width: 520px; margin: 16px auto 0;">
+        <strong>Behavior:</strong> The celebration panel is dismissible — close (×) in the top-right returns the member to today's practice so they can continue with step work, etc. An 8-second auto-dismiss fades to the Today view unless they interact. "Keep going" (primary) dismisses and scrolls to the next unchecked item. "Done for today" (secondary) closes the check-in modal and keeps the member on the caught-up view if nothing else is pending.<br><br>
+        <strong>Tone notes:</strong> confetti is gold + teal + gold-hero (no rainbow — stay on-brand). Animation is 2.4s, then particles fade. The streak badge ("Day 937 · +1 streak") appears only if the member has checked in 2+ days running — first-time celebration is quieter, no streak shown.
+      </div>
+
+      <!-- ROUGH-DAY VARIANT — struggling / hard mood -->
+      <div class="state-note" style="margin-top: 28px; border-color: var(--teal);">
+        <strong>Variant — rough day (struggling / hard):</strong> confetti still fires because showing up on a hard day <em>is</em> the work — but confetti tones shift to the warmer half of the palette (gold/cream/teal, no bright yellow-hero), the headline softens, the streak badge is hidden, and a short supportive callout with a curated quote replaces the bright streak. The goal: acknowledge the difficulty without dimming the win of checking in.
+      </div>
+
+      <div class="checkin-modal">
+        <div class="celebrate" style="background: linear-gradient(180deg, rgba(42,138,153,0.06) 0%, white 70%);">
+          <div class="close-x" title="Close — return to today's practice">×</div>
+          <div class="confetti">
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <span class="big-emoji">⚓</span>
+          <h3 style="font-size: 22px;">You showed up. That's the work.</h3>
+          <div class="summary-line">
+            You logged <strong>"struggling"</strong> and noted <em>"rough morning, thinking about calling my sponsor."</em>
+          </div>
+          <div class="callout-soft">
+            Even on the hardest days, checking in is the path. Keep walking it — things can shift when you let them.
+            <span class="attr">— "Courage doesn't always roar. Sometimes it's the quiet voice at the end of the day saying, 'I will try again tomorrow.'" — Mary Anne Radmacher</span>
+          </div>
+          <div>
+            <div class="done-btn" style="background: var(--teal);">Call my sponsor</div>
+            <div class="secondary-btn">Keep going</div>
+          </div>
+          <span class="auto-dismiss-note">Auto-closes in 12s on rough days · or press × to return to your day</span>
+        </div>
+      </div>
+
+      <div class="callout" style="max-width: 520px; margin: 16px auto 0;">
+        <strong>Why the extra time on rough days:</strong> 12-second auto-dismiss (vs. 8s default) gives the member time to read the quote. Primary CTA shifts from "Keep going" to "Call my sponsor" for struggling mood — one tap to their support network in the moment they're most likely to need it. "Hard" mood gets a lighter variant: same layout, quieter callout, primary stays "Keep going" but a "Reach out to sponsor" link appears.<br><br>
+        <strong>Quote library tagging:</strong> the supportive quote rotates daily, pulled from <code>inspiration_quotes</code> where <code>tone_tag = 'struggling'</code>. Seed examples: Radmacher (above), "The only way out is through." (Frost), "Rock bottom became the solid foundation on which I rebuilt my life." (Rowling), "You don't have to see the whole staircase. Just take the first step." (MLK).
+      </div>
+    </div>
+  </div>
+
+  <!-- STATE 3 — SPONSOR PULL-THROUGH -->
+  <div class="state-section">
+    <div class="state-header">
+      <h2>State 3 — Sponsor with struggling sponsee (cross-role alert)</h2>
+      <span class="tag">Desktop</span>
+    </div>
+    <div class="state-note">
+      Angel checked in as "struggling" two hours ago. In today's build, Travis would have to tab into My Sponsees to see this. In the new structure, it lands at the top of his Today queue with an alert treatment and a direct "Reach out" CTA.
+    </div>
+
+    <div class="app-frame">
+      <div class="top-nav">
+        <div class="logo">⚓ <span class="anchor">SoberAnchor</span><span class="com">.com</span></div>
+        <div class="nav-links">
+          <a>Find Help</a><a>Meetings</a><a>Resources</a><a>Our Story</a>
+        </div>
+        <div class="nav-user">Travis ▾</div>
+      </div>
+      <div class="subnav">
+        <div class="subnav-left">
+          <div class="subnav-item active">⚓ My Journey</div>
+          <div class="subnav-item">👥 My Sponsees <span style="background:var(--red-alert); color:white; font-size:10px; padding:2px 6px; border-radius:8px; margin-left:4px;">1</span></div>
+        </div>
+      </div>
+      <div class="hero">
+        <div class="hero-row1">
+          <span class="hero-greeting">Good evening, Travis 👋</span>
+          <span class="hero-stat"><strong>936 days</strong> sober · Alcohol / AA</span>
+          <span class="hero-stat"><strong>2 sponsees</strong> · AA</span>
+        </div>
+        <div class="hero-row2">
+          <span class="hero-milestone">
+            <span class="label">Next Milestone</span>
+            <span class="value">3 Years · 159 days away</span>
+          </span>
+          <span class="hero-divider"></span>
+          <span class="hero-stepband">Currently on <strong>Step 1 · Powerlessness</strong></span>
+        </div>
+        <div class="hero-quote">
+          "We cannot give what we do not have. Tend to yourself, and the rest follows." <span class="attr">— Anonymous</span>
+        </div>
+      </div>
+
+      <div class="main">
+        <div class="col-primary">
+          <div class="today-card">
+            <div class="today-head">
+              <span class="today-label">Today's practice</span>
+              <span class="today-date">Thursday, April 16</span>
+            </div>
+            <div class="today-subtitle" style="padding: 0 20px 16px;">Angel needs you first — then tend to yourself. Small things, your order.</div>
+
+            <div class="today-items">
+
+              <!-- PRIORITY OVERRIDE: struggling sponsee -->
+              <div class="today-item" style="background: var(--red-alert-bg);">
+                <div class="today-icon alert">🚨</div>
+                <div class="today-text">
+                  <div class="label alert">Angel checked in "struggling" · 2h ago</div>
+                  <div class="sub">"Gonna miss my girls here soon!" — first struggling check-in in 11 days</div>
+                </div>
+                <a class="today-cta alert">Reach out →</a>
+              </div>
+
+              <!-- SELF FIRST: own daily -->
+              <div class="today-item">
+                <div class="today-icon gold">⚓</div>
+                <div class="today-text">
+                  <div class="label">Log today's check-in</div>
+                  <div class="sub">Mood · meeting · a note · <em>your own work first</em></div>
+                </div>
+                <a class="today-cta">Check in →</a>
+              </div>
+              <div class="today-item">
+                <div class="today-icon">📝</div>
+                <div class="today-text">
+                  <div class="label">Continue Step 1: Powerlessness</div>
+                  <div class="sub">1 prompt in progress · started yesterday</div>
+                </div>
+                <a class="today-cta secondary">Continue →</a>
+              </div>
+
+              <!-- SPONSOR TASKS: after self-care -->
+              <div class="today-item">
+                <div class="today-icon">✍️</div>
+                <div class="today-text">
+                  <div class="label">Review 2 step-work submissions</div>
+                  <div class="sub">Angel (Step 1) · Mike (Step 3) — oldest waiting 26h</div>
+                </div>
+                <a class="today-cta secondary">Review →</a>
+              </div>
+              <div class="today-item">
+                <div class="today-icon">🎉</div>
+                <div class="today-text">
+                  <div class="label">Mike hits 2 years sober on April 30</div>
+                  <div class="sub">14 days out · time to order a chip or plan something · last milestone was 18mo</div>
+                </div>
+                <a class="today-cta secondary">Plan his 2-year →</a>
+              </div>
+            </div>
+
+            <div class="today-footer">Order of care: those who need you now &nbsp;→&nbsp; your own day &nbsp;→&nbsp; sponsor work &nbsp;→&nbsp; enrichment</div>
+          </div>
+
+          <div class="callout">
+            <strong>Priority logic — "self first, but alerts override":</strong><br>
+            Tier 1 · Sponsee alert (struggling / relapsed / silent 3+ days) — jumps to top, red treatment<br>
+            Tier 2 · Member's own check-in, step work, meetings — the sponsor's own recovery always ranks above non-urgent sponsor work<br>
+            Tier 3 · Sponsor tasks — step-work reviews waiting, sponsee milestone reminders, requested meetings<br>
+            Tier 4 · Enrichment — recommended reading, resources
+          </div>
+        </div>
+
+        <div class="col-secondary">
+          <div class="sup-card">
+            <h4>Your Sponsees</h4>
+            <div class="sup-row"><span class="left">Angel</span><span class="right" style="color:var(--red-alert); font-weight:600;">struggling · 2h</span></div>
+            <div class="sup-row"><span class="left">Mike</span><span class="right">Step 3 · 2yr in 14d</span></div>
+            <div class="add-person-btn">+ Invite a sponsee</div>
+            <a class="sup-link">View sponsees tab →</a>
+          </div>
+          <div class="sup-card">
+            <h4>Your Recovery</h4>
+            <div class="sup-row"><span class="left">Step 1 of 12</span><span class="right">In progress</span></div>
+            <div class="sup-row"><span class="left">Meetings this week</span><span class="right">1 of 3</span></div>
+            <div class="sup-row"><span class="left">Sponsor: Angel</span><span class="right">AA</span></div>
+            <div class="add-person-btn">+ Add a sponsor</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATE 4 — CAUGHT UP -->
+  <div class="state-section">
+    <div class="state-header">
+      <h2>State 4 — Caught-up / done state</h2>
+      <span class="tag">Desktop</span>
+    </div>
+    <div class="state-note">
+      Every Today item is completed. Reassurance + summary of what got done, plus one low-pressure nudge toward reflection or resources. The absence of pressure is the point.
+    </div>
+
+    <div class="app-frame">
+      <div class="top-nav">
+        <div class="logo">⚓ <span class="anchor">SoberAnchor</span><span class="com">.com</span></div>
+        <div class="nav-links"><a>Find Help</a><a>Meetings</a><a>Resources</a><a>Our Story</a></div>
+        <div class="nav-user">Travis ▾</div>
+      </div>
+      <div class="subnav">
+        <div class="subnav-left">
+          <div class="subnav-item active">⚓ My Journey</div>
+          <div class="subnav-item">👥 My Sponsees</div>
+        </div>
+      </div>
+      <div class="hero">
+        <div class="hero-row1">
+          <span class="hero-greeting">Good evening, Travis 👋</span>
+          <span class="hero-stat"><strong>936 days</strong> sober · Alcohol / AA</span>
+          <span class="hero-stat"><strong>105 days</strong> · co-dependent / CoDA</span>
+        </div>
+        <div class="hero-row2">
+          <span class="hero-milestone">
+            <span class="label">Next Milestone</span>
+            <span class="value">3 Years · 159 days away</span>
+          </span>
+          <span class="hero-divider"></span>
+          <span class="hero-stepband">Currently on <strong>Step 1 · Powerlessness</strong></span>
+        </div>
+        <div class="hero-quote">
+          "Courage doesn't always roar. Sometimes it's the quiet voice at the end of the day saying, 'I will try again tomorrow.'" <span class="attr">— Mary Anne Radmacher</span>
+        </div>
+      </div>
+
+      <div class="main">
+        <div class="col-primary">
+          <div class="today-card">
+            <div class="today-head">
+              <span class="today-label">Today's practice</span>
+              <span class="today-date">Thursday, April 16</span>
+            </div>
+            <div class="caught-up">
+              <span class="emoji">🌊</span>
+              <h3>Anchored for today.</h3>
+              <p>Checked in, logged a meeting, spent time on Step 1. Come back tomorrow — practice updates daily.</p>
+              <div class="divider"></div>
+              <div class="summary">
+                Today you · <strong>checked in "okay"</strong> · <strong>logged Lambda Nexus AA</strong> · <strong>answered 1 Step 1 prompt</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="callout">
+            <strong>Why this matters:</strong> Dashboards that always show tasks create low-grade anxiety. A clear "done" state is a reward signal. It also sets the psychological expectation that recovery has a daily rhythm, not an infinite backlog. The right rail stays present so the member can still explore, manage relationships, or reflect.
+          </div>
+        </div>
+
+        <!-- Right rail persists even when caught up — Progress / People / History -->
+        <div class="col-secondary">
+          <div class="sup-card">
+            <h4>Progress</h4>
+            <div class="sup-row"><span class="left">Step 1 of 12</span><span class="right">In progress</span></div>
+            <div class="sup-row"><span class="left">Journal entries</span><span class="right">3 this week</span></div>
+            <div class="sup-row"><span class="left">Meetings logged</span><span class="right">2 this week</span></div>
+            <div class="sup-row"><span class="left">Streak</span><span class="right" style="color:var(--gold); font-weight:600;">Day 12</span></div>
+            <a class="sup-link">See full progress →</a>
+          </div>
+          <div class="sup-card">
+            <h4>People</h4>
+            <div class="sup-row"><span class="left">Sponsor: Angel</span><span class="right">AA</span></div>
+            <div class="sup-row"><span class="left">Sponsees</span><span class="right">2 active</span></div>
+            <div class="add-person-btn">+ Add a sponsor</div>
+            <div class="add-person-btn">+ Invite a sponsee</div>
+            <a class="sup-link">Manage relationships →</a>
+          </div>
+          <div class="sup-card">
+            <h4>Recent</h4>
+            <div class="sup-row"><span class="left">Apr 16 · okay</span><span class="right">today</span></div>
+            <div class="sup-row"><span class="left">Apr 15 · great</span><span class="right">1d</span></div>
+            <div class="sup-row"><span class="left">Apr 14 · okay</span><span class="right">2d</span></div>
+            <a class="sup-link">See history →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATE 5 — MOBILE -->
+  <div class="state-section">
+    <div class="state-header">
+      <h2>State 5 — Mobile views (375–390px)</h2>
+      <span class="tag">Mobile</span>
+    </div>
+    <div class="state-note">
+      The Today queue stacks naturally. The unified check-in is a full-screen sheet on mobile. Smart chips become full-width rows for easier tapping. This is the dominant use case — design for this first.
+    </div>
+
+    <div class="mobile-row">
+      <div>
+        <div class="mobile-label">Default</div>
+        <div class="app-frame mobile">
+          <div class="top-nav" style="padding: 12px 14px;">
+            <div class="logo" style="font-size:16px;">⚓ <span class="anchor">SoberAnchor</span></div>
+            <div class="nav-user" style="padding: 4px 10px; font-size:12px;">Travis ▾</div>
+          </div>
+          <div class="subnav">
+            <div class="subnav-left">
+              <div class="subnav-item active" style="padding: 12px 0; font-size:13px;">⚓ Journey</div>
+              <div class="subnav-item" style="padding: 12px 0; font-size:13px;">👥 Sponsees</div>
+            </div>
+          </div>
+          <div class="hero">
+            <div class="hero-greeting" style="font-size: 16px;">Good morning, Travis 👋</div>
+            <div class="hero-stat" style="margin-top:4px;"><strong style="font-size:18px;">936 days</strong> · Alcohol / AA</div>
+            <div class="hero-row2" style="margin-top:8px; padding-top:8px; font-size:11px;">
+              <span class="hero-milestone">
+                <span class="label" style="font-size:10px;">Next Milestone</span>
+                <span class="value" style="font-size:12px;">3 Years · 159 days</span>
+              </span>
+            </div>
+            <div class="hero-stepband" style="margin-top:6px; font-size:11px;">Step 1 · Powerlessness</div>
+            <div class="hero-quote" style="margin-top:12px; padding-top:12px; font-size:13px;">
+              "You are not your addiction." <span class="attr" style="font-size:10px;">— Unknown</span>
+            </div>
+          </div>
+          <div class="main single" style="padding: 14px;">
+            <div class="today-card">
+              <div class="today-head" style="padding: 16px 16px 4px;">
+                <span class="today-label" style="font-size: 18px;">Today's practice</span>
+                <span class="today-date">Apr 16</span>
+              </div>
+              <div class="today-subtitle" style="padding: 0 16px 12px; font-size: 12px;">Small things that keep you grounded.</div>
+              <div class="today-items">
+                <div class="today-item">
+                  <div class="today-icon gold">⚓</div>
+                  <div class="today-text">
+                    <div class="label">Check in</div>
+                    <div class="sub">Mood, meeting, note</div>
+                  </div>
+                  <a class="today-cta">Go →</a>
+                </div>
+                <div class="today-item">
+                  <div class="today-icon">📝</div>
+                  <div class="today-text">
+                    <div class="label">Continue Step 1</div>
+                    <div class="sub">1 in progress</div>
+                  </div>
+                  <a class="today-cta secondary">→</a>
+                </div>
+                <div class="today-item">
+                  <div class="today-icon">📍</div>
+                  <div class="today-text">
+                    <div class="label">Log a meeting</div>
+                    <div class="sub">0 of 3 this week</div>
+                  </div>
+                  <a class="today-cta secondary">→</a>
+                </div>
+                <div class="today-item">
+                  <div class="today-icon">💡</div>
+                  <div class="today-text">
+                    <div class="label">Read: Powerlessness</div>
+                    <div class="sub">4 min</div>
+                  </div>
+                  <a class="today-cta secondary">→</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="mobile-label">Check-in sheet</div>
+        <div class="app-frame mobile">
+          <div class="checkin-head">
+            <h3 style="font-size:16px;">Check in · Apr 16</h3>
+            <span class="x">×</span>
+          </div>
+          <div class="checkin-sub">Only mood is required.</div>
+          <div class="checkin-block">
+            <div class="q">How are you today?</div>
+            <div class="mood-row">
+              <div class="mood-chip struggling" style="padding: 10px 2px;"><span class="emoji" style="font-size:20px;">😖</span><span class="label-mood" style="font-size:10px;">Strug.</span></div>
+              <div class="mood-chip" style="padding: 10px 2px;"><span class="emoji" style="font-size:20px;">😕</span><span class="label-mood" style="font-size:10px;">Hard</span></div>
+              <div class="mood-chip selected" style="padding: 10px 2px;"><span class="emoji" style="font-size:20px;">😐</span><span class="label-mood" style="font-size:10px;">Okay</span></div>
+              <div class="mood-chip" style="padding: 10px 2px;"><span class="emoji" style="font-size:20px;">🙂</span><span class="label-mood" style="font-size:10px;">Good</span></div>
+              <div class="mood-chip great" style="padding: 10px 2px;"><span class="emoji" style="font-size:20px;">😊</span><span class="label-mood" style="font-size:10px;">Great</span></div>
+            </div>
+          </div>
+          <div class="checkin-block">
+            <div class="q">Meeting today?</div>
+            <div class="meeting-chip usual">
+              <span class="dot"></span>
+              <div>
+                <div class="title" style="font-size:13px;">Tue 7pm · Lambda Nexus</div>
+                <div style="font-size:11px; color:var(--teal);">usual</div>
+              </div>
+            </div>
+            <div class="meeting-chip">
+              <span class="dot"></span>
+              <div class="title" style="font-size:13px;">Mon 12pm · Fresh Start</div>
+            </div>
+            <div class="meeting-chip">
+              <span class="dot" style="background: var(--gold);"></span>
+              <div class="title" style="font-size:13px;">Sun 10am · Sister coffee<span class="personal-badge" style="font-size:9px;">pers.</span></div>
+            </div>
+            <div class="meeting-chip muted">
+              <span class="dot"></span>
+              <span class="title" style="font-size:13px;">+ different meeting</span>
+            </div>
+            <div class="meeting-chip muted">
+              <span class="dot"></span>
+              <span class="title" style="font-size:13px;">No meeting today</span>
+            </div>
+          </div>
+          <div class="checkin-block">
+            <div class="q">A note? <span style="color:var(--mid); font-weight:400;">(optional)</span></div>
+            <textarea placeholder="One line..."></textarea>
+          </div>
+          <div class="checkin-save">Save check-in</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="mobile-label">Caught up</div>
+        <div class="app-frame mobile">
+          <div class="top-nav" style="padding: 12px 14px;">
+            <div class="logo" style="font-size:16px;">⚓ <span class="anchor">SoberAnchor</span></div>
+            <div class="nav-user" style="padding: 4px 10px; font-size:12px;">Travis ▾</div>
+          </div>
+          <div class="hero">
+            <div class="hero-greeting" style="font-size: 16px;">Good evening 👋</div>
+            <div class="hero-stat" style="margin-top:4px;"><strong style="font-size:18px;">936 days</strong> · Alcohol / AA</div>
+            <div class="hero-row2" style="margin-top:8px; padding-top:8px; font-size:11px;">
+              <span class="hero-milestone">
+                <span class="label" style="font-size:10px;">Next</span>
+                <span class="value" style="font-size:12px;">3 Years · 159d</span>
+              </span>
+            </div>
+            <div class="hero-quote" style="margin-top:12px; padding-top:12px; font-size:13px;">
+              "I will try again tomorrow." <span class="attr" style="font-size:10px;">— Radmacher</span>
+            </div>
+          </div>
+          <div class="main single" style="padding: 14px;">
+            <div class="today-card">
+              <div class="today-head" style="padding: 16px 16px 4px;">
+                <span class="today-label" style="font-size: 18px;">Today's practice</span>
+                <span class="today-date">Apr 16</span>
+              </div>
+              <div class="caught-up" style="padding: 32px 14px;">
+                <span class="emoji">🌊</span>
+                <h3 style="font-size:18px;">Anchored for today.</h3>
+                <p style="font-size:13px;">Checked in, meeting logged, Step 1 progress. Come back tomorrow — practice updates daily.</p>
+              </div>
+            </div>
+            <!-- Right rail cards stack below on mobile -->
+            <div class="sup-card" style="margin-top: 14px;">
+              <h4>People</h4>
+              <div class="sup-row"><span class="left">Sponsor: Angel</span><span class="right">AA</span></div>
+              <div class="sup-row"><span class="left">Sponsees</span><span class="right">2 active</span></div>
+              <div class="add-person-btn">+ Invite a sponsee</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPEN QUESTIONS -->
+  <div class="state-section">
+    <div class="state-header">
+      <h2>Open questions · pre-build</h2>
+      <span class="tag">For review</span>
+    </div>
+
+    <div class="callout">
+      <strong>1. Label — resolved:</strong> <strong>Today's practice</strong>. Reserves "Anchored" language for the completion moment only ("Anchored in for today" post-save, "Anchored for today" caught-up). "Practice" quietly echoes step work and daily discipline without chore-speak, and pairs naturally with the caught-up footer ("Come back tomorrow — practice updates daily"). Subtitle copy stays warm and invitational ("Small things that keep you grounded. Skip what doesn't fit today."). For sponsor alerts, subtitle becomes "Angel needs you first — then tend to yourself." Copy can still be tightened via the ux-copy skill before build, but the direction is set.
+    </div>
+    <div class="callout">
+      <strong>2. How many items max?</strong> Proposal: 4–6 items. More than 6 feels like the old cluttered dashboard. Items past #6 either roll to tomorrow or cluster ("3 older items →").
+    </div>
+    <div class="callout">
+      <strong>3. What drives order?</strong> Priority rule: (a) cross-role alerts (struggling sponsees, review waits) first, (b) daily-habit items (check-in, meetings) next, (c) step-work progress, (d) optional/enriching items last.
+    </div>
+    <div class="callout">
+      <strong>4. Refresh cadence:</strong> The day rolls over at 4am local time — a soft boundary so late-night check-ins still count toward "today." Completed items stay visible (checked through) until rollover so the sense of accomplishment lingers through the day. User-facing copy never says "4am" or "list" — it says "practice updates daily."
+    </div>
+    <div class="callout">
+      <strong>5. Role switching — resolved:</strong>
+      Cross-role pull-through is limited to three item types — (a) sponsee check-in alerts (struggling / relapsed / silent), (b) sponsee step-work submissions awaiting review, (c) upcoming sponsee milestones worth acknowledging.
+      Priority rule: "self first, but alerts override" — Tier 1 struggling alerts, Tier 2 own daily (check-in / step work / meetings), Tier 3 sponsor tasks (reviews, milestone prompts), Tier 4 enrichment.
+      The My Journey / My Sponsees tabs remain for detail work but the Today queue is the daily landing.
+    </div>
+    <div class="callout">
+      <strong>6. Step-work integration:</strong> Deliberately separate flow. A Today item can deep-link to a specific prompt, but prompts don't live inline in the check-in. This matches how the step work actually functions (long-form reflection).
+    </div>
+    <div class="callout">
+      <strong>7. Meeting smart-chip fallbacks:</strong> If a user has 0 logged meetings, the chips become static defaults ("add your first meeting"). If they have 10+, pick top 2–3 and include "+ different meeting" for long tail. Custom meetings (saved personal/family/sponsor meetings) live in a new <code>user_custom_meetings</code> table and are unioned with public meetings in the chip ranking query. Personal chips get a subtle gold "personal" badge so they're visually distinct.
+    </div>
+    <div class="callout">
+      <strong>7b. Mood scale — 5 points:</strong> 😖 Struggling · 😕 Hard · 😐 Okay · 🙂 Good · 😊 Great. Preserves "struggling" as the existing alert-trigger (no DB enum migration needed beyond adding "hard" and "good"). Struggling triggers the red sponsor alert; "hard" is visible to sponsor in sponsee history but does not alert. "Good" and "great" are both positive but distinct for trend graphing. Three points would lose trend resolution; seven points would add noise without gain.
+    </div>
+    <div class="callout">
+      <strong>7c. Custom meeting data model + smart recurrence:</strong> new <code>user_custom_meetings</code> table: <code>id, user_id, name, type (enum: family / sponsor / church / other), recurrence (enum: once / daily / weekly / custom), day_of_week, time, is_active, is_private, created_at</code>. Smart recurrence detection on the form: 3+ same-day-of-week logs → pre-select "Weekly"; 4+ consecutive days → pre-select "Daily" (Angel's "It Takes AA Village"). Gold <strong>AUTO</strong> badge on the pre-selected chip so the user knows it's a suggestion they can override.
+    </div>
+    <div class="callout">
+      <strong>7d. Personal meeting privacy:</strong> personal meetings (sister coffee, church group, family support) default to <em>content-private / count-shared</em>. Sponsor sees "Angel logged 2 personal meetings this week" but not the name or note. "Private" checkbox on the custom meeting form surfaces this explicitly. Public meetings (AA, NA, CoDA with formal names) remain shared in full — the assumption is that fellowship meetings are already public information.
+    </div>
+    <div class="callout">
+      <strong>7e. Hard-day nudge logic:</strong> single "hard" check-in is not an alert — it's visible to sponsor in history but silent. Three consecutive "hard" check-ins (or a "hard" → "struggling" escalation) triggers a gentle nudge in the sponsor's Today queue: "Angel has had 3 hard days this week — consider checking in." Softer treatment than the red "struggling" alert.
+    </div>
+    <div class="callout">
+      <strong>7f. Daily quote:</strong> rotates daily, pulled from a curated quote library (can start with ~50 quotes, add more over time). Filtered by tone — morning quotes lean energetic, evening lean reflective, caught-up lean peaceful. Struggling check-ins could pull from a different subset ("You showed up. That's the work."). Stored in a simple <code>inspiration_quotes</code> table with <code>text, attribution, tone_tag, is_active</code>.
+    </div>
+    <div class="callout">
+      <strong>7g. Sponsor milestone reminder cadence:</strong> AA milestone coins follow a standard ladder — 24 hours (desire), 30 days, 60 days, 90 days, 6 months, 9 months, 1 year, then annually. Sponsors often order a physical chip (typical vendor ship window 5–10 business days) and sometimes organize a dinner or gathering, especially for the 1-year. Surface-to-sponsor windows:
+      <table style="margin-top: 10px; font-size: 13px; border-collapse: collapse; width: 100%;">
+        <tr style="background: var(--warm-gray); font-weight: 600;">
+          <td style="padding: 6px 10px; border: 1px solid var(--border);">Milestone</td>
+          <td style="padding: 6px 10px; border: 1px solid var(--border);">Surface to sponsor</td>
+          <td style="padding: 6px 10px; border: 1px solid var(--border);">Notes</td>
+        </tr>
+        <tr><td style="padding: 6px 10px; border: 1px solid var(--border);">24h / desire chip</td><td style="padding: 6px 10px; border: 1px solid var(--border);">Day-of</td><td style="padding: 6px 10px; border: 1px solid var(--border);">Usually given in-person at meeting</td></tr>
+        <tr><td style="padding: 6px 10px; border: 1px solid var(--border);">30 days</td><td style="padding: 6px 10px; border: 1px solid var(--border);">7 days before</td><td style="padding: 6px 10px; border: 1px solid var(--border);">Rush shipping still possible</td></tr>
+        <tr><td style="padding: 6px 10px; border: 1px solid var(--border);">60 days</td><td style="padding: 6px 10px; border: 1px solid var(--border);">10 days before</td><td style="padding: 6px 10px; border: 1px solid var(--border);">Standard ship window</td></tr>
+        <tr><td style="padding: 6px 10px; border: 1px solid var(--border);">90 days</td><td style="padding: 6px 10px; border: 1px solid var(--border);">10 days before</td><td style="padding: 6px 10px; border: 1px solid var(--border);">Standard ship window</td></tr>
+        <tr><td style="padding: 6px 10px; border: 1px solid var(--border);">6 months</td><td style="padding: 6px 10px; border: 1px solid var(--border);">14 days before</td><td style="padding: 6px 10px; border: 1px solid var(--border);">More sponsors personalize</td></tr>
+        <tr><td style="padding: 6px 10px; border: 1px solid var(--border);">9 months</td><td style="padding: 6px 10px; border: 1px solid var(--border);">14 days before</td><td style="padding: 6px 10px; border: 1px solid var(--border);">&nbsp;</td></tr>
+        <tr style="background: rgba(212,165,116,0.1);"><td style="padding: 6px 10px; border: 1px solid var(--border); font-weight: 600;">1 year (big one)</td><td style="padding: 6px 10px; border: 1px solid var(--border); font-weight: 600;">21 days before</td><td style="padding: 6px 10px; border: 1px solid var(--border);">Time to plan chip + gathering / dinner / cake</td></tr>
+        <tr><td style="padding: 6px 10px; border: 1px solid var(--border);">18 months</td><td style="padding: 6px 10px; border: 1px solid var(--border);">10 days before</td><td style="padding: 6px 10px; border: 1px solid var(--border);">&nbsp;</td></tr>
+        <tr><td style="padding: 6px 10px; border: 1px solid var(--border);">Annual (2 yr, 3 yr, …)</td><td style="padding: 6px 10px; border: 1px solid var(--border);">14 days before</td><td style="padding: 6px 10px; border: 1px solid var(--border);">Consistent year-over-year</td></tr>
+      </table>
+      Inside window, the reminder surfaces in the sponsor's Today queue ("Mike hits 2 years sober on April 30 · 14 days out"). Outside window, it lives on the sponsee's profile page only. Day-of, the reminder flips to celebratory tone ("🎉 Mike is celebrating 2 years today — reach out").
+    </div>
+    <div class="callout">
+      <strong>7h. Celebration panel — dismissible + mood-aware:</strong> The post-checkin celebration (State 2b) is intentionally <em>not</em> a lock-out. Members can close via × in the top right, or let the 8s auto-dismiss return them to today's practice so they can continue with step work, reading, etc. Two CTAs: "Keep going" (primary — scrolls to next unchecked item) and "Done for today" (secondary — closes everything). On rough days (struggling / hard mood), the panel shifts: confetti still fires (softer palette, no bright yellow-hero), streak badge hides, a compassionate quote callout replaces the bright streak, the primary CTA becomes "Call my sponsor" for struggling, and auto-dismiss extends to 12s so the member has time to read.
+    </div>
+    <div class="callout">
+      <strong>8. Gamification layer:</strong> Confetti moment on check-in save (State 2b) is the on-ramp — fires for every successful check-in, because showing up on a hard day <em>is</em> the win. Streak badge appears only once member has a 2+ day streak and is suppressed on rough-day variants. A broken streak is softened, not punished — "Every day is Day 1 when you need it to be." Future: tie the caught-up state into a weekly view showing the streak bar, which links to the fuller gamification ideas already in <code>gamification-wireframes.html</code>.
+    </div>
+    <div class="callout">
+      <strong>9. Validation:</strong> Before build, a 20-min interview with Angel + 2 others. Test: (a) does the Today concept reduce confusion, (b) does the unified check-in feel faster than separate actions, (c) does the struggling-sponsee alert read correctly — helpful or alarming, (d) does the caught-up state feel rewarding or empty, (e) does the confetti feel warm or cheesy.
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

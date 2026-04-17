@@ -1,5 +1,11 @@
 # CLAUDE.md — SoberAnchor Development Standards
 
+## Coding Behavior (read first)
+Before writing any code in this repo, load the **karpathy-guidelines** skill at
+`.claude/skills/karpathy-guidelines/SKILL.md`. Its four principles — Think
+Before Coding, Simplicity First, Surgical Changes, Goal-Driven Execution —
+govern *how* you write code. The rules below govern *what* SoberAnchor needs.
+
 ## Project Context
 - **Stack:** Next.js + Supabase + Tailwind, deployed on Vercel at soberanchor.com
 - **Supabase project:** ybpwqqbnfphdmsktghqd (us-west-1)
