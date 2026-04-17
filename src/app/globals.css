@@ -150,6 +150,13 @@ body {
   .today-label { font-size: 22px; }
 }
 
+/* ── Mood chip labels — abbreviate on very narrow viewports ── */
+.mood-label-short { display: none; }
+@media (max-width: 399px) {
+  .mood-label-full  { display: none; }
+  .mood-label-short { display: inline; }
+}
+
 /* ── Celebration panel — confetti ── */
 @keyframes confettiFall {
   0%   { transform: translateY(0) rotate(0deg);    opacity: 1; }

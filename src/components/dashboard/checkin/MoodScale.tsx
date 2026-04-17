@@ -1,9 +1,19 @@
 'use client'
+import type { RefObject } from 'react'
 import { MOODS, type MoodKey } from './checkin-types'
 
 interface Props {
   value: MoodKey | null
   onChange: (mood: MoodKey) => void
+  firstButtonRef?: RefObject<HTMLButtonElement | null>
+}
+
+const SHORT_LABELS: Record<MoodKey, string> = {
+  struggling: 'Strug.',
+  hard: 'Hard',
+  okay: 'Okay',
+  good: 'Good',
+  great: 'Great',
 }
 
 // Border/bg colors per mood when selected
@@ -15,19 +25,20 @@ const MOOD_COLORS: Record<MoodKey, { border: string; bg: string }> = {
   great:      { border: 'var(--gold-hero)',  bg: 'rgba(240,192,64,0.08)' },
 }
 
-export default function MoodScale({ value, onChange }: Props) {
+export default function MoodScale({ value, onChange, firstButtonRef }: Props) {
   return (
     <div
       role="radiogroup"
       aria-label="How are you today?"
       style={{ display: 'flex', gap: 6 }}
     >
-      {MOODS.map(m => {
+      {MOODS.map((m, i) => {
         const selected = value === m.key
         const colors = MOOD_COLORS[m.key]
         return (
           <button
             key={m.key}
+            ref={i === 0 ? firstButtonRef : undefined}
             role="radio"
             aria-checked={selected}
             onClick={() => onChange(m.key)}
@@ -57,7 +68,8 @@ export default function MoodScale({ value, onChange }: Props) {
                 lineHeight: 1,
               }}
             >
-              {m.label}
+              <span className="mood-label-full">{m.label}</span>
+              <span className="mood-label-short">{SHORT_LABELS[m.key]}</span>
             </span>
           </button>
         )

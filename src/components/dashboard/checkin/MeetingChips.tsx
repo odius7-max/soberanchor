@@ -111,7 +111,7 @@ export default function MeetingChips({ userId, value, onChange, onCustom }: Prop
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {[1, 2].map(i => (
-          <div key={i} style={{ height: 44, borderRadius: 10, background: 'var(--warm-gray)', animation: 'pulse 1.5s infinite' }} />
+          <div key={i} className="animate-pulse" style={{ height: 44, borderRadius: 10, background: 'var(--warm-gray)' }} />
         ))}
       </div>
     )
@@ -159,10 +159,9 @@ export default function MeetingChips({ userId, value, onChange, onCustom }: Prop
         </button>
       ))}
 
-      {/* + Custom meeting */}
+      {/* + Custom meeting — action button, not a radio selection */}
       <button
-        role="radio"
-        aria-checked={false}
+        type="button"
         onClick={onCustom}
         style={chipStyle(false)}
       >

@@ -213,7 +213,7 @@ export default function CheckInModal({ userId, onClose }: Props) {
                 onClick={handleClose}
                 aria-label="Close — return to today's practice"
                 title="Close — return to today's practice"
-                style={{ fontSize: 20, lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--mid)', padding: '2px 0 2px 12px', flexShrink: 0 }}
+                style={{ fontSize: 20, lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--mid)', flexShrink: 0, minWidth: 44, minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
                 ×
               </button>
@@ -230,6 +230,7 @@ export default function CheckInModal({ userId, onClose }: Props) {
                 <MoodScale
                   value={form.mood}
                   onChange={mood => setForm(f => ({ ...f, mood }))}
+                  firstButtonRef={firstFocusRef}
                 />
               </div>
 
@@ -298,7 +299,6 @@ export default function CheckInModal({ userId, onClose }: Props) {
             {/* Footer */}
             <div className="px-6 pb-6 pt-3 flex-shrink-0" style={{ borderTop: '1px solid var(--border)' }}>
               <button
-                ref={firstFocusRef}
                 onClick={handleSave}
                 disabled={submitting || !form.mood}
                 className="w-full rounded-xl font-semibold text-white"
