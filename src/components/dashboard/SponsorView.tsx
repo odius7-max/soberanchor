@@ -12,7 +12,6 @@ import Link from 'next/link'
 import CheckInReportModal from './CheckInReportModal'
 import StepWorkReportModal from './StepWorkReportModal'
 import MeetingReportModal from './MeetingReportModal'
-import SponsorNavTabs from './sponsor/SponsorNavTabs'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -707,7 +706,6 @@ export default function SponsorView({ sponsees, pendingRequests, displayName, us
   // ─── Reusable inner content ───────────────────────────────────────────────
   const dashboardContent = (
     <>
-      <SponsorNavTabs active="sponsees" />
       <PendingRequests requests={pendingRequests} perspective="as_sponsor" />
 
       {/* ── Summary stats row ── */}
@@ -727,13 +725,26 @@ export default function SponsorView({ sponsees, pendingRequests, displayName, us
       </div>
 
       {/* ── Header + add button ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 8, flexWrap: 'wrap' }}>
         <h3 style={{ fontWeight: 700, color: 'var(--navy)', fontSize: 15, margin: 0 }}>Your Sponsees</h3>
-        <button
-          onClick={() => setShowAddModal(true)}
-          style={{ background: 'var(--navy)', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
-          + Add Sponsee
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Link
+            href="/dashboard/sponsees/program"
+            style={{
+              background: '#fff', color: 'var(--navy)',
+              border: '1.5px solid var(--border)', borderRadius: 8,
+              padding: '7px 14px', fontSize: 13, fontWeight: 600,
+              cursor: 'pointer', fontFamily: 'var(--font-body)',
+              textDecoration: 'none', whiteSpace: 'nowrap',
+            }}>
+            Task Library →
+          </Link>
+          <button
+            onClick={() => setShowAddModal(true)}
+            style={{ background: 'var(--navy)', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
+            + Add Sponsee
+          </button>
+        </div>
       </div>
 
       {/* ── Sponsee cards ── */}
