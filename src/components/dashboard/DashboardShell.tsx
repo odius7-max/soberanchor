@@ -26,6 +26,7 @@ import JourneySubNav from './nav/JourneySubNav'
 import type { JourneyTab } from './nav/JourneySubNav'
 import SponseesTab from './nav/SponseesTab'
 import Hero from './Hero'
+import RightRail from './RightRail'
 
 type Mode = 'my' | 'sponsees' | 'checkin' | 'facility'
 type Tab = 'today' | 'overview' | 'stepwork' | 'journal' | 'meetings' | 'tasks' | 'saved'
@@ -315,25 +316,47 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
               </div>
             )}
 
-            {activeTab === 'today' && TODAY_QUEUE_ENABLED && todayQueueItems && (
-              <TodayCard
-                items={todayQueueItems}
-                overflowCount={todayQueueOverflow ?? 0}
-                caughtUp={todayQueueItems.every(i => i.completed)}
-                onCheckIn={() => setCheckInOpen(true)}
-                caughtUpSummaryParts={(() => {
-                  const parts: string[] = []
-                  const ci = recentCheckIns[0]
-                  if (ci?.mood) parts.push(`checked in '${ci.mood}'`)
-                  const mtg = meetingAttendance[0]
-                  if (mtg?.meeting_name) parts.push(`logged ${mtg.meeting_name}`)
-                  const step = profile?.current_step
-                  if (stepWorkCount > 0 && step) {
-                    parts.push(`answered ${stepWorkCount} Step ${step} prompt${stepWorkCount !== 1 ? 's' : ''}`)
-                  }
-                  return parts
-                })()}
-              />
+            {activeTab === 'today' && TODAY_QUEUE_ENABLED && (
+              <div className="grid lg:grid-cols-[minmax(0,1fr)_320px]" style={{ gap: 16 }}>
+                {/* Main column */}
+                <div>
+                  {todayQueueItems && (
+                    <TodayCard
+                      items={todayQueueItems}
+                      overflowCount={todayQueueOverflow ?? 0}
+                      caughtUp={todayQueueItems.every(i => i.completed)}
+                      onCheckIn={() => setCheckInOpen(true)}
+                      caughtUpSummaryParts={(() => {
+                        const parts: string[] = []
+                        const ci = recentCheckIns[0]
+                        if (ci?.mood) parts.push(`checked in '${ci.mood}'`)
+                        const mtg = meetingAttendance[0]
+                        if (mtg?.meeting_name) parts.push(`logged ${mtg.meeting_name}`)
+                        const step = profile?.current_step
+                        if (stepWorkCount > 0 && step) {
+                          parts.push(`answered ${stepWorkCount} Step ${step} prompt${stepWorkCount !== 1 ? 's' : ''}`)
+                        }
+                        return parts
+                      })()}
+                    />
+                  )}
+                </div>
+                {/* Right rail */}
+                <RightRail
+                  currentStep={currentStep}
+                  completedSteps={completedSteps}
+                  allStepsDone={allStepsDone}
+                  journalCount={journalCount}
+                  stepWorkCount={stepWorkCount}
+                  meetingsThisWeek={meetingsThisWeek}
+                  meetingsTotal={meetingsTotal}
+                  activeSponsors={activeSponsors}
+                  sponsees={sponsees}
+                  isSponsor={isSponsor}
+                  recentCheckIns={recentCheckIns}
+                  today={new Date().toISOString().slice(0, 10)}
+                />
+              </div>
             )}
             {activeTab === 'overview' && (
               <OverviewTab userId={userId} activeFellowshipId={activeFellowshipId} currentStep={currentStep} completedSteps={completedSteps} allStepsDone={allStepsDone} journalCount={journalCount} stepWorkCount={stepWorkCount} recentCheckIns={recentCheckIns} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} recentMeetings={meetingAttendance.slice(0,3)} readingAssignments={readingAssignments} activeSponsors={activeSponsors} isAvailableSponsor={isSponsor} activityItems={activityItems} displayName={displayName} onCheckIn={() => setCheckInOpen(true)} onJournal={() => setActiveTab('journal')} onViewTasks={() => setActiveTab('tasks')} />
