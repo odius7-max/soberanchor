@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -19,14 +19,26 @@
   --border-warm: #E8E4DF;
   --mid: #888;
   --dark: #2C2C2C;
-  --font-display: 'Cormorant Garamond', Georgia, serif;
+  /* Display font kept as alias to body for now — Cormorant Garamond retired
+     across the app. Existing `var(--font-display)` references stay valid but
+     render in Outfit. Safe to remove the alias (and all call sites) in a
+     follow-up cleanup sweep. */
   --font-body: 'Outfit', sans-serif;
+  --font-display: var(--font-body);
   /* Shadow tokens */
   --shadow-card: 0 4px 18px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.027), 0 0.8px 3px rgba(0,0,0,0.02);
   --shadow-feature: 0 8px 30px rgba(0,51,102,0.08);
   --shadow-hero: 0 24px 80px rgba(0,51,102,0.15);
   --shadow-button: 0 4px 12px rgba(0,51,102,0.2);
   --shadow-gold: 0 4px 12px rgba(212,165,116,0.3);
+  --shadow-subnav-inset: inset 0 1px 0 rgba(0,0,0,0.015);
+  /* Today-queue tokens */
+  --gold-hero: #f0c040;
+  --green-ok: #27AE60;
+  --green-bg: rgba(39,174,96,0.12);
+  --red-alert: #C0392B;
+  --red-alert-bg: rgba(192,57,43,0.1);
+  --teal-bg: rgba(42,138,153,0.08);
 }
 
 @theme inline {
@@ -42,6 +54,8 @@
   --color-mid: #888888;
   --color-dark: #2C2C2C;
   --color-green: #27AE60;
+  --color-gold-hero: #f0c040;
+  --color-red-alert: #C0392B;
 }
 
 * { box-sizing: border-box; }
@@ -116,3 +130,27 @@ body {
 .animate-fade-up-d1 { animation: fadeUp 0.5s ease 0.1s forwards; opacity: 0; }
 .animate-fade-up-d2 { animation: fadeUp 0.5s ease 0.2s forwards; opacity: 0; }
 .animate-fade-up-d3 { animation: fadeUp 0.5s ease 0.3s forwards; opacity: 0; }
+
+/* ── Today queue — subnav visual separation ── */
+.subnav-band {
+  background: var(--warm-gray);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-subnav-inset);
+}
+
+/* ── Today queue — section headline ── */
+.today-label {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: -0.4px;
+}
+@media (min-width: 768px) {
+  .today-label { font-size: 22px; }
+}
+
+/* ── Today queue — reduced-motion: disable confetti animation ── */
+@media (prefers-reduced-motion: reduce) {
+  .confetti-piece { animation: none !important; }
+}
