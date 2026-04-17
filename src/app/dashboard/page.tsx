@@ -421,8 +421,8 @@ export default async function DashboardPage() {
   const checkedInToday = recentCheckIns.length > 0 && recentCheckIns[0].check_in_date === today
 
   // Resolve the specific workbook slug for the current step so the CTA lands on the
-  // correct answering page (no /dashboard/step-work index exists).
-  let stepWorkHref = '/dashboard/step-work/aa-step-1-reading'
+  // correct answering page. Falls back to /dashboard/step-work/pending (always exists).
+  let stepWorkHref: string | undefined
   if (todayQueueEnabled && profile?.current_step) {
     let q = supabase
       .from('program_workbooks')
@@ -435,7 +435,7 @@ export default async function DashboardPage() {
       q = q.eq('fellowship_id', profile.primary_fellowship_id) as typeof q
     }
     const { data: wb } = await q.maybeSingle()
-    if (wb?.slug) stepWorkHref = `/dashboard/step-work/${wb.slug}`
+    stepWorkHref = wb?.slug ? `/dashboard/step-work/${wb.slug}` : '/dashboard/step-work/pending'
   }
 
   let todayQueue = todayQueueEnabled

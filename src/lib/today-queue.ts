@@ -68,8 +68,8 @@ export function buildMemberTodayQueue(input: MemberQueueInput): TodayQueueResult
     completed: input.checkedInToday,
   })
 
-  // Priority 450 — step work in progress
-  if (input.currentStep) {
+  // Priority 450 — step work in progress (only when a resolvable href is available)
+  if (input.currentStep && input.stepWorkHref) {
     items.push({
       id: 'stepwork',
       icon: '📝',
@@ -79,7 +79,7 @@ export function buildMemberTodayQueue(input: MemberQueueInput): TodayQueueResult
         ? `${input.stepWorkCount} prompt${input.stepWorkCount !== 1 ? 's' : ''} answered`
         : 'Ready to begin',
       cta: 'Continue →',
-      href: input.stepWorkHref ?? '/dashboard/step-work/aa-step-1-reading',
+      href: input.stepWorkHref,
       priority: 450,
     })
   }
