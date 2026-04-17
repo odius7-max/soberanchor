@@ -19,6 +19,9 @@ export const MOODS: MoodOption[] = [
 export type MeetingKind = 'public' | 'custom'
 
 export interface SelectedMeeting {
+  // Stable identity for the UI chip — use chip.key from MeetingChipData.
+  // Required because multiple text-only attendance rows share id='' + kind='custom'.
+  key: string
   kind: MeetingKind
   id: string
   name: string
@@ -43,7 +46,9 @@ export interface NewCustomMeeting {
 
 export interface CheckinFormState {
   mood: MoodKey | null
-  meeting: SelectedMeeting | null
+  // 'none' = user explicitly chose "No meeting today"
+  // null  = user hasn't interacted with the meeting picker
+  meeting: SelectedMeeting | 'none' | null
   newCustom: NewCustomMeeting | null
   note: string
   isSharedWithSponsor: boolean

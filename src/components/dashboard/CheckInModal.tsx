@@ -109,7 +109,7 @@ export default function CheckInModal({ userId, onClose, hasActiveSponsor = false
     setForm(f => ({
       ...f,
       newCustom: custom,
-      meeting: { kind: 'custom', id: '', name: custom.name },
+      meeting: { key: 'custom:new', kind: 'custom', id: '', name: custom.name },
     }))
     setShowCustomForm(false)
   }
@@ -153,20 +153,42 @@ export default function CheckInModal({ userId, onClose, hasActiveSponsor = false
       if (cm) resolvedMeetingId = cm.id
     }
 
-    // 3. If meeting selected — insert meeting_attendance
-    const meetingName = form.meeting?.name ?? form.newCustom?.name ?? null
+    // 3. Meeting attendance bookkeeping
+    // Rules:
+    //   - If editing AND user interacted with the meeting picker (picked a
+    //     meeting, picked "No meeting today", or entered a custom), clear any
+    //     prior same-day dashboard_quick attendance so we don't double-count.
+    //     (Attendance logged from directory/geolocation/qr_code is preserved.)
+    //   - If editing AND user didn't touch meetings (meeting === null and no
+    //     newCustom), leave prior attendance alone.
+    //   - Insert a new attendance row only when an actual meeting was selected.
+    const meetingPicked = form.meeting && form.meeting !== 'none' ? form.meeting : null
+    const userInteractedWithMeetings = form.meeting !== null || !!form.newCustom
+
+    if (existingCheckInId && userInteractedWithMeetings) {
+      const today = new Date().toISOString().slice(0, 10)
+      await supabase
+        .from('meeting_attendance')
+        .delete()
+        .eq('user_id', userId)
+        .eq('checkin_method', 'dashboard_quick')
+        .gte('attended_at', `${today}T00:00:00Z`)
+        .lte('attended_at', `${today}T23:59:59Z`)
+    }
+
+    const meetingName = meetingPicked?.name ?? form.newCustom?.name ?? null
     if (meetingName) {
-      const isPublic = form.meeting?.kind === 'public'
+      const isPublic = meetingPicked?.kind === 'public'
       const isCustomSaved = !!resolvedMeetingId
-      const isExistingCustom = form.meeting?.kind === 'custom' && form.meeting.id
+      const isExistingCustom = meetingPicked?.kind === 'custom' && !!meetingPicked.id
 
       await supabase.from('meeting_attendance').insert({
         user_id: userId,
-        meeting_id: isPublic ? form.meeting!.id : null,
+        meeting_id: isPublic ? meetingPicked!.id : null,
         custom_meeting_id: isCustomSaved
           ? resolvedMeetingId
           : isExistingCustom
-            ? form.meeting!.id
+            ? meetingPicked!.id
             : null,
         meeting_name: meetingName,
         attended_at: new Date().toISOString(),
@@ -283,11 +305,8 @@ export default function CheckInModal({ userId, onClose, hasActiveSponsor = false
                 ) : (
                   <MeetingChips
                     userId={userId}
-                    value={form.meeting ?? (form.meeting === null ? null : 'none')}
-                    onChange={v => {
-                      if (v === 'none') setForm(f => ({ ...f, meeting: null, newCustom: null }))
-                      else setForm(f => ({ ...f, meeting: v, newCustom: null }))
-                    }}
+                    value={form.meeting}
+                    onChange={v => setForm(f => ({ ...f, meeting: v, newCustom: null }))}
                     onCustom={() => { setShowCustomForm(true); setForm(f => ({ ...f, meeting: null })) }}
                   />
                 )}
@@ -348,7 +367,9 @@ export default function CheckInModal({ userId, onClose, hasActiveSponsor = false
                   transition: 'opacity 0.15s',
                 }}
               >
-                {submitting ? CHECKIN_COPY.saving : CHECKIN_COPY.save}
+                {submitting
+                  ? (existingCheckInId ? CHECKIN_COPY.updating : CHECKIN_COPY.saving)
+                  : (existingCheckInId ? CHECKIN_COPY.update : CHECKIN_COPY.save)}
               </button>
             </div>
           </>

@@ -94,7 +94,9 @@ export default function MeetingChips({ userId, value, onChange, onCustom }: Prop
   function isSelected(chip: MeetingChipData) {
     if (value === 'none') return false
     if (!value) return false
-    return value.id === chip.id && value.kind === chip.kind
+    // Match by the chip's unique key. Comparing id+kind alone would highlight
+    // every text-only attendance row at once (they all share id='' + kind='custom').
+    return value.key === chip.key
   }
 
   function select(chip: MeetingChipData) {
@@ -102,7 +104,7 @@ export default function MeetingChips({ userId, value, onChange, onCustom }: Prop
       if (isSelected(chip)) {
         onChange(null) // deselect
       } else {
-        onChange({ kind: chip.kind, id: chip.id!, name: chip.name })
+        onChange({ key: chip.key, kind: chip.kind, id: chip.id ?? '', name: chip.name })
       }
     }
   }
