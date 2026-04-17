@@ -8,6 +8,7 @@ interface MemberQueueInput {
   stepWorkCount: number
   meetingsThisWeek: number
   weeklyMeetingTarget?: number
+  stepWorkHref?: string
 }
 
 export function buildMemberTodayQueue(input: MemberQueueInput): TodayQueueResult {
@@ -37,7 +38,7 @@ export function buildMemberTodayQueue(input: MemberQueueInput): TodayQueueResult
         ? `${input.stepWorkCount} prompt${input.stepWorkCount !== 1 ? 's' : ''} answered`
         : 'Ready to begin',
       cta: 'Continue →',
-      href: '/dashboard/step-work',
+      href: input.stepWorkHref ?? '/dashboard/step-work/aa-step-1-reading',
       priority: 450,
     })
   }
@@ -50,7 +51,7 @@ export function buildMemberTodayQueue(input: MemberQueueInput): TodayQueueResult
     label: 'Log a meeting this week',
     sub: `${input.meetingsThisWeek} of ${target} weekly target`,
     cta: 'Find meetings →',
-    href: '/meetings',
+    href: '/find/meetings',
     priority: 400,
     completed: input.meetingsThisWeek >= target,
   })
@@ -102,7 +103,7 @@ export function buildSponsorTodayItems(input: SponsorTodayInput): TodayItemData[
         label: `${sponsee.name} checked in as struggling`,
         sub: 'Today · reach out when you can',
         cta: 'Reach out →',
-        href: `/dashboard/sponsees/${sponsee.id}`,
+        href: `/my-recovery/sponsor/sponsee/${sponsee.id}`,
         priority: 600,
       })
       continue
@@ -120,7 +121,7 @@ export function buildSponsorTodayItems(input: SponsorTodayInput): TodayItemData[
         label: `${sponsee.name} hasn't checked in for ${daysSilent} days`,
         sub: 'A quick check-in might help',
         cta: 'Reach out →',
-        href: `/dashboard/sponsees/${sponsee.id}`,
+        href: `/my-recovery/sponsor/sponsee/${sponsee.id}`,
         priority: 580,
       })
     }
@@ -134,7 +135,7 @@ export function buildSponsorTodayItems(input: SponsorTodayInput): TodayItemData[
         label: `Review ${sponsee.name}'s step work`,
         sub: `${sponsee.pendingReviews} awaiting response`,
         cta: 'Review →',
-        href: `/dashboard/sponsees/${sponsee.id}`,
+        href: `/my-recovery/sponsor/sponsee/${sponsee.id}`,
         priority: 350,
       })
     }
@@ -158,7 +159,7 @@ export function buildSponsorTodayItems(input: SponsorTodayInput): TodayItemData[
         : `${r.sponsee_name} hits ${r.milestone_label} on ${formattedDate}`,
       sub: dayOf ? undefined : `${daysOut} days out · time to order a chip or plan something`,
       cta: `Plan their ${r.milestone_label} →`,
-      href: `/dashboard/sponsees/${r.sponsee_user_id}`,
+      href: `/my-recovery/sponsor/sponsee/${r.sponsee_user_id}`,
       priority: 300,
     })
   }

@@ -406,12 +406,31 @@ export default async function DashboardPage() {
   const today = getTodayDateStr()
   const checkedInToday = recentCheckIns.length > 0 && recentCheckIns[0].check_in_date === today
 
+  // Resolve the specific workbook slug for the current step so the CTA lands on the
+  // correct answering page (no /dashboard/step-work index exists).
+  let stepWorkHref = '/dashboard/step-work/aa-step-1-reading'
+  if (todayQueueEnabled && profile?.current_step) {
+    let q = supabase
+      .from('program_workbooks')
+      .select('slug')
+      .eq('is_active', true)
+      .eq('step_number', profile.current_step)
+      .order('sort_order')
+      .limit(1)
+    if (profile.primary_fellowship_id) {
+      q = q.eq('fellowship_id', profile.primary_fellowship_id) as typeof q
+    }
+    const { data: wb } = await q.maybeSingle()
+    if (wb?.slug) stepWorkHref = `/dashboard/step-work/${wb.slug}`
+  }
+
   let todayQueue = todayQueueEnabled
     ? buildMemberTodayQueue({
         checkedInToday,
         currentStep: profile?.current_step ?? null,
         stepWorkCount,
         meetingsThisWeek,
+        stepWorkHref,
       })
     : null
 
