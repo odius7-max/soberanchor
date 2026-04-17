@@ -125,21 +125,39 @@ export function buildSponsorTodayItems(input: SponsorTodayInput): TodayItemData[
       continue
     }
 
-    // Tier 1 — silent 3+ days (priority 580); skip if already alerted struggling
-    const daysSilent = latest
-      ? Math.floor((new Date(today).getTime() - new Date(latest.date).getTime()) / 86_400_000)
-      : 999
-    if (daysSilent >= 3) {
+    // Tier 1 — silent: no shared check-ins at all, or none in 3+ days (priority 580)
+    if (!latest) {
+      // No rows returned by the is_shared_with_sponsor=true query — sponsee hasn't
+      // shared any check-ins yet. Don't expose a raw day-count sentinel.
       items.push({
         id: `alert-silent-${sponsee.id}`,
         icon: '🔔',
         variant: 'alert',
-        label: `${sponsee.name} hasn't checked in for ${daysSilent} days`,
-        sub: 'A quick check-in might help',
+        label: `${sponsee.name} — no recent check-ins shared with you`,
+        sub: undefined,
         cta: 'Reach out →',
         href: `/my-recovery/sponsor/sponsee/${sponsee.id}`,
         priority: 580,
       })
+    } else {
+      const daysSilent = Math.floor(
+        (new Date(today).getTime() - new Date(latest.date).getTime()) / 86_400_000
+      )
+      if (daysSilent >= 3) {
+        const lastDate = new Date(latest.date + 'T00:00:00').toLocaleDateString('en-US', {
+          month: 'short', day: 'numeric',
+        })
+        items.push({
+          id: `alert-silent-${sponsee.id}`,
+          icon: '🔔',
+          variant: 'alert',
+          label: `${sponsee.name} hasn't checked in for ${daysSilent} day${daysSilent !== 1 ? 's' : ''}`,
+          sub: `Last shared check-in: ${lastDate}`,
+          cta: 'Reach out →',
+          href: `/my-recovery/sponsor/sponsee/${sponsee.id}`,
+          priority: 580,
+        })
+      }
     }
 
     // Tier 3 — pending step work reviews (priority 350)
