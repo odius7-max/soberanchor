@@ -141,8 +141,7 @@ export default function CheckInModal({ userId, onClose }: Props) {
             : null,
         meeting_name: meetingName,
         attended_at: new Date().toISOString(),
-        // 'dashboard_quick' not in enum — using 'manual' (spec assumed a new value)
-        checkin_method: 'manual',
+        checkin_method: 'dashboard_quick',
         notes: form.note.trim() || null,
       })
     }
