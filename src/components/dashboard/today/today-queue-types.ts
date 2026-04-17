@@ -10,6 +10,11 @@ export interface TodayItemData {
   href?: string
   priority: number
   completed?: boolean
+  /**
+   * When set, renders a check-to-complete affordance. Clicking it calls
+   * acknowledge_sponsee_checkin RPC and optimistically hides the row.
+   */
+  ackCheckInId?: string
 }
 
 export interface TodayQueueResult {

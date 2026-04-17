@@ -1,5 +1,8 @@
 'use client'
 import Link from 'next/link'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 import type { TodayItemData } from './today-queue-types'
 
 interface Props {
@@ -8,6 +11,29 @@ interface Props {
 }
 
 export default function TodayItem({ item, onCheckIn }: Props) {
+  const router = useRouter()
+  const [locallyHidden, setLocallyHidden] = useState(false)
+  const [ackError, setAckError] = useState(false)
+
+  async function handleAcknowledge(e: React.MouseEvent) {
+    e.stopPropagation()
+    e.preventDefault()
+    if (!item.ackCheckInId) return
+    setLocallyHidden(true)
+    setAckError(false)
+    const supabase = createClient()
+    const { error } = await supabase.rpc('acknowledge_sponsee_checkin', {
+      p_check_in_id: item.ackCheckInId,
+    })
+    if (error) {
+      setLocallyHidden(false)
+      setAckError(true)
+      return
+    }
+    router.refresh()
+  }
+
+  if (locallyHidden) return null
   const iconBg =
     item.variant === 'gold' ? 'var(--gold-10)' :
     item.variant === 'alert' ? 'var(--red-alert-bg)' :
@@ -67,6 +93,28 @@ export default function TodayItem({ item, onCheckIn }: Props) {
 
       {item.completed ? (
         <div style={{ fontSize: 14, color: 'var(--mid)', flexShrink: 0 }}>✓</div>
+      ) : item.ackCheckInId ? (
+        <button
+          onClick={handleAcknowledge}
+          aria-label="Mark as handled"
+          title="Mark as handled"
+          style={{
+            flexShrink: 0,
+            width: 44,
+            height: 44,
+            borderRadius: '50%',
+            background: ackError ? 'var(--red-alert-bg)' : 'var(--teal-bg)',
+            border: `2px solid ${ackError ? 'var(--red-alert)' : 'var(--teal)'}`,
+            color: ackError ? 'var(--red-alert)' : 'var(--teal)',
+            fontSize: 18,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          ✓
+        </button>
       ) : (
         <div style={{ fontSize: 13, fontWeight: 600, color: ctaColor, flexShrink: 0 }}>
           {item.cta}

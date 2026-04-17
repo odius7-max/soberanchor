@@ -208,7 +208,7 @@ export default async function DashboardPage() {
         sponseeAdmin.from('user_profiles').select('id,display_name,sobriety_date').in('id', sponseeIds),
         // 60-day check-in history — only rows the sponsee opted to share
         sponseeAdmin.from('check_ins')
-          .select('user_id,check_in_date,mood,notes,sober_today,meetings_attended,called_sponsor')
+          .select('id,user_id,check_in_date,mood,notes,sober_today,meetings_attended,called_sponsor,sponsor_acknowledged_at')
           .in('user_id', sponseeIds)
           .eq('is_shared_with_sponsor', true)
           .gte('check_in_date', sixtyDaysAgoStr)
@@ -248,12 +248,14 @@ export default async function DashboardPage() {
       for (const ci of (sponseeCheckInsRes.data ?? [])) {
         if (!checkInsBySponsee[ci.user_id]) checkInsBySponsee[ci.user_id] = []
         checkInsBySponsee[ci.user_id].push({
+          id: ci.id as string,
           date: ci.check_in_date as string,
           mood: ci.mood as string | null,
           notes: ci.notes as string | null,
           soberToday: ci.sober_today as boolean,
           meetingsAttended: (ci.meetings_attended as number | null) ?? 0,
           calledSponsor: ci.called_sponsor as boolean | null,
+          sponsor_acknowledged_at: ci.sponsor_acknowledged_at as string | null,
         })
       }
 

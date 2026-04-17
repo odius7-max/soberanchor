@@ -119,7 +119,7 @@ export function buildMemberTodayQueue(input: MemberQueueInput): TodayQueueResult
 interface SponsorSponseeInput {
   id: string
   name: string
-  checkInHistory: Array<{ date: string; mood: string | null }>
+  checkInHistory: Array<{ id: string; date: string; mood: string | null; sponsor_acknowledged_at: string | null }>
   pendingReviews: number
 }
 
@@ -160,6 +160,8 @@ export function buildSponsorTodayItems(input: SponsorTodayInput): TodayItemData[
 
     // Tier 1 — severe check-in today (struggling | hard | crisis) — priority 600
     if (latest?.date === today && latest.mood && SEVERE_MOODS.has(latest.mood)) {
+      if (latest.sponsor_acknowledged_at) continue
+
       const mood = latest.mood
       items.push({
         id: `alert-${mood}-${sponsee.id}`,
@@ -170,6 +172,7 @@ export function buildSponsorTodayItems(input: SponsorTodayInput): TodayItemData[
         cta: 'Reach out →',
         href: `/my-recovery/sponsor/sponsee/${sponsee.id}`,
         priority: 600,
+        ackCheckInId: latest.id,
       })
       continue
     }
