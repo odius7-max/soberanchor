@@ -632,8 +632,8 @@ export default function DashboardBanner({
                             {/* Days */}
                             <div suppressHydrationWarning style={{ textAlign: 'right' }}>
                               {isActive ? (
-                                <span style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: '#fff', letterSpacing: '-0.5px', lineHeight: 1 }}>
-                                  {days.toLocaleString()}<span style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.5)', marginLeft: 3 }}>days</span>
+                                <span style={{ fontFamily: 'Inter, var(--font-body)', fontSize: 22, fontWeight: 700, color: '#f0c040', letterSpacing: '-0.5px', lineHeight: 1 }}>
+                                  {days.toLocaleString()}
                                 </span>
                               ) : (
                                 <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
@@ -668,8 +668,8 @@ export default function DashboardBanner({
                             {/* Days */}
                             <div suppressHydrationWarning style={{ textAlign: 'right' }}>
                               {isActive ? (
-                                <span style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#fff', letterSpacing: '-0.5px' }}>
-                                  {days.toLocaleString()}<span style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.5)', marginLeft: 2 }}>d</span>
+                                <span style={{ fontFamily: 'Inter, var(--font-body)', fontSize: 18, fontWeight: 700, color: '#f0c040', letterSpacing: '-0.5px' }}>
+                                  {days.toLocaleString()}
                                 </span>
                               ) : (
                                 <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>
@@ -702,7 +702,7 @@ export default function DashboardBanner({
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255, 255, 255, 0.06)', borderRadius: 10, padding: '10px 16px', marginTop: 12 }}>
                 <span style={{ fontSize: 16, flexShrink: 0 }}>🎯</span>
                 <span style={{ fontSize: 13, color: '#9badc4', fontWeight: 500 }}>
-                  <strong style={{ color: '#fff', fontWeight: 700 }}>{nextMLabel}</strong> — {daysToNext} day{daysToNext !== 1 ? 's' : ''} away
+                  <strong style={{ fontFamily: 'Inter, var(--font-body)', color: '#fff', fontWeight: 700 }}>{nextMLabel}</strong> — {daysToNext} day{daysToNext !== 1 ? 's' : ''} away
                 </span>
               </div>
             )}
@@ -755,19 +755,19 @@ export default function DashboardBanner({
                 {/* Currently On — anchored right of the step row */}
                 <div style={{
                   flexShrink: 0,
-                  background: allStepsDone ? 'rgba(39,174,96,0.12)' : 'rgba(42,138,153,0.12)',
-                  border: `1px solid ${allStepsDone ? 'rgba(39,174,96,0.3)' : 'rgba(42,138,153,0.3)'}`,
-                  borderRadius: 10,
-                  padding: '8px 14px',
+                  background: allStepsDone ? 'rgba(39,174,96,0.12)' : 'rgba(240, 192, 64, 0.12)',
+                  border: `1px solid ${allStepsDone ? 'rgba(39,174,96,0.3)' : 'rgba(240, 192, 64, 0.2)'}`,
+                  borderRadius: 12,
+                  padding: '12px 16px',
                   textAlign: 'center',
                 }}>
-                  <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 4, whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: allStepsDone ? 'rgba(255,255,255,0.35)' : 'rgba(240, 192, 64, 0.7)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 4, whiteSpace: 'nowrap' }}>
                     {allStepsDone ? 'Progress' : 'Currently On'}
                   </div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: allStepsDone ? '#27AE60' : '#2A8A99', lineHeight: 1, letterSpacing: '-0.3px' }}>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: allStepsDone ? '#27AE60' : '#f0c040', lineHeight: 1, letterSpacing: '-0.3px' }}>
                     {allStepsDone ? 'All Done' : `Step ${localCurrentStep}`}
                   </div>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', marginTop: 3, whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: 10, color: allStepsDone ? 'rgba(255,255,255,0.45)' : '#fff', marginTop: 3, whiteSpace: 'nowrap' }}>
                     {allStepsDone ? '12 of 12 ✓' : STEPS[localCurrentStep - 1]?.s}
                   </div>
                 </div>
