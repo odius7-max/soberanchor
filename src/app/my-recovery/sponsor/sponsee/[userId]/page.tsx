@@ -70,7 +70,7 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
     sponsorNotesRes,
   ] = await Promise.all([
     admin.from('user_profiles').select('display_name, sobriety_date, current_step').eq('id', sponseeId).single(),
-    admin.from('check_ins').select('id, check_in_date, mood, notes, sober_today, meetings_attended').eq('user_id', sponseeId).order('check_in_date', { ascending: false }).limit(5),
+    admin.from('check_ins').select('id, check_in_date, mood, notes, sober_today, meetings_attended').eq('user_id', sponseeId).eq('is_shared_with_sponsor', true).order('check_in_date', { ascending: false }).limit(5),
     admin.from('journal_entries').select('id, title, entry_date, excerpt, step_number').eq('user_id', sponseeId).eq('is_shared_with_sponsor', true).order('entry_date', { ascending: false }).limit(10),
     admin.from('step_work_entries')
       .select('id, workbook_id, review_status, submitted_at, reviewed_at, updated_at, program_workbooks(title, step_number, slug)')

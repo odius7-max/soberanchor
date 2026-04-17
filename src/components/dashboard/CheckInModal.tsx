@@ -39,9 +39,6 @@ async function computeStreak(userId: string): Promise<number> {
   return streak
 }
 
-// Rough moods default to shared so sponsors see safety-relevant check-ins
-const ROUGH_MOODS = new Set<MoodKey>(['struggling', 'hard'])
-
 export default function CheckInModal({ userId, onClose, hasActiveSponsor = false }: Props) {
   const router = useRouter()
   const backdropRef = useRef<HTMLDivElement>(null)
@@ -49,7 +46,7 @@ export default function CheckInModal({ userId, onClose, hasActiveSponsor = false
 
   const [phase, setPhase] = useState<Phase>('form')
   const [form, setForm] = useState<CheckinFormState>({
-    mood: null, meeting: null, newCustom: null, note: '', isSharedWithSponsor: false,
+    mood: null, meeting: null, newCustom: null, note: '', isSharedWithSponsor: hasActiveSponsor,
   })
   const [showCustomForm, setShowCustomForm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -234,12 +231,7 @@ export default function CheckInModal({ userId, onClose, hasActiveSponsor = false
                 </div>
                 <MoodScale
                   value={form.mood}
-                  onChange={mood => setForm(f => ({
-                    ...f,
-                    mood,
-                    // Reset share default when mood changes: rough → share, light → private
-                    isSharedWithSponsor: ROUGH_MOODS.has(mood),
-                  }))}
+                  onChange={mood => setForm(f => ({ ...f, mood }))}
                   firstButtonRef={firstFocusRef}
                 />
               </div>
@@ -258,8 +250,8 @@ export default function CheckInModal({ userId, onClose, hasActiveSponsor = false
                   </label>
                   <div style={{ fontSize: 11, color: 'var(--mid)', marginTop: 4, paddingLeft: 26 }}>
                     {form.isSharedWithSponsor
-                      ? 'Your sponsor will see this check-in'
-                      : 'Only you will see this check-in'}
+                      ? 'Your sponsor will see your mood and notes.'
+                      : 'Only you will see this check-in.'}
                   </div>
                 </div>
               )}
