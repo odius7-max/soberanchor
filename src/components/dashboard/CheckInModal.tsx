@@ -10,19 +10,7 @@ import MeetingChips from './checkin/MeetingChips'
 import CustomMeetingForm from './checkin/CustomMeetingForm'
 import type { CheckinFormState, MoodKey, NewCustomMeeting, SaveResult } from './checkin/checkin-types'
 import { CHECKIN_COPY } from '@/lib/copy/checkin'
-
-// CelebrationPanel imported lazily in Phase D Commit 6.
-// Stub so the save handler can set celebration state without the full component.
-let CelebrationPanel: React.ComponentType<{
-  mood: MoodKey; streak: number; meetingName: string | null
-  onClose: () => void; onKeepGoing: () => void
-}> | null = null
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  CelebrationPanel = require('./checkin/CelebrationPanel').default
-} catch {
-  // Not yet built — celebration phase will fall back to closing the modal
-}
+import CelebrationPanel from './checkin/CelebrationPanel'
 
 interface Props {
   userId: string
@@ -168,12 +156,7 @@ export default function CheckInModal({ userId, onClose }: Props) {
     setSaveResult({ streak, mood: form.mood, meetingName })
     setSubmitting(false)
 
-    // 6. Show celebration if panel is built, otherwise close
-    if (CelebrationPanel) {
-      setPhase('celebration')
-    } else {
-      handleClose()
-    }
+    setPhase('celebration')
   }
 
   const dateLabel = new Date().toLocaleDateString('en-US', {
@@ -204,7 +187,7 @@ export default function CheckInModal({ userId, onClose }: Props) {
         }}
         onMouseDown={e => e.stopPropagation()}
       >
-        {phase === 'celebration' && CelebrationPanel && saveResult ? (
+        {phase === 'celebration' && saveResult ? (
           <CelebrationPanel
             mood={saveResult.mood}
             streak={saveResult.streak}
