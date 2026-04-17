@@ -25,6 +25,7 @@ import type { DailyQuote } from './today/today-queue-types'
 import JourneySubNav from './nav/JourneySubNav'
 import type { JourneyTab } from './nav/JourneySubNav'
 import SponseesTab from './nav/SponseesTab'
+import Hero from './Hero'
 
 type Mode = 'my' | 'sponsees' | 'checkin' | 'facility'
 type Tab = 'today' | 'overview' | 'stepwork' | 'journal' | 'meetings' | 'tasks' | 'saved'
@@ -273,14 +274,26 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
           <>
             {!onboardingCompleted && <OnboardingCard userId={userId} />}
             <PendingRequests requests={pendingRequests} perspective="as_sponsee" />
-            <DashboardBanner
-              userId={userId}
-              displayName={displayName}
-              initialMilestones={initialMilestones}
-              fellowships={fellowships}
-              onActiveFellowshipChange={handleActiveFellowshipChange}
-              dailyQuote={dailyQuote}
-            />
+            {TODAY_QUEUE_ENABLED ? (
+              <Hero
+                userId={userId}
+                displayName={displayName}
+                milestones={initialMilestones}
+                fellowships={fellowships}
+                currentStep={currentStep}
+                dailyQuote={dailyQuote ?? null}
+                onActiveFellowshipChange={handleActiveFellowshipChange}
+              />
+            ) : (
+              <DashboardBanner
+                userId={userId}
+                displayName={displayName}
+                initialMilestones={initialMilestones}
+                fellowships={fellowships}
+                onActiveFellowshipChange={handleActiveFellowshipChange}
+                dailyQuote={dailyQuote}
+              />
+            )}
 
             {/* Tabs — legacy 7-tab row, shown only when new nav is off */}
             {!TODAY_QUEUE_ENABLED && (
