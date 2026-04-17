@@ -48,6 +48,7 @@ export default function CheckInModal({ userId, onClose, hasActiveSponsor = false
   const [form, setForm] = useState<CheckinFormState>({
     mood: null, meeting: null, newCustom: null, note: '', isSharedWithSponsor: hasActiveSponsor,
   })
+  const [existingCheckInId, setExistingCheckInId] = useState<string | null>(null)
   const [showCustomForm, setShowCustomForm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -56,6 +57,27 @@ export default function CheckInModal({ userId, onClose, hasActiveSponsor = false
 
   // Portal mount guard
   useEffect(() => { setMounted(true) }, [])
+
+  // Load today's existing check-in for same-day edit mode
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10)
+    createClient()
+      .from('check_ins')
+      .select('id,mood,notes')
+      .eq('user_id', userId)
+      .eq('check_in_date', today)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setExistingCheckInId(data.id)
+          setForm(f => ({
+            ...f,
+            mood: (data.mood as CheckinFormState['mood']) ?? null,
+            note: (data.notes as string) ?? '',
+          }))
+        }
+      })
+  }, [userId])
 
   // Body scroll lock
   useEffect(() => {
@@ -98,14 +120,19 @@ export default function CheckInModal({ userId, onClose, hasActiveSponsor = false
     setError(null)
     const supabase = createClient()
 
-    // 1. Insert check_in
-    const { error: ciError } = await supabase.from('check_ins').insert({
-      user_id: userId,
+    // 1. Insert or update check_in
+    // is_shared_with_sponsor is server-determined (always true when active sponsor exists)
+    const sharedWithSponsor = hasActiveSponsor
+    const ciPayload = {
       mood: form.mood,
       sober_today: true,
       notes: form.note.trim() || null,
-      is_shared_with_sponsor: form.isSharedWithSponsor,
-    })
+      is_shared_with_sponsor: sharedWithSponsor,
+    }
+    const ciResult = existingCheckInId
+      ? await supabase.from('check_ins').update(ciPayload).eq('id', existingCheckInId).eq('user_id', userId)
+      : await supabase.from('check_ins').insert({ user_id: userId, ...ciPayload })
+    const ciError = ciResult.error
     if (ciError) { setError('Failed to save. Please try again.'); setSubmitting(false); return }
 
     // 2. If a custom meeting was created and "save to my meetings" — upsert first to get id
@@ -236,25 +263,12 @@ export default function CheckInModal({ userId, onClose, hasActiveSponsor = false
                 />
               </div>
 
-              {/* Share with sponsor (only when user has an active sponsor) */}
-              {hasActiveSponsor && (
-                <div>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={form.isSharedWithSponsor}
-                      onChange={e => setForm(f => ({ ...f, isSharedWithSponsor: e.target.checked }))}
-                      style={{ accentColor: 'var(--teal)', width: 16, height: 16, flexShrink: 0 }}
-                    />
-                    <span style={{ fontSize: 14, color: 'var(--dark)' }}>Share with your sponsor</span>
-                  </label>
-                  <div style={{ fontSize: 11, color: 'var(--mid)', marginTop: 4, paddingLeft: 26 }}>
-                    {form.isSharedWithSponsor
-                      ? 'Your sponsor will see your mood and notes.'
-                      : 'Only you will see this check-in.'}
-                  </div>
-                </div>
-              )}
+              {/* Sharing notice (no toggle — always shared when active sponsor exists) */}
+              <div style={{ fontSize: 12, color: 'var(--mid)', padding: '2px 0' }}>
+                {hasActiveSponsor
+                  ? 'Shared with your sponsor — this is how we stay accountable.'
+                  : 'Private to you.'}
+              </div>
 
               {/* Meeting */}
               <div>
