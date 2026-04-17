@@ -19,9 +19,12 @@ import type { PendingRequest } from './PendingRequests'
 import ProviderDashboardShell from '@/components/providers/ProviderDashboardShell'
 import type { FacilityData } from '@/components/providers/ListingTab'
 import type { Lead } from '@/components/providers/LeadsTab'
+import TodayCard from './today/TodayCard'
+import type { TodayItemData } from './today/today-queue-types'
+import type { DailyQuote } from './today/today-queue-types'
 
 type Mode = 'my' | 'sponsees' | 'checkin' | 'facility'
-type Tab = 'overview' | 'stepwork' | 'journal' | 'meetings' | 'tasks' | 'saved'
+type Tab = 'today' | 'overview' | 'stepwork' | 'journal' | 'meetings' | 'tasks' | 'saved'
 
 export interface CheckIn { id:string; check_in_date:string; mood:string|null; notes:string|null; sober_today:boolean; meetings_attended:number }
 export interface JournalEntry { id:string; title:string|null; entry_date:string; excerpt:string|null; step_number:number|null; is_shared_with_sponsor:boolean }
@@ -68,10 +71,16 @@ interface Props {
   pendingRequests: PendingRequest[]
   sponsorPendingRequests: PendingRequest[]
   activityItems: ActivityItem[]
+  todayQueueItems?: TodayItemData[]
+  todayQueueOverflow?: number
+  dailyQuote?: DailyQuote | null
 }
 
+const TODAY_QUEUE_ENABLED = process.env.NEXT_PUBLIC_TODAY_QUEUE_ENABLED === 'true'
+
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'overview',  label: '⚓ Overview' },
+  ...(TODAY_QUEUE_ENABLED ? [{ id: 'today' as Tab, label: '⚓ Today' }] : []),
+  { id: 'overview',  label: '🗂️ Overview' },
   { id: 'stepwork',  label: '📖 Step Work' },
   { id: 'journal',   label: '✏️ Journal' },
   { id: 'meetings',  label: '👥 Meetings' },
@@ -79,12 +88,12 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'saved',     label: '❤️ Saved' },
 ]
 
-export default function DashboardShell({ userId, phone, onboardingCompleted, isProvider, providerData, profile, stepCompletions, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsors, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships }: Props) {
+export default function DashboardShell({ userId, phone, onboardingCompleted, isProvider, providerData, profile, stepCompletions, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsors, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships, todayQueueItems, todayQueueOverflow, dailyQuote }: Props) {
   const router = useRouter()
   // Provider-only users (no recovery onboarding) default to facility mode
   const defaultMode: Mode = (isProvider && !onboardingCompleted) ? 'facility' : 'my'
   const [mode, setMode] = useState<Mode>(defaultMode)
-  const [activeTab, setActiveTab] = useState<Tab>('overview')
+  const [activeTab, setActiveTab] = useState<Tab>(TODAY_QUEUE_ENABLED ? 'today' : 'overview')
   const [checkInOpen, setCheckInOpen] = useState(false)
   const [recoveryNudgeDismissed, setRecoveryNudgeDismissed] = useState(false)
   const { ref: modeScrollRef,  fadeLeft: modeFadeLeft,  fadeRight: modeFadeRight  } = useScrollFade()
@@ -251,6 +260,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
               initialMilestones={initialMilestones}
               fellowships={fellowships}
               onActiveFellowshipChange={handleActiveFellowshipChange}
+              dailyQuote={dailyQuote}
             />
 
             {/* Tabs */}
@@ -271,6 +281,14 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
               </div>
             </div>
 
+            {activeTab === 'today' && TODAY_QUEUE_ENABLED && todayQueueItems && (
+              <TodayCard
+                items={todayQueueItems}
+                overflowCount={todayQueueOverflow ?? 0}
+                caughtUp={todayQueueItems.every(i => i.completed)}
+                onCheckIn={() => setCheckInOpen(true)}
+              />
+            )}
             {activeTab === 'overview' && (
               <OverviewTab userId={userId} activeFellowshipId={activeFellowshipId} currentStep={currentStep} completedSteps={completedSteps} allStepsDone={allStepsDone} journalCount={journalCount} stepWorkCount={stepWorkCount} recentCheckIns={recentCheckIns} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} recentMeetings={meetingAttendance.slice(0,3)} readingAssignments={readingAssignments} activeSponsors={activeSponsors} isAvailableSponsor={isSponsor} activityItems={activityItems} displayName={displayName} onCheckIn={() => setCheckInOpen(true)} onJournal={() => setActiveTab('journal')} onViewTasks={() => setActiveTab('tasks')} />
             )}

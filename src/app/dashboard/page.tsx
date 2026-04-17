@@ -6,6 +6,9 @@ import type { CheckIn, JournalEntry, MeetingAttendance, ReadingAssignment, Spons
 import type { PendingRequest } from '@/components/dashboard/PendingRequests'
 import type { FacilityData } from '@/components/providers/ListingTab'
 import type { Lead } from '@/components/providers/LeadsTab'
+import { getDailyQuote } from '@/lib/daily-quote'
+import { buildMemberTodayQueue } from '@/lib/today-queue'
+import { getTodayDateStr } from '@/lib/today-window'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -397,6 +400,24 @@ export default async function DashboardPage() {
     }
   }
 
+  // Today queue + daily quote (behind feature flag — avoids extra DB calls when flag is off)
+  const todayQueueEnabled = process.env.NEXT_PUBLIC_TODAY_QUEUE_ENABLED === 'true'
+  const today = getTodayDateStr()
+  const checkedInToday = recentCheckIns.length > 0 && recentCheckIns[0].check_in_date === today
+
+  const todayQueue = todayQueueEnabled
+    ? buildMemberTodayQueue({
+        checkedInToday,
+        currentStep: profile?.current_step ?? null,
+        stepWorkCount,
+        meetingsThisWeek,
+      })
+    : null
+
+  const dailyQuote = todayQueueEnabled
+    ? await getDailyQuote(supabase, userId)
+    : null
+
   return (
     <DashboardShell
       userId={userId}
@@ -422,6 +443,9 @@ export default async function DashboardPage() {
       activityItems={activityItems}
       initialMilestones={initialMilestones}
       fellowships={fellowships}
+      todayQueueItems={todayQueue?.items}
+      todayQueueOverflow={todayQueue?.overflowCount}
+      dailyQuote={dailyQuote}
     />
   )
 }

@@ -101,6 +101,7 @@ interface Props {
   initialMilestones: SobrietyMilestone[]
   fellowships: Fellowship[]
   onActiveFellowshipChange: (fellowshipId: string | null) => void
+  dailyQuote?: { text: string; attribution: string | null } | null
 }
 
 // ─── Shared form fields ───────────────────────────────────────────────────────
@@ -191,6 +192,7 @@ function MilestoneForm({
 export default function DashboardBanner({
   userId, displayName,
   initialMilestones, fellowships, onActiveFellowshipChange,
+  dailyQuote,
 }: Props) {
   const router = useRouter()
   const [milestones, setMilestones] = useState<SobrietyMilestone[]>(initialMilestones)
@@ -708,12 +710,18 @@ export default function DashboardBanner({
             )}
 
             {/* ── Quote: thin divider, italic, muted ── */}
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: 18, paddingTop: 14, marginBottom: activeMilestone?.fellowship_id ? 14 : 0 }}>
-              <div style={{ color: '#9badc4', fontSize: 13, fontStyle: 'italic', lineHeight: 1.65 }}>
-                &ldquo;{quote.text}&rdquo;
+            {(dailyQuote || quote) && (
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', marginTop: 18, paddingTop: 14, marginBottom: activeMilestone?.fellowship_id ? 14 : 0 }}>
+                <div style={{ color: 'rgba(255,255,255,0.82)', fontSize: 15, fontStyle: 'italic', lineHeight: 1.65 }}>
+                  &ldquo;{dailyQuote ? dailyQuote.text : quote.text}&rdquo;
+                </div>
+                {(dailyQuote ? dailyQuote.attribution : quote.attr) && (
+                  <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 5 }}>
+                    — {dailyQuote ? dailyQuote.attribution : quote.attr}
+                  </div>
+                )}
               </div>
-              <div style={{ color: '#6b7a8d', fontSize: 11, marginTop: 5 }}>— {quote.attr}</div>
-            </div>
+            )}
 
             {/* ── Step progress bar + Currently On label ── */}
             {activeMilestone?.fellowship_id && (
