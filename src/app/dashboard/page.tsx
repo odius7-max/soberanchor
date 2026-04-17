@@ -7,8 +7,9 @@ import type { PendingRequest } from '@/components/dashboard/PendingRequests'
 import type { FacilityData } from '@/components/providers/ListingTab'
 import type { Lead } from '@/components/providers/LeadsTab'
 import { getDailyQuote } from '@/lib/daily-quote'
-import { buildMemberTodayQueue } from '@/lib/today-queue'
+import { buildMemberTodayQueue, buildSponsorTodayItems } from '@/lib/today-queue'
 import { getTodayDateStr } from '@/lib/today-window'
+import { getUpcomingMilestones } from '@/lib/milestone-windows'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -405,7 +406,7 @@ export default async function DashboardPage() {
   const today = getTodayDateStr()
   const checkedInToday = recentCheckIns.length > 0 && recentCheckIns[0].check_in_date === today
 
-  const todayQueue = todayQueueEnabled
+  let todayQueue = todayQueueEnabled
     ? buildMemberTodayQueue({
         checkedInToday,
         currentStep: profile?.current_step ?? null,
@@ -413,6 +414,69 @@ export default async function DashboardPage() {
         meetingsThisWeek,
       })
     : null
+
+  // Sponsor pull-through: merge Tier 1 alerts + Tier 3 tasks into Today queue
+  if (todayQueueEnabled && todayQueue && profile?.is_available_sponsor && sponsees.length > 0) {
+    // Upsert upcoming milestone reminders (ON CONFLICT DO NOTHING via ignoreDuplicates)
+    const milestoneUpserts = sponsees.flatMap(s => {
+      if (!s.sobrietyDate) return []
+      const upcoming = getUpcomingMilestones(new Date(s.sobrietyDate + 'T00:00:00'))
+      return upcoming.map(m => {
+        const milestoneDate = new Date(new Date(s.sobrietyDate! + 'T00:00:00').getTime() + m.days * 86_400_000)
+        return {
+          sponsor_user_id: userId,
+          sponsee_user_id: s.id,
+          milestone_label: m.label,
+          milestone_date: milestoneDate.toISOString().slice(0, 10),
+          surfaced_at: new Date().toISOString(),
+        }
+      })
+    })
+    if (milestoneUpserts.length > 0) {
+      await supabase.from('sponsor_milestone_reminders').upsert(milestoneUpserts, {
+        onConflict: 'sponsor_user_id,sponsee_user_id,milestone_label,milestone_date',
+        ignoreDuplicates: true,
+      })
+    }
+
+    // Fetch non-dismissed, not-yet-past reminders for this sponsor
+    const { data: milestoneRows } = await supabase
+      .from('sponsor_milestone_reminders')
+      .select('sponsee_user_id,milestone_label,milestone_date')
+      .eq('sponsor_user_id', userId)
+      .is('dismissed_at', null)
+      .gte('milestone_date', today)
+
+    const sponseeNameMap = Object.fromEntries(sponsees.map(s => [s.id, s.name]))
+    const milestoneReminders = (milestoneRows ?? []).map(r => ({
+      sponsee_user_id: r.sponsee_user_id as string,
+      sponsee_name: sponseeNameMap[r.sponsee_user_id as string] ?? 'Your sponsee',
+      milestone_label: r.milestone_label as string,
+      milestone_date: r.milestone_date as string,
+    }))
+
+    const sponsorItems = buildSponsorTodayItems({
+      sponsees: sponsees.map(s => ({
+        id: s.id,
+        name: s.name,
+        checkInHistory: s.checkInHistory,
+        pendingReviews: s.pendingReviews,
+      })),
+      milestoneReminders,
+      today,
+    })
+
+    if (sponsorItems.length > 0) {
+      const combined = [...todayQueue.items, ...sponsorItems]
+      combined.sort((a, b) => b.priority - a.priority)
+      const visible = combined.slice(0, 6)
+      todayQueue = {
+        items: visible,
+        overflowCount: Math.max(0, combined.length - 6),
+        caughtUp: combined.every(i => i.completed),
+      }
+    }
+  }
 
   const dailyQuote = todayQueueEnabled
     ? await getDailyQuote(supabase, userId)
