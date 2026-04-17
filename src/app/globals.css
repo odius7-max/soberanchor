@@ -136,7 +136,7 @@ body {
   background: var(--warm-gray);
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
-  box-shadow: var(--shadow-subnav-inset);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
 /* ── Today queue — section headline ── */

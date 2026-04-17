@@ -165,10 +165,10 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
         {/* Underline mode bar */}
         <div className="subnav-band relative" style={{ borderBottom: '2px solid #e8e4df' }}>
           {modeFadeLeft && (
-            <div aria-hidden style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 40, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to right, #fff, transparent)' }} />
+            <div aria-hidden style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 40, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to right, var(--warm-gray), transparent)' }} />
           )}
           {modeFadeRight && (
-            <div aria-hidden style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 40, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to left, #fff, transparent)' }} />
+            <div aria-hidden style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 40, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to left, var(--warm-gray), transparent)' }} />
           )}
           <div ref={modeScrollRef} className="flex items-center overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
             {modes.map(m => (

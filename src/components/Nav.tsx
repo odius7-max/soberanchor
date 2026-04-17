@@ -145,7 +145,7 @@ export default function Nav() {
                     onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,51,102,0.07)')}
                   >
                     <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)', whiteSpace: 'nowrap' }}>
-                      {displayName || 'Account'} ▾
+                      {displayName ? `My Journey | ${displayName} ▾` : 'Account ▾'}
                     </span>
                   </button>
 
