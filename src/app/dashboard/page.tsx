@@ -402,6 +402,19 @@ export default async function DashboardPage() {
     }
   }
 
+  // Sponsee alert count — drives the red badge on My Sponsees sub-nav
+  // Uses same Tier 1 logic as buildSponsorTodayItems: severe mood today OR 3+ silent days
+  const SEVERE_MOODS_SET = new Set(['struggling', 'hard', 'crisis'])
+  const sponseeAlertCount = sponsees.filter(s => {
+    const latest = s.checkInHistory[0]
+    if (latest?.date === today && SEVERE_MOODS_SET.has(latest.mood ?? '')) return true
+    if (!latest) return true
+    const daysSilent = Math.floor(
+      (new Date(today).getTime() - new Date(latest.date).getTime()) / 86_400_000
+    )
+    return daysSilent >= 3
+  }).length
+
   // Today queue + daily quote (behind feature flag — avoids extra DB calls when flag is off)
   const todayQueueEnabled = process.env.NEXT_PUBLIC_TODAY_QUEUE_ENABLED === 'true'
   const today = getTodayDateStr()
@@ -530,6 +543,7 @@ export default async function DashboardPage() {
       todayQueueItems={todayQueue?.items}
       todayQueueOverflow={todayQueue?.overflowCount}
       dailyQuote={dailyQuote}
+      sponseeAlertCount={sponseeAlertCount}
     />
   )
 }

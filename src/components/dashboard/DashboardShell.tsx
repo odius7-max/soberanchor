@@ -22,6 +22,9 @@ import type { Lead } from '@/components/providers/LeadsTab'
 import TodayCard from './today/TodayCard'
 import type { TodayItemData } from './today/today-queue-types'
 import type { DailyQuote } from './today/today-queue-types'
+import JourneySubNav from './nav/JourneySubNav'
+import type { JourneyTab } from './nav/JourneySubNav'
+import SponseesTab from './nav/SponseesTab'
 
 type Mode = 'my' | 'sponsees' | 'checkin' | 'facility'
 type Tab = 'today' | 'overview' | 'stepwork' | 'journal' | 'meetings' | 'tasks' | 'saved'
@@ -74,6 +77,7 @@ interface Props {
   todayQueueItems?: TodayItemData[]
   todayQueueOverflow?: number
   dailyQuote?: DailyQuote | null
+  sponseeAlertCount?: number
 }
 
 const TODAY_QUEUE_ENABLED = process.env.NEXT_PUBLIC_TODAY_QUEUE_ENABLED === 'true'
@@ -88,7 +92,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'saved',     label: '❤️ Saved' },
 ]
 
-export default function DashboardShell({ userId, phone, onboardingCompleted, isProvider, providerData, profile, stepCompletions, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsors, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships, todayQueueItems, todayQueueOverflow, dailyQuote }: Props) {
+export default function DashboardShell({ userId, phone, onboardingCompleted, isProvider, providerData, profile, stepCompletions, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsors, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships, todayQueueItems, todayQueueOverflow, dailyQuote, sponseeAlertCount = 0 }: Props) {
   const router = useRouter()
   // Provider-only users (no recovery onboarding) default to facility mode
   const defaultMode: Mode = (isProvider && !onboardingCompleted) ? 'facility' : 'my'
@@ -171,7 +175,14 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
             <div aria-hidden style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 40, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to left, var(--warm-gray), transparent)' }} />
           )}
           <div ref={modeScrollRef} className="flex items-center overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-            {modes.map(m => (
+            {modes.map(m => m.id === 'sponsees' ? (
+              <SponseesTab
+                key="sponsees"
+                isActive={mode === 'sponsees'}
+                alertCount={sponseeAlertCount}
+                onClick={() => setMode('sponsees')}
+              />
+            ) : (
               <button
                 key={m.id}
                 onClick={() => setMode(m.id)}
@@ -246,6 +257,14 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
           </div>
         </div>
 
+        {/* Secondary strip — Journey sub-nav (when My Journey active) */}
+        {TODAY_QUEUE_ENABLED && mode === 'my' && (
+          <JourneySubNav
+            activeTab={activeTab as JourneyTab}
+            onTabChange={tab => setActiveTab(tab)}
+          />
+        )}
+
         {/* Spacer below mode bar */}
         <div style={{ paddingTop: 24 }} />
 
@@ -263,23 +282,25 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
               dailyQuote={dailyQuote}
             />
 
-            {/* Tabs */}
-            <div className="relative mb-5" style={{ borderBottom: '2px solid var(--border)' }}>
-              {tabsFadeLeft && (
-                <div aria-hidden style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 40, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to right, #fff, transparent)' }} />
-              )}
-              {tabsFadeRight && (
-                <div aria-hidden style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 40, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to left, #fff, transparent)' }} />
-              )}
-              <div ref={tabsScrollRef} className="flex overflow-x-auto" style={{ scrollbarWidth: 'none', gap: '0' }}>
-                {TABS.map(t => (
-                  <button key={t.id} onClick={() => setActiveTab(t.id)} className="font-semibold flex-shrink-0 transition-colors"
-                    style={{ padding: '10px 18px', fontSize: '14px', cursor: 'pointer', background: 'none', border: 'none', whiteSpace: 'nowrap', color: activeTab === t.id ? 'var(--navy)' : 'var(--mid)', borderBottom: activeTab === t.id ? '2px solid var(--navy)' : '2px solid transparent', marginBottom: '-2px' }}>
-                    {t.label}
-                  </button>
-                ))}
+            {/* Tabs — legacy 7-tab row, shown only when new nav is off */}
+            {!TODAY_QUEUE_ENABLED && (
+              <div className="relative mb-5" style={{ borderBottom: '2px solid var(--border)' }}>
+                {tabsFadeLeft && (
+                  <div aria-hidden style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 40, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to right, #fff, transparent)' }} />
+                )}
+                {tabsFadeRight && (
+                  <div aria-hidden style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 40, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to left, #fff, transparent)' }} />
+                )}
+                <div ref={tabsScrollRef} className="flex overflow-x-auto" style={{ scrollbarWidth: 'none', gap: '0' }}>
+                  {TABS.map(t => (
+                    <button key={t.id} onClick={() => setActiveTab(t.id)} className="font-semibold flex-shrink-0 transition-colors"
+                      style={{ padding: '10px 18px', fontSize: '14px', cursor: 'pointer', background: 'none', border: 'none', whiteSpace: 'nowrap', color: activeTab === t.id ? 'var(--navy)' : 'var(--mid)', borderBottom: activeTab === t.id ? '2px solid var(--navy)' : '2px solid transparent', marginBottom: '-2px' }}>
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {activeTab === 'today' && TODAY_QUEUE_ENABLED && todayQueueItems && (
               <TodayCard
