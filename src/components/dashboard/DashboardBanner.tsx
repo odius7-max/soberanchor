@@ -632,7 +632,7 @@ export default function DashboardBanner({
                             {/* Days */}
                             <div suppressHydrationWarning style={{ textAlign: 'right' }}>
                               {isActive ? (
-                                <span style={{ fontFamily: 'Inter, var(--font-body)', fontSize: 22, fontWeight: 700, color: '#f0c040', letterSpacing: '-0.5px', lineHeight: 1 }}>
+                                <span style={{ fontFamily: 'Inter, var(--font-body)', fontSize: 22, fontWeight: 700, color: 'var(--gold-hero)', letterSpacing: '-0.4px', lineHeight: 1 }}>
                                   {days.toLocaleString()}
                                 </span>
                               ) : (
@@ -668,7 +668,7 @@ export default function DashboardBanner({
                             {/* Days */}
                             <div suppressHydrationWarning style={{ textAlign: 'right' }}>
                               {isActive ? (
-                                <span style={{ fontFamily: 'Inter, var(--font-body)', fontSize: 18, fontWeight: 700, color: '#f0c040', letterSpacing: '-0.5px' }}>
+                                <span style={{ fontFamily: 'Inter, var(--font-body)', fontSize: 18, fontWeight: 700, color: 'var(--gold-hero)', letterSpacing: '-0.4px' }}>
                                   {days.toLocaleString()}
                                 </span>
                               ) : (

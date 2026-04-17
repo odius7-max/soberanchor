@@ -136,7 +136,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
 
   const modes: { id: Mode; label: string }[] = [
     // Only show My Recovery if user has completed onboarding (has recovery data)
-    ...(onboardingCompleted ? [{ id: 'my' as Mode, label: '✨ My Recovery' }] : []),
+    ...(onboardingCompleted ? [{ id: 'my' as Mode, label: '⚓ My Journey' }] : []),
     ...(isSponsor ? [{ id: 'sponsees' as Mode, label: '👥 My Sponsees' }] : []),
     ...(isProvider ? [{ id: 'facility' as Mode, label: '🏥 My Facility' }] : []),
   ]
@@ -154,7 +154,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
       <div className="max-w-[940px] mx-auto">
 
         {/* Underline mode bar */}
-        <div className="relative" style={{ background: '#fff', borderBottom: '2px solid #e8e4df' }}>
+        <div className="subnav-band relative" style={{ borderBottom: '2px solid #e8e4df' }}>
           {modeFadeLeft && (
             <div aria-hidden style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 40, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to right, #fff, transparent)' }} />
           )}
