@@ -10,9 +10,10 @@ interface Props {
   overflowCount: number
   caughtUp: boolean
   onCheckIn?: () => void
+  caughtUpSummaryParts?: string[]
 }
 
-export default function TodayCard({ items: initialItems, overflowCount, caughtUp: initialCaughtUp, onCheckIn }: Props) {
+export default function TodayCard({ items: initialItems, overflowCount, caughtUp: initialCaughtUp, onCheckIn, caughtUpSummaryParts }: Props) {
   const { items, caughtUp } = useTodayQueue(initialItems)
 
   const dateLabel = new Date().toLocaleDateString('en-US', {
@@ -21,7 +22,7 @@ export default function TodayCard({ items: initialItems, overflowCount, caughtUp
     day: 'numeric',
   })
 
-  if (caughtUp || initialCaughtUp) return <CaughtUpState />
+  if (caughtUp || initialCaughtUp) return <CaughtUpState summaryParts={caughtUpSummaryParts} />
 
   return (
     <div

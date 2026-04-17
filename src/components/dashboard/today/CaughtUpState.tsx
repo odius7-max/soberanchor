@@ -1,7 +1,11 @@
 'use client'
 import { TODAY_COPY } from '@/lib/copy/today'
 
-export default function CaughtUpState() {
+interface Props {
+  summaryParts?: string[]
+}
+
+export default function CaughtUpState({ summaryParts }: Props) {
   return (
     <div
       style={{
@@ -28,6 +32,20 @@ export default function CaughtUpState() {
       <div style={{ fontSize: 14, color: 'var(--mid)', lineHeight: 1.6 }}>
         {TODAY_COPY.caughtUpBody}
       </div>
+      {summaryParts && summaryParts.length > 0 && (
+        <>
+          <div
+            style={{
+              width: 200,
+              margin: '20px auto 16px',
+              borderTop: '1px solid var(--border)',
+            }}
+          />
+          <div style={{ fontSize: 13, color: 'var(--mid)', lineHeight: 1.6 }}>
+            {TODAY_COPY.caughtUpSummary(summaryParts)}
+          </div>
+        </>
+      )}
     </div>
   )
 }

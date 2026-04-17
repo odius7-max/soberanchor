@@ -287,6 +287,18 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
                 overflowCount={todayQueueOverflow ?? 0}
                 caughtUp={todayQueueItems.every(i => i.completed)}
                 onCheckIn={() => setCheckInOpen(true)}
+                caughtUpSummaryParts={(() => {
+                  const parts: string[] = []
+                  const ci = recentCheckIns[0]
+                  if (ci?.mood) parts.push(`checked in '${ci.mood}'`)
+                  const mtg = meetingAttendance[0]
+                  if (mtg?.meeting_name) parts.push(`logged ${mtg.meeting_name}`)
+                  const step = profile?.current_step
+                  if (stepWorkCount > 0 && step) {
+                    parts.push(`answered ${stepWorkCount} Step ${step} prompt${stepWorkCount !== 1 ? 's' : ''}`)
+                  }
+                  return parts
+                })()}
               />
             )}
             {activeTab === 'overview' && (
