@@ -46,6 +46,7 @@ export interface CheckinFormState {
   meeting: SelectedMeeting | null
   newCustom: NewCustomMeeting | null
   note: string
+  isSharedWithSponsor: boolean
 }
 
 export interface SaveResult {

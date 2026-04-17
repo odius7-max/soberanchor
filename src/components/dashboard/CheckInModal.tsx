@@ -15,6 +15,7 @@ import CelebrationPanel from './checkin/CelebrationPanel'
 interface Props {
   userId: string
   onClose: () => void
+  hasActiveSponsor?: boolean
 }
 
 type Phase = 'form' | 'celebration'
@@ -38,14 +39,17 @@ async function computeStreak(userId: string): Promise<number> {
   return streak
 }
 
-export default function CheckInModal({ userId, onClose }: Props) {
+// Rough moods default to shared so sponsors see safety-relevant check-ins
+const ROUGH_MOODS = new Set<MoodKey>(['struggling', 'hard'])
+
+export default function CheckInModal({ userId, onClose, hasActiveSponsor = false }: Props) {
   const router = useRouter()
   const backdropRef = useRef<HTMLDivElement>(null)
   const firstFocusRef = useRef<HTMLButtonElement>(null)
 
   const [phase, setPhase] = useState<Phase>('form')
   const [form, setForm] = useState<CheckinFormState>({
-    mood: null, meeting: null, newCustom: null, note: '',
+    mood: null, meeting: null, newCustom: null, note: '', isSharedWithSponsor: false,
   })
   const [showCustomForm, setShowCustomForm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -103,6 +107,7 @@ export default function CheckInModal({ userId, onClose }: Props) {
       mood: form.mood,
       sober_today: true,
       notes: form.note.trim() || null,
+      is_shared_with_sponsor: form.isSharedWithSponsor,
     })
     if (ciError) { setError('Failed to save. Please try again.'); setSubmitting(false); return }
 
@@ -229,10 +234,35 @@ export default function CheckInModal({ userId, onClose }: Props) {
                 </div>
                 <MoodScale
                   value={form.mood}
-                  onChange={mood => setForm(f => ({ ...f, mood }))}
+                  onChange={mood => setForm(f => ({
+                    ...f,
+                    mood,
+                    // Reset share default when mood changes: rough → share, light → private
+                    isSharedWithSponsor: ROUGH_MOODS.has(mood),
+                  }))}
                   firstButtonRef={firstFocusRef}
                 />
               </div>
+
+              {/* Share with sponsor (only when user has an active sponsor) */}
+              {hasActiveSponsor && (
+                <div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={form.isSharedWithSponsor}
+                      onChange={e => setForm(f => ({ ...f, isSharedWithSponsor: e.target.checked }))}
+                      style={{ accentColor: 'var(--teal)', width: 16, height: 16, flexShrink: 0 }}
+                    />
+                    <span style={{ fontSize: 14, color: 'var(--dark)' }}>Share with your sponsor</span>
+                  </label>
+                  <div style={{ fontSize: 11, color: 'var(--mid)', marginTop: 4, paddingLeft: 26 }}>
+                    {form.isSharedWithSponsor
+                      ? 'Your sponsor will see this check-in'
+                      : 'Only you will see this check-in'}
+                  </div>
+                </div>
+              )}
 
               {/* Meeting */}
               <div>

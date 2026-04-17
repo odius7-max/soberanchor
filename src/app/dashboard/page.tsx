@@ -206,10 +206,11 @@ export default async function DashboardPage() {
         sponsorTasksRes,
       ] = await Promise.all([
         sponseeAdmin.from('user_profiles').select('id,display_name,sobriety_date').in('id', sponseeIds),
-        // 60-day check-in history for mood trend + streak calculation
+        // 60-day check-in history — only rows the sponsee opted to share
         sponseeAdmin.from('check_ins')
           .select('user_id,check_in_date,mood,notes,sober_today,meetings_attended,called_sponsor')
           .in('user_id', sponseeIds)
+          .eq('is_shared_with_sponsor', true)
           .gte('check_in_date', sixtyDaysAgoStr)
           .order('check_in_date', { ascending: false }),
         // Count pending reviews per sponsee

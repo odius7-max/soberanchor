@@ -342,7 +342,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
         )}
       </div>
 
-      {checkInOpen && <CheckInModal userId={userId} onClose={() => setCheckInOpen(false)} />}
+      {checkInOpen && <CheckInModal userId={userId} onClose={() => setCheckInOpen(false)} hasActiveSponsor={activeSponsors.length > 0} />}
     </div>
   )
 }
