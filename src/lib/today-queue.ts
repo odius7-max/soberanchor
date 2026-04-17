@@ -87,6 +87,21 @@ interface SponsorTodayInput {
   today: string
 }
 
+// Moods that surface a sponsor alert. 'crisis' is DB-only (not shown in modal UI)
+// but must be caught here — it's the most urgent case.
+const SEVERE_MOODS = new Set(['struggling', 'hard', 'crisis'])
+
+const MOOD_ALERT_LABEL: Record<string, string> = {
+  crisis:     'is in crisis — reach out now',
+  struggling: 'checked in as struggling',
+  hard:       'is having a hard day',
+}
+const MOOD_ALERT_SUB: Record<string, string> = {
+  crisis:     'Today · reach out now',
+  struggling: 'Today · reach out when you can',
+  hard:       'Today · check in if you can',
+}
+
 export function buildSponsorTodayItems(input: SponsorTodayInput): TodayItemData[] {
   const { sponsees, milestoneReminders, today } = input
   const items: TodayItemData[] = []
@@ -94,14 +109,15 @@ export function buildSponsorTodayItems(input: SponsorTodayInput): TodayItemData[
   for (const sponsee of sponsees) {
     const latest = sponsee.checkInHistory[0]
 
-    // Tier 1 — struggling check-in today (priority 600)
-    if (latest?.date === today && latest.mood === 'struggling') {
+    // Tier 1 — severe check-in today (struggling | hard | crisis) — priority 600
+    if (latest?.date === today && latest.mood && SEVERE_MOODS.has(latest.mood)) {
+      const mood = latest.mood
       items.push({
-        id: `alert-struggling-${sponsee.id}`,
-        icon: '⚠️',
+        id: `alert-${mood}-${sponsee.id}`,
+        icon: mood === 'crisis' ? '🚨' : '⚠️',
         variant: 'alert',
-        label: `${sponsee.name} checked in as struggling`,
-        sub: 'Today · reach out when you can',
+        label: `${sponsee.name} ${MOOD_ALERT_LABEL[mood] ?? 'checked in as struggling'}`,
+        sub: MOOD_ALERT_SUB[mood] ?? 'Today · reach out when you can',
         cta: 'Reach out →',
         href: `/my-recovery/sponsor/sponsee/${sponsee.id}`,
         priority: 600,
