@@ -7,7 +7,7 @@ import type { PendingRequest } from '@/components/dashboard/PendingRequests'
 import type { FacilityData } from '@/components/providers/ListingTab'
 import type { Lead } from '@/components/providers/LeadsTab'
 import { getDailyQuote } from '@/lib/daily-quote'
-import { buildMemberTodayQueue, buildSponsorTodayItems } from '@/lib/today-queue'
+import { buildMemberTodayQueue, buildSponsorTodayItems, getTodaySummaryParts } from '@/lib/today-queue'
 import { getTodayDateStr } from '@/lib/today-window'
 import { getUpcomingMilestones } from '@/lib/milestone-windows'
 
@@ -507,9 +507,18 @@ export default async function DashboardPage() {
         items: visible,
         overflowCount: Math.max(0, combined.length - 6),
         caughtUp: combined.every(i => i.completed),
+        memberCaughtUp: todayQueue.memberCaughtUp,
       }
     }
   }
+
+  // Caught-up summary parts — computed server-side so DashboardShell doesn't need to
+  const todaySummaryParts = todayQueueEnabled ? getTodaySummaryParts({
+    checkedInMood: recentCheckIns[0]?.check_in_date === today ? (recentCheckIns[0]?.mood ?? null) : null,
+    meetingName: meetingAttendance.find(m => m.attended_at.slice(0, 10) === today)?.meeting_name ?? null,
+    stepWorkCount,
+    currentStep: profile?.current_step ?? null,
+  }) : []
 
   const dailyQuote = todayQueueEnabled
     ? await getDailyQuote(supabase, userId)
@@ -542,6 +551,8 @@ export default async function DashboardPage() {
       fellowships={fellowships}
       todayQueueItems={todayQueue?.items}
       todayQueueOverflow={todayQueue?.overflowCount}
+      todayMemberCaughtUp={todayQueue?.memberCaughtUp}
+      todaySummaryParts={todaySummaryParts}
       dailyQuote={dailyQuote}
       sponseeAlertCount={sponseeAlertCount}
     />

@@ -16,6 +16,7 @@ export interface TodayQueueResult {
   items: TodayItemData[]
   overflowCount: number
   caughtUp: boolean
+  memberCaughtUp: boolean
 }
 
 export interface DailyQuote {

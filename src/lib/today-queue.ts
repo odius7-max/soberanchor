@@ -2,6 +2,47 @@ import type { TodayItemData, TodayQueueResult } from '@/components/dashboard/tod
 
 const DEFAULT_MEETING_TARGET = 3
 
+// ─── Caught-up detection ─────────────────────────────────────────────────────
+
+export interface CaughtUpInput {
+  checkedInToday: boolean
+  stepWorkCount: number
+  currentStep: number | null
+  meetingsThisWeek: number
+  weeklyMeetingTarget?: number
+}
+
+/**
+ * True when all required Today items are satisfied:
+ * - Check-in logged for today
+ * - Meeting goal met this week (or user has no weekly target set)
+ * Step work is not forced daily — if currentStep is null (no program) it's not required.
+ */
+export function isCaughtUp(input: CaughtUpInput): boolean {
+  if (!input.checkedInToday) return false
+  const target = input.weeklyMeetingTarget ?? DEFAULT_MEETING_TARGET
+  if (input.meetingsThisWeek < target) return false
+  return true
+}
+
+export interface TodaySummaryInput {
+  checkedInMood: string | null
+  meetingName: string | null
+  stepWorkCount: number
+  currentStep: number | null
+}
+
+/** Builds "Today you · checked in 'okay' · logged X · answered Y prompt" string parts. */
+export function getTodaySummaryParts(input: TodaySummaryInput): string[] {
+  const parts: string[] = []
+  if (input.checkedInMood) parts.push(`checked in '${input.checkedInMood}'`)
+  if (input.meetingName) parts.push(`logged ${input.meetingName}`)
+  if (input.stepWorkCount > 0 && input.currentStep) {
+    parts.push(`answered ${input.stepWorkCount} Step ${input.currentStep} prompt${input.stepWorkCount !== 1 ? 's' : ''}`)
+  }
+  return parts
+}
+
 interface MemberQueueInput {
   checkedInToday: boolean
   currentStep: number | null
@@ -59,11 +100,19 @@ export function buildMemberTodayQueue(input: MemberQueueInput): TodayQueueResult
   items.sort((a, b) => b.priority - a.priority)
   const visible = items.slice(0, 6)
   const overflowCount = Math.max(0, items.length - 6)
+  const memberCaughtUp = isCaughtUp({
+    checkedInToday: input.checkedInToday,
+    stepWorkCount: input.stepWorkCount,
+    currentStep: input.currentStep,
+    meetingsThisWeek: input.meetingsThisWeek,
+    weeklyMeetingTarget: input.weeklyMeetingTarget,
+  })
 
   return {
     items: visible,
     overflowCount,
     caughtUp: items.every(i => i.completed),
+    memberCaughtUp,
   }
 }
 

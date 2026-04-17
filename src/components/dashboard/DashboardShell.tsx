@@ -78,6 +78,8 @@ interface Props {
   activityItems: ActivityItem[]
   todayQueueItems?: TodayItemData[]
   todayQueueOverflow?: number
+  todayMemberCaughtUp?: boolean
+  todaySummaryParts?: string[]
   dailyQuote?: DailyQuote | null
   sponseeAlertCount?: number
 }
@@ -94,7 +96,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'saved',     label: '❤️ Saved' },
 ]
 
-export default function DashboardShell({ userId, phone, onboardingCompleted, isProvider, providerData, profile, stepCompletions, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsors, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships, todayQueueItems, todayQueueOverflow, dailyQuote, sponseeAlertCount = 0 }: Props) {
+export default function DashboardShell({ userId, phone, onboardingCompleted, isProvider, providerData, profile, stepCompletions, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsors, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships, todayQueueItems, todayQueueOverflow, todayMemberCaughtUp, todaySummaryParts, dailyQuote, sponseeAlertCount = 0 }: Props) {
   const router = useRouter()
   // Provider-only users (no recovery onboarding) default to facility mode
   const defaultMode: Mode = (isProvider && !onboardingCompleted) ? 'facility' : 'my'
@@ -324,20 +326,9 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
                     <TodayCard
                       items={todayQueueItems}
                       overflowCount={todayQueueOverflow ?? 0}
-                      caughtUp={todayQueueItems.every(i => i.completed)}
+                      caughtUp={todayMemberCaughtUp ?? false}
                       onCheckIn={() => setCheckInOpen(true)}
-                      caughtUpSummaryParts={(() => {
-                        const parts: string[] = []
-                        const ci = recentCheckIns[0]
-                        if (ci?.mood) parts.push(`checked in '${ci.mood}'`)
-                        const mtg = meetingAttendance[0]
-                        if (mtg?.meeting_name) parts.push(`logged ${mtg.meeting_name}`)
-                        const step = profile?.current_step
-                        if (stepWorkCount > 0 && step) {
-                          parts.push(`answered ${stepWorkCount} Step ${step} prompt${stepWorkCount !== 1 ? 's' : ''}`)
-                        }
-                        return parts
-                      })()}
+                      caughtUpSummaryParts={todaySummaryParts ?? []}
                     />
                   )}
                 </div>
