@@ -71,7 +71,7 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
   ] = await Promise.all([
     admin.from('user_profiles').select('display_name, sobriety_date, current_step').eq('id', sponseeId).single(),
     admin.from('check_ins').select('id, check_in_date, mood, notes, sober_today, meetings_attended').eq('user_id', sponseeId).eq('is_shared_with_sponsor', true).order('check_in_date', { ascending: false }).limit(5),
-    admin.from('journal_entries').select('id, title, entry_date, excerpt, step_number').eq('user_id', sponseeId).eq('is_shared_with_sponsor', true).order('entry_date', { ascending: false }).limit(10),
+    admin.from('journal_entries').select('id, title, entry_date, body, step_number').eq('user_id', sponseeId).eq('is_shared_with_sponsor', true).order('entry_date', { ascending: false }).limit(10),
     admin.from('step_work_entries')
       .select('id, workbook_id, review_status, submitted_at, reviewed_at, updated_at, program_workbooks(title, step_number, slug)')
       .eq('user_id', sponseeId)
@@ -282,7 +282,7 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
                 <span style={{ fontSize: 12, color: 'var(--mid)' }}>{fmtDate(e.entry_date)}</span>
               </div>
             </div>
-            {e.excerpt && <div style={{ fontSize: 13, color: 'var(--mid)', marginTop: 3, lineHeight: 1.5 }}>{e.excerpt}</div>}
+            {e.body && <div style={{ fontSize: 13, color: 'var(--mid)', marginTop: 3, lineHeight: 1.5 }}>{e.body.length > 160 ? e.body.trim().slice(0, 157) + '…' : e.body}</div>}
           </div>
         ))}
       </div>

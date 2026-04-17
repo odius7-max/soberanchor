@@ -40,7 +40,7 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     supabase.from('user_profiles').select('display_name,sobriety_date,primary_fellowship_id,current_step,is_available_sponsor,onboarding_completed').eq('id', userId).single(),
     supabase.from('check_ins').select('id,check_in_date,mood,notes,sober_today,meetings_attended').eq('user_id', userId).order('check_in_date', { ascending: false }).limit(4),
-    supabase.from('journal_entries').select('id,title,entry_date,excerpt,step_number,is_shared_with_sponsor').eq('user_id', userId).order('entry_date', { ascending: false }).limit(10),
+    supabase.from('journal_entries').select('id,title,entry_date,body,step_number,is_shared_with_sponsor').eq('user_id', userId).order('entry_date', { ascending: false }).limit(10),
     supabase.from('journal_entries').select('id', { count: 'exact', head: true }).eq('user_id', userId),
     supabase.from('step_work_entries').select('id', { count: 'exact', head: true }).eq('user_id', userId).neq('review_status', 'draft'),
     supabase.from('meeting_attendance').select('id,meeting_name,fellowship_name,location_name,attended_at,checkin_method,notes').eq('user_id', userId).order('attended_at', { ascending: false }).limit(20),
@@ -161,7 +161,7 @@ export default async function DashboardPage() {
     const { data } = await supabase
       .from('reading_assignments')
       .select('id,title,source,is_completed,due_date,created_at')
-      .in('relationship_id', allRelIds)
+      .in('sponsor_relationship_id', allRelIds)
       .order('created_at', { ascending: false })
     readingAssignments = (data ?? []) as ReadingAssignment[]
   }
@@ -402,6 +402,11 @@ export default async function DashboardPage() {
     }
   }
 
+  // Today queue + daily quote (behind feature flag — avoids extra DB calls when flag is off)
+  const todayQueueEnabled = process.env.NEXT_PUBLIC_TODAY_QUEUE_ENABLED === 'true'
+  const today = getTodayDateStr()
+  const checkedInToday = recentCheckIns.length > 0 && recentCheckIns[0].check_in_date === today
+
   // Sponsee alert count — drives the red badge on My Sponsees sub-nav
   // Uses same Tier 1 logic as buildSponsorTodayItems: severe mood today OR 3+ silent days
   const SEVERE_MOODS_SET = new Set(['struggling', 'hard', 'crisis'])
@@ -414,11 +419,6 @@ export default async function DashboardPage() {
     )
     return daysSilent >= 3
   }).length
-
-  // Today queue + daily quote (behind feature flag — avoids extra DB calls when flag is off)
-  const todayQueueEnabled = process.env.NEXT_PUBLIC_TODAY_QUEUE_ENABLED === 'true'
-  const today = getTodayDateStr()
-  const checkedInToday = recentCheckIns.length > 0 && recentCheckIns[0].check_in_date === today
 
   // Resolve the specific workbook slug for the current step so the CTA lands on the
   // correct answering page. Falls back to /dashboard/step-work/pending (always exists).
