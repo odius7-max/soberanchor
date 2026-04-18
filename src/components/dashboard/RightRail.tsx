@@ -6,6 +6,8 @@ import type { ActiveSponsor, SponseeFull, CheckIn } from './DashboardShell'
 const SEVERE_MOODS = new Set(['struggling', 'hard', 'crisis'])
 
 interface Props {
+  userId: string
+  displayName: string
   currentStep: number
   completedSteps: number
   allStepsDone: boolean
@@ -26,7 +28,7 @@ function relH(dateStr: string): string {
   return `${Math.round(hours / 24)}d`
 }
 
-export default function RightRail({ currentStep, completedSteps, allStepsDone, journalCount, stepWorkCount, meetingsThisWeek, meetingsTotal, activeSponsors, sponsees, isSponsor, recentCheckIns, today }: Props) {
+export default function RightRail({ userId, displayName, currentStep, completedSteps, allStepsDone, journalCount, stepWorkCount, meetingsThisWeek, meetingsTotal, activeSponsors, sponsees, isSponsor, recentCheckIns, today }: Props) {
   const hasSponseesWithAlerts = isSponsor && sponsees.length > 0
 
   if (hasSponseesWithAlerts) {
@@ -67,6 +69,15 @@ export default function RightRail({ currentStep, completedSteps, allStepsDone, j
             View sponsees tab →
           </a>
         </div>
+
+        {/* People (manage sponsor + sponsee relationships) */}
+        <PeopleCard
+          userId={userId}
+          displayName={displayName}
+          activeSponsors={activeSponsors}
+          sponsees={sponsees}
+          isSponsor={isSponsor}
+        />
 
         {/* Your Recovery */}
         <div style={{ background: '#fff', borderRadius: 12, boxShadow: 'var(--shadow-card)', padding: '16px 18px' }}>
@@ -112,6 +123,8 @@ export default function RightRail({ currentStep, completedSteps, allStepsDone, j
         meetingsTotal={meetingsTotal}
       />
       <PeopleCard
+        userId={userId}
+        displayName={displayName}
         activeSponsors={activeSponsors}
         sponsees={sponsees}
         isSponsor={isSponsor}
