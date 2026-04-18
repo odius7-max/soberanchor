@@ -66,18 +66,27 @@ export default function PeopleCard({ userId, displayName, activeSponsors, sponse
     try {
       await removeSponsorRelationship(relationshipId)
       router.refresh()
+    } catch (err) {
+      console.error('[PeopleCard] unlinkSponsor failed', err)
+      alert(`Could not end relationship: ${err instanceof Error ? err.message : 'Unknown error'}`)
     } finally {
       setUnlinking(null)
     }
   }
 
   async function unlinkSponsee(sponseeId: string, sponseeName: string, relationshipIds: string[]) {
-    if (relationshipIds.length === 0) return
+    if (relationshipIds.length === 0) {
+      alert(`No active relationship found for ${sponseeName}. This may indicate a data issue — please refresh the page.`)
+      return
+    }
     if (!confirm(`End your sponsor relationship with ${sponseeName}?`)) return
     setUnlinking(sponseeId)
     try {
       await Promise.all(relationshipIds.map(id => removeSponsorRelationship(id)))
       router.refresh()
+    } catch (err) {
+      console.error('[PeopleCard] unlinkSponsee failed', err)
+      alert(`Could not end relationship: ${err instanceof Error ? err.message : 'Unknown error'}`)
     } finally {
       setUnlinking(null)
     }
