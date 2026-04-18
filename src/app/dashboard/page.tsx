@@ -422,19 +422,44 @@ export default async function DashboardPage() {
     return daysSilent >= 3
   }).length
 
+  // Derive current step from step_completions — NOT profile.current_step, which can
+  // drift stale. This matches DashboardShell's first-gap algorithm so the Hero,
+  // Today card, and Overview all agree. Scope to the primary milestone's fellowship
+  // (same default activeFellowshipId DashboardShell computes on mount).
+  // See CLAUDE.md pitfall #5: "Step completion sync".
+  const serverPrimaryMilestone = initialMilestones.find(m => m.is_primary) ?? initialMilestones[0] ?? null
+  const serverActiveFellowshipId: string | null | undefined = initialMilestones.length > 0
+    ? (serverPrimaryMilestone?.fellowship_id ?? null)
+    : undefined
+  const derivedCompletions = serverActiveFellowshipId === undefined
+    ? stepCompletions
+    : serverActiveFellowshipId === null
+      ? []
+      : stepCompletions.filter(sc => sc.fellowship_id === serverActiveFellowshipId)
+  const derivedCompletedSet = new Set(derivedCompletions.map(r => r.step_number))
+  const derivedAllStepsDone = derivedCompletedSet.size >= 12
+  const derivedFirstIncomplete = (() => {
+    for (let i = 1; i <= 12; i++) {
+      if (!derivedCompletedSet.has(i)) return i
+    }
+    return 12
+  })()
+  const derivedCurrentStep: number | null = derivedAllStepsDone ? null : derivedFirstIncomplete
+
   // Resolve the specific workbook slug for the current step so the CTA lands on the
   // correct answering page. Falls back to /dashboard/step-work/pending (always exists).
+  const stepWorkFellowshipId = serverActiveFellowshipId ?? profile?.primary_fellowship_id ?? null
   let stepWorkHref: string | undefined
-  if (todayQueueEnabled && profile?.current_step) {
+  if (todayQueueEnabled && derivedCurrentStep) {
     let q = supabase
       .from('program_workbooks')
       .select('slug')
       .eq('is_active', true)
-      .eq('step_number', profile.current_step)
+      .eq('step_number', derivedCurrentStep)
       .order('sort_order')
       .limit(1)
-    if (profile.primary_fellowship_id) {
-      q = q.eq('fellowship_id', profile.primary_fellowship_id) as typeof q
+    if (stepWorkFellowshipId) {
+      q = q.eq('fellowship_id', stepWorkFellowshipId) as typeof q
     }
     const { data: wb } = await q.maybeSingle()
     stepWorkHref = wb?.slug ? `/dashboard/step-work/${wb.slug}` : '/dashboard/step-work/pending'
@@ -443,7 +468,7 @@ export default async function DashboardPage() {
   let todayQueue = todayQueueEnabled
     ? buildMemberTodayQueue({
         checkedInToday,
-        currentStep: profile?.current_step ?? null,
+        currentStep: derivedCurrentStep,
         stepWorkCount,
         meetingsThisWeek,
         stepWorkHref,
@@ -519,7 +544,7 @@ export default async function DashboardPage() {
     checkedInMood: recentCheckIns[0]?.check_in_date === today ? (recentCheckIns[0]?.mood ?? null) : null,
     meetingName: meetingAttendance.find(m => m.attended_at.slice(0, 10) === today)?.meeting_name ?? null,
     stepWorkCount,
-    currentStep: profile?.current_step ?? null,
+    currentStep: derivedCurrentStep,
   }) : []
 
   const dailyQuote = todayQueueEnabled
