@@ -17,7 +17,7 @@ function getSearchContext(pathname: string): SearchContext {
 export default function Nav() {
   const pathname  = usePathname()
   const router    = useRouter()
-  const { user, profile, isProvider, loading, openAuthModal, signOut } = useAuth()
+  const { user, profile, loading, openAuthModal, signOut } = useAuth()
   const [mobileOpen,   setMobileOpen]   = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [searchOpen,   setSearchOpen]   = useState(false)
@@ -113,26 +113,14 @@ export default function Nav() {
               </Link>
             ))}
 
-            {/* Our Story — logged-out only */}
-            {!loading && !user && (
-              <Link
-                href="/our-story"
-                className={`px-3.5 py-2 rounded-lg text-[13.5px] font-medium transition-colors whitespace-nowrap ${
-                  pathname === '/our-story' ? 'text-teal bg-[var(--teal-10)]' : 'text-dark hover:bg-warm-gray'
-                }`}
-              >
-                Our Story
-              </Link>
-            )}
-
-            {/* For Providers — muted, always shown */}
+            {/* Our Story — shown to all users */}
             <Link
-              href="/for-providers"
+              href="/our-story"
               className={`px-3.5 py-2 rounded-lg text-[13.5px] font-medium transition-colors whitespace-nowrap ${
-                pathname === '/for-providers' ? 'text-teal font-semibold' : 'text-mid hover:text-dark hover:bg-warm-gray'
+                pathname === '/our-story' ? 'text-teal bg-[var(--teal-10)]' : 'text-dark hover:bg-warm-gray'
               }`}
             >
-              For Providers
+              Our Story
             </Link>
           </div>
 
@@ -157,7 +145,7 @@ export default function Nav() {
                     onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,51,102,0.07)')}
                   >
                     <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)', whiteSpace: 'nowrap' }}>
-                      My Recovery{displayName ? ` | ${displayName}` : ''} ▾
+                      {displayName ? `My Journey | ${displayName} ▾` : 'Account ▾'}
                     </span>
                   </button>
 
@@ -178,12 +166,6 @@ export default function Nav() {
                         Settings
                         {pathname === '/my-recovery/settings' && <span className="text-[10px] font-bold text-teal">●</span>}
                       </Link>
-                      {isProvider && (
-                        <Link href="/providers/dashboard" onClick={() => setDropdownOpen(false)} className="flex items-center justify-between px-4 py-3 text-[14px] text-dark hover:bg-warm-gray transition-colors">
-                          Provider Dashboard
-                          {pathname.startsWith('/providers') && <span className="text-[10px] font-bold text-teal">●</span>}
-                        </Link>
-                      )}
                       <button
                         onClick={handleSignOut}
                         className="block w-full text-left px-4 py-3 text-[14px] text-mid hover:bg-warm-gray transition-colors"
@@ -286,26 +268,14 @@ export default function Nav() {
             </Link>
           ))}
 
-          {!loading && !user && (
-            <Link
-              href="/our-story"
-              onClick={() => setMobileOpen(false)}
-              className={`block py-3.5 text-[15px] font-medium border-b border-[var(--border)] ${
-                pathname === '/our-story' ? 'text-teal' : 'text-dark'
-              }`}
-            >
-              Our Story
-            </Link>
-          )}
-
           <Link
-            href="/for-providers"
+            href="/our-story"
             onClick={() => setMobileOpen(false)}
             className={`block py-3.5 text-[15px] font-medium border-b border-[var(--border)] ${
-              pathname === '/for-providers' ? 'text-teal' : 'text-mid'
+              pathname === '/our-story' ? 'text-teal' : 'text-dark'
             }`}
           >
-            For Providers
+            Our Story
           </Link>
 
           {!loading && (
@@ -320,11 +290,6 @@ export default function Nav() {
                 <Link href="/my-recovery/settings" onClick={() => setMobileOpen(false)} className="block py-3.5 text-[15px] font-medium border-b border-[var(--border)]" style={{ color: 'var(--navy)' }}>
                   Settings
                 </Link>
-                {isProvider && (
-                  <Link href="/providers/dashboard" onClick={() => setMobileOpen(false)} className="block py-3.5 text-[15px] font-medium border-b border-[var(--border)]" style={{ color: 'var(--navy)' }}>
-                    Provider Dashboard
-                  </Link>
-                )}
                 <button
                   onClick={handleSignOut}
                   className="block py-3.5 text-[15px] text-mid w-full text-left"

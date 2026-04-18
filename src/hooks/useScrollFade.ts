@@ -11,7 +11,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 export function useScrollFade<T extends HTMLElement = HTMLDivElement>() {
   const ref = useRef<T>(null)
   const [fadeLeft,  setFadeLeft]  = useState(false)
-  const [fadeRight, setFadeRight] = useState(false)
+  const [fadeRight, setFadeRight] = useState(true)  // assume overflow until update() proves otherwise
 
   const update = useCallback(() => {
     const el = ref.current

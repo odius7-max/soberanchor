@@ -36,12 +36,17 @@ export default function OnboardingCard({ userId }: { userId: string }) {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function dismiss() {
-    // Save whatever the user already entered, but don't require it
+    // Save whatever the user already entered, but don't require it.
+    // Only mark onboarding_completed=true if we have a display_name — otherwise
+    // the user would be stuck as "Friend" on every surface. (CLAUDE.md pitfall #3)
+    const hasName = displayName.trim().length >= 2
     const profileUpdates: Record<string, unknown> = {
-      onboarding_completed: true,
       updated_at: new Date().toISOString(),
     }
-    if (displayName.trim()) profileUpdates.display_name = displayName.trim()
+    if (hasName) {
+      profileUpdates.display_name = displayName.trim()
+      profileUpdates.onboarding_completed = true
+    }
     if (fellowshipId)       profileUpdates.primary_fellowship_id = fellowshipId
     if (sobrietyDate)       profileUpdates.sobriety_date = sobrietyDate
     if (role === 'sponsor' || role === 'both') profileUpdates.is_available_sponsor = true
@@ -130,10 +135,11 @@ export default function OnboardingCard({ userId }: { userId: string }) {
 
   if (dismissed) return null
 
-  // "Next" requires data for fellowship (step 2) and sobriety date (step 3).
-  // Name and role steps are always advanceable.
+  // "Next" requires a name (step 1), fellowship (step 2), sobriety date (step 3).
+  // Role step is always advanceable. Name gate prevents the "Friend" fallback
+  // from being permanent (CLAUDE.md pitfall #3).
   const nextEnabled =
-    step === 1 ? true :
+    step === 1 ? displayName.trim().length >= 2 :
     step === 2 ? !!fellowshipId :
     step === 3 ? !!sobrietyDate :
     true

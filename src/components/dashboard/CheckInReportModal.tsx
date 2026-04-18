@@ -219,6 +219,7 @@ function ModalBody({ sponseeId, sponseeName, onClose }: ContentProps) {
       .from('check_ins')
       .select('check_in_date,mood,sober_today,meetings_attended,called_sponsor,notes')
       .eq('user_id', sponseeId)
+      .eq('is_shared_with_sponsor', true)
       .order('check_in_date', { ascending: true })
       .then(({ data }) => {
         if (!cancelled) {

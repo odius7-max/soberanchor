@@ -10,7 +10,19 @@
 import { Resend } from 'resend'
 import { createAdminClient } from './supabase/admin'
 
-const resend  = new Resend(process.env.RESEND_API_KEY)
+// Lazy-init Resend so importing this module at build-time (e.g. during
+// Next.js page-data collection for API routes) doesn't throw when
+// RESEND_API_KEY isn't populated in that environment. Runtime calls
+// still require the key to be set.
+let _resend: Resend | null = null
+function getResend(): Resend {
+  if (!_resend) {
+    const key = process.env.RESEND_API_KEY
+    if (!key) throw new Error('RESEND_API_KEY is not set')
+    _resend = new Resend(key)
+  }
+  return _resend
+}
 const FROM    = 'SoberAnchor <no-reply@soberanchor.com>'
 const BASE    = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://soberanchor.com').replace(/\/$/, '')
 
@@ -255,7 +267,7 @@ export async function sendNotification<T extends NotificationType>(
 
     const { subject, html } = built
 
-    await resend.emails.send({ from: FROM, to: email, subject, html })
+    await getResend().emails.send({ from: FROM, to: email, subject, html })
 
     // Log the send (non-fatal if this fails)
     await admin.from('notification_log').insert({

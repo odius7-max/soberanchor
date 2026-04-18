@@ -121,7 +121,7 @@ export default function ClaimFlow({ userId, preselectedFacility = null }: Props)
     }).eq('id', facility.id)
 
     setSubmitting(false)
-    router.push('/providers/dashboard')
+    router.push('/dashboard')
   }
 
   async function createFacility() {
@@ -180,7 +180,7 @@ export default function ClaimFlow({ userId, preselectedFacility = null }: Props)
 
     if (facilityErr) { setSubmitting(false); setError(facilityErr.message); return }
     setSubmitting(false)
-    router.push('/providers/dashboard')
+    router.push('/dashboard')
   }
 
   const inputStyle = (focused = false) => ({

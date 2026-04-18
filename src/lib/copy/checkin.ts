@@ -1,0 +1,18 @@
+export const CHECKIN_COPY = {
+  title: (date: string) => `Check in · ${date}`,
+  subtitle: 'Only mood is required.',
+  moodQ: 'How are you today?',
+  meetingQOptional: 'Meeting today? (optional)',
+  noteQ: 'A note? (optional)',
+  noteHelper: 'Private by default. Visible to your sponsor.',
+  noteHelperPrivate: 'Private to you — not shared.',
+  save: 'Save check-in',
+  update: 'Update check-in',
+  saving: 'Saving…',
+  updating: 'Updating…',
+  customLabel: '+ Custom meeting',
+  differentLabel: '+ Different meeting',
+  noMeeting: 'No meeting today',
+  usualBadge: 'usual',
+  personalBadge: 'personal',
+} as const

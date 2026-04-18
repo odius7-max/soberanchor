@@ -8,9 +8,15 @@ interface JournalEntry {
   id: string
   title: string | null
   entry_date: string
-  excerpt: string | null
+  body: string | null
   step_number: number | null
   is_shared_with_sponsor: boolean
+}
+
+function toExcerpt(body: string | null): string | null {
+  if (!body) return null
+  const clean = body.trim()
+  return clean.length > 160 ? clean.slice(0, 157) + '…' : clean
 }
 
 interface Props {
@@ -122,7 +128,7 @@ export default function JournalTab({ userId, entries }: Props) {
                 <span className="font-semibold text-navy" style={{ fontFamily: 'var(--font-display)', fontSize: '18px' }}>{entry.title ?? 'Untitled Entry'}</span>
                 <span className="text-mid flex-shrink-0 ml-3" style={{ fontSize: '12px', marginTop: '3px' }}>{fmtDate(entry.entry_date)}</span>
               </div>
-              {entry.excerpt && <div className="text-mid" style={{ fontSize: '14px', lineHeight: 1.55 }}>{entry.excerpt}</div>}
+              {(() => { const ex = toExcerpt(entry.body); return ex && <div className="text-mid" style={{ fontSize: '14px', lineHeight: 1.55 }}>{ex}</div>; })()}
               <div className="flex gap-2 mt-2 flex-wrap">
                 {entry.step_number && (
                   <span className="rounded-full font-semibold" style={{ fontSize: '11px', padding: '3px 10px', background: 'rgba(212,165,116,0.1)', border: '1px solid rgba(212,165,116,0.2)', color: '#9A7B54' }}>Step {entry.step_number} Work</span>

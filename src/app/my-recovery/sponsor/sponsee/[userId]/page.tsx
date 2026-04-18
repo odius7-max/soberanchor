@@ -2,14 +2,13 @@ import { redirect, notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import Link from 'next/link'
-import SponseeProgram from '@/components/dashboard/SponseeProgram'
-import SponseeTasksSection from '@/components/dashboard/SponseeTasksSection'
+import SponseeDetailClient from '@/components/dashboard/SponseeDetailClient'
 import SponsorNotesSection from '@/components/dashboard/SponsorNotesSection'
 import type { SponsorTask } from '@/app/actions/sponsorTasks'
 
 const MOOD_META: Record<string, { emoji: string; label: string; color: string }> = {
-  great:      { emoji: '😊', label: 'great',      color: '#27AE60' },
-  good:       { emoji: '🙂', label: 'good',       color: '#2A8A99' },
+  great:      { emoji: '😊', label: 'great',      color: '#38a169' },
+  good:       { emoji: '🙂', label: 'good',       color: '#38a169' },
   okay:       { emoji: '😐', label: 'okay',       color: '#D4A574' },
   struggling: { emoji: '😔', label: 'struggling', color: '#E67E22' },
   crisis:     { emoji: '😰', label: 'crisis',     color: '#C0392B' },
@@ -68,10 +67,11 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
     completionsRes,
     tasksRes,
     sponsorNotesRes,
+    milestonesRes,
   ] = await Promise.all([
-    admin.from('user_profiles').select('display_name, sobriety_date, current_step').eq('id', sponseeId).single(),
-    admin.from('check_ins').select('id, check_in_date, mood, notes, sober_today, meetings_attended').eq('user_id', sponseeId).order('check_in_date', { ascending: false }).limit(5),
-    admin.from('journal_entries').select('id, title, entry_date, excerpt, step_number').eq('user_id', sponseeId).eq('is_shared_with_sponsor', true).order('entry_date', { ascending: false }).limit(10),
+    admin.from('user_profiles').select('display_name, sobriety_date, current_step, primary_fellowship_id').eq('id', sponseeId).single(),
+    admin.from('check_ins').select('id, check_in_date, mood, notes, sober_today, meetings_attended').eq('user_id', sponseeId).eq('is_shared_with_sponsor', true).order('check_in_date', { ascending: false }).limit(5),
+    admin.from('journal_entries').select('id, title, entry_date, body, step_number').eq('user_id', sponseeId).eq('is_shared_with_sponsor', true).order('entry_date', { ascending: false }).limit(10),
     admin.from('step_work_entries')
       .select('id, workbook_id, review_status, submitted_at, reviewed_at, updated_at, program_workbooks(title, step_number, slug)')
       .eq('user_id', sponseeId)
@@ -92,6 +92,13 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
       .eq('sponsor_id', user.id)
       .eq('sponsee_id', sponseeId)
       .order('created_at', { ascending: false }),
+    // Sponsee's own fellowship from sobriety_milestones — used as the default for the
+    // Program dropdown when sponsor_relationships.fellowship_id is still null.
+    admin.from('sobriety_milestones')
+      .select('fellowship_id, is_primary')
+      .eq('user_id', sponseeId)
+      .order('is_primary', { ascending: false })
+      .order('sobriety_date', { ascending: true }),
   ])
 
   if (!profileRes.data) notFound()
@@ -112,6 +119,16 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
   const completedSteps = Math.min(initialCompletions.filter(c => c.is_completed).length, 12)
   const allStepsDone = completedSteps >= 12
   const nextStep = allStepsDone ? null : completedSteps + 1
+
+  // Default the Program dropdown to the sponsee's fellowship when the sponsor
+  // relationship has none recorded yet. Prefer the sponsee's primary milestone,
+  // fall back to any recorded milestone, then user_profiles.primary_fellowship_id.
+  const sponseeMilestones = (milestonesRes.data ?? []) as { fellowship_id: string | null; is_primary: boolean | null }[]
+  const suggestedFellowshipId =
+    sponseeMilestones.find(m => m.is_primary && m.fellowship_id)?.fellowship_id
+    ?? sponseeMilestones.find(m => m.fellowship_id)?.fellowship_id
+    ?? (profile as { primary_fellowship_id?: string | null }).primary_fellowship_id
+    ?? null
 
   const card = { background: '#fff', border: '1px solid var(--border)', borderRadius: 16, padding: '20px 24px', marginBottom: 16 } as const
 
@@ -149,26 +166,23 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
         </div>
       </div>
 
-      {/* Program selector + step grid */}
-      <SponseeProgram
+      {/* Program selector + step grid + Tasks — state shared so the Tasks card sees
+          fellowship changes immediately and "+ Assign Task" can validate. */}
+      <SponseeDetailClient
         fellowships={fellowships}
         initialFellowshipId={rel.fellowship_id ?? null}
+        suggestedFellowshipId={suggestedFellowshipId}
         relationshipId={rel.id}
         sponseeId={sponseeId}
         sponseeName={profile.display_name ?? 'your sponsee'}
         currentStep={profile.current_step ?? 1}
         initialCompletions={initialCompletions}
+        nextStep={nextStep}
+        completedTasksCount={sponsorTasks.filter(t => t.status === 'completed').length}
+        lastSubmittedAt={submittedEntries[0]?.submitted_at ?? null}
+        initialTasks={sponsorTasks}
       />
-
-      {/* Tasks */}
-      <div style={card}>
-        <SponseeTasksSection
-          sponseeId={sponseeId}
-          sponseeName={profile.display_name ?? 'your sponsee'}
-          relationshipId={rel.id}
-          initialTasks={sponsorTasks}
-        />
-      </div>
+      {/* (Tasks card now rendered inside SponseeDetailClient above) */}
 
       {/* Submitted step work — needs review */}
       {submittedEntries.length > 0 && (
@@ -278,7 +292,7 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
                 <span style={{ fontSize: 12, color: 'var(--mid)' }}>{fmtDate(e.entry_date)}</span>
               </div>
             </div>
-            {e.excerpt && <div style={{ fontSize: 13, color: 'var(--mid)', marginTop: 3, lineHeight: 1.5 }}>{e.excerpt}</div>}
+            {e.body && <div style={{ fontSize: 13, color: 'var(--mid)', marginTop: 3, lineHeight: 1.5 }}>{e.body.length > 160 ? e.body.trim().slice(0, 157) + '…' : e.body}</div>}
           </div>
         ))}
       </div>

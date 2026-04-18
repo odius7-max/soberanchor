@@ -33,8 +33,8 @@ const STEPS = [
 ]
 
 const MOOD_META: Record<string, { emoji: string; label: string; color: string }> = {
-  great:      { emoji: '😊', label: 'great',      color: '#27AE60' },
-  good:       { emoji: '🙂', label: 'good',       color: '#2A8A99' },
+  great:      { emoji: '😊', label: 'great',      color: '#38a169' },
+  good:       { emoji: '🙂', label: 'good',       color: '#38a169' },
   okay:       { emoji: '😐', label: 'okay',       color: '#D4A574' },
   struggling: { emoji: '😔', label: 'struggling', color: '#E67E22' },
   crisis:     { emoji: '😰', label: 'crisis',     color: '#C0392B' },
@@ -303,8 +303,10 @@ export default function OverviewTab({ userId, activeFellowshipId, currentStep, c
       {/* Meeting Log */}
       <div className={card}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-navy" style={{ fontSize: '15px' }}>👥 Meeting Log</h3>
-          <span style={{ fontSize: '11px', color: 'var(--mid)', background: 'var(--warm-gray)', padding: '4px 10px', borderRadius: '8px' }}>Auto-synced</span>
+          <div className="flex items-center gap-2">
+            <h3 className="font-bold text-navy" style={{ fontSize: '15px' }}>👥 Meeting Log</h3>
+            <span style={{ fontSize: '11px', color: 'var(--mid)', background: 'var(--warm-gray)', padding: '4px 10px', borderRadius: '8px' }}>Auto-synced</span>
+          </div>
         </div>
         <div className="flex gap-3 mb-4">
           <div className="flex-1 rounded-xl text-center" style={{ background: 'var(--teal-10)', padding: '14px 16px' }}>
@@ -397,8 +399,8 @@ export default function OverviewTab({ userId, activeFellowshipId, currentStep, c
         <div className="mt-3">
           <button
             onClick={() => setShowFindSponsor(true)}
-            className="font-semibold text-white rounded-lg transition-colors hover:bg-navy-dark"
-            style={{ fontSize: '13px', padding: '8px 16px', background: 'var(--navy)', border: 'none', cursor: 'pointer', width: '100%' }}
+            className="font-semibold rounded-lg transition-colors"
+            style={{ fontSize: '13px', padding: '8px 16px', background: '#fff', color: '#1a2332', border: '2px solid #d0d5dd', cursor: 'pointer', width: '100%' }}
           >
             {activeSponsors.length > 0 ? '+ Add a Sponsor' : '🔍 Find Your Sponsor'}
           </button>

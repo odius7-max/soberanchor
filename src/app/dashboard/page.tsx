@@ -2,8 +2,14 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import DashboardShell from '@/components/dashboard/DashboardShell'
-import type { CheckIn, JournalEntry, MeetingAttendance, ReadingAssignment, SponseeFull, SponseeCheckIn, ActivityItem, SobrietyMilestone, Fellowship, ActiveSponsor } from '@/components/dashboard/DashboardShell'
+import type { CheckIn, JournalEntry, MeetingAttendance, ReadingAssignment, SponseeFull, SponseeCheckIn, ActivityItem, SobrietyMilestone, Fellowship, ActiveSponsor, ProviderData } from '@/components/dashboard/DashboardShell'
 import type { PendingRequest } from '@/components/dashboard/PendingRequests'
+import type { FacilityData } from '@/components/providers/ListingTab'
+import type { Lead } from '@/components/providers/LeadsTab'
+import { getDailyQuote } from '@/lib/daily-quote'
+import { buildMemberTodayQueue, buildSponsorTodayItems, getTodaySummaryParts } from '@/lib/today-queue'
+import { getTodayDateStr } from '@/lib/today-window'
+import { getUpcomingMilestones } from '@/lib/milestone-windows'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -13,6 +19,116 @@ export default async function DashboardPage() {
 
   const userId = user.id
   const phone = user.phone ?? null
+
+  // ── Email-invite conversion ─────────────────────────────────────────────
+  // Two-directional: materialize any pending sponsee_invites (sponsor→sponsee)
+  // AND sponsor_invites (sponsee→sponsor) addressed to this user's email into
+  // pending sponsor_relationships rows, so the existing PendingRequests banner
+  // picks them up without the invitee needing to search for anyone. Idempotent:
+  // we dedupe against existing relationships and mark processed invites
+  // 'converted'. Fellowship is resolved from the sender's primary_fellowship_id
+  // at conversion time, which also fixes the long-standing null fellowship_id
+  // bug at the source.
+  if (user.email) {
+    const inviteAdmin = createAdminClient()
+    const emailLower = user.email.toLowerCase()
+
+    // ── Direction 1: sponsor invited sponsee (sponsee_invites) ──
+    const { data: pendingInvites } = await inviteAdmin
+      .from('sponsee_invites')
+      .select('id, sponsor_id, created_at')
+      .eq('invitee_email', emailLower)
+      .eq('status', 'pending')
+
+    if (pendingInvites && pendingInvites.length > 0) {
+      const inviteSponsorIds = [...new Set(pendingInvites.map(i => i.sponsor_id as string))]
+
+      const [{ data: inviteSponsorProfiles }, { data: existingInviteRels }] = await Promise.all([
+        inviteAdmin.from('user_profiles').select('id, primary_fellowship_id').in('id', inviteSponsorIds),
+        inviteAdmin.from('sponsor_relationships').select('sponsor_id').in('sponsor_id', inviteSponsorIds).eq('sponsee_id', userId),
+      ])
+
+      const fellowshipMap = new Map(
+        (inviteSponsorProfiles ?? []).map(p => [
+          p.id as string,
+          (p as { primary_fellowship_id: string | null }).primary_fellowship_id ?? null,
+        ])
+      )
+      const existingRelSet = new Set((existingInviteRels ?? []).map(r => r.sponsor_id as string))
+
+      const relInserts: Array<{ sponsor_id: string; sponsee_id: string; status: string; fellowship_id: string | null; created_at: string }> = []
+      const inviteIdsToMark: string[] = []
+
+      for (const inv of pendingInvites) {
+        inviteIdsToMark.push(inv.id as string)
+        if (existingRelSet.has(inv.sponsor_id as string)) continue
+        relInserts.push({
+          sponsor_id: inv.sponsor_id as string,
+          sponsee_id: userId,
+          status: 'pending',
+          fellowship_id: fellowshipMap.get(inv.sponsor_id as string) ?? null,
+          created_at: inv.created_at as string,
+        })
+      }
+
+      if (relInserts.length > 0) {
+        await inviteAdmin.from('sponsor_relationships').insert(relInserts)
+      }
+      if (inviteIdsToMark.length > 0) {
+        await inviteAdmin.from('sponsee_invites').update({ status: 'converted' }).in('id', inviteIdsToMark)
+      }
+    }
+
+    // ── Direction 2: sponsee invited sponsor (sponsor_invites) ──
+    // Mirror of the block above. New user = sponsor; original sender = sponsee.
+    // Incoming request then surfaces in PendingRequests with
+    // perspective="as_sponsor".
+    const { data: pendingSponsorInvites } = await inviteAdmin
+      .from('sponsor_invites')
+      .select('id, sponsee_id, created_at')
+      .eq('invitee_email', emailLower)
+      .eq('status', 'pending')
+
+    if (pendingSponsorInvites && pendingSponsorInvites.length > 0) {
+      const inviteSponseeIds = [...new Set(pendingSponsorInvites.map(i => i.sponsee_id as string))]
+
+      const [{ data: inviteSponseeProfiles }, { data: existingSponsorRels }] = await Promise.all([
+        inviteAdmin.from('user_profiles').select('id, primary_fellowship_id').in('id', inviteSponseeIds),
+        inviteAdmin.from('sponsor_relationships').select('sponsee_id').eq('sponsor_id', userId).in('sponsee_id', inviteSponseeIds),
+      ])
+
+      const sponseeFellowshipMap = new Map(
+        (inviteSponseeProfiles ?? []).map(p => [
+          p.id as string,
+          (p as { primary_fellowship_id: string | null }).primary_fellowship_id ?? null,
+        ])
+      )
+      const existingSponsorRelSet = new Set((existingSponsorRels ?? []).map(r => r.sponsee_id as string))
+
+      const sponsorRelInserts: Array<{ sponsor_id: string; sponsee_id: string; status: string; fellowship_id: string | null; created_at: string }> = []
+      const sponsorInviteIdsToMark: string[] = []
+
+      for (const inv of pendingSponsorInvites) {
+        sponsorInviteIdsToMark.push(inv.id as string)
+        if (existingSponsorRelSet.has(inv.sponsee_id as string)) continue
+        sponsorRelInserts.push({
+          sponsor_id: userId,
+          sponsee_id: inv.sponsee_id as string,
+          status: 'pending',
+          fellowship_id: sponseeFellowshipMap.get(inv.sponsee_id as string) ?? null,
+          created_at: inv.created_at as string,
+        })
+      }
+
+      if (sponsorRelInserts.length > 0) {
+        await inviteAdmin.from('sponsor_relationships').insert(sponsorRelInserts)
+      }
+      if (sponsorInviteIdsToMark.length > 0) {
+        await inviteAdmin.from('sponsor_invites').update({ status: 'converted' }).in('id', sponsorInviteIdsToMark)
+      }
+    }
+  }
+
 
   // Parallel fetches
   const [
@@ -34,7 +150,7 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     supabase.from('user_profiles').select('display_name,sobriety_date,primary_fellowship_id,current_step,is_available_sponsor,onboarding_completed').eq('id', userId).single(),
     supabase.from('check_ins').select('id,check_in_date,mood,notes,sober_today,meetings_attended').eq('user_id', userId).order('check_in_date', { ascending: false }).limit(4),
-    supabase.from('journal_entries').select('id,title,entry_date,excerpt,step_number,is_shared_with_sponsor').eq('user_id', userId).order('entry_date', { ascending: false }).limit(10),
+    supabase.from('journal_entries').select('id,title,entry_date,body,step_number,is_shared_with_sponsor').eq('user_id', userId).order('entry_date', { ascending: false }).limit(10),
     supabase.from('journal_entries').select('id', { count: 'exact', head: true }).eq('user_id', userId),
     supabase.from('step_work_entries').select('id', { count: 'exact', head: true }).eq('user_id', userId).neq('review_status', 'draft'),
     supabase.from('meeting_attendance').select('id,meeting_name,fellowship_name,location_name,attended_at,checkin_method,notes').eq('user_id', userId).order('attended_at', { ascending: false }).limit(20),
@@ -155,7 +271,7 @@ export default async function DashboardPage() {
     const { data } = await supabase
       .from('reading_assignments')
       .select('id,title,source,is_completed,due_date,created_at')
-      .in('relationship_id', allRelIds)
+      .in('sponsor_relationship_id', allRelIds)
       .order('created_at', { ascending: false })
     readingAssignments = (data ?? []) as ReadingAssignment[]
   }
@@ -200,10 +316,11 @@ export default async function DashboardPage() {
         sponsorTasksRes,
       ] = await Promise.all([
         sponseeAdmin.from('user_profiles').select('id,display_name,sobriety_date').in('id', sponseeIds),
-        // 60-day check-in history for mood trend + streak calculation
+        // 60-day check-in history — only rows the sponsee opted to share
         sponseeAdmin.from('check_ins')
-          .select('user_id,check_in_date,mood,notes,sober_today,meetings_attended,called_sponsor')
+          .select('id,user_id,check_in_date,mood,notes,sober_today,meetings_attended,called_sponsor,sponsor_acknowledged_at')
           .in('user_id', sponseeIds)
+          .eq('is_shared_with_sponsor', true)
           .gte('check_in_date', sixtyDaysAgoStr)
           .order('check_in_date', { ascending: false }),
         // Count pending reviews per sponsee
@@ -241,12 +358,14 @@ export default async function DashboardPage() {
       for (const ci of (sponseeCheckInsRes.data ?? [])) {
         if (!checkInsBySponsee[ci.user_id]) checkInsBySponsee[ci.user_id] = []
         checkInsBySponsee[ci.user_id].push({
+          id: ci.id as string,
           date: ci.check_in_date as string,
           mood: ci.mood as string | null,
           notes: ci.notes as string | null,
           soberToday: ci.sober_today as boolean,
           meetingsAttended: (ci.meetings_attended as number | null) ?? 0,
           calledSponsor: ci.called_sponsor as boolean | null,
+          sponsor_acknowledged_at: ci.sponsor_acknowledged_at as string | null,
         })
       }
 
@@ -351,6 +470,216 @@ export default async function DashboardPage() {
     }
   }
 
+  // ── Provider data (if user has a provider account) ──
+  let isProviderUser = false
+  let providerData: ProviderData | null = null
+
+  const { data: providerAccount } = await supabase
+    .from('provider_accounts')
+    .select('id, subscription_tier')
+    .eq('auth_user_id', userId)
+    .eq('is_active', true)
+    .maybeSingle()
+
+  if (providerAccount) {
+    isProviderUser = true
+    const { data: facilitiesRaw } = await supabase
+      .from('facilities')
+      .select('id,name,description,phone,email,website,address_line1,city,state,zip,facility_type,listing_tier,is_verified,is_claimed,is_featured,avg_rating,review_count')
+      .eq('provider_account_id', providerAccount.id)
+      .order('created_at', { ascending: true })
+      .limit(1)
+
+    if (facilitiesRaw && facilitiesRaw.length > 0) {
+      const facility = facilitiesRaw[0] as FacilityData
+      const [amenitiesRes2, insuranceRes2, leadsRes2] = await Promise.all([
+        supabase.from('facility_amenities').select('amenity_name').eq('facility_id', facility.id),
+        supabase.from('facility_insurance').select('insurance_name').eq('facility_id', facility.id),
+        supabase.from('leads').select('id,first_name,phone,insurance_provider,seeking,who_for,notes,status,created_at')
+          .eq('facility_id', facility.id)
+          .order('created_at', { ascending: false })
+          .limit(100),
+      ])
+      const provLeads: Lead[] = (leadsRes2.data ?? []) as Lead[]
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+      const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+      providerData = {
+        facility,
+        amenities: (amenitiesRes2.data ?? []).map(r => r.amenity_name as string),
+        insurance: (insuranceRes2.data ?? []).map(r => r.insurance_name as string),
+        leads: provLeads,
+        leadsThisMonth: provLeads.filter(l => new Date(l.created_at) >= startOfMonth).length,
+        leadsLastMonth: provLeads.filter(l => { const d = new Date(l.created_at); return d >= startOfLastMonth && d < startOfMonth }).length,
+      }
+    }
+  }
+
+  // Today queue + daily quote (behind feature flag — avoids extra DB calls when flag is off)
+  const todayQueueEnabled = process.env.NEXT_PUBLIC_TODAY_QUEUE_ENABLED === 'true'
+  const today = getTodayDateStr()
+  const checkedInToday = recentCheckIns.length > 0 && recentCheckIns[0].check_in_date === today
+
+  // Sponsee alert count — drives the red badge on My Sponsees sub-nav
+  // Uses same Tier 1 logic as buildSponsorTodayItems: severe mood today OR 3+ silent days
+  const SEVERE_MOODS_SET = new Set(['struggling', 'hard', 'crisis'])
+  const sponseeAlertCount = sponsees.filter(s => {
+    const latest = s.checkInHistory[0]
+    if (latest?.date === today && SEVERE_MOODS_SET.has(latest.mood ?? '')) return true
+    if (!latest) return true
+    const daysSilent = Math.floor(
+      (new Date(today).getTime() - new Date(latest.date).getTime()) / 86_400_000
+    )
+    return daysSilent >= 3
+  }).length
+
+  // Derive current step from step_completions — NOT profile.current_step, which can
+  // drift stale. This matches DashboardShell's first-gap algorithm so the Hero,
+  // Today card, and Overview all agree. Scope to the primary milestone's fellowship
+  // (same default activeFellowshipId DashboardShell computes on mount).
+  // See CLAUDE.md pitfall #5: "Step completion sync".
+  const serverPrimaryMilestone = initialMilestones.find(m => m.is_primary) ?? initialMilestones[0] ?? null
+  const serverActiveFellowshipId: string | null | undefined = initialMilestones.length > 0
+    ? (serverPrimaryMilestone?.fellowship_id ?? null)
+    : undefined
+  const derivedCompletions = serverActiveFellowshipId === undefined
+    ? stepCompletions
+    : serverActiveFellowshipId === null
+      ? []
+      : stepCompletions.filter(sc => sc.fellowship_id === serverActiveFellowshipId)
+  const derivedCompletedSet = new Set(derivedCompletions.map(r => r.step_number))
+  const derivedAllStepsDone = derivedCompletedSet.size >= 12
+  const derivedFirstIncomplete = (() => {
+    for (let i = 1; i <= 12; i++) {
+      if (!derivedCompletedSet.has(i)) return i
+    }
+    return 12
+  })()
+  const derivedCurrentStep: number | null = derivedAllStepsDone ? null : derivedFirstIncomplete
+
+  // Resolve the specific workbook(s) for the current step. Used for two things:
+  //   1. CTA slug → /dashboard/step-work/<slug> (first workbook by sort_order)
+  //   2. Detecting whether the sponsee has already submitted this step to their
+  //      sponsor — any entry with review_status IN ('submitted','reviewed')
+  //      means the member's part is done (awaiting sponsor review). The Today
+  //      card should reflect that rather than keep urging "Continue Step X".
+  const stepWorkFellowshipId = serverActiveFellowshipId ?? profile?.primary_fellowship_id ?? null
+  let stepWorkHref: string | undefined
+  let stepWorkSubmitted = false
+  if (todayQueueEnabled && derivedCurrentStep) {
+    let wbQ = supabase
+      .from('program_workbooks')
+      .select('id, slug, sort_order')
+      .eq('is_active', true)
+      .eq('step_number', derivedCurrentStep)
+      .order('sort_order')
+    if (stepWorkFellowshipId) {
+      wbQ = wbQ.eq('fellowship_id', stepWorkFellowshipId) as typeof wbQ
+    }
+    const { data: wbs } = await wbQ
+    const workbooks = (wbs ?? []) as { id: string; slug: string; sort_order: number }[]
+    stepWorkHref = workbooks[0]?.slug
+      ? `/dashboard/step-work/${workbooks[0].slug}`
+      : '/dashboard/step-work/pending'
+
+    if (workbooks.length > 0) {
+      const { data: submittedEntries } = await supabase
+        .from('step_work_entries')
+        .select('id')
+        .eq('user_id', userId)
+        .in('workbook_id', workbooks.map(w => w.id))
+        .in('review_status', ['submitted', 'reviewed'])
+        .limit(1)
+      stepWorkSubmitted = (submittedEntries ?? []).length > 0
+    }
+  }
+
+  let todayQueue = todayQueueEnabled
+    ? buildMemberTodayQueue({
+        checkedInToday,
+        currentStep: derivedCurrentStep,
+        stepWorkCount,
+        stepWorkSubmitted,
+        meetingsThisWeek,
+        stepWorkHref,
+      })
+    : null
+
+  // Sponsor pull-through: merge Tier 1 alerts + Tier 3 tasks into Today queue
+  if (todayQueueEnabled && todayQueue && profile?.is_available_sponsor && sponsees.length > 0) {
+    // Upsert upcoming milestone reminders (ON CONFLICT DO NOTHING via ignoreDuplicates)
+    const milestoneUpserts = sponsees.flatMap(s => {
+      if (!s.sobrietyDate) return []
+      const upcoming = getUpcomingMilestones(new Date(s.sobrietyDate + 'T00:00:00'))
+      return upcoming.map(m => {
+        const milestoneDate = new Date(new Date(s.sobrietyDate! + 'T00:00:00').getTime() + m.days * 86_400_000)
+        return {
+          sponsor_user_id: userId,
+          sponsee_user_id: s.id,
+          milestone_label: m.label,
+          milestone_date: milestoneDate.toISOString().slice(0, 10),
+          surfaced_at: new Date().toISOString(),
+        }
+      })
+    })
+    if (milestoneUpserts.length > 0) {
+      await supabase.from('sponsor_milestone_reminders').upsert(milestoneUpserts, {
+        onConflict: 'sponsor_user_id,sponsee_user_id,milestone_label,milestone_date',
+        ignoreDuplicates: true,
+      })
+    }
+
+    // Fetch non-dismissed, not-yet-past reminders for this sponsor
+    const { data: milestoneRows } = await supabase
+      .from('sponsor_milestone_reminders')
+      .select('sponsee_user_id,milestone_label,milestone_date')
+      .eq('sponsor_user_id', userId)
+      .is('dismissed_at', null)
+      .gte('milestone_date', today)
+
+    const sponseeNameMap = Object.fromEntries(sponsees.map(s => [s.id, s.name]))
+    const milestoneReminders = (milestoneRows ?? []).map(r => ({
+      sponsee_user_id: r.sponsee_user_id as string,
+      sponsee_name: sponseeNameMap[r.sponsee_user_id as string] ?? 'Your sponsee',
+      milestone_label: r.milestone_label as string,
+      milestone_date: r.milestone_date as string,
+    }))
+
+    const sponsorItems = buildSponsorTodayItems({
+      sponsees: sponsees.map(s => ({
+        id: s.id,
+        name: s.name,
+        checkInHistory: s.checkInHistory,
+        pendingReviews: s.pendingReviews,
+      })),
+      milestoneReminders,
+      today,
+    })
+
+    if (sponsorItems.length > 0) {
+      const combined = [...todayQueue.items, ...sponsorItems]
+      combined.sort((a, b) => b.priority - a.priority)
+      const visible = combined.slice(0, 6)
+      todayQueue = {
+        items: visible,
+        overflowCount: Math.max(0, combined.length - 6),
+        caughtUp: combined.every(i => i.completed),
+        memberCaughtUp: todayQueue.memberCaughtUp,
+      }
+    }
+  }
+
+  // Caught-up summary parts — computed server-side so DashboardShell doesn't need to
+  const todaySummaryParts = todayQueueEnabled ? getTodaySummaryParts({
+    checkedInMood: recentCheckIns[0]?.check_in_date === today ? (recentCheckIns[0]?.mood ?? null) : null,
+    meetingName: meetingAttendance.find(m => m.attended_at.slice(0, 10) === today)?.meeting_name ?? null,
+    stepWorkCount,
+    currentStep: derivedCurrentStep,
+  }) : []
+
+  const dailyQuote = todayQueueEnabled
+    ? await getDailyQuote(supabase, userId)
+    : null
+
   return (
     <DashboardShell
       userId={userId}
@@ -358,6 +687,8 @@ export default async function DashboardPage() {
       profile={profile}
       stepCompletions={stepCompletions}
       onboardingCompleted={profile?.onboarding_completed ?? false}
+      isProvider={isProviderUser}
+      providerData={providerData}
       recentCheckIns={recentCheckIns}
       journalEntries={journalEntries}
       journalCount={journalCount}
@@ -374,6 +705,12 @@ export default async function DashboardPage() {
       activityItems={activityItems}
       initialMilestones={initialMilestones}
       fellowships={fellowships}
+      todayQueueItems={todayQueue?.items}
+      todayQueueOverflow={todayQueue?.overflowCount}
+      todayMemberCaughtUp={todayQueue?.memberCaughtUp}
+      todaySummaryParts={todaySummaryParts}
+      dailyQuote={dailyQuote}
+      sponseeAlertCount={sponseeAlertCount}
     />
   )
 }

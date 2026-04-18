@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { respondToSponsorRequest } from '@/app/dashboard/actions'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 
 export interface PendingRequest {
   id: string
@@ -26,6 +27,7 @@ interface Props {
 }
 
 export default function PendingRequests({ requests, perspective }: Props) {
+  const router = useRouter()
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
   const [isPending, startTransition] = useTransition()
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -33,12 +35,47 @@ export default function PendingRequests({ requests, perspective }: Props) {
   const visible = requests.filter(r => !dismissed.has(r.id))
   if (visible.length === 0) return null
 
+  // Direct client-side Supabase — RLS enforces participant-only writes.
+  // Same pattern as PeopleCard's unlink flow.
+  async function respondDirect(id: string, accept: boolean): Promise<void> {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not signed in')
+
+    const nowIso = new Date().toISOString()
+    const update: Record<string, unknown> = accept
+      ? { status: 'active', started_at: nowIso }
+      : { status: 'ended', ended_at: nowIso }
+
+    const { error } = await supabase
+      .from('sponsor_relationships')
+      .update(update)
+      .eq('id', id)
+    if (error) throw new Error(error.message)
+
+    // If we're accepting AS the sponsor, flip is_available_sponsor so the
+    // Sponsees tab becomes available.
+    if (accept && perspective === 'as_sponsor') {
+      await supabase
+        .from('user_profiles')
+        .update({ is_available_sponsor: true })
+        .eq('id', user.id)
+    }
+  }
+
   function respond(id: string, accept: boolean) {
     setActiveId(id)
     startTransition(async () => {
-      await respondToSponsorRequest(id, accept)
-      setDismissed(prev => new Set([...prev, id]))
-      setActiveId(null)
+      try {
+        await respondDirect(id, accept)
+        setDismissed(prev => new Set([...prev, id]))
+        router.refresh()
+      } catch (err) {
+        console.error('[PendingRequests] respond failed', err)
+        alert(`Could not ${accept ? 'accept' : 'decline'} request: ${err instanceof Error ? err.message : String(err)}`)
+      } finally {
+        setActiveId(null)
+      }
     })
   }
 

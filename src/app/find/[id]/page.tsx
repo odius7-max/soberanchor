@@ -211,21 +211,25 @@ export default async function FacilityDetail({
               </p>
 
               {!facility.is_claimed && (
-                <>
-                  <div className="border-t border-border my-5" />
-                  <p className="text-[13px] text-mid mb-2">
-                    Are you the owner of this facility?
-                  </p>
+                <div className="rounded-[14px] border border-border p-6 mt-5" style={{ background: '#fff' }}>
+                  <h4 className="font-semibold text-navy text-[15px] mb-3">Is this your facility?</h4>
                   <Link
                     href={`/providers/claim?facility=${facility.id}`}
-                    className="inline-block text-teal font-semibold text-sm hover:underline mb-1"
+                    className="block w-full text-center font-semibold text-white rounded-xl py-3 mb-3 transition-opacity hover:opacity-90"
+                    style={{ background: 'var(--teal)', fontSize: 14, textDecoration: 'none' }}
                   >
-                    Claim this listing →
+                    🏥 Claim This Listing
                   </Link>
-                  <p className="text-[12px] text-mid">
-                    Receive leads, add photos, and manage your profile
+                  <p className="text-[13px] text-mid leading-relaxed mb-3">
+                    Manage your listing, respond to leads, and connect with people seeking help.
                   </p>
-                </>
+                  <Link
+                    href="/for-providers"
+                    className="text-teal font-medium text-[13px] hover:underline"
+                  >
+                    Learn more →
+                  </Link>
+                </div>
               )}
             </div>
           )}

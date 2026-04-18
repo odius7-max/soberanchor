@@ -181,6 +181,8 @@ export async function requestSponsor(sponsorUserId: string, fellowshipId: string
 }
 
 // Either party can unlink an active or pending sponsor relationship.
+// (Currently invoked via direct client-side Supabase UPDATE in PeopleCard;
+// this server-side variant is kept for future API consumers.)
 export async function removeSponsorRelationship(relationshipId: string): Promise<void> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -190,7 +192,6 @@ export async function removeSponsorRelationship(relationshipId: string): Promise
     .from('sponsor_relationships')
     .update({ status: 'ended', ended_at: new Date().toISOString() })
     .eq('id', relationshipId)
-    .or(`sponsor_id.eq.${user.id},sponsee_id.eq.${user.id}`)
 
   if (error) throw new Error(error.message)
   revalidatePath('/dashboard')
@@ -516,16 +517,40 @@ export async function respondToSponsorRequest(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  // Either party can accept or decline — both sponsor and sponsee can respond
+  // Fetch the row first so we know whether the responder is the sponsor side —
+  // in which case accepting should also flip is_available_sponsor = true so
+  // the Sponsees tab appears.
+  const { data: rel, error: relErr } = await supabase
+    .from('sponsor_relationships')
+    .select('id, sponsor_id, sponsee_id')
+    .eq('id', relationshipId)
+    .maybeSingle()
+  if (relErr) throw new Error(relErr.message)
+  if (!rel) throw new Error('Request not found')
+
+  const isResponderSponsor = rel.sponsor_id === user.id
+  const isResponderSponsee = rel.sponsee_id === user.id
+  if (!isResponderSponsor && !isResponderSponsee) throw new Error('Unauthorized')
+
   const { error } = await supabase
     .from('sponsor_relationships')
     .update({
       status: accept ? 'active' : 'ended',
       ...(accept ? { started_at: new Date().toISOString() } : {}),
+      ...(accept ? {} : { ended_at: new Date().toISOString() }),
     })
     .eq('id', relationshipId)
-    .or(`sponsee_id.eq.${user.id},sponsor_id.eq.${user.id}`)
 
   if (error) throw new Error(error.message)
+
+  // If the responder is the sponsor side and they accepted, make sure their
+  // profile reflects sponsor availability so the Sponsees tab shows up.
+  if (accept && isResponderSponsor) {
+    await supabase
+      .from('user_profiles')
+      .update({ is_available_sponsor: true })
+      .eq('id', user.id)
+  }
+
   revalidatePath('/dashboard')
 }
