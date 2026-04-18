@@ -1,9 +1,10 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTodayQueue } from './useTodayQueue'
 import TodayItem from './TodayItem'
 import CaughtUpState from './CaughtUpState'
 import { TODAY_COPY } from '@/lib/copy/today'
+import { getTodayDateStr } from '@/lib/today-window'
 import type { TodayItemData } from './today-queue-types'
 
 interface Props {
@@ -14,11 +15,32 @@ interface Props {
   caughtUpSummaryParts?: string[]
 }
 
+// Persist "user dismissed caught-up for today" across page loads, keyed by date
+// so the preference naturally expires when tomorrow's queue rolls in.
+const CAUGHT_UP_DISMISS_KEY_PREFIX = 'today_caughtup_dismissed_'
+
 export default function TodayCard({ items: initialItems, overflowCount, caughtUp: initialCaughtUp, onCheckIn, caughtUpSummaryParts }: Props) {
   const { items, caughtUp } = useTodayQueue(initialItems)
   // When true, render the item list even though everything is done, so users
   // can review/revisit completed items instead of being stuck on the caught-up card.
   const [forceShowList, setForceShowList] = useState(false)
+
+  // Rehydrate the dismissal preference on mount. Brief flash of caught-up → list
+  // is acceptable and avoids SSR/CSR hydration mismatch warnings.
+  useEffect(() => {
+    try {
+      const key = CAUGHT_UP_DISMISS_KEY_PREFIX + getTodayDateStr()
+      if (localStorage.getItem(key) === '1') setForceShowList(true)
+    } catch { /* localStorage may be blocked (private mode, etc.) — fall back to default */ }
+  }, [])
+
+  function handleViewList() {
+    setForceShowList(true)
+    try {
+      const key = CAUGHT_UP_DISMISS_KEY_PREFIX + getTodayDateStr()
+      localStorage.setItem(key, '1')
+    } catch { /* non-fatal — UI still flips via state */ }
+  }
 
   const dateLabel = new Date().toLocaleDateString('en-US', {
     weekday: 'short',
@@ -31,7 +53,7 @@ export default function TodayCard({ items: initialItems, overflowCount, caughtUp
     return (
       <CaughtUpState
         summaryParts={caughtUpSummaryParts}
-        onViewList={items.length > 0 ? () => setForceShowList(true) : undefined}
+        onViewList={items.length > 0 ? handleViewList : undefined}
       />
     )
   }
