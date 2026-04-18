@@ -180,11 +180,12 @@ export async function requestSponsor(sponsorUserId: string, fellowshipId: string
   revalidatePath('/dashboard')
 }
 
-export type UnlinkResult = { ok: true } | { ok: false; error: string; stage: string }
-
 // Either party can unlink an active or pending sponsor relationship.
 // Returns a plain result object so errors serialize cleanly to the client.
-export async function removeSponsorRelationship(relationshipId: string): Promise<UnlinkResult> {
+// Note: cannot export the result type from a 'use server' file — inline only.
+export async function removeSponsorRelationship(
+  relationshipId: string,
+): Promise<{ ok: true } | { ok: false; error: string; stage: string }> {
   try {
     console.log('[removeSponsorRelationship] start', { relationshipId })
 
