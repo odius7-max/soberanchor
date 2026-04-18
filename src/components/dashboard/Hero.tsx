@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { getGreeting } from '@/lib/greeting'
+import { useScrollFade } from '@/hooks/useScrollFade'
 import type { SobrietyMilestone, Fellowship } from './DashboardBanner'
 
 const STEPS = [
@@ -48,15 +49,18 @@ interface Props {
   milestones: SobrietyMilestone[]
   fellowships: Fellowship[]
   currentStep: number
+  completedStepNumbers?: number[]
   dailyQuote: { text: string; attribution: string | null } | null
   onActiveFellowshipChange: (fid: string | null) => void
 }
 
-export default function Hero({ userId, displayName, milestones: initialMilestones, fellowships, currentStep, dailyQuote, onActiveFellowshipChange }: Props) {
+export default function Hero({ userId, displayName, milestones: initialMilestones, fellowships, currentStep, completedStepNumbers = [], dailyQuote, onActiveFellowshipChange }: Props) {
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const [milestones, setMilestones] = useState<SobrietyMilestone[]>(initialMilestones)
   const [showPanel, setShowPanel] = useState(false)
+  const { ref: stepsScrollRef, fadeLeft: stepsFadeLeft, fadeRight: stepsFadeRight } = useScrollFade()
+  const completedStepSet = new Set(completedStepNumbers)
   const [saving, setSaving] = useState(false)
   const [editingId, setEditingId] = useState<string | 'new' | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
@@ -250,72 +254,123 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
             )}
           </div>
         ) : (
-          /* ── Condensed 3-row hero ── */
+          /* ── Condensed 3-row hero (matches dashboard-today-wireframe.html lines 576-593) ── */
           <>
-            {/* Row 1: greeting + sobriety stats */}
-            <div suppressHydrationWarning style={{ marginBottom: milestones.length > 0 ? 4 : 16 }}>
-              <span style={{ fontSize: 20, fontWeight: 500, color: '#fff', letterSpacing: '-0.3px' }}>
+            {/* Row 1: greeting + fellowship stats inline, baseline-aligned */}
+            <div
+              suppressHydrationWarning
+              style={{ display: 'flex', alignItems: 'baseline', gap: 20, flexWrap: 'wrap', marginBottom: 6 }}
+            >
+              <span style={{ fontSize: 22, fontWeight: 600, color: '#fff', letterSpacing: '-0.3px' }}>
                 {greeting}, {displayName} 👋
               </span>
-            </div>
-            {milestones.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
-                {milestones.map(m => {
-                  const days = mounted ? calcDays(m.sobriety_date) : null
-                  const abbr = getFellowshipAbbr(m.fellowship_id)
-                  return (
-                    <span
-                      key={m.id}
-                      suppressHydrationWarning
-                      style={{
-                        fontSize: 13, fontWeight: 600, color: m.is_primary ? '#f0c040' : 'rgba(255,255,255,0.75)',
-                        background: m.is_primary ? 'rgba(240,192,64,0.1)' : 'rgba(255,255,255,0.08)',
-                        border: `1px solid ${m.is_primary ? 'rgba(240,192,64,0.25)' : 'rgba(255,255,255,0.12)'}`,
-                        borderRadius: 20, padding: '4px 12px',
-                      }}
-                    >
+              {milestones.map(m => {
+                const days = mounted ? calcDays(m.sobriety_date) : null
+                const abbr = getFellowshipAbbr(m.fellowship_id)
+                // If label matches abbreviation (common from onboarding default),
+                // show the abbreviation only. Otherwise show "Label / Abbr".
+                const suffix = abbr
+                  ? (m.label === abbr ? abbr : `${m.label} / ${abbr}`)
+                  : m.label
+                return (
+                  <span
+                    key={m.id}
+                    suppressHydrationWarning
+                    style={{ fontSize: 14, color: 'rgba(255,255,255,0.72)', display: 'inline-flex', alignItems: 'baseline', gap: 6 }}
+                  >
+                    <strong style={{ color: '#f0c040', fontWeight: 700, fontSize: 22, letterSpacing: '-0.4px' }}>
                       {days !== null ? `${days.toLocaleString()} days` : '—'}
-                      {abbr ? ` · ${abbr}` : ''}
-                    </span>
-                  )
-                })}
-              </div>
-            )}
+                    </strong>
+                    <span>· {suffix}</span>
+                  </span>
+                )
+              })}
+            </div>
 
-            {/* Row 2: next milestone + step */}
-            {(nextMLabel !== null || milestones.length > 0) && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+            {/* Row 2: next milestone + current step, separated by thin divider */}
+            {(nextMLabel !== null || (!allStepsDone && stepLabel)) && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.12)', fontSize: 13 }}>
                 {nextMLabel !== null && daysToNext !== null && (
-                  <span style={{ fontSize: 13, color: '#9badc4' }}>
-                    <span style={{ color: '#fff', fontWeight: 600 }}>Next: {nextMLabel}</span>
-                    {' · '}{daysToNext} day{daysToNext !== 1 ? 's' : ''} away
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: '#fff' }}>
+                    <span style={{ color: '#f0c040', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', fontSize: 11 }}>
+                      Next Milestone
+                    </span>
+                    <span style={{ fontWeight: 600 }}>
+                      {nextMLabel} · {daysToNext} day{daysToNext !== 1 ? 's' : ''} away
+                    </span>
                   </span>
                 )}
                 {nextMLabel !== null && !allStepsDone && stepLabel && (
-                  <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 14 }}>|</span>
+                  <span aria-hidden style={{ width: 1, height: 14, background: 'rgba(255,255,255,0.18)' }} />
                 )}
                 {!allStepsDone && stepLabel && (
-                  <span style={{ fontSize: 13, color: '#9badc4' }}>
-                    <span style={{ color: '#f0c040', fontWeight: 600 }}>Step {currentStep}</span>
-                    {' · '}{stepLabel}
+                  <span style={{ color: 'rgba(255,255,255,0.7)' }}>
+                    Currently on{' '}
+                    <strong style={{ color: '#f0c040', fontWeight: 600 }}>
+                      Step {currentStep} · {stepLabel}
+                    </strong>
                   </span>
                 )}
                 {allStepsDone && (
-                  <span style={{ fontSize: 13, color: '#27AE60', fontWeight: 600 }}>All 12 steps complete ✓</span>
+                  <span style={{ color: '#27AE60', fontWeight: 600 }}>All 12 steps complete ✓</span>
                 )}
+              </div>
+            )}
+
+            {/* Row 2.5: 12-step progress strip (numbered squares) */}
+            {milestones.length > 0 && (
+              <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.08)', position: 'relative' }}>
+                {stepsFadeLeft && (
+                  <div aria-hidden style={{ position: 'absolute', top: 12, left: 0, bottom: 0, width: 24, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to right, #003366, transparent)' }} />
+                )}
+                {stepsFadeRight && (
+                  <div aria-hidden style={{ position: 'absolute', top: 12, right: 0, bottom: 0, width: 24, zIndex: 1, pointerEvents: 'none', background: 'linear-gradient(to left, #1a4a5e, transparent)' }} />
+                )}
+                <div
+                  ref={stepsScrollRef}
+                  style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none' as const, paddingBottom: 2 }}
+                >
+                  {STEPS.map(({ n, s }) => {
+                    const isDone = completedStepSet.has(n)
+                    const isCurrent = !allStepsDone && n === currentStep
+                    return (
+                      <div
+                        key={n}
+                        title={`Step ${n} · ${s}`}
+                        style={{
+                          width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 12, fontWeight: 700,
+                          background: isDone
+                            ? 'linear-gradient(135deg, #3a7ca5, #2a9d8f)'
+                            : isCurrent
+                              ? '#f0c040'
+                              : 'rgba(255,255,255,0.06)',
+                          border: isCurrent
+                            ? '2px solid rgba(255,255,255,0.9)'
+                            : isDone
+                              ? '1.5px solid rgba(255,255,255,0.2)'
+                              : '1px solid rgba(255,255,255,0.12)',
+                          color: isDone ? '#fff' : isCurrent ? '#1a2332' : 'rgba(255,255,255,0.5)',
+                          boxShadow: isCurrent ? '0 0 0 3px rgba(240,192,64,0.25)' : 'none',
+                        }}
+                      >
+                        {isDone ? '✓' : n}
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             )}
 
             {/* Row 3: daily quote */}
             {dailyQuote && (
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 12 }}>
-                <div style={{ color: 'rgba(255,255,255,0.82)', fontSize: 14, fontStyle: 'italic', lineHeight: 1.6 }}>
-                  &ldquo;{dailyQuote.text}&rdquo;
-                </div>
+              <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.08)', fontSize: 15, fontStyle: 'italic', color: 'rgba(255,255,255,0.82)', lineHeight: 1.55 }}>
+                &ldquo;{dailyQuote.text}&rdquo;
                 {dailyQuote.attribution && (
-                  <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, marginTop: 4 }}>
+                  <span style={{ fontStyle: 'normal', color: 'rgba(255,255,255,0.5)', fontSize: 12, marginLeft: 4 }}>
                     — {dailyQuote.attribution}
-                  </div>
+                  </span>
                 )}
               </div>
             )}
