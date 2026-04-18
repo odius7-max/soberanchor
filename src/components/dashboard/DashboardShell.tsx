@@ -346,6 +346,8 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
                 </div>
                 {/* Right rail */}
                 <RightRail
+                  userId={userId}
+                  displayName={displayName}
                   currentStep={currentStep}
                   completedSteps={completedSteps}
                   allStepsDone={allStepsDone}
