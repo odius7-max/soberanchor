@@ -288,6 +288,9 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
                 "Friend" fallback would stick forever (CLAUDE.md pitfall #3). */}
             {(!onboardingCompleted || !profile?.display_name) && <OnboardingCard userId={userId} />}
             <PendingRequests requests={pendingRequests} perspective="as_sponsee" />
+            {/* Incoming sponsorship requests — shown to all users (not gated by
+                is_available_sponsor) so people asked to sponsor can respond. */}
+            <PendingRequests requests={sponsorPendingRequests} perspective="as_sponsor" />
             {TODAY_QUEUE_ENABLED ? (
               <Hero
                 userId={userId}
