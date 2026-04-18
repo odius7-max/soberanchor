@@ -44,7 +44,7 @@ function buildEmailHtml(body: string, subject: string): string {
             <table width="100%" cellpadding="0" cellspacing="0">
               <tr>
                 <td align="center" style="padding:8px 0 24px;">
-                  <a href="https://soberanchor.com/signup"
+                  <a href="https://soberanchor.com/?auth=signup"
                      style="display:inline-block;background:#2A8A99;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:10px;font-size:15px;font-weight:600;letter-spacing:-0.2px;">
                     Create Your Free Account →
                   </a>
