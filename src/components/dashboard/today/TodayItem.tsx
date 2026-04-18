@@ -85,7 +85,14 @@ export default function TodayItem({ item, onCheckIn }: Props) {
           {item.label}
         </div>
         {item.sub && (
-          <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 2 }}>
+          <div
+            style={{
+              fontSize: 12,
+              color: item.variant === 'alert' && !item.completed ? 'var(--red-alert)' : 'var(--mid)',
+              marginTop: 2,
+              fontWeight: item.variant === 'alert' && !item.completed ? 600 : 400,
+            }}
+          >
             {item.sub}
           </div>
         )}
@@ -102,18 +109,28 @@ export default function TodayItem({ item, onCheckIn }: Props) {
             flexShrink: 0,
             width: 44,
             height: 44,
-            borderRadius: '50%',
-            background: ackError ? 'var(--red-alert-bg)' : 'var(--teal-bg)',
-            border: `2px solid ${ackError ? 'var(--red-alert)' : 'var(--teal)'}`,
-            color: ackError ? 'var(--red-alert)' : 'var(--teal)',
-            fontSize: 18,
+            borderRadius: 8,
+            background: 'transparent',
+            border: 'none',
+            padding: 0,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          ✓
+          <span
+            aria-hidden
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 6,
+              background: '#fff',
+              border: `2px solid ${ackError ? 'var(--red-alert)' : 'var(--red-alert)'}`,
+              boxShadow: ackError ? 'none' : '0 0 0 3px var(--red-alert-bg)',
+              display: 'block',
+            }}
+          />
         </button>
       ) : (
         <div style={{ fontSize: 13, fontWeight: 600, color: ctaColor, flexShrink: 0 }}>
