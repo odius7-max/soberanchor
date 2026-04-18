@@ -446,23 +446,41 @@ export default async function DashboardPage() {
   })()
   const derivedCurrentStep: number | null = derivedAllStepsDone ? null : derivedFirstIncomplete
 
-  // Resolve the specific workbook slug for the current step so the CTA lands on the
-  // correct answering page. Falls back to /dashboard/step-work/pending (always exists).
+  // Resolve the specific workbook(s) for the current step. Used for two things:
+  //   1. CTA slug → /dashboard/step-work/<slug> (first workbook by sort_order)
+  //   2. Detecting whether the sponsee has already submitted this step to their
+  //      sponsor — any entry with review_status IN ('submitted','reviewed')
+  //      means the member's part is done (awaiting sponsor review). The Today
+  //      card should reflect that rather than keep urging "Continue Step X".
   const stepWorkFellowshipId = serverActiveFellowshipId ?? profile?.primary_fellowship_id ?? null
   let stepWorkHref: string | undefined
+  let stepWorkSubmitted = false
   if (todayQueueEnabled && derivedCurrentStep) {
-    let q = supabase
+    let wbQ = supabase
       .from('program_workbooks')
-      .select('slug')
+      .select('id, slug, sort_order')
       .eq('is_active', true)
       .eq('step_number', derivedCurrentStep)
       .order('sort_order')
-      .limit(1)
     if (stepWorkFellowshipId) {
-      q = q.eq('fellowship_id', stepWorkFellowshipId) as typeof q
+      wbQ = wbQ.eq('fellowship_id', stepWorkFellowshipId) as typeof wbQ
     }
-    const { data: wb } = await q.maybeSingle()
-    stepWorkHref = wb?.slug ? `/dashboard/step-work/${wb.slug}` : '/dashboard/step-work/pending'
+    const { data: wbs } = await wbQ
+    const workbooks = (wbs ?? []) as { id: string; slug: string; sort_order: number }[]
+    stepWorkHref = workbooks[0]?.slug
+      ? `/dashboard/step-work/${workbooks[0].slug}`
+      : '/dashboard/step-work/pending'
+
+    if (workbooks.length > 0) {
+      const { data: submittedEntries } = await supabase
+        .from('step_work_entries')
+        .select('id')
+        .eq('user_id', userId)
+        .in('workbook_id', workbooks.map(w => w.id))
+        .in('review_status', ['submitted', 'reviewed'])
+        .limit(1)
+      stepWorkSubmitted = (submittedEntries ?? []).length > 0
+    }
   }
 
   let todayQueue = todayQueueEnabled
@@ -470,6 +488,7 @@ export default async function DashboardPage() {
         checkedInToday,
         currentStep: derivedCurrentStep,
         stepWorkCount,
+        stepWorkSubmitted,
         meetingsThisWeek,
         stepWorkHref,
       })

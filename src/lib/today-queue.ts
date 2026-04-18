@@ -47,6 +47,14 @@ interface MemberQueueInput {
   checkedInToday: boolean
   currentStep: number | null
   stepWorkCount: number
+  /**
+   * True when the sponsee has submitted step work for the current step to their
+   * sponsor and is awaiting (or has received) sponsor review. derivedCurrentStep
+   * only advances once the sponsor writes a step_completions row, so between
+   * "sponsee hits submit" and "sponsor marks complete" the Today card otherwise
+   * keeps saying "Continue Step X". See CLAUDE.md pitfall #5 (step completion sync).
+   */
+  stepWorkSubmitted?: boolean
   meetingsThisWeek: number
   weeklyMeetingTarget?: number
   stepWorkHref?: string
@@ -68,19 +76,27 @@ export function buildMemberTodayQueue(input: MemberQueueInput): TodayQueueResult
     completed: input.checkedInToday,
   })
 
-  // Priority 450 — step work in progress (only when a resolvable href is available)
+  // Priority 450 — step work in progress (only when a resolvable href is available).
+  // When the sponsee has already submitted this step to their sponsor, render the
+  // item as done so it doesn't keep pushing them to "Continue" work they finished.
   if (input.currentStep && input.stepWorkHref) {
+    const submitted = !!input.stepWorkSubmitted
     items.push({
       id: 'stepwork',
       icon: '📝',
       variant: 'default',
-      label: `Continue Step ${input.currentStep}`,
-      sub: input.stepWorkCount > 0
-        ? `${input.stepWorkCount} prompt${input.stepWorkCount !== 1 ? 's' : ''} answered`
-        : 'Ready to begin',
-      cta: 'Continue →',
+      label: submitted
+        ? `Step ${input.currentStep} submitted`
+        : `Continue Step ${input.currentStep}`,
+      sub: submitted
+        ? 'Awaiting sponsor review'
+        : input.stepWorkCount > 0
+          ? `${input.stepWorkCount} prompt${input.stepWorkCount !== 1 ? 's' : ''} answered`
+          : 'Ready to begin',
+      cta: submitted ? 'Submitted' : 'Continue →',
       href: input.stepWorkHref,
       priority: 450,
+      completed: submitted,
     })
   }
 
