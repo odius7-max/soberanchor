@@ -81,6 +81,39 @@ If modifying a shared component (nav, modal, card, button, form), check EVERY pa
 - When creating records that span multiple tables (e.g., onboarding), wrap in a transaction or ensure all writes complete before marking the operation as done
 - Never trust that a migration ran — verify with a SELECT after applying
 
+### Mutation patterns — server actions vs API routes vs client-side (IMPORTANT)
+Server actions (`'use server'` in `src/app/dashboard/actions.ts`) have repeatedly
+failed on this Vercel deployment with the opaque `"An error occurred in the
+Server Components render"` message — sometimes at build-time (page-data
+collection), sometimes at request-time. Root cause was never pinned down, but
+the pattern is reproducible. Use this decision tree instead:
+
+1. **Can the user write this themselves under RLS?** (e.g. updating own profile,
+   updating a sponsor_relationship they participate in, inserting own check-in)
+   → Call Supabase directly from the client using `createClient()` from
+   `@/lib/supabase/client`. RLS enforces the safety. This is the most reliable
+   path on Vercel today.
+   Examples: `PeopleCard.unlinkSponsor`, `PendingRequests.respondDirect`,
+   `TasksTab`, `OverviewTab`.
+
+2. **Does the operation need service_role** (cross-user auth.users lookup,
+   RLS-bypass insert, etc.)? → Build an API route under `/api/...` with
+   `export const runtime = 'nodejs'` and `export const dynamic = 'force-dynamic'`.
+   Call it from the client via `fetch()`. Return `NextResponse.json({...})`
+   with proper status codes.
+   Examples: `/api/dashboard/search-user`, `/api/dashboard/send-sponsor-request`,
+   `/api/dashboard/request-sponsor`.
+
+3. **Avoid adding new server actions to `actions.ts` for user-triggered flows.**
+   If you must, test the exact flow end-to-end on the Vercel dev preview before
+   handing off — it compiling locally is not sufficient.
+
+4. **Modules imported by API routes must not instantiate clients at module load.**
+   `next build` evaluates route modules during page-data collection. If
+   `new Resend(process.env.RESEND_API_KEY)` or similar runs at import time with
+   an unset env var, the build fails. Lazy-initialize inside the function that
+   actually uses it. `src/lib/notifications.ts` uses the `getResend()` pattern.
+
 ### API Routes
 - All API routes that accept user input: validate input length, strip HTML, check auth
 - AI search: inject current date/time into system prompt, extract name keywords for text search
@@ -120,3 +153,6 @@ If modifying a shared component (nav, modal, card, button, form), check EVERY pa
 8. **Provider account cleanup** — When rejecting a provider claim, also deactivate the provider_accounts record
 9. **Milestone display** — Dashboard hero must read from sobriety_milestones table, not just user_profiles
 10. **AI search** — Always include name keyword ILIKE search alongside AI classification results
+11. **Server actions on Vercel** — `'use server'` functions in `src/app/dashboard/actions.ts` have repeatedly failed with opaque "Server Components render" errors on deploy. For user-triggered mutations, prefer client-side Supabase (when RLS allows) or API routes under `/api/...` (when service_role is needed). See "Mutation patterns" section above.
+12. **Incoming sponsor requests visibility** — A user being asked to sponsor someone must see the request even if `is_available_sponsor = false`. Render `sponsorPendingRequests` on the My Recovery page (not gated by `isSponsor`), and flip `is_available_sponsor = true` when the sponsor side accepts.
+13. **Module-load side effects in API routes** — `next build` collects page data by evaluating route modules. Any module they import that does `new SomeClient(process.env.X)` at top level will crash the build if X isn't set in the build environment. Lazy-initialize (see `src/lib/notifications.ts` → `getResend()`).
