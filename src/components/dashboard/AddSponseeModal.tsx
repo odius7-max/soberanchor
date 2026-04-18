@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useTransition, useRef, useEffect, Component } from 'react'
+import { useRouter } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { searchUserByEmail, sendSponsorRequest, requestSponsor } from '@/app/dashboard/actions'
-import type { SearchResult, ExistingRelationship } from '@/app/dashboard/actions'
+import type { SearchResult, ExistingRelationship } from '@/app/dashboard/sponsor-search-types'
 
 interface FellowshipOption { id: string; abbreviation: string; name: string }
 
@@ -47,6 +47,7 @@ const inputStyle: React.CSSProperties = {
 }
 
 export default function AddSponseeModal({ onClose, mode = 'add_sponsee', sponsorName, userId }: Props) {
+  const router = useRouter()
   const isFindSponsor = mode === 'find_sponsor'
   const [email, setEmail] = useState('')
   const [result, setResult] = useState<SearchResult | null>(null)
@@ -91,8 +92,14 @@ export default function AddSponseeModal({ onClose, mode = 'add_sponsee', sponsor
     setResult(null); setError(null); setSent(false)
     startTransition(async () => {
       try {
-        const r = await searchUserByEmail(email.trim())
-        setResult(r)
+        const res = await fetch('/api/dashboard/search-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email.trim() }),
+        })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(data.error ?? `Search failed (${res.status})`)
+        setResult(data as SearchResult)
       } catch (e: any) {
         setError(e.message)
       }
@@ -105,12 +112,21 @@ export default function AddSponseeModal({ onClose, mode = 'add_sponsee', sponsor
     const fid = selectedFellowshipId || null
     startTransition(async () => {
       try {
-        if (isFindSponsor) {
-          await requestSponsor(result.userId, fid)
-        } else {
-          await sendSponsorRequest(result.userId, fid)
-        }
+        const url = isFindSponsor
+          ? '/api/dashboard/request-sponsor'
+          : '/api/dashboard/send-sponsor-request'
+        const payload = isFindSponsor
+          ? { sponsorUserId: result.userId, fellowshipId: fid }
+          : { sponseeUserId: result.userId, fellowshipId: fid }
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(data.error ?? `Request failed (${res.status})`)
         setSent(true)
+        router.refresh()
       } catch (e: any) {
         setError(e.message)
       }
