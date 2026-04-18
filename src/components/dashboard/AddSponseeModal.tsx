@@ -371,10 +371,11 @@ export default function AddSponseeModal({ onClose, mode = 'add_sponsee', sponsor
                   <p style={{ fontSize: 13, color: 'var(--mid)', lineHeight: 1.6, marginBottom: 14 }}>
                     They may not have signed up yet. Send them a personal invite email and they can create a free account.
                   </p>
-                  {!isFindSponsor
-                    ? <InviteComposer email={email} sponsorName={sponsorName ?? 'Your sponsor'} />
-                    : <CopyInviteLink email={email} mode={mode} />
-                  }
+                  <InviteComposer
+                    email={email}
+                    senderName={sponsorName ?? (isFindSponsor ? 'A fellow member' : 'Your sponsor')}
+                    direction={isFindSponsor ? 'invite_sponsor' : 'invite_sponsee'}
+                  />
                 </>
               )}
             </div>
@@ -386,17 +387,34 @@ export default function AddSponseeModal({ onClose, mode = 'add_sponsee', sponsor
   )
 }
 
-function InviteComposer({ email, sponsorName }: { email: string; sponsorName: string }) {
-  const defaultSubject = `${sponsorName} invited you to SoberAnchor`
-  const defaultBody = `Hey,
+type InviteDirection = 'invite_sponsee' | 'invite_sponsor'
 
-I'd like to sponsor you on SoberAnchor — a free app built to support your recovery journey. It lets us stay connected through daily check-ins, step work, and meeting tracking all in one place.
+function InviteComposer({ email, senderName, direction }: { email: string; senderName: string; direction: InviteDirection }) {
+  const isInvitingSponsor = direction === 'invite_sponsor'
 
-Click the button below to create your free account. Once you're set up, search for my email and we can connect.
+  const defaultSubject = isInvitingSponsor
+    ? `${senderName} asked you to be their sponsor on SoberAnchor`
+    : `${senderName} invited you to SoberAnchor`
+
+  const defaultBody = isInvitingSponsor
+    ? `Hey,
+
+I'd like you to be my sponsor through SoberAnchor. It keeps us connected with daily check-ins, step work, and meeting tracking — all in one place. Sponsors get a free 30-day trial.
+
+Click below to create your account. You'll see my request waiting when you sign in — no searching, just tap Accept.
+
+Thanks for considering it. It would mean a lot.
+
+– ${senderName}`
+    : `Hey,
+
+I'd like to sponsor you through SoberAnchor. We can stay connected there through daily check-ins, step work, and meeting tracking — all in one place. Sponsees always use it free.
+
+Click below to create your account. You'll see my invite waiting when you sign in.
 
 Looking forward to walking this path with you.
 
-– ${sponsorName}`
+– ${senderName}`
 
   const [subject, setSubject] = useState(defaultSubject)
   const [body, setBody] = useState(defaultBody)
@@ -411,10 +429,12 @@ Looking forward to walking this path with you.
     setSending(true)
     setInviteError(null)
     try {
-      const res = await fetch('/api/invite-sponsee', {
+      const endpoint = isInvitingSponsor ? '/api/invite-sponsor' : '/api/invite-sponsee'
+      const nameField = isInvitingSponsor ? { senderName } : { sponsorName: senderName }
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to: email, subject: subject.trim(), body: body.trim(), sponsorName }),
+        body: JSON.stringify({ to: email, subject: subject.trim(), body: body.trim(), ...nameField }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Failed to send invite.')
@@ -542,27 +562,3 @@ Looking forward to walking this path with you.
   )
 }
 
-function CopyInviteLink({ email, mode }: { email: string; mode: 'add_sponsee' | 'find_sponsor' }) {
-  const [copied, setCopied] = useState(false)
-  const url = typeof window !== 'undefined'
-    ? `${window.location.origin}/my-recovery`
-    : 'https://soberanchor.com/my-recovery'
-
-  function copy() {
-    const text = mode === 'find_sponsor'
-      ? `Hey, I'm looking for a sponsor on SoberAnchor. Create your free account here: ${url} — then search for my email to connect.`
-      : `Hey, I'd like to sponsor you on SoberAnchor. Create your free account here: ${url} — then search for my email to connect.`
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2500)
-    })
-  }
-
-  return (
-    <button
-      onClick={copy}
-      style={{ width: '100%', background: '#fff', border: '1.5px solid var(--navy)', color: 'var(--navy)', borderRadius: 8, padding: '10px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)', transition: 'background 0.15s' }}>
-      {copied ? '✓ Copied to clipboard!' : '📋 Copy invite message'}
-    </button>
-  )
-}

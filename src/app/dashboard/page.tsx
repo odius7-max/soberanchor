@@ -20,6 +20,116 @@ export default async function DashboardPage() {
   const userId = user.id
   const phone = user.phone ?? null
 
+  // ── Email-invite conversion ─────────────────────────────────────────────
+  // Two-directional: materialize any pending sponsee_invites (sponsor→sponsee)
+  // AND sponsor_invites (sponsee→sponsor) addressed to this user's email into
+  // pending sponsor_relationships rows, so the existing PendingRequests banner
+  // picks them up without the invitee needing to search for anyone. Idempotent:
+  // we dedupe against existing relationships and mark processed invites
+  // 'converted'. Fellowship is resolved from the sender's primary_fellowship_id
+  // at conversion time, which also fixes the long-standing null fellowship_id
+  // bug at the source.
+  if (user.email) {
+    const inviteAdmin = createAdminClient()
+    const emailLower = user.email.toLowerCase()
+
+    // ── Direction 1: sponsor invited sponsee (sponsee_invites) ──
+    const { data: pendingInvites } = await inviteAdmin
+      .from('sponsee_invites')
+      .select('id, sponsor_id, created_at')
+      .eq('invitee_email', emailLower)
+      .eq('status', 'pending')
+
+    if (pendingInvites && pendingInvites.length > 0) {
+      const inviteSponsorIds = [...new Set(pendingInvites.map(i => i.sponsor_id as string))]
+
+      const [{ data: inviteSponsorProfiles }, { data: existingInviteRels }] = await Promise.all([
+        inviteAdmin.from('user_profiles').select('id, primary_fellowship_id').in('id', inviteSponsorIds),
+        inviteAdmin.from('sponsor_relationships').select('sponsor_id').in('sponsor_id', inviteSponsorIds).eq('sponsee_id', userId),
+      ])
+
+      const fellowshipMap = new Map(
+        (inviteSponsorProfiles ?? []).map(p => [
+          p.id as string,
+          (p as { primary_fellowship_id: string | null }).primary_fellowship_id ?? null,
+        ])
+      )
+      const existingRelSet = new Set((existingInviteRels ?? []).map(r => r.sponsor_id as string))
+
+      const relInserts: Array<{ sponsor_id: string; sponsee_id: string; status: string; fellowship_id: string | null; created_at: string }> = []
+      const inviteIdsToMark: string[] = []
+
+      for (const inv of pendingInvites) {
+        inviteIdsToMark.push(inv.id as string)
+        if (existingRelSet.has(inv.sponsor_id as string)) continue
+        relInserts.push({
+          sponsor_id: inv.sponsor_id as string,
+          sponsee_id: userId,
+          status: 'pending',
+          fellowship_id: fellowshipMap.get(inv.sponsor_id as string) ?? null,
+          created_at: inv.created_at as string,
+        })
+      }
+
+      if (relInserts.length > 0) {
+        await inviteAdmin.from('sponsor_relationships').insert(relInserts)
+      }
+      if (inviteIdsToMark.length > 0) {
+        await inviteAdmin.from('sponsee_invites').update({ status: 'converted' }).in('id', inviteIdsToMark)
+      }
+    }
+
+    // ── Direction 2: sponsee invited sponsor (sponsor_invites) ──
+    // Mirror of the block above. New user = sponsor; original sender = sponsee.
+    // Incoming request then surfaces in PendingRequests with
+    // perspective="as_sponsor".
+    const { data: pendingSponsorInvites } = await inviteAdmin
+      .from('sponsor_invites')
+      .select('id, sponsee_id, created_at')
+      .eq('invitee_email', emailLower)
+      .eq('status', 'pending')
+
+    if (pendingSponsorInvites && pendingSponsorInvites.length > 0) {
+      const inviteSponseeIds = [...new Set(pendingSponsorInvites.map(i => i.sponsee_id as string))]
+
+      const [{ data: inviteSponseeProfiles }, { data: existingSponsorRels }] = await Promise.all([
+        inviteAdmin.from('user_profiles').select('id, primary_fellowship_id').in('id', inviteSponseeIds),
+        inviteAdmin.from('sponsor_relationships').select('sponsee_id').eq('sponsor_id', userId).in('sponsee_id', inviteSponseeIds),
+      ])
+
+      const sponseeFellowshipMap = new Map(
+        (inviteSponseeProfiles ?? []).map(p => [
+          p.id as string,
+          (p as { primary_fellowship_id: string | null }).primary_fellowship_id ?? null,
+        ])
+      )
+      const existingSponsorRelSet = new Set((existingSponsorRels ?? []).map(r => r.sponsee_id as string))
+
+      const sponsorRelInserts: Array<{ sponsor_id: string; sponsee_id: string; status: string; fellowship_id: string | null; created_at: string }> = []
+      const sponsorInviteIdsToMark: string[] = []
+
+      for (const inv of pendingSponsorInvites) {
+        sponsorInviteIdsToMark.push(inv.id as string)
+        if (existingSponsorRelSet.has(inv.sponsee_id as string)) continue
+        sponsorRelInserts.push({
+          sponsor_id: userId,
+          sponsee_id: inv.sponsee_id as string,
+          status: 'pending',
+          fellowship_id: sponseeFellowshipMap.get(inv.sponsee_id as string) ?? null,
+          created_at: inv.created_at as string,
+        })
+      }
+
+      if (sponsorRelInserts.length > 0) {
+        await inviteAdmin.from('sponsor_relationships').insert(sponsorRelInserts)
+      }
+      if (sponsorInviteIdsToMark.length > 0) {
+        await inviteAdmin.from('sponsor_invites').update({ status: 'converted' }).in('id', sponsorInviteIdsToMark)
+      }
+    }
+  }
+
+
   // Parallel fetches
   const [
     profileRes,
