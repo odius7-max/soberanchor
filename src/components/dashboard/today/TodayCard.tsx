@@ -1,4 +1,5 @@
 'use client'
+import { useState } from 'react'
 import { useTodayQueue } from './useTodayQueue'
 import TodayItem from './TodayItem'
 import CaughtUpState from './CaughtUpState'
@@ -15,6 +16,9 @@ interface Props {
 
 export default function TodayCard({ items: initialItems, overflowCount, caughtUp: initialCaughtUp, onCheckIn, caughtUpSummaryParts }: Props) {
   const { items, caughtUp } = useTodayQueue(initialItems)
+  // When true, render the item list even though everything is done, so users
+  // can review/revisit completed items instead of being stuck on the caught-up card.
+  const [forceShowList, setForceShowList] = useState(false)
 
   const dateLabel = new Date().toLocaleDateString('en-US', {
     weekday: 'short',
@@ -22,7 +26,15 @@ export default function TodayCard({ items: initialItems, overflowCount, caughtUp
     day: 'numeric',
   })
 
-  if (caughtUp || initialCaughtUp) return <CaughtUpState summaryParts={caughtUpSummaryParts} />
+  const isCaughtUp = (caughtUp || initialCaughtUp) && !forceShowList
+  if (isCaughtUp) {
+    return (
+      <CaughtUpState
+        summaryParts={caughtUpSummaryParts}
+        onViewList={items.length > 0 ? () => setForceShowList(true) : undefined}
+      />
+    )
+  }
 
   return (
     <div
