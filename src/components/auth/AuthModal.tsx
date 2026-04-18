@@ -88,7 +88,9 @@ export default function AuthModal() {
       setStep('onboarding')
     } else {
       closeAuthModal()
-      router.refresh()
+      // Send users to their member center after sign-in rather than
+      // leaving them on whatever page they signed in from.
+      router.push('/dashboard')
     }
   }
 
@@ -160,7 +162,7 @@ export default function AuthModal() {
     await refreshProfile()
     setLoading(false)
     closeAuthModal()
-    router.refresh()
+    router.push('/dashboard')
   }
 
   const grouped = fellowships.reduce<Record<string, Fellowship[]>>((acc, f) => {
