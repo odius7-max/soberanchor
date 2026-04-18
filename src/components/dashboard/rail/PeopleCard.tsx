@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AddSponseeModal from '../AddSponseeModal'
-import { removeSponsorRelationship } from '@/app/dashboard/actions'
+import { createClient } from '@/lib/supabase/client'
 import type { ActiveSponsor, SponseeFull } from '../DashboardShell'
 
 interface Props {
@@ -60,20 +60,26 @@ export default function PeopleCard({ userId, displayName, activeSponsors, sponse
   const visibleSponsees = sponsees.slice(0, SPONSEE_DISPLAY_LIMIT)
   const overflowSponsees = Math.max(0, sponsees.length - SPONSEE_DISPLAY_LIMIT)
 
+  // Direct client-side UPDATE — RLS enforces participant-only writes.
+  // Matches the pattern used in TasksTab and OverviewTab.
+  async function endRelationship(relationshipId: string): Promise<void> {
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('sponsor_relationships')
+      .update({ status: 'ended', ended_at: new Date().toISOString() })
+      .eq('id', relationshipId)
+    if (error) throw new Error(error.message)
+  }
+
   async function unlinkSponsor(relationshipId: string, sponsorName: string) {
     if (!confirm(`End your sponsor relationship with ${sponsorName}?`)) return
     setUnlinking(relationshipId)
     try {
-      const res = await removeSponsorRelationship(relationshipId)
-      if (!res.ok) {
-        console.error('[PeopleCard] unlinkSponsor result', res)
-        alert(`Could not end relationship (stage: ${res.stage}): ${res.error}`)
-        return
-      }
+      await endRelationship(relationshipId)
       router.refresh()
     } catch (err) {
-      console.error('[PeopleCard] unlinkSponsor threw', err)
-      alert(`Unexpected error: ${err instanceof Error ? err.message : String(err)}`)
+      console.error('[PeopleCard] unlinkSponsor failed', err)
+      alert(`Could not end relationship: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
       setUnlinking(null)
     }
@@ -87,17 +93,11 @@ export default function PeopleCard({ userId, displayName, activeSponsors, sponse
     if (!confirm(`End your sponsor relationship with ${sponseeName}?`)) return
     setUnlinking(sponseeId)
     try {
-      const results = await Promise.all(relationshipIds.map(id => removeSponsorRelationship(id)))
-      const failed = results.find(r => !r.ok)
-      if (failed && !failed.ok) {
-        console.error('[PeopleCard] unlinkSponsee result', results)
-        alert(`Could not end relationship (stage: ${failed.stage}): ${failed.error}`)
-        return
-      }
+      await Promise.all(relationshipIds.map(id => endRelationship(id)))
       router.refresh()
     } catch (err) {
-      console.error('[PeopleCard] unlinkSponsee threw', err)
-      alert(`Unexpected error: ${err instanceof Error ? err.message : String(err)}`)
+      console.error('[PeopleCard] unlinkSponsee failed', err)
+      alert(`Could not end relationship: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
       setUnlinking(null)
     }
