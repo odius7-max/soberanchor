@@ -26,6 +26,10 @@ interface Props {
   assignedMeta: Record<string, { assignedAt: string; completedAt: string | null }>
   sponseeId: string
   relationshipId: string
+  /** Fellowship the sponsee is in — used to scope "Open Program Builder" links so
+   *  the builder opens to the matching fellowship's program (not the sponsor's
+   *  personal primary). */
+  fellowshipId: string | null
   onAssigned: (tasks: SponsorTask[]) => void
   onCancel: () => void
 }
@@ -43,8 +47,11 @@ function fmtDate(s: string) {
 
 export default function FromProgramTab({
   library, steps, currentStep, assignedLibraryIds, assignedMeta,
-  sponseeId, relationshipId, onAssigned, onCancel,
+  sponseeId, relationshipId, fellowshipId, onAssigned, onCancel,
 }: Props) {
+  const programBuilderHref = fellowshipId
+    ? `/dashboard/sponsees/program?fellowship=${fellowshipId}`
+    : '/dashboard/sponsees/program'
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(() => {
     const s = new Set<number>()
@@ -124,7 +131,7 @@ export default function FromProgramTab({
           Build your task library from the Program Builder, then come back here to assign.
         </div>
         <a
-          href="/dashboard/sponsees/program"
+          href={programBuilderHref}
           style={{
             display: 'inline-block', marginTop: 14,
             fontSize: 12, fontWeight: 700, color: 'var(--teal)',
@@ -210,7 +217,7 @@ export default function FromProgramTab({
                   }}>
                     You haven&apos;t created any tasks for Step {step.step_number} yet.{' '}
                     <a
-                      href="/dashboard/sponsees/program"
+                      href={programBuilderHref}
                       style={{ color: 'var(--teal)', fontWeight: 600, textDecoration: 'none' }}
                     >
                       Build tasks in the Program Builder

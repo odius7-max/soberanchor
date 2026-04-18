@@ -269,6 +269,7 @@ export default function AssignTaskModal({
               assignedMeta={assignedMeta}
               sponseeId={sponseeId}
               relationshipId={relationshipId}
+              fellowshipId={fellowshipId}
               onAssigned={handleAssignedFromProgram}
               onCancel={close}
             />

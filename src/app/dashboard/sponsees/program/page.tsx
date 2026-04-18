@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import Link from 'next/link'
 import ProgramBuilder from '@/components/dashboard/sponsor/ProgramBuilder'
 import { getOrCreateProgram, getLibraryTasks } from './actions'
@@ -11,24 +12,122 @@ const AA_STEP_NAMES: Record<number, string> = {
   9: 'Amends', 10: 'Daily Inventory', 11: 'Spiritual Growth', 12: 'Service',
 }
 
-export default async function SponsorProgramPage() {
+export default async function SponsorProgramPage({
+  searchParams,
+}: {
+  // Next.js 15 passes searchParams as a Promise
+  searchParams: Promise<{ fellowship?: string }>
+}) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/?auth=required')
 
-  // Get sponsor's profile
-  const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('primary_fellowship_id, is_available_sponsor')
-    .eq('id', user.id)
-    .single()
+  const params = await searchParams
+  const requestedFellowshipId = params?.fellowship ?? null
 
+  // Gather all fellowships this sponsor touches, in parallel:
+  //   1. Their own sobriety milestones (their personal fellowship(s))
+  //   2. Fellowships of their active sponsor_relationships (who they sponsor)
+  //   3. Their existing program templates (in case they built programs previously)
+  // Union of those IDs is the switchable set in the Program Builder header.
+  const [profileRes, milestonesRes, sponseeRelsRes, existingTemplatesRes, fellowshipsRes] = await Promise.all([
+    supabase
+      .from('user_profiles')
+      .select('primary_fellowship_id, is_available_sponsor')
+      .eq('id', user.id)
+      .single(),
+    supabase
+      .from('sobriety_milestones')
+      .select('fellowship_id, is_primary, sobriety_date')
+      .eq('user_id', user.id)
+      .order('is_primary', { ascending: false })
+      .order('sobriety_date', { ascending: true }),
+    supabase
+      .from('sponsor_relationships')
+      .select('sponsee_id, fellowship_id')
+      .eq('sponsor_id', user.id)
+      .eq('status', 'active'),
+    supabase
+      .from('sponsor_program_templates')
+      .select('fellowship_id')
+      .eq('sponsor_id', user.id),
+    supabase
+      .from('fellowships')
+      .select('id, name, abbreviation')
+      .order('name'),
+  ])
+
+  const profile = profileRes.data
   if (!profile?.is_available_sponsor) redirect('/dashboard')
 
-  const fellowshipId = profile.primary_fellowship_id
-  if (!fellowshipId) redirect('/dashboard')
+  const milestones = (milestonesRes.data ?? []) as { fellowship_id: string | null; is_primary: boolean }[]
+  const sponseeRels = (sponseeRelsRes.data ?? []) as { sponsee_id: string; fellowship_id: string | null }[]
+  const existingTemplates = (existingTemplatesRes.data ?? []) as { fellowship_id: string }[]
+  const allFellowships = (fellowshipsRes.data ?? []) as { id: string; name: string; abbreviation: string | null }[]
 
-  // Get or create program template
+  // Build the switchable set in priority order: primary milestone first, then any
+  // other milestone, then sponsee fellowships, then existing templates. Use a Set
+  // to dedupe while preserving order.
+  const switchable: string[] = []
+  const seen = new Set<string>()
+  const pushId = (id: string | null | undefined) => {
+    if (id && !seen.has(id)) { seen.add(id); switchable.push(id) }
+  }
+  if (profile.primary_fellowship_id) pushId(profile.primary_fellowship_id)
+  for (const m of milestones) if (m.is_primary) pushId(m.fellowship_id)
+  for (const m of milestones) pushId(m.fellowship_id)
+  for (const r of sponseeRels) pushId(r.fellowship_id)
+  for (const t of existingTemplates) pushId(t.fellowship_id)
+
+  // Fallback: if the sponsor has sponsees but the relationship rows have null
+  // fellowship_id (legacy rows, or never set during creation), resolve each
+  // sponsee's OWN primary fellowship via their milestones / profile. Uses admin
+  // client because RLS blocks cross-user profile reads. Without this, a sponsor
+  // whose only fellowship context is their sponsees' fellowships can't reach
+  // the Task Library at all.
+  if (switchable.length === 0 && sponseeRels.length > 0) {
+    const sponseeIds = sponseeRels.map(r => r.sponsee_id)
+    const admin = createAdminClient()
+    const [sponseeMilestonesRes, sponseeProfilesRes] = await Promise.all([
+      admin.from('sobriety_milestones')
+        .select('user_id, fellowship_id, is_primary')
+        .in('user_id', sponseeIds)
+        .not('fellowship_id', 'is', null)
+        .order('is_primary', { ascending: false }),
+      admin.from('user_profiles')
+        .select('id, primary_fellowship_id')
+        .in('id', sponseeIds),
+    ])
+    const sponseeMilestones = (sponseeMilestonesRes.data ?? []) as { user_id: string; fellowship_id: string; is_primary: boolean }[]
+    const sponseeProfiles = (sponseeProfilesRes.data ?? []) as { id: string; primary_fellowship_id: string | null }[]
+    // Prefer each sponsee's primary milestone, then any milestone, then their profile.
+    for (const sid of sponseeIds) {
+      const primary = sponseeMilestones.find(m => m.user_id === sid && m.is_primary)
+      if (primary) { pushId(primary.fellowship_id); continue }
+      const any = sponseeMilestones.find(m => m.user_id === sid)
+      if (any) { pushId(any.fellowship_id); continue }
+      const p = sponseeProfiles.find(p => p.id === sid)
+      if (p?.primary_fellowship_id) pushId(p.primary_fellowship_id)
+    }
+  }
+
+  if (switchable.length === 0) redirect('/dashboard')
+
+  // Resolve the selected fellowship: the query param takes precedence as long as
+  // it's in the switchable set; otherwise default to the first entry (which is
+  // the sponsor's primary).
+  const fellowshipId =
+    (requestedFellowshipId && switchable.includes(requestedFellowshipId))
+      ? requestedFellowshipId
+      : switchable[0]
+
+  // Build the fellowship list that will power the switcher UI (id + display label).
+  const availableFellowships = switchable
+    .map(id => allFellowships.find(f => f.id === id))
+    .filter((f): f is { id: string; name: string; abbreviation: string | null } => !!f)
+    .map(f => ({ id: f.id, name: f.name, abbreviation: f.abbreviation }))
+
+  // Get or create program template for the selected fellowship
   const program = await getOrCreateProgram(fellowshipId)
   if (!program) redirect('/dashboard')
 
@@ -77,20 +176,17 @@ export default async function SponsorProgramPage() {
 
   const allExamples = (examplesRes.data ?? []) as { id: string; step_number: number; title: string; description: string | null; category: string }[]
 
-  // Determine active step for the first sponsee (if any)
-  const { data: sponseeRels } = await supabase
-    .from('sponsor_relationships')
-    .select('sponsee_id, fellowship_id')
-    .eq('sponsor_id', user.id)
-    .eq('status', 'active')
-    .limit(1)
-
+  // Determine active step for the first sponsee of THIS fellowship (if any). Scoping
+  // to the same fellowship matters — a sponsor's CoDA sponsee shouldn't define the
+  // "current step" marker when the sponsor is viewing their AA program.
+  const sponseeRelForFellowship = sponseeRels.find(r => r.fellowship_id === fellowshipId)
   let activeStep: number | null = null
-  if (sponseeRels && sponseeRels.length > 0) {
+  if (sponseeRelForFellowship) {
     const { data: completions } = await supabase
       .from('step_completions')
       .select('step_number')
-      .eq('user_id', sponseeRels[0].sponsee_id)
+      .eq('user_id', sponseeRelForFellowship.sponsee_id)
+      .eq('fellowship_id', fellowshipId)
       .eq('is_completed', true)
 
     const completedSteps = new Set((completions ?? []).map(c => c.step_number as number))
@@ -113,6 +209,7 @@ export default async function SponsorProgramPage() {
         <ProgramBuilder
           programId={program.id}
           fellowshipId={fellowshipId}
+          availableFellowships={availableFellowships}
           steps={steps}
           initialTasks={libraryTasks}
           initialExamples={allExamples}

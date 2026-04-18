@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import AssignTaskModal from './sponsor/AssignTaskModal'
 import EditTaskModal from './AssignTaskModal'
 import type { SponsorTask } from '@/app/actions/sponsorTasks'
@@ -37,18 +37,38 @@ interface Props {
   completedTasksCount: number
   lastSubmittedAt: string | null
   initialTasks: SponsorTask[]
+  /** Called when the sponsor clicks + Assign Task but no fellowship is selected. Parent
+   *  should scroll to the Program dropdown and flag it as required. */
+  onAssignBlocked?: () => void
 }
 
 export default function SponseeTasksSection({
   sponseeId, sponseeName, relationshipId,
   fellowshipId, currentStep, completedTasksCount, lastSubmittedAt,
   initialTasks,
+  onAssignBlocked,
 }: Props) {
   const [showAssign, setShowAssign]     = useState(false)
   const [editingTask, setEditingTask]   = useState<SponsorTask | null>(null)
   const [reviewingTask, setReviewingTask] = useState<SponsorTask | null>(null)
   const [tasks, setTasks]               = useState<SponsorTask[]>(initialTasks)
   const [deletingId, setDeletingId]     = useState<string | null>(null)
+  const [assignError, setAssignError]   = useState<string | null>(null)
+
+  function handleOpenAssign() {
+    if (!fellowshipId) {
+      setAssignError('Select a Program first above before assigning a task.')
+      onAssignBlocked?.()
+      return
+    }
+    setAssignError(null)
+    setShowAssign(true)
+  }
+
+  // Clear the "select a program" nag once the sponsor picks a fellowship.
+  useEffect(() => {
+    if (fellowshipId) setAssignError(null)
+  }, [fellowshipId])
 
   const active    = tasks.filter(t => t.status !== 'completed')
   const completed = tasks.filter(t => t.status === 'completed')
@@ -83,7 +103,7 @@ export default function SponseeTasksSection({
           )}
         </h2>
         <button
-          onClick={() => setShowAssign(true)}
+          onClick={handleOpenAssign}
           style={{
             background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 8,
             padding: '7px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer',
@@ -93,6 +113,20 @@ export default function SponseeTasksSection({
           + Assign Task
         </button>
       </div>
+
+      {assignError && (
+        <div
+          role="alert"
+          style={{
+            marginBottom: 12, fontSize: 13, color: '#C0392B', fontWeight: 600,
+            padding: '10px 12px', borderRadius: 8,
+            background: 'rgba(192,57,43,0.06)',
+            border: '1px solid rgba(192,57,43,0.2)',
+          }}
+        >
+          {assignError}
+        </div>
+      )}
 
       {tasks.length === 0 && (
         <div style={{ textAlign: 'center', padding: '28px 16px', color: 'var(--mid)' }}>

@@ -40,16 +40,29 @@ interface ExampleTaskData {
   category: string
 }
 
+interface FellowshipOption {
+  id: string
+  name: string
+  abbreviation: string | null
+}
+
 interface Props {
   programId: string
   fellowshipId: string
+  /**
+   * All fellowships this sponsor can maintain a program for — their own sobriety
+   * fellowships PLUS any fellowship they sponsor in. When more than one is
+   * available the header renders a pill row so the sponsor can switch programs
+   * (e.g. "CoDA" ↔ "AA") without leaving the page.
+   */
+  availableFellowships: FellowshipOption[]
   steps: StepDef[]
   initialTasks: LibraryTask[]
   initialExamples: ExampleTaskData[]
   activeStep: number | null
 }
 
-export default function ProgramBuilder({ programId, fellowshipId, steps, initialTasks, initialExamples, activeStep }: Props) {
+export default function ProgramBuilder({ programId, fellowshipId, availableFellowships, steps, initialTasks, initialExamples, activeStep }: Props) {
   const router = useRouter()
   const [tasks, setTasks] = useState<LibraryTask[]>(initialTasks)
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(() => {
@@ -212,10 +225,19 @@ export default function ProgramBuilder({ programId, fellowshipId, steps, initial
 
   const totalTasks = tasks.length
 
+  // Label used in the header — short abbreviation if available, else full name.
+  const selectedFellowship = availableFellowships.find(f => f.id === fellowshipId)
+  const selectedLabel = selectedFellowship?.abbreviation ?? selectedFellowship?.name ?? 'Program'
+
+  function switchFellowship(nextId: string) {
+    if (nextId === fellowshipId) return
+    router.push(`/dashboard/sponsees/program?fellowship=${nextId}`)
+  }
+
   return (
     <div>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 12, flexWrap: 'wrap' }}>
         <div>
           <h2 style={{
             fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700,
@@ -224,6 +246,8 @@ export default function ProgramBuilder({ programId, fellowshipId, steps, initial
             Program Builder
           </h2>
           <p style={{ fontSize: 13, color: 'var(--mid)', marginTop: 4 }}>
+            <span style={{ fontWeight: 600, color: 'var(--navy)' }}>{selectedLabel}</span>
+            {' · '}
             {totalTasks} task{totalTasks !== 1 ? 's' : ''} across {steps.length} steps
           </p>
         </div>
@@ -238,6 +262,43 @@ export default function ProgramBuilder({ programId, fellowshipId, steps, initial
           {allExpanded ? 'Collapse All' : 'Expand All'}
         </button>
       </div>
+
+      {/* Fellowship switcher — only render when the sponsor has more than one program to manage */}
+      {availableFellowships.length > 1 && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
+          marginBottom: 20, padding: '10px 12px',
+          background: 'rgba(42,157,143,0.05)',
+          border: '1px solid rgba(42,157,143,0.18)',
+          borderRadius: 10,
+        }}>
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--mid)' }}>
+            Program
+          </span>
+          {availableFellowships.map(f => {
+            const isActive = f.id === fellowshipId
+            return (
+              <button
+                key={f.id}
+                onClick={() => switchFellowship(f.id)}
+                style={{
+                  fontSize: 12, fontWeight: 700,
+                  padding: '6px 12px', borderRadius: 999,
+                  border: isActive ? '1.5px solid var(--teal)' : '1.5px solid var(--border)',
+                  background: isActive ? 'var(--teal)' : '#fff',
+                  color: isActive ? '#fff' : 'var(--navy)',
+                  cursor: isActive ? 'default' : 'pointer',
+                  fontFamily: 'var(--font-body)',
+                  letterSpacing: '0.3px',
+                }}
+                aria-pressed={isActive}
+              >
+                {f.abbreviation ?? f.name}
+              </button>
+            )
+          })}
+        </div>
+      )}
 
       {/* Empty state */}
       {totalTasks === 0 && expandedSteps.size === 0 && (

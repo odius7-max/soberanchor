@@ -34,25 +34,37 @@ export interface StepCompletion { step_number: number; is_completed: boolean | n
 interface Props {
   fellowships: Fellowship[]
   initialFellowshipId: string | null
+  /** Sponsee's own fellowship (from sobriety_milestones / user_profiles) — used as default
+   *  when the sponsor relationship has no fellowship picked yet. */
+  suggestedFellowshipId?: string | null
   relationshipId: string
   sponseeId: string
   sponseeName: string
   currentStep: number
   initialCompletions: StepCompletion[]
+  /** Called whenever the sponsor picks a fellowship (or the default is auto-persisted). */
+  onFellowshipChange?: (newId: string | null) => void
+  /** When true, render the dropdown in a red "required" state (for missing-program error). */
+  highlightMissing?: boolean
 }
 
 export default function SponseeProgram({
   fellowships,
   initialFellowshipId,
+  suggestedFellowshipId = null,
   relationshipId,
   sponseeId,
   sponseeName,
   currentStep,
   initialCompletions,
+  onFellowshipChange,
+  highlightMissing = false,
 }: Props) {
   const supabase = createClient()
 
-  const [fellowshipId, setFellowshipId] = useState<string | null>(initialFellowshipId)
+  // Seed with the saved fellowship, falling back to the sponsee's own fellowship.
+  const seedFellowshipId = initialFellowshipId ?? suggestedFellowshipId
+  const [fellowshipId, setFellowshipId] = useState<string | null>(seedFellowshipId)
   const [completions, setCompletions] = useState<StepCompletion[]>(initialCompletions)
   const [hasContent, setHasContent] = useState(false)
   // selectedStep = incomplete step clicked → opens mark-complete modal
@@ -69,33 +81,46 @@ export default function SponseeProgram({
 
   // Check whether the active fellowship has any seeded workbooks
   useEffect(() => {
-    if (!initialFellowshipId) { setHasContent(false); return }
+    if (!seedFellowshipId) { setHasContent(false); return }
     supabase
       .from('program_workbooks')
       .select('id', { count: 'exact', head: true })
-      .eq('fellowship_id', initialFellowshipId)
+      .eq('fellowship_id', seedFellowshipId)
       .eq('is_active', true)
       .then(({ count }) => setHasContent((count ?? 0) > 0))
-  }, [initialFellowshipId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [seedFellowshipId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-persist the suggested fellowship once on mount if the sponsor_relationship
+  // hasn't recorded one yet. This prevents the "— Select program —" placeholder from
+  // showing when the sponsee already has a known fellowship, and ensures + Assign Task
+  // and the step grid work without the sponsor having to re-pick.
+  useEffect(() => {
+    if (!initialFellowshipId && suggestedFellowshipId) {
+      void handleFellowshipChange(suggestedFellowshipId)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function handleFellowshipChange(newId: string) {
     setUpdatingFellowship(true)
-    setFellowshipId(newId || null)
+    const resolved = newId || null
+    setFellowshipId(resolved)
+    onFellowshipChange?.(resolved)
     await supabase
       .from('sponsor_relationships')
-      .update({ fellowship_id: newId || null })
+      .update({ fellowship_id: resolved })
       .eq('id', relationshipId)
-    if (newId) {
+    if (resolved) {
       const [completionsRes, workbooksRes] = await Promise.all([
         supabase
           .from('step_completions')
           .select('step_number, is_completed, completed_method, sponsor_note, completed_at')
           .eq('user_id', sponseeId)
-          .eq('fellowship_id', newId),
+          .eq('fellowship_id', resolved),
         supabase
           .from('program_workbooks')
           .select('id', { count: 'exact', head: true })
-          .eq('fellowship_id', newId)
+          .eq('fellowship_id', resolved)
           .eq('is_active', true),
       ])
       setCompletions(completionsRes.data ?? [])
@@ -182,11 +207,16 @@ export default function SponseeProgram({
               style={{
                 fontSize: 14, fontWeight: 600, color: 'var(--navy)',
                 padding: '9px 36px 9px 14px', borderRadius: 10,
-                border: '1.5px solid var(--border)', background: '#fff',
+                border: highlightMissing
+                  ? '1.5px solid #C0392B'
+                  : '1.5px solid var(--border)',
+                background: highlightMissing ? 'rgba(192,57,43,0.04)' : '#fff',
                 cursor: updatingFellowship ? 'wait' : 'pointer',
                 appearance: 'none' as const, minWidth: 220,
                 fontFamily: 'var(--font-body)',
                 opacity: updatingFellowship ? 0.6 : 1,
+                boxShadow: highlightMissing ? '0 0 0 3px rgba(192,57,43,0.12)' : 'none',
+                transition: 'border-color 0.2s, box-shadow 0.2s, background 0.2s',
               }}
             >
               <option value="">— Select program —</option>
@@ -196,9 +226,22 @@ export default function SponseeProgram({
                 </option>
               ))}
             </select>
-            <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: 12, color: 'var(--mid)' }}>▾</span>
+            <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: 12, color: highlightMissing ? '#C0392B' : 'var(--mid)' }}>▾</span>
           </div>
         </div>
+        {highlightMissing && (
+          <div
+            role="alert"
+            style={{
+              marginTop: 12, fontSize: 13, color: '#C0392B', fontWeight: 600,
+              padding: '8px 12px', borderRadius: 8,
+              background: 'rgba(192,57,43,0.06)',
+              border: '1px solid rgba(192,57,43,0.2)',
+            }}
+          >
+            Select a Program first to assign a task.
+          </div>
+        )}
         {fellowshipId && !hasContent && (
           <div style={{ marginTop: 12, fontSize: 13, color: '#888', padding: '8px 12px', background: 'rgba(136,136,136,0.06)', borderRadius: 8, border: '1px solid rgba(136,136,136,0.12)' }}>
             Step work content for {currentFellowship?.abbreviation ?? currentFellowship?.name} is coming soon. You can still track step completion here.
