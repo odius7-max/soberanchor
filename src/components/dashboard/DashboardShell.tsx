@@ -147,9 +147,18 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
     : activeFellowshipId === null
       ? []
       : stepCompletions.filter(sc => sc.fellowship_id === activeFellowshipId)
-  const completedSteps = new Set(filteredCompletions.map(r => r.step_number)).size
+  const completedStepNumbers = filteredCompletions.map(r => r.step_number)
+  const completedStepSet = new Set(completedStepNumbers)
+  const completedSteps = completedStepSet.size
   const allStepsDone = completedSteps >= 12
-  const currentStep = allStepsDone ? 12 : Math.max(1, completedSteps + 1)
+  // First-gap-found: handles out-of-order completions (e.g. 1,2,3,5 done → current = 4)
+  const firstIncomplete = (() => {
+    for (let i = 1; i <= 12; i++) {
+      if (!completedStepSet.has(i)) return i
+    }
+    return 12
+  })()
+  const currentStep = allStepsDone ? 12 : firstIncomplete
 
   const modes: { id: Mode; label: string }[] = [
     // Only show My Recovery if user has completed onboarding (has recovery data)
@@ -275,7 +284,9 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
         {/* ── My Recovery ── */}
         {mode === 'my' && (
           <>
-            {!onboardingCompleted && <OnboardingCard userId={userId} />}
+            {/* Re-show onboarding if user has no display_name — otherwise the
+                "Friend" fallback would stick forever (CLAUDE.md pitfall #3). */}
+            {(!onboardingCompleted || !profile?.display_name) && <OnboardingCard userId={userId} />}
             <PendingRequests requests={pendingRequests} perspective="as_sponsee" />
             {TODAY_QUEUE_ENABLED ? (
               <Hero
@@ -284,6 +295,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
                 milestones={initialMilestones}
                 fellowships={fellowships}
                 currentStep={currentStep}
+                completedStepNumbers={completedStepNumbers}
                 dailyQuote={dailyQuote ?? null}
                 onActiveFellowshipChange={handleActiveFellowshipChange}
               />
