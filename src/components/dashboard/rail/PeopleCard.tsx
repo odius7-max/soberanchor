@@ -64,11 +64,16 @@ export default function PeopleCard({ userId, displayName, activeSponsors, sponse
     if (!confirm(`End your sponsor relationship with ${sponsorName}?`)) return
     setUnlinking(relationshipId)
     try {
-      await removeSponsorRelationship(relationshipId)
+      const res = await removeSponsorRelationship(relationshipId)
+      if (!res.ok) {
+        console.error('[PeopleCard] unlinkSponsor result', res)
+        alert(`Could not end relationship (stage: ${res.stage}): ${res.error}`)
+        return
+      }
       router.refresh()
     } catch (err) {
-      console.error('[PeopleCard] unlinkSponsor failed', err)
-      alert(`Could not end relationship: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      console.error('[PeopleCard] unlinkSponsor threw', err)
+      alert(`Unexpected error: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
       setUnlinking(null)
     }
@@ -82,11 +87,17 @@ export default function PeopleCard({ userId, displayName, activeSponsors, sponse
     if (!confirm(`End your sponsor relationship with ${sponseeName}?`)) return
     setUnlinking(sponseeId)
     try {
-      await Promise.all(relationshipIds.map(id => removeSponsorRelationship(id)))
+      const results = await Promise.all(relationshipIds.map(id => removeSponsorRelationship(id)))
+      const failed = results.find(r => !r.ok)
+      if (failed && !failed.ok) {
+        console.error('[PeopleCard] unlinkSponsee result', results)
+        alert(`Could not end relationship (stage: ${failed.stage}): ${failed.error}`)
+        return
+      }
       router.refresh()
     } catch (err) {
-      console.error('[PeopleCard] unlinkSponsee failed', err)
-      alert(`Could not end relationship: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      console.error('[PeopleCard] unlinkSponsee threw', err)
+      alert(`Unexpected error: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
       setUnlinking(null)
     }

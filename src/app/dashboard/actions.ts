@@ -180,46 +180,72 @@ export async function requestSponsor(sponsorUserId: string, fellowshipId: string
   revalidatePath('/dashboard')
 }
 
+export type UnlinkResult = { ok: true } | { ok: false; error: string; stage: string }
+
 // Either party can unlink an active or pending sponsor relationship.
-export async function removeSponsorRelationship(relationshipId: string): Promise<void> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized — please sign in again.')
+// Returns a plain result object so errors serialize cleanly to the client.
+export async function removeSponsorRelationship(relationshipId: string): Promise<UnlinkResult> {
+  try {
+    console.log('[removeSponsorRelationship] start', { relationshipId })
 
-  // 1. RLS-scoped read confirms visibility and participation
-  const { data: existing, error: readErr } = await supabase
-    .from('sponsor_relationships')
-    .select('id, sponsor_id, sponsee_id, status')
-    .eq('id', relationshipId)
-    .maybeSingle()
+    const supabase = await createClient()
+    const authRes = await supabase.auth.getUser()
+    const user = authRes.data.user
+    if (authRes.error) return { ok: false, error: `Auth error: ${authRes.error.message}`, stage: 'auth' }
+    if (!user) return { ok: false, error: 'Not signed in.', stage: 'auth' }
+    console.log('[removeSponsorRelationship] auth ok', { userId: user.id })
 
-  if (readErr) throw new Error(`Read failed: ${readErr.message}`)
-  if (!existing) {
-    throw new Error(`Relationship ${relationshipId} not found or not visible to you.`)
-  }
-  if (existing.sponsor_id !== user.id && existing.sponsee_id !== user.id) {
-    throw new Error('You are not a participant in this relationship.')
-  }
-  if (existing.status === 'ended') {
+    // 1. RLS-scoped read confirms visibility + participation
+    const readRes = await supabase
+      .from('sponsor_relationships')
+      .select('id, sponsor_id, sponsee_id, status')
+      .eq('id', relationshipId)
+      .maybeSingle()
+
+    if (readRes.error) {
+      console.error('[removeSponsorRelationship] read error', readRes.error)
+      return { ok: false, error: `Read failed: ${readRes.error.message}`, stage: 'read' }
+    }
+    const existing = readRes.data
+    if (!existing) {
+      return { ok: false, error: `Relationship ${relationshipId} not visible (RLS or missing row).`, stage: 'read' }
+    }
+    if (existing.sponsor_id !== user.id && existing.sponsee_id !== user.id) {
+      return { ok: false, error: 'You are not a participant in this relationship.', stage: 'read' }
+    }
+    if (existing.status === 'ended') {
+      revalidatePath('/dashboard')
+      return { ok: true }
+    }
+    console.log('[removeSponsorRelationship] participant confirmed', { status: existing.status })
+
+    // 2. Update — RLS policy already enforces participant-only writes
+    const updRes = await supabase
+      .from('sponsor_relationships')
+      .update({ status: 'ended', ended_at: new Date().toISOString() })
+      .eq('id', relationshipId)
+      .select('id, status')
+
+    if (updRes.error) {
+      console.error('[removeSponsorRelationship] update error', updRes.error)
+      return { ok: false, error: `Update failed: ${updRes.error.message}`, stage: 'update' }
+    }
+    const updated = updRes.data
+    if (!updated || updated.length === 0) {
+      return { ok: false, error: `Update returned zero rows (RLS blocked or row vanished).`, stage: 'update' }
+    }
+    if (updated[0].status !== 'ended') {
+      return { ok: false, error: `Status after update is "${updated[0].status}" (expected "ended").`, stage: 'update' }
+    }
+    console.log('[removeSponsorRelationship] success', { id: updated[0].id })
+
     revalidatePath('/dashboard')
-    return
+    return { ok: true }
+  } catch (e) {
+    const msg = e instanceof Error ? `${e.name}: ${e.message}` : String(e)
+    console.error('[removeSponsorRelationship] uncaught', e)
+    return { ok: false, error: `Uncaught: ${msg}`, stage: 'catch' }
   }
-
-  // 2. Update — RLS policy already enforces participant-only updates
-  const { data: updated, error: updErr } = await supabase
-    .from('sponsor_relationships')
-    .update({ status: 'ended', ended_at: new Date().toISOString() })
-    .eq('id', relationshipId)
-    .select('id, status')
-
-  if (updErr) throw new Error(`DB update failed: ${updErr.message}`)
-  if (!updated || updated.length === 0) {
-    throw new Error(`Update returned zero rows for id=${relationshipId} — RLS UPDATE policy may have blocked.`)
-  }
-  if (updated[0].status !== 'ended') {
-    throw new Error(`Update ran but status is "${updated[0].status}" (expected "ended").`)
-  }
-  revalidatePath('/dashboard')
 }
 
 // ─── Step Work Report ─────────────────────────────────────────────────────────
