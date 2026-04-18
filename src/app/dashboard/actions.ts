@@ -184,15 +184,41 @@ export async function requestSponsor(sponsorUserId: string, fellowshipId: string
 export async function removeSponsorRelationship(relationshipId: string): Promise<void> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized')
+  if (!user) throw new Error('Unauthorized — please sign in again.')
 
-  const { error } = await supabase
+  // 1. RLS-scoped read confirms visibility and participation
+  const { data: existing, error: readErr } = await supabase
+    .from('sponsor_relationships')
+    .select('id, sponsor_id, sponsee_id, status')
+    .eq('id', relationshipId)
+    .maybeSingle()
+
+  if (readErr) throw new Error(`Read failed: ${readErr.message}`)
+  if (!existing) {
+    throw new Error(`Relationship ${relationshipId} not found or not visible to you.`)
+  }
+  if (existing.sponsor_id !== user.id && existing.sponsee_id !== user.id) {
+    throw new Error('You are not a participant in this relationship.')
+  }
+  if (existing.status === 'ended') {
+    revalidatePath('/dashboard')
+    return
+  }
+
+  // 2. Update — RLS policy already enforces participant-only updates
+  const { data: updated, error: updErr } = await supabase
     .from('sponsor_relationships')
     .update({ status: 'ended', ended_at: new Date().toISOString() })
     .eq('id', relationshipId)
-    .or(`sponsor_id.eq.${user.id},sponsee_id.eq.${user.id}`)
+    .select('id, status')
 
-  if (error) throw new Error(error.message)
+  if (updErr) throw new Error(`DB update failed: ${updErr.message}`)
+  if (!updated || updated.length === 0) {
+    throw new Error(`Update returned zero rows for id=${relationshipId} — RLS UPDATE policy may have blocked.`)
+  }
+  if (updated[0].status !== 'ended') {
+    throw new Error(`Update ran but status is "${updated[0].status}" (expected "ended").`)
+  }
   revalidatePath('/dashboard')
 }
 
