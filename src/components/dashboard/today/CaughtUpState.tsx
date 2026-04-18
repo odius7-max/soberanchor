@@ -3,9 +3,11 @@ import { TODAY_COPY } from '@/lib/copy/today'
 
 interface Props {
   summaryParts?: string[]
+  /** When provided, renders a text link that reveals the completed list. */
+  onViewList?: () => void
 }
 
-export default function CaughtUpState({ summaryParts }: Props) {
+export default function CaughtUpState({ summaryParts, onViewList }: Props) {
   return (
     <div
       style={{
@@ -45,6 +47,25 @@ export default function CaughtUpState({ summaryParts }: Props) {
             {TODAY_COPY.caughtUpSummary(summaryParts)}
           </div>
         </>
+      )}
+      {onViewList && (
+        <button
+          onClick={onViewList}
+          style={{
+            marginTop: 20,
+            background: 'none',
+            border: 'none',
+            padding: '8px 12px',
+            fontSize: 13,
+            fontWeight: 600,
+            color: 'var(--teal)',
+            cursor: 'pointer',
+            fontFamily: 'var(--font-body)',
+            minHeight: 44,
+          }}
+        >
+          {TODAY_COPY.caughtUpViewList}
+        </button>
       )}
     </div>
   )

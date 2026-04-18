@@ -10,6 +10,7 @@ export const TODAY_COPY = {
   caughtUpTitle: "Anchored for today.",
   caughtUpBody: "Come back tomorrow — practice updates daily.",
   caughtUpSummary: (parts: string[]) => `Today you · ${parts.join(' · ')}`,
+  caughtUpViewList: "View today's practice →",
 
   celebrateTitle: "Anchored in for today.",
   celebrateStreakBadge: (days: number) => `Day ${days} · +1 streak`,
