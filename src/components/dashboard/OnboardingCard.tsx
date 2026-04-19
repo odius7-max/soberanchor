@@ -89,6 +89,7 @@ export default function OnboardingCard({ userId }: { userId: string }) {
       .eq('id', userId)
 
     if (profileError) {
+      console.error('[OnboardingCard] profile update failed', profileError)
       setSaveError('Failed to save your profile. Please try again.')
       setSaving(false)
       return
@@ -111,6 +112,7 @@ export default function OnboardingCard({ userId }: { userId: string }) {
         )
 
       if (milestoneError) {
+        console.error('[OnboardingCard] milestone upsert failed', milestoneError)
         setSaveError('Failed to save your sobriety date. Please try again.')
         setSaving(false)
         return
@@ -124,6 +126,7 @@ export default function OnboardingCard({ userId }: { userId: string }) {
       .eq('id', userId)
 
     if (completeError) {
+      console.error('[OnboardingCard] mark complete failed', completeError)
       setSaveError('Setup almost done — tap again to finish.')
       setSaving(false)
       return
