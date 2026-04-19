@@ -94,6 +94,8 @@ interface Props {
   dailyQuote?: DailyQuote | null
   sponseeAlertCount?: number
   programRows: ProgramRowData[]
+  workingPrograms?: { fellowshipId: string; fellowshipAbbr: string }[]
+  stepWorkData?: Record<string, Record<number, { label: string; slug: string }>>
 }
 
 const TODAY_QUEUE_ENABLED = process.env.NEXT_PUBLIC_TODAY_QUEUE_ENABLED === 'true'
@@ -108,7 +110,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'saved',     label: '❤️ Saved' },
 ]
 
-export default function DashboardShell({ userId, phone, onboardingCompleted, isProvider, providerData, profile, stepCompletions, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsors, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships, todayQueueItems, todayQueueOverflow, todayMemberCaughtUp, todaySummaryParts, dailyQuote, sponseeAlertCount = 0, programRows }: Props) {
+export default function DashboardShell({ userId, phone, onboardingCompleted, isProvider, providerData, profile, stepCompletions, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsors, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships, todayQueueItems, todayQueueOverflow, todayMemberCaughtUp, todaySummaryParts, dailyQuote, sponseeAlertCount = 0, programRows, workingPrograms = [], stepWorkData = {} }: Props) {
   const router = useRouter()
   // Provider-only users (no recovery onboarding) default to facility mode
   const defaultMode: Mode = (isProvider && !onboardingCompleted) ? 'facility' : 'my'
@@ -314,6 +316,9 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
                 dailyQuote={dailyQuote ?? null}
                 onActiveFellowshipChange={handleActiveFellowshipChange}
                 programRows={programRows}
+                workingPrograms={workingPrograms}
+                stepCompletions={stepCompletions}
+                stepWorkData={stepWorkData}
               />
             ) : (
               <DashboardBanner

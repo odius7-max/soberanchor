@@ -14,5 +14,8 @@ export function getProgramLabel(args: {
   if (args.workbookName && args.currentStep) {
     return `${args.workbookName} · Step ${args.currentStep}`
   }
+  if (args.workbookName && !args.currentStep) {
+    return `${args.workbookName} · Not started`
+  }
   return 'Just Tracking'
 }

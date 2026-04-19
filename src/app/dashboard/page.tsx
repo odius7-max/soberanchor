@@ -299,17 +299,26 @@ export default async function DashboardPage() {
   // ── Program rows for Hero Phase 2 table ────────────────────────────────────
   // One entry per sobriety_milestone, used to drive the SOBER/FELLOWSHIP/PROGRAM/SINCE table.
   const milestoneFellowshipIds = initialMilestones.map(m => m.fellowship_id).filter(Boolean) as string[]
-  const workbookByFellowship = new Map<string, { title: string }>()
+  const workbookByFellowship = new Map<string, { workbook_name: string | null }>()
+  const stepWorkData: Record<string, Record<number, { label: string; slug: string }>> = {}
   if (milestoneFellowshipIds.length > 0) {
     const { data: wbRows } = await supabase
       .from('program_workbooks')
-      .select('fellowship_id, title')
+      .select('fellowship_id, workbook_name, step_number, title, slug')
       .eq('is_active', true)
       .in('fellowship_id', milestoneFellowshipIds)
       .order('sort_order')
     for (const wb of (wbRows ?? [])) {
       const fid = wb.fellowship_id as string
-      if (!workbookByFellowship.has(fid)) workbookByFellowship.set(fid, { title: wb.title as string })
+      if (!workbookByFellowship.has(fid)) workbookByFellowship.set(fid, { workbook_name: (wb as any).workbook_name as string | null })
+      const stepNum = wb.step_number as number | null
+      if (stepNum !== null) {
+        if (!stepWorkData[fid]) stepWorkData[fid] = {}
+        if (!stepWorkData[fid][stepNum]) {
+          const label = (wb.title as string).replace(/^Step \d+:\s*/i, '')
+          stepWorkData[fid][stepNum] = { label, slug: wb.slug as string }
+        }
+      }
     }
   }
   const sponseeCountByFellowship = new Map<string, number>()
@@ -333,12 +342,21 @@ export default async function DashboardPage() {
       milestoneId: m.id,
       fellowshipId: m.fellowship_id ?? null,
       fellowshipAbbr: fellowship ? (fellowship.abbreviation ?? fellowship.name) : null,
-      workbookName: wb?.title ?? null,
+      workbookName: wb?.workbook_name ?? null,
       currentStep: getStepForFellowship(m.fellowship_id ?? null),
       maxStep: wb ? 12 : null,
       activeSponseesInFellowship: sponseeCountByFellowship.get(m.fellowship_id ?? '__null__') ?? 0,
       sobrietyDate: m.sobriety_date,
     }
+  })
+
+  // ── Working programs (Phase 3) ─────────────────────────────────────────────
+  // Pills appear for every declared fellowship (milestone with a fellowship_id),
+  // regardless of step progress or sponsor relationships. Primary milestone first
+  // (milestoneFellowshipIds preserves the is_primary DESC order from the query).
+  const workingPrograms = [...new Set(milestoneFellowshipIds)].map(fid => {
+    const f = fellowships.find(f => f.id === fid)
+    return { fellowshipId: fid, fellowshipAbbr: f ? (f.abbreviation ?? f.name) : fid }
   })
 
   const rawPendingAsSponsee = rawPendingAsSponseeWithFellowship.filter(r => {
@@ -844,6 +862,8 @@ export default async function DashboardPage() {
       dailyQuote={dailyQuote}
       sponseeAlertCount={sponseeAlertCount}
       programRows={programRows}
+      workingPrograms={workingPrograms}
+      stepWorkData={stepWorkData}
     />
   )
 }
