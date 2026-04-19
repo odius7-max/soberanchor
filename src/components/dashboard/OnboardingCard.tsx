@@ -7,9 +7,10 @@ import { createClient } from '@/lib/supabase/client'
 interface Fellowship { id: string; name: string; abbreviation: string | null }
 
 type Step = 1 | 2 | 3 | 4
-type Role = 'sponsee' | 'sponsor' | 'both'
+type Role = 'none' | 'sponsee' | 'sponsor' | 'both'
 
 const ROLE_OPTIONS: { value: Role; emoji: string; title: string; desc: string }[] = [
+  { value: 'none',    emoji: '🌱', title: 'Not yet',              desc: "I'm just getting started — no sponsor yet"       },
   { value: 'sponsee', emoji: '🧭', title: 'I have a sponsor',    desc: "I'm working the steps with someone guiding me"   },
   { value: 'sponsor', emoji: '⚓', title: 'I sponsor others',    desc: 'I guide others through the program'              },
   { value: 'both',    emoji: '🤝', title: 'Both',                desc: 'I have a sponsor and I also sponsor others'      },
@@ -24,7 +25,7 @@ export default function OnboardingCard({ userId }: { userId: string }) {
   const [displayName, setDisplayName] = useState('')
   const [fellowshipId, setFellowshipId] = useState('')
   const [sobrietyDate, setSobrietyDate] = useState('')
-  const [role, setRole]               = useState<Role>('sponsee')
+  const [role, setRole]               = useState<Role>('none')
   const [saving, setSaving]           = useState(false)
   const [saveError, setSaveError]     = useState<string | null>(null)
   const [dismissed, setDismissed]     = useState(false)
