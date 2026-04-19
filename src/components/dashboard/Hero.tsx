@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Fragment } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { getGreeting } from '@/lib/greeting'
 import { useScrollFade } from '@/hooks/useScrollFade'
 import type { SobrietyMilestone, Fellowship } from './DashboardBanner'
+import type { ProgramRowData } from './DashboardShell'
+import { getProgramLabel } from '@/lib/program-column'
 
 const STEPS = [
   { n: 1, s: 'Powerlessness' }, { n: 2, s: 'Hope' }, { n: 3, s: 'Decision' },
@@ -33,6 +35,12 @@ function calcDays(dateStr: string): number {
   return Math.floor((Date.now() - new Date(dateStr + 'T00:00:00').getTime()) / 86400000)
 }
 
+function fmtSober(days: number): string {
+  if (days < 365) return `${days.toLocaleString()} days`
+  const years = Math.round(days / 365)
+  return `${years} year${years !== 1 ? 's' : ''}`
+}
+
 const FIELD_STYLE: React.CSSProperties = {
   width: '100%', fontSize: 13, padding: '9px 12px', borderRadius: 8,
   border: '1.5px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.1)',
@@ -52,9 +60,10 @@ interface Props {
   completedStepNumbers?: number[]
   dailyQuote: { text: string; attribution: string | null } | null
   onActiveFellowshipChange: (fid: string | null) => void
+  programRows: ProgramRowData[]
 }
 
-export default function Hero({ userId, displayName, milestones: initialMilestones, fellowships, currentStep, completedStepNumbers = [], dailyQuote, onActiveFellowshipChange }: Props) {
+export default function Hero({ userId, displayName, milestones: initialMilestones, fellowships, currentStep, completedStepNumbers = [], dailyQuote, onActiveFellowshipChange, programRows }: Props) {
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const [milestones, setMilestones] = useState<SobrietyMilestone[]>(initialMilestones)
@@ -166,6 +175,28 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
     setConfirmDeleteId(null)
   }
 
+  const sortedMilestones = [...milestones].sort((a, b) => {
+    if (a.is_primary && !b.is_primary) return -1
+    if (!a.is_primary && b.is_primary) return 1
+    return new Date(b.sobriety_date).getTime() - new Date(a.sobriety_date).getTime()
+  })
+  const programRowMap = new Map(programRows.map(r => [r.milestoneId, r]))
+  const tableRows = sortedMilestones.map(m => {
+    const days = mounted ? calcDays(m.sobriety_date) : null
+    const row = programRowMap.get(m.id)
+    const programLabel = row ? getProgramLabel({
+      fellowshipId: row.fellowshipId,
+      activeSponseesInFellowship: row.activeSponseesInFellowship,
+      workbookName: row.workbookName,
+      currentStep: row.currentStep,
+      maxStep: row.maxStep,
+    }) : 'Just Tracking'
+    const abbr = row?.fellowshipAbbr ?? getFellowshipAbbr(m.fellowship_id) ?? '—'
+    const since = new Date(m.sobriety_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    const onEdit = () => { startEdit(m); setShowPanel(true) }
+    return { m, days, programLabel, abbr, since, onEdit }
+  })
+
   return (
     <div
       className="rounded-[20px] overflow-hidden mb-6 relative px-4 pt-5 pb-5 md:px-8 md:pt-6 md:pb-6"
@@ -254,38 +285,99 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
             )}
           </div>
         ) : (
-          /* ── Condensed 3-row hero (matches dashboard-today-wireframe.html lines 576-593) ── */
+          /* ── Hero program table ── */
           <>
-            {/* Row 1: greeting + fellowship stats inline, baseline-aligned */}
+            {/* Greeting */}
             <div
               suppressHydrationWarning
-              style={{ display: 'flex', alignItems: 'baseline', gap: 20, flexWrap: 'wrap', marginBottom: 6 }}
+              style={{ fontSize: 22, fontWeight: 600, color: '#fff', letterSpacing: '-0.3px', marginBottom: 16 }}
             >
-              <span style={{ fontSize: 22, fontWeight: 600, color: '#fff', letterSpacing: '-0.3px' }}>
-                {greeting}, {displayName} 👋
-              </span>
-              {milestones.map(m => {
-                const days = mounted ? calcDays(m.sobriety_date) : null
-                const abbr = getFellowshipAbbr(m.fellowship_id)
-                // If label matches abbreviation (common from onboarding default),
-                // show the abbreviation only. Otherwise show "Label / Abbr".
-                const suffix = abbr
-                  ? (m.label === abbr ? abbr : `${m.label} / ${abbr}`)
-                  : m.label
-                return (
-                  <span
-                    key={m.id}
-                    suppressHydrationWarning
-                    style={{ fontSize: 14, color: 'rgba(255,255,255,0.72)', display: 'inline-flex', alignItems: 'baseline', gap: 6 }}
-                  >
-                    <strong style={{ color: '#f0c040', fontWeight: 700, fontSize: 22, letterSpacing: '-0.4px' }}>
-                      {days !== null ? `${days.toLocaleString()} days` : '—'}
-                    </strong>
-                    <span>· {suffix}</span>
-                  </span>
-                )
-              })}
+              {greeting}, {displayName} 👋
             </div>
+
+            {/* Program table or empty-state CTA */}
+            {milestones.length > 0 ? (
+              <>
+                {/* Responsive table styles */}
+                <style>{`
+                  .sa-hero-table{display:grid;grid-template-columns:auto auto auto auto auto;column-gap:24px;row-gap:8px;align-items:center;width:fit-content;margin-bottom:8px;}
+                  .sa-col-hdr{font-size:9px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:rgba(255,255,255,0.3);}
+                  .sa-hero-row-m{display:none;}
+                  @media(max-width:719px){.sa-hero-table{column-gap:16px;}}
+                  @media(max-width:559px){
+                    .sa-hero-table{display:none;}
+                    .sa-hero-row-m{display:block;}
+                  }
+                `}</style>
+
+                {/* Single grid: header cells + Fragment-keyed data rows share column widths */}
+                <div className="sa-hero-table">
+                  <div className="sa-col-hdr">SOBER</div>
+                  <div className="sa-col-hdr">FLSHP</div>
+                  <div className="sa-col-hdr">PROGRAM</div>
+                  <div className="sa-col-hdr">SINCE</div>
+                  <div />
+                  {tableRows.map(({ m, days, abbr, programLabel, since, onEdit }) => (
+                    <Fragment key={m.id}>
+                      <div suppressHydrationWarning style={{ fontWeight: 700, color: '#f0c040', fontSize: 13, whiteSpace: 'nowrap' as const }}>
+                        {days !== null ? fmtSober(days) : '—'}
+                      </div>
+                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', whiteSpace: 'nowrap' as const }}>
+                        {abbr}
+                      </div>
+                      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', whiteSpace: 'nowrap' as const }}>
+                        {programLabel}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap' as const }}>
+                        {since}
+                      </div>
+                      <button
+                        onClick={onEdit} title={`Edit ${m.label}`}
+                        style={{ padding: '4px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.55)', fontSize: 14, lineHeight: 1 }}
+                        onMouseEnter={e => { e.currentTarget.style.color = '#fff' }}
+                        onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.55)' }}
+                      >✎</button>
+                    </Fragment>
+                  ))}
+                </div>
+
+                {/* Mobile: stacked blocks (hidden above 559px) */}
+                {tableRows.map(({ m, days, abbr, programLabel, since, onEdit }) => (
+                  <div key={m.id} className="sa-hero-row-m" suppressHydrationWarning style={{ marginBottom: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                      <div style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, minWidth: 0 }}>
+                        <span style={{ fontWeight: 700, color: '#f0c040' }}>{days !== null ? fmtSober(days) : '—'}</span>
+                        <span style={{ color: 'rgba(255,255,255,0.75)' }}>{` · ${abbr} · ${programLabel}`}</span>
+                      </div>
+                      <button
+                        onClick={onEdit} title={`Edit ${m.label}`}
+                        style={{ padding: '4px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.55)', fontSize: 14, lineHeight: 1, flexShrink: 0 }}
+                        onMouseEnter={e => { e.currentTarget.style.color = '#fff' }}
+                        onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.55)' }}
+                      >✎</button>
+                    </div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{since}</div>
+                  </div>
+                ))}
+
+                {/* + Add program */}
+                <button
+                  onClick={() => { setEditingId('new'); setFLabel(''); setFDate(''); setFFellowshipId(''); setFIsPrimary(false); setShowPanel(true) }}
+                  style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', marginTop: 2, padding: 0, fontFamily: 'var(--font-body)', transition: 'color 0.15s', textAlign: 'left' as const }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.65)' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.35)' }}
+                >
+                  + Add program
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => { setEditingId('new'); setFLabel(''); setFDate(''); setFFellowshipId(''); setFIsPrimary(false); setShowPanel(true) }}
+                style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1px dashed rgba(255,255,255,0.3)', background: 'transparent', color: 'rgba(255,255,255,0.65)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)', textAlign: 'center' as const }}
+              >
+                + Add your sobriety date
+              </button>
+            )}
 
             {/* Row 2: next milestone + current step, separated by thin divider */}
             {(nextMLabel !== null || (!allStepsDone && stepLabel)) && (
@@ -375,14 +467,6 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
               </div>
             )}
 
-            <button
-              onClick={() => setShowPanel(true)}
-              style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', background: 'none', border: 'none', cursor: 'pointer', marginTop: 10, padding: 0, fontFamily: 'var(--font-body)', transition: 'color 0.15s' }}
-              onMouseEnter={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.6)' }}
-              onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.3)' }}
-            >
-              {milestones.length === 0 ? '+ Add milestone' : 'Edit milestones →'}
-            </button>
           </>
         )}
       </div>

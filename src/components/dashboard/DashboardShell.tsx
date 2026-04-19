@@ -43,6 +43,17 @@ export type { SobrietyMilestone, Fellowship }
 
 interface StepCompletion { step_number: number; fellowship_id: string | null }
 
+export interface ProgramRowData {
+  milestoneId: string
+  fellowshipId: string | null
+  fellowshipAbbr: string | null
+  workbookName: string | null
+  currentStep: number | null
+  maxStep: number | null
+  activeSponseesInFellowship: number
+  sobrietyDate: string
+}
+
 export interface ProviderData {
   facility: FacilityData
   amenities: string[]
@@ -82,6 +93,7 @@ interface Props {
   todaySummaryParts?: string[]
   dailyQuote?: DailyQuote | null
   sponseeAlertCount?: number
+  programRows: ProgramRowData[]
 }
 
 const TODAY_QUEUE_ENABLED = process.env.NEXT_PUBLIC_TODAY_QUEUE_ENABLED === 'true'
@@ -96,7 +108,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'saved',     label: '❤️ Saved' },
 ]
 
-export default function DashboardShell({ userId, phone, onboardingCompleted, isProvider, providerData, profile, stepCompletions, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsors, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships, todayQueueItems, todayQueueOverflow, todayMemberCaughtUp, todaySummaryParts, dailyQuote, sponseeAlertCount = 0 }: Props) {
+export default function DashboardShell({ userId, phone, onboardingCompleted, isProvider, providerData, profile, stepCompletions, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsors, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships, todayQueueItems, todayQueueOverflow, todayMemberCaughtUp, todaySummaryParts, dailyQuote, sponseeAlertCount = 0, programRows }: Props) {
   const router = useRouter()
   // Provider-only users (no recovery onboarding) default to facility mode
   const defaultMode: Mode = (isProvider && !onboardingCompleted) ? 'facility' : 'my'
@@ -301,6 +313,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
                 completedStepNumbers={completedStepNumbers}
                 dailyQuote={dailyQuote ?? null}
                 onActiveFellowshipChange={handleActiveFellowshipChange}
+                programRows={programRows}
               />
             ) : (
               <DashboardBanner

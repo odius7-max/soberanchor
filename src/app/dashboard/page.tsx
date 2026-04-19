@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import DashboardShell from '@/components/dashboard/DashboardShell'
-import type { CheckIn, JournalEntry, MeetingAttendance, ReadingAssignment, SponseeFull, SponseeCheckIn, ActivityItem, SobrietyMilestone, Fellowship, ActiveSponsor, ProviderData } from '@/components/dashboard/DashboardShell'
+import type { CheckIn, JournalEntry, MeetingAttendance, ReadingAssignment, SponseeFull, SponseeCheckIn, ActivityItem, SobrietyMilestone, Fellowship, ActiveSponsor, ProviderData, ProgramRowData } from '@/components/dashboard/DashboardShell'
 import type { PendingRequest } from '@/components/dashboard/PendingRequests'
 import type { FacilityData } from '@/components/providers/ListingTab'
 import type { Lead } from '@/components/providers/LeadsTab'
@@ -295,6 +295,51 @@ export default async function DashboardPage() {
       `${r.sponsee_id as string}|${(r.fellowship_id as string | null) ?? '__null__'}`
     )
   )
+
+  // ── Program rows for Hero Phase 2 table ────────────────────────────────────
+  // One entry per sobriety_milestone, used to drive the SOBER/FELLOWSHIP/PROGRAM/SINCE table.
+  const milestoneFellowshipIds = initialMilestones.map(m => m.fellowship_id).filter(Boolean) as string[]
+  const workbookByFellowship = new Map<string, { title: string }>()
+  if (milestoneFellowshipIds.length > 0) {
+    const { data: wbRows } = await supabase
+      .from('program_workbooks')
+      .select('fellowship_id, title')
+      .eq('is_active', true)
+      .in('fellowship_id', milestoneFellowshipIds)
+      .order('sort_order')
+    for (const wb of (wbRows ?? [])) {
+      const fid = wb.fellowship_id as string
+      if (!workbookByFellowship.has(fid)) workbookByFellowship.set(fid, { title: wb.title as string })
+    }
+  }
+  const sponseeCountByFellowship = new Map<string, number>()
+  for (const r of (activeAsSponsorRowsForFilter ?? [])) {
+    const fid = (r.fellowship_id as string | null) ?? '__null__'
+    sponseeCountByFellowship.set(fid, (sponseeCountByFellowship.get(fid) ?? 0) + 1)
+  }
+  function getStepForFellowship(fellowshipId: string | null): number | null {
+    if (!fellowshipId) return null
+    const completed = new Set(
+      stepCompletions.filter(sc => sc.fellowship_id === fellowshipId).map(sc => sc.step_number)
+    )
+    if (completed.size === 0) return null
+    for (let i = 1; i <= 12; i++) { if (!completed.has(i)) return i }
+    return 13 // all 12 done — signals "complete" via currentStep > maxStep in getProgramLabel
+  }
+  const programRows: ProgramRowData[] = initialMilestones.map(m => {
+    const fellowship = m.fellowship_id ? fellowships.find(f => f.id === m.fellowship_id) : null
+    const wb = m.fellowship_id ? workbookByFellowship.get(m.fellowship_id) : null
+    return {
+      milestoneId: m.id,
+      fellowshipId: m.fellowship_id ?? null,
+      fellowshipAbbr: fellowship ? (fellowship.abbreviation ?? fellowship.name) : null,
+      workbookName: wb?.title ?? null,
+      currentStep: getStepForFellowship(m.fellowship_id ?? null),
+      maxStep: wb ? 12 : null,
+      activeSponseesInFellowship: sponseeCountByFellowship.get(m.fellowship_id ?? '__null__') ?? 0,
+      sobrietyDate: m.sobriety_date,
+    }
+  })
 
   const rawPendingAsSponsee = rawPendingAsSponseeWithFellowship.filter(r => {
     // Skip if I already have an active sponsor for this fellowship
@@ -798,6 +843,7 @@ export default async function DashboardPage() {
       todaySummaryParts={todaySummaryParts}
       dailyQuote={dailyQuote}
       sponseeAlertCount={sponseeAlertCount}
+      programRows={programRows}
     />
   )
 }
