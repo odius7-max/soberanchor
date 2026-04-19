@@ -489,10 +489,9 @@ export default function GlobalSearch({ open, context, onClose }: Props) {
               {(result.step_work_results?.length ?? 0) > 0 && (
                 <ResultSection icon="📋" label="Step Work" count={result.step_work_results.length}>
                   {result.step_work_results.map(sw => <StepWorkRow key={sw.id} sw={sw} onClose={onClose} />)}
-                  <Link href="/dashboard/step-work" onClick={onClose}
-                    style={{ display: 'block', padding: '6px 14px', fontSize: 12, color: 'var(--teal)', fontWeight: 600, textDecoration: 'none' }}>
-                    View all step work →
-                  </Link>
+                  {/* NOTE: /dashboard/step-work has no index page — only [slug], pending,
+                      and review/[entryId] subroutes. Individual StepWorkRow links already
+                      deep-link to the right prompt, so no "View all" footer here. */}
                 </ResultSection>
               )}
 
