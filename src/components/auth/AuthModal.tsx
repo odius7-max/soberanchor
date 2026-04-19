@@ -59,15 +59,20 @@ export default function AuthModal() {
     if (isAuthModalOpen) setStep(authModalInitialStep)
   }, [isAuthModalOpen, authModalInitialStep])
 
-  // Reset state when modal closes
+  // Reset state when modal closes.
+  // IMPORTANT: return a cleanup that clears the timer. Without this, the
+  // timer scheduled on initial mount (when isAuthModalOpen is false) fires
+  // 300ms later and stomps setStep('login') on top of whatever step the
+  // modal was opened in. That's what caused /?auth=signup to briefly show
+  // "Create Account" and then flip to "Welcome back".
   useEffect(() => {
-    if (!isAuthModalOpen) {
-      setTimeout(() => {
-        setStep('login'); setEmail(''); setPassword(''); setConfirm('')
-        setDisplayName(''); setSobrietyDate(''); setFellowshipId('')
-        setError(null); setSuccess(null); setShowPassword(false); setShowConfirm(false)
-      }, 300)
-    }
+    if (isAuthModalOpen) return
+    const t = setTimeout(() => {
+      setStep('login'); setEmail(''); setPassword(''); setConfirm('')
+      setDisplayName(''); setSobrietyDate(''); setFellowshipId('')
+      setError(null); setSuccess(null); setShowPassword(false); setShowConfirm(false)
+    }, 300)
+    return () => clearTimeout(t)
   }, [isAuthModalOpen])
 
   // Load fellowships when reaching onboarding
