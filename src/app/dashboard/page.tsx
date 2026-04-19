@@ -59,14 +59,21 @@ export default async function DashboardPage() {
       const relInserts: Array<{ sponsor_id: string; sponsee_id: string; status: string; fellowship_id: string | null; created_at: string }> = []
       const inviteIdsToMark: string[] = []
 
+      // Track sponsors we've already queued in THIS batch — otherwise multiple
+      // invites from the same sponsor both pass the DB-existence check and we
+      // insert duplicate pending rows. (The existingRelSet was loaded once
+      // before the loop and doesn't know about rows we're about to insert.)
+      const queuedSponsors = new Set<string>()
       for (const inv of pendingInvites) {
         inviteIdsToMark.push(inv.id as string)
-        if (existingRelSet.has(inv.sponsor_id as string)) continue
+        const sponsorId = inv.sponsor_id as string
+        if (existingRelSet.has(sponsorId) || queuedSponsors.has(sponsorId)) continue
+        queuedSponsors.add(sponsorId)
         relInserts.push({
-          sponsor_id: inv.sponsor_id as string,
+          sponsor_id: sponsorId,
           sponsee_id: userId,
           status: 'pending',
-          fellowship_id: fellowshipMap.get(inv.sponsor_id as string) ?? null,
+          fellowship_id: fellowshipMap.get(sponsorId) ?? null,
           created_at: inv.created_at as string,
         })
       }
@@ -108,14 +115,18 @@ export default async function DashboardPage() {
       const sponsorRelInserts: Array<{ sponsor_id: string; sponsee_id: string; status: string; fellowship_id: string | null; created_at: string }> = []
       const sponsorInviteIdsToMark: string[] = []
 
+      // Same within-batch dedupe as direction 1 above.
+      const queuedSponsees = new Set<string>()
       for (const inv of pendingSponsorInvites) {
         sponsorInviteIdsToMark.push(inv.id as string)
-        if (existingSponsorRelSet.has(inv.sponsee_id as string)) continue
+        const sponseeId = inv.sponsee_id as string
+        if (existingSponsorRelSet.has(sponseeId) || queuedSponsees.has(sponseeId)) continue
+        queuedSponsees.add(sponseeId)
         sponsorRelInserts.push({
           sponsor_id: userId,
-          sponsee_id: inv.sponsee_id as string,
+          sponsee_id: sponseeId,
           status: 'pending',
-          fellowship_id: sponseeFellowshipMap.get(inv.sponsee_id as string) ?? null,
+          fellowship_id: sponseeFellowshipMap.get(sponseeId) ?? null,
           created_at: inv.created_at as string,
         })
       }
@@ -250,18 +261,36 @@ export default async function DashboardPage() {
     const nameMap: Record<string, string | null> = Object.fromEntries(
       (profiles ?? []).map((p: any) => [p.id, p.display_name])
     )
-    pendingRequests = rawPendingAsSponsee.map((r: any) => ({
-      id: r.id,
-      otherId: r.sponsor_id,
-      otherName: nameMap[r.sponsor_id] ?? 'Anonymous',
-      createdAt: r.created_at,
-    }))
-    sponsorPendingRequests = rawPendingAsSponsor.map((r: any) => ({
-      id: r.id,
-      otherId: r.sponsee_id,
-      otherName: nameMap[r.sponsee_id] ?? 'Anonymous',
-      createdAt: r.created_at,
-    }))
+    // Dedupe by the "other" user id, keeping the most recent row. Prevents
+    // the same requester from showing up multiple times if duplicate pending
+    // sponsor_relationships rows exist (e.g. from legacy data or the pre-fix
+    // conversion loop). Most-recent wins so Accept/Decline acts on the latest.
+    const dedupeMostRecent = <T extends { created_at: string }>(
+      rows: T[],
+      keyOf: (r: T) => string
+    ): T[] => {
+      const best = new Map<string, T>()
+      for (const r of rows) {
+        const k = keyOf(r)
+        const prev = best.get(k)
+        if (!prev || new Date(r.created_at) > new Date(prev.created_at)) best.set(k, r)
+      }
+      return Array.from(best.values())
+    }
+    pendingRequests = dedupeMostRecent(rawPendingAsSponsee, (r: any) => r.sponsor_id as string)
+      .map((r: any) => ({
+        id: r.id,
+        otherId: r.sponsor_id,
+        otherName: nameMap[r.sponsor_id] ?? 'Anonymous',
+        createdAt: r.created_at,
+      }))
+    sponsorPendingRequests = dedupeMostRecent(rawPendingAsSponsor, (r: any) => r.sponsee_id as string)
+      .map((r: any) => ({
+        id: r.id,
+        otherId: r.sponsee_id,
+        otherName: nameMap[r.sponsee_id] ?? 'Anonymous',
+        createdAt: r.created_at,
+      }))
   }
 
   // Reading assignments — fetch across all active sponsor relationships
