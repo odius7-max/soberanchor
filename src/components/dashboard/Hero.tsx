@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Fragment } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { getGreeting } from '@/lib/greeting'
@@ -181,6 +181,21 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
     return new Date(b.sobriety_date).getTime() - new Date(a.sobriety_date).getTime()
   })
   const programRowMap = new Map(programRows.map(r => [r.milestoneId, r]))
+  const tableRows = sortedMilestones.map(m => {
+    const days = mounted ? calcDays(m.sobriety_date) : null
+    const row = programRowMap.get(m.id)
+    const programLabel = row ? getProgramLabel({
+      fellowshipId: row.fellowshipId,
+      activeSponseesInFellowship: row.activeSponseesInFellowship,
+      workbookName: row.workbookName,
+      currentStep: row.currentStep,
+      maxStep: row.maxStep,
+    }) : 'Just Tracking'
+    const abbr = row?.fellowshipAbbr ?? getFellowshipAbbr(m.fellowship_id) ?? '—'
+    const since = new Date(m.sobriety_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    const onEdit = () => { startEdit(m); setShowPanel(true) }
+    return { m, days, programLabel, abbr, since, onEdit }
+  })
 
   return (
     <div
@@ -283,80 +298,67 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
             {/* Program table or empty-state CTA */}
             {milestones.length > 0 ? (
               <>
-                {/* Responsive table styles — desktop grid / mobile stacked block */}
+                {/* Responsive table styles */}
                 <style>{`
-                  .sa-hero-hdr,.sa-hero-row-d{display:grid;grid-template-columns:auto auto auto auto auto;gap:24px;align-items:center;width:fit-content;}
+                  .sa-hero-table{display:grid;grid-template-columns:auto auto auto auto auto;column-gap:24px;row-gap:8px;align-items:center;width:fit-content;margin-bottom:8px;}
+                  .sa-col-hdr{font-size:9px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:rgba(255,255,255,0.3);}
                   .sa-hero-row-m{display:none;}
-                  @media(max-width:719px){.sa-hero-hdr,.sa-hero-row-d{gap:16px;}}
+                  @media(max-width:719px){.sa-hero-table{column-gap:16px;}}
                   @media(max-width:559px){
-                    .sa-hero-hdr,.sa-hero-row-d{display:none;}
+                    .sa-hero-table{display:none;}
                     .sa-hero-row-m{display:block;}
                   }
                 `}</style>
 
-                {/* Column headers */}
-                <div className="sa-hero-hdr" style={{ marginBottom: 6 }}>
-                  {['SOBER', 'FLSHP', 'PROGRAM', 'SINCE', ''].map(h => (
-                    <div key={h} style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.8px', textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.3)' }}>{h}</div>
+                {/* Single grid: header cells + Fragment-keyed data rows share column widths */}
+                <div className="sa-hero-table">
+                  <div className="sa-col-hdr">SOBER</div>
+                  <div className="sa-col-hdr">FLSHP</div>
+                  <div className="sa-col-hdr">PROGRAM</div>
+                  <div className="sa-col-hdr">SINCE</div>
+                  <div />
+                  {tableRows.map(({ m, days, abbr, programLabel, since, onEdit }) => (
+                    <Fragment key={m.id}>
+                      <div suppressHydrationWarning style={{ fontWeight: 700, color: '#f0c040', fontSize: 13, whiteSpace: 'nowrap' as const }}>
+                        {days !== null ? fmtSober(days) : '—'}
+                      </div>
+                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', whiteSpace: 'nowrap' as const }}>
+                        {abbr}
+                      </div>
+                      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', whiteSpace: 'nowrap' as const }}>
+                        {programLabel}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap' as const }}>
+                        {since}
+                      </div>
+                      <button
+                        onClick={onEdit} title={`Edit ${m.label}`}
+                        style={{ padding: '4px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.55)', fontSize: 14, lineHeight: 1 }}
+                        onMouseEnter={e => { e.currentTarget.style.color = '#fff' }}
+                        onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.55)' }}
+                      >✎</button>
+                    </Fragment>
                   ))}
                 </div>
 
-                {/* Data rows */}
-                {sortedMilestones.map(m => {
-                  const days = mounted ? calcDays(m.sobriety_date) : null
-                  const row = programRowMap.get(m.id)
-                  const programLabel = row ? getProgramLabel({
-                    fellowshipId: row.fellowshipId,
-                    activeSponseesInFellowship: row.activeSponseesInFellowship,
-                    workbookName: row.workbookName,
-                    currentStep: row.currentStep,
-                    maxStep: row.maxStep,
-                  }) : 'Just Tracking'
-                  const abbr = row?.fellowshipAbbr ?? getFellowshipAbbr(m.fellowship_id) ?? '—'
-                  const since = new Date(m.sobriety_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                  const onEdit = () => { startEdit(m); setShowPanel(true) }
-                  return (
-                    <div key={m.id} suppressHydrationWarning style={{ marginBottom: 8 }}>
-                      {/* Desktop: 5-column grid */}
-                      <div className="sa-hero-row-d">
-                        <div style={{ fontWeight: 700, color: '#f0c040', fontSize: 13, whiteSpace: 'nowrap' as const }}>
-                          {days !== null ? fmtSober(days) : '—'}
-                        </div>
-                        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', whiteSpace: 'nowrap' as const }}>
-                          {abbr}
-                        </div>
-                        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', whiteSpace: 'nowrap' as const }}>
-                          {programLabel}
-                        </div>
-                        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap' as const }}>
-                          {since}
-                        </div>
-                        <button
-                          onClick={onEdit} title={`Edit ${m.label}`}
-                          style={{ padding: '4px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.55)', fontSize: 14, lineHeight: 1 }}
-                          onMouseEnter={e => { e.currentTarget.style.color = '#fff' }}
-                          onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.55)' }}
-                        >✎</button>
+                {/* Mobile: stacked blocks (hidden above 559px) */}
+                {tableRows.map(({ m, days, abbr, programLabel, since, onEdit }) => (
+                  <div key={m.id} className="sa-hero-row-m" suppressHydrationWarning style={{ marginBottom: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                      <div style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, minWidth: 0 }}>
+                        <span style={{ fontWeight: 700, color: '#f0c040' }}>{days !== null ? fmtSober(days) : '—'}</span>
+                        <span style={{ color: 'rgba(255,255,255,0.75)' }}>{` · ${abbr} · ${programLabel}`}</span>
                       </div>
-                      {/* Mobile: 2-line stacked block */}
-                      <div className="sa-hero-row-m">
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-                          <div style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, minWidth: 0 }}>
-                            <span style={{ fontWeight: 700, color: '#f0c040' }}>{days !== null ? fmtSober(days) : '—'}</span>
-                            <span style={{ color: 'rgba(255,255,255,0.75)' }}>{` · ${abbr} · ${programLabel}`}</span>
-                          </div>
-                          <button
-                            onClick={onEdit} title={`Edit ${m.label}`}
-                            style={{ padding: '4px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.55)', fontSize: 14, lineHeight: 1, flexShrink: 0 }}
-                            onMouseEnter={e => { e.currentTarget.style.color = '#fff' }}
-                            onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.55)' }}
-                          >✎</button>
-                        </div>
-                        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{since}</div>
-                      </div>
+                      <button
+                        onClick={onEdit} title={`Edit ${m.label}`}
+                        style={{ padding: '4px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.55)', fontSize: 14, lineHeight: 1, flexShrink: 0 }}
+                        onMouseEnter={e => { e.currentTarget.style.color = '#fff' }}
+                        onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.55)' }}
+                      >✎</button>
                     </div>
-                  )
-                })}
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{since}</div>
+                  </div>
+                ))}
 
                 {/* + Add program */}
                 <button
