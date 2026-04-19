@@ -204,9 +204,11 @@ export default function PeopleCard({ userId, displayName, activeSponsors, sponse
 
         {/* Action buttons */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <button type="button" onClick={() => setShowFindSponsor(true)} style={actionBtn}>
-            {hasSponsor ? '+ Add another sponsor' : '+ Add a sponsor'}
-          </button>
+          {!hasSponsor && (
+            <button type="button" onClick={() => setShowFindSponsor(true)} style={actionBtn}>
+              + Add a sponsor
+            </button>
+          )}
           {isSponsor && (
             <button type="button" onClick={() => setShowAddSponsee(true)} style={actionBtn}>
               + Invite a sponsee
@@ -214,10 +216,21 @@ export default function PeopleCard({ userId, displayName, activeSponsors, sponse
           )}
         </div>
 
-        {/* Manage link */}
-        {(hasSponsor || isSponsor) && (
+        {hasSponsor && (
+          <button
+            type="button"
+            onClick={() => setShowFindSponsor(true)}
+            style={{ marginTop: 8, background: 'none', border: 'none', color: 'var(--teal)',
+                     fontSize: 12, fontWeight: 600, cursor: 'pointer', padding: 0, textAlign: 'left' }}
+          >
+            + Add a sponsor for another fellowship →
+          </button>
+        )}
+
+        {/* Manage link — sponsors only; non-sponsors have no index page to land on */}
+        {isSponsor && (
           <a
-            href={isSponsor ? '/dashboard?tab=sponsees' : '/dashboard'}
+            href="/dashboard?tab=sponsees"
             style={{
               display: 'block',
               marginTop: 12,
