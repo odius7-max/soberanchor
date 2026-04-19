@@ -11,11 +11,12 @@ interface Props {
   programs: Program[]
   defaultFellowshipId: string
   onChange: (fellowshipId: string) => void
+  dark?: boolean
 }
 
 const STORAGE_KEY = 'sa:selectedFellowship'
 
-export default function ProgramPills({ programs, defaultFellowshipId, onChange }: Props) {
+export default function ProgramPills({ programs, defaultFellowshipId, onChange, dark = false }: Props) {
   const [selected, setSelected] = useState<string>(() => {
     if (typeof window === 'undefined') return defaultFellowshipId
     const stored = sessionStorage.getItem(STORAGE_KEY)
@@ -32,7 +33,7 @@ export default function ProgramPills({ programs, defaultFellowshipId, onChange }
   if (programs.length <= 1) return null
 
   return (
-    <div role="tablist" aria-label="Program" style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+    <div role="tablist" aria-label="Program" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
       {programs.map(p => {
         const active = p.fellowshipId === selected
         return (
@@ -42,11 +43,18 @@ export default function ProgramPills({ programs, defaultFellowshipId, onChange }
             aria-selected={active}
             onClick={() => setSelected(p.fellowshipId)}
             style={{
-              padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 700,
-              border: active ? '1.5px solid var(--teal)' : '1px solid var(--border)',
-              background: active ? 'rgba(42,138,153,0.08)' : 'transparent',
-              color: active ? 'var(--teal)' : 'var(--mid)',
+              padding: '4px 12px', borderRadius: 999, fontSize: 11, fontWeight: 700,
+              border: dark
+                ? (active ? '1.5px solid rgba(42,138,153,0.8)' : '1px solid rgba(255,255,255,0.2)')
+                : (active ? '1.5px solid var(--teal)' : '1px solid var(--border)'),
+              background: dark
+                ? (active ? 'rgba(42,138,153,0.18)' : 'transparent')
+                : (active ? 'rgba(42,138,153,0.08)' : 'transparent'),
+              color: dark
+                ? (active ? '#7dd3da' : 'rgba(255,255,255,0.55)')
+                : (active ? 'var(--teal)' : 'var(--mid)'),
               cursor: 'pointer', fontFamily: 'var(--font-body)',
+              letterSpacing: '0.4px',
             }}
           >
             {p.fellowshipAbbr}

@@ -299,17 +299,17 @@ export default async function DashboardPage() {
   // ── Program rows for Hero Phase 2 table ────────────────────────────────────
   // One entry per sobriety_milestone, used to drive the SOBER/FELLOWSHIP/PROGRAM/SINCE table.
   const milestoneFellowshipIds = initialMilestones.map(m => m.fellowship_id).filter(Boolean) as string[]
-  const workbookByFellowship = new Map<string, { title: string }>()
+  const workbookByFellowship = new Map<string, { workbook_name: string | null }>()
   if (milestoneFellowshipIds.length > 0) {
     const { data: wbRows } = await supabase
       .from('program_workbooks')
-      .select('fellowship_id, title')
+      .select('fellowship_id, workbook_name')
       .eq('is_active', true)
       .in('fellowship_id', milestoneFellowshipIds)
       .order('sort_order')
     for (const wb of (wbRows ?? [])) {
       const fid = wb.fellowship_id as string
-      if (!workbookByFellowship.has(fid)) workbookByFellowship.set(fid, { title: wb.title as string })
+      if (!workbookByFellowship.has(fid)) workbookByFellowship.set(fid, { workbook_name: (wb as any).workbook_name as string | null })
     }
   }
   const sponseeCountByFellowship = new Map<string, number>()
@@ -333,7 +333,7 @@ export default async function DashboardPage() {
       milestoneId: m.id,
       fellowshipId: m.fellowship_id ?? null,
       fellowshipAbbr: fellowship ? (fellowship.abbreviation ?? fellowship.name) : null,
-      workbookName: wb?.title ?? null,
+      workbookName: wb?.workbook_name ?? null,
       currentStep: getStepForFellowship(m.fellowship_id ?? null),
       maxStep: wb ? 12 : null,
       activeSponseesInFellowship: sponseeCountByFellowship.get(m.fellowship_id ?? '__null__') ?? 0,

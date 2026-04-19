@@ -8,6 +8,7 @@ import { useScrollFade } from '@/hooks/useScrollFade'
 import type { SobrietyMilestone, Fellowship } from './DashboardBanner'
 import type { ProgramRowData } from './DashboardShell'
 import { getProgramLabel } from '@/lib/program-column'
+import ProgramPills from './ProgramPills'
 
 const STEPS = [
   { n: 1, s: 'Powerlessness' }, { n: 2, s: 'Hope' }, { n: 3, s: 'Decision' },
@@ -61,9 +62,10 @@ interface Props {
   dailyQuote: { text: string; attribution: string | null } | null
   onActiveFellowshipChange: (fid: string | null) => void
   programRows: ProgramRowData[]
+  workingPrograms: { fellowshipId: string; fellowshipAbbr: string }[]
 }
 
-export default function Hero({ userId, displayName, milestones: initialMilestones, fellowships, currentStep, completedStepNumbers = [], dailyQuote, onActiveFellowshipChange, programRows }: Props) {
+export default function Hero({ userId, displayName, milestones: initialMilestones, fellowships, currentStep, completedStepNumbers = [], dailyQuote, onActiveFellowshipChange, programRows, workingPrograms }: Props) {
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const [milestones, setMilestones] = useState<SobrietyMilestone[]>(initialMilestones)
@@ -406,6 +408,18 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
                 {allStepsDone && (
                   <span style={{ color: '#27AE60', fontWeight: 600 }}>All 12 steps complete ✓</span>
                 )}
+              </div>
+            )}
+
+            {/* Row 2.5a: program pills — above step grid, same divider rhythm */}
+            {milestones.length > 0 && workingPrograms.length > 1 && (
+              <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                <ProgramPills
+                  programs={workingPrograms}
+                  defaultFellowshipId={primaryMilestone?.fellowship_id ?? workingPrograms[0]?.fellowshipId ?? ''}
+                  onChange={onActiveFellowshipChange}
+                  dark
+                />
               </div>
             )}
 

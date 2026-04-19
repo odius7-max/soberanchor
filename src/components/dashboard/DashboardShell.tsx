@@ -27,7 +27,6 @@ import type { JourneyTab } from './nav/JourneySubNav'
 import SponseesTab from './nav/SponseesTab'
 import Hero from './Hero'
 import RightRail from './RightRail'
-import ProgramPills from './ProgramPills'
 
 type Mode = 'my' | 'sponsees' | 'checkin' | 'facility'
 type Tab = 'today' | 'overview' | 'stepwork' | 'journal' | 'meetings' | 'tasks' | 'saved'
@@ -306,24 +305,18 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
                 is_available_sponsor) so people asked to sponsor can respond. */}
             <PendingRequests requests={sponsorPendingRequests} perspective="as_sponsor" />
             {TODAY_QUEUE_ENABLED ? (
-              <>
-                <Hero
-                  userId={userId}
-                  displayName={displayName}
-                  milestones={initialMilestones}
-                  fellowships={fellowships}
-                  currentStep={currentStep}
-                  completedStepNumbers={completedStepNumbers}
-                  dailyQuote={dailyQuote ?? null}
-                  onActiveFellowshipChange={handleActiveFellowshipChange}
-                  programRows={programRows}
-                />
-                <ProgramPills
-                  programs={workingPrograms}
-                  defaultFellowshipId={(typeof activeFellowshipId === 'string' ? activeFellowshipId : null) ?? workingPrograms[0]?.fellowshipId ?? ''}
-                  onChange={handleActiveFellowshipChange}
-                />
-              </>
+              <Hero
+                userId={userId}
+                displayName={displayName}
+                milestones={initialMilestones}
+                fellowships={fellowships}
+                currentStep={currentStep}
+                completedStepNumbers={completedStepNumbers}
+                dailyQuote={dailyQuote ?? null}
+                onActiveFellowshipChange={handleActiveFellowshipChange}
+                programRows={programRows}
+                workingPrograms={workingPrograms}
+              />
             ) : (
               <DashboardBanner
                 userId={userId}
