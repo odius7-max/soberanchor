@@ -245,8 +245,66 @@ export default async function DashboardPage() {
   let pendingRequests: PendingRequest[] = []
   let sponsorPendingRequests: PendingRequest[] = []
 
-  const rawPendingAsSponsee = pendingReqsRes.data ?? []
-  const rawPendingAsSponsor = pendingAsSponsorRes.data ?? []
+  // Fetch a broader view of pending rows that also includes fellowship_id so we
+  // can filter out rows that would collide with an existing active relationship
+  // on idx_sponsor_per_fellowship (or unique_active_pair_null_fellowship). Those
+  // pending rows are un-acceptable — accepting them would throw a unique
+  // constraint error, so don't surface them at all.
+  type RawPending = { id: string; created_at: string; fellowship_id: string | null; sponsor_id?: string; sponsee_id?: string }
+  const rawPendingAsSponseeWithFellowship = ((pendingReqsRes.data ?? []) as any[]).map(r => ({
+    id: r.id as string, created_at: r.created_at as string,
+    sponsor_id: r.sponsor_id as string, fellowship_id: null as string | null,
+  })) as RawPending[]
+  const rawPendingAsSponsorWithFellowship = ((pendingAsSponsorRes.data ?? []) as any[]).map(r => ({
+    id: r.id as string, created_at: r.created_at as string,
+    sponsee_id: r.sponsee_id as string, fellowship_id: null as string | null,
+  })) as RawPending[]
+
+  // Hydrate fellowship_id on each pending row — the base queries don't select it.
+  if (rawPendingAsSponseeWithFellowship.length > 0 || rawPendingAsSponsorWithFellowship.length > 0) {
+    const allIds = [
+      ...rawPendingAsSponseeWithFellowship.map(r => r.id),
+      ...rawPendingAsSponsorWithFellowship.map(r => r.id),
+    ]
+    const { data: fRows } = await supabase
+      .from('sponsor_relationships')
+      .select('id, fellowship_id')
+      .in('id', allIds)
+    const fMap = new Map((fRows ?? []).map(r => [r.id as string, (r.fellowship_id as string | null) ?? null]))
+    for (const r of rawPendingAsSponseeWithFellowship) r.fellowship_id = fMap.get(r.id) ?? null
+    for (const r of rawPendingAsSponsorWithFellowship) r.fellowship_id = fMap.get(r.id) ?? null
+  }
+
+  // Build a lookup of active relationships where I'm the sponsee, keyed by
+  // fellowship_id string (null → '__null__'). Used to suppress pending-as-sponsee
+  // invites that conflict with an existing sponsor for the same fellowship.
+  const activeAsSponseeByFellowship = new Set<string>()
+  for (const r of activeSponsorRels) {
+    activeAsSponseeByFellowship.add(r.fellowship_id ?? '__null__')
+  }
+
+  // Fetch active relationships where I'm the sponsor, for the opposite-direction
+  // filter. Keyed by "sponseeId|fellowshipId" — only that pair is truly blocked.
+  const { data: activeAsSponsorRowsForFilter } = await supabase
+    .from('sponsor_relationships')
+    .select('sponsee_id, fellowship_id')
+    .eq('sponsor_id', userId)
+    .eq('status', 'active')
+  const activeAsSponsorPairKeys = new Set(
+    (activeAsSponsorRowsForFilter ?? []).map(r =>
+      `${r.sponsee_id as string}|${(r.fellowship_id as string | null) ?? '__null__'}`
+    )
+  )
+
+  const rawPendingAsSponsee = rawPendingAsSponseeWithFellowship.filter(r => {
+    // Skip if I already have an active sponsor for this fellowship
+    return !activeAsSponseeByFellowship.has(r.fellowship_id ?? '__null__')
+  })
+  const rawPendingAsSponsor = rawPendingAsSponsorWithFellowship.filter(r => {
+    // Skip if I'm already sponsoring this person in this fellowship
+    const key = `${r.sponsee_id ?? ''}|${r.fellowship_id ?? '__null__'}`
+    return !activeAsSponsorPairKeys.has(key)
+  })
 
   if (rawPendingAsSponsee.length > 0 || rawPendingAsSponsor.length > 0) {
     const admin = createAdminClient()
