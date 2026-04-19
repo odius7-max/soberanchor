@@ -283,12 +283,23 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
             {/* Program table or empty-state CTA */}
             {milestones.length > 0 ? (
               <>
+                {/* Responsive table styles — desktop grid / mobile stacked block */}
+                <style>{`
+                  .sa-hero-hdr,.sa-hero-row-d{display:grid;grid-template-columns:auto auto minmax(120px,1fr) auto auto;gap:20px;align-items:center;}
+                  .sa-hero-row-m{display:none;}
+                  @media(max-width:559px){
+                    .sa-hero-hdr,.sa-hero-row-d{display:none;}
+                    .sa-hero-row-m{display:block;}
+                  }
+                `}</style>
+
                 {/* Column headers */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'max-content max-content 1fr max-content 28px', gap: '3px 10px', marginBottom: 6, overflow: 'hidden' }}>
+                <div className="sa-hero-hdr" style={{ marginBottom: 6 }}>
                   {['SOBER', 'FLSHP', 'PROGRAM', 'SINCE', ''].map(h => (
                     <div key={h} style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.8px', textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.3)' }}>{h}</div>
                   ))}
                 </div>
+
                 {/* Data rows */}
                 {sortedMilestones.map(m => {
                   const days = mounted ? calcDays(m.sobriety_date) : null
@@ -302,36 +313,50 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
                   }) : 'Just Tracking'
                   const abbr = row?.fellowshipAbbr ?? getFellowshipAbbr(m.fellowship_id) ?? '—'
                   const since = new Date(m.sobriety_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                  const onEdit = () => { startEdit(m); setShowPanel(true) }
                   return (
-                    <div
-                      key={m.id}
-                      suppressHydrationWarning
-                      style={{ display: 'grid', gridTemplateColumns: 'max-content max-content 1fr max-content 28px', gap: '3px 10px', alignItems: 'center', marginBottom: 7, overflow: 'hidden' }}
-                    >
-                      <div style={{ fontWeight: 700, color: '#f0c040', fontSize: 13, whiteSpace: 'nowrap' as const }}>
-                        {days !== null ? fmtSober(days) : '—'}
+                    <div key={m.id} suppressHydrationWarning style={{ marginBottom: 8 }}>
+                      {/* Desktop: 5-column grid */}
+                      <div className="sa-hero-row-d">
+                        <div style={{ fontWeight: 700, color: '#f0c040', fontSize: 13, whiteSpace: 'nowrap' as const }}>
+                          {days !== null ? fmtSober(days) : '—'}
+                        </div>
+                        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', whiteSpace: 'nowrap' as const }}>
+                          {abbr}
+                        </div>
+                        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+                          {programLabel}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap' as const }}>
+                          {since}
+                        </div>
+                        <button
+                          onClick={onEdit} title={`Edit ${m.label}`}
+                          style={{ padding: '4px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.55)', fontSize: 14, lineHeight: 1 }}
+                          onMouseEnter={e => { e.currentTarget.style.color = '#fff' }}
+                          onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.55)' }}
+                        >✎</button>
                       </div>
-                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', whiteSpace: 'nowrap' as const }}>
-                        {abbr}
+                      {/* Mobile: 2-line stacked block */}
+                      <div className="sa-hero-row-m">
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                          <div style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, minWidth: 0 }}>
+                            <span style={{ fontWeight: 700, color: '#f0c040' }}>{days !== null ? fmtSober(days) : '—'}</span>
+                            <span style={{ color: 'rgba(255,255,255,0.75)' }}>{` · ${abbr} · ${programLabel}`}</span>
+                          </div>
+                          <button
+                            onClick={onEdit} title={`Edit ${m.label}`}
+                            style={{ padding: '4px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.55)', fontSize: 14, lineHeight: 1, flexShrink: 0 }}
+                            onMouseEnter={e => { e.currentTarget.style.color = '#fff' }}
+                            onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.55)' }}
+                          >✎</button>
+                        </div>
+                        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{since}</div>
                       </div>
-                      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
-                        {programLabel}
-                      </div>
-                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap' as const }}>
-                        {since}
-                      </div>
-                      <button
-                        onClick={() => { startEdit(m); setShowPanel(true) }}
-                        title={`Edit ${m.label}`}
-                        style={{ padding: 0, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.3)', fontSize: 13, textAlign: 'right' as const }}
-                        onMouseEnter={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.75)' }}
-                        onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.3)' }}
-                      >
-                        ✏
-                      </button>
                     </div>
                   )
                 })}
+
                 {/* + Add program */}
                 <button
                   onClick={() => { setEditingId('new'); setFLabel(''); setFDate(''); setFFellowshipId(''); setFIsPrimary(false); setShowPanel(true) }}
