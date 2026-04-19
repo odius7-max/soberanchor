@@ -14,7 +14,8 @@ interface Props {
   isSponsor: boolean
 }
 
-const actionBtn: React.CSSProperties = {
+const secondaryBtn: React.CSSProperties = {
+  flex: 1,
   fontSize: 13,
   fontWeight: 600,
   padding: '8px 12px',
@@ -24,7 +25,6 @@ const actionBtn: React.CSSProperties = {
   borderRadius: 8,
   cursor: 'pointer',
   textAlign: 'center',
-  width: '100%',
 }
 
 const unlinkBtn: React.CSSProperties = {
@@ -202,34 +202,24 @@ export default function PeopleCard({ userId, displayName, activeSponsors, sponse
           </div>
         )}
 
-        {/* Action buttons */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <button type="button" onClick={() => setShowFindSponsor(true)} style={actionBtn}>
-            {hasSponsor ? '+ Add another sponsor' : '+ Add a sponsor'}
-          </button>
-          {isSponsor && (
-            <button type="button" onClick={() => setShowAddSponsee(true)} style={actionBtn}>
-              + Invite a sponsee
+        {/* Action row */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {isSponsor && (
+              <button type="button" onClick={() => setShowAddSponsee(true)} style={secondaryBtn}>
+                + Invite sponsee
+              </button>
+            )}
+            <button type="button" onClick={() => setShowFindSponsor(true)} style={secondaryBtn}>
+              + Add {hasSponsor ? 'sponsor' : 'a sponsor'}
             </button>
+          </div>
+          {hasSponsor && (
+            <div style={{ fontSize: 11, color: 'var(--mid)', textAlign: 'right', paddingRight: 4 }}>
+              for another fellowship
+            </div>
           )}
         </div>
-
-        {/* Manage link */}
-        {(hasSponsor || isSponsor) && (
-          <a
-            href={isSponsor ? '/dashboard?tab=sponsees' : '/dashboard'}
-            style={{
-              display: 'block',
-              marginTop: 12,
-              fontSize: 13,
-              color: 'var(--teal)',
-              fontWeight: 600,
-              textDecoration: 'none',
-            }}
-          >
-            Manage relationships →
-          </a>
-        )}
       </div>
 
       {showFindSponsor && (
