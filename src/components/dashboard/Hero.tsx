@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation'
 import { getGreeting } from '@/lib/greeting'
 import { useScrollFade } from '@/hooks/useScrollFade'
 import type { SobrietyMilestone, Fellowship } from './DashboardBanner'
+import type { ProgramRowData } from './DashboardShell'
+import { getProgramLabel } from '@/lib/program-column'
 
 const STEPS = [
   { n: 1, s: 'Powerlessness' }, { n: 2, s: 'Hope' }, { n: 3, s: 'Decision' },
@@ -33,6 +35,12 @@ function calcDays(dateStr: string): number {
   return Math.floor((Date.now() - new Date(dateStr + 'T00:00:00').getTime()) / 86400000)
 }
 
+function fmtSober(days: number): string {
+  if (days < 365) return `${days.toLocaleString()} days`
+  const years = Math.round(days / 365)
+  return `${years} year${years !== 1 ? 's' : ''}`
+}
+
 const FIELD_STYLE: React.CSSProperties = {
   width: '100%', fontSize: 13, padding: '9px 12px', borderRadius: 8,
   border: '1.5px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.1)',
@@ -52,9 +60,10 @@ interface Props {
   completedStepNumbers?: number[]
   dailyQuote: { text: string; attribution: string | null } | null
   onActiveFellowshipChange: (fid: string | null) => void
+  programRows: ProgramRowData[]
 }
 
-export default function Hero({ userId, displayName, milestones: initialMilestones, fellowships, currentStep, completedStepNumbers = [], dailyQuote, onActiveFellowshipChange }: Props) {
+export default function Hero({ userId, displayName, milestones: initialMilestones, fellowships, currentStep, completedStepNumbers = [], dailyQuote, onActiveFellowshipChange, programRows }: Props) {
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const [milestones, setMilestones] = useState<SobrietyMilestone[]>(initialMilestones)
@@ -166,6 +175,13 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
     setConfirmDeleteId(null)
   }
 
+  const sortedMilestones = [...milestones].sort((a, b) => {
+    if (a.is_primary && !b.is_primary) return -1
+    if (!a.is_primary && b.is_primary) return 1
+    return new Date(b.sobriety_date).getTime() - new Date(a.sobriety_date).getTime()
+  })
+  const programRowMap = new Map(programRows.map(r => [r.milestoneId, r]))
+
   return (
     <div
       className="rounded-[20px] overflow-hidden mb-6 relative px-4 pt-5 pb-5 md:px-8 md:pt-6 md:pb-6"
@@ -254,38 +270,86 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
             )}
           </div>
         ) : (
-          /* ── Condensed 3-row hero (matches dashboard-today-wireframe.html lines 576-593) ── */
+          /* ── Hero program table ── */
           <>
-            {/* Row 1: greeting + fellowship stats inline, baseline-aligned */}
+            {/* Greeting */}
             <div
               suppressHydrationWarning
-              style={{ display: 'flex', alignItems: 'baseline', gap: 20, flexWrap: 'wrap', marginBottom: 6 }}
+              style={{ fontSize: 22, fontWeight: 600, color: '#fff', letterSpacing: '-0.3px', marginBottom: 16 }}
             >
-              <span style={{ fontSize: 22, fontWeight: 600, color: '#fff', letterSpacing: '-0.3px' }}>
-                {greeting}, {displayName} 👋
-              </span>
-              {milestones.map(m => {
-                const days = mounted ? calcDays(m.sobriety_date) : null
-                const abbr = getFellowshipAbbr(m.fellowship_id)
-                // If label matches abbreviation (common from onboarding default),
-                // show the abbreviation only. Otherwise show "Label / Abbr".
-                const suffix = abbr
-                  ? (m.label === abbr ? abbr : `${m.label} / ${abbr}`)
-                  : m.label
-                return (
-                  <span
-                    key={m.id}
-                    suppressHydrationWarning
-                    style={{ fontSize: 14, color: 'rgba(255,255,255,0.72)', display: 'inline-flex', alignItems: 'baseline', gap: 6 }}
-                  >
-                    <strong style={{ color: '#f0c040', fontWeight: 700, fontSize: 22, letterSpacing: '-0.4px' }}>
-                      {days !== null ? `${days.toLocaleString()} days` : '—'}
-                    </strong>
-                    <span>· {suffix}</span>
-                  </span>
-                )
-              })}
+              {greeting}, {displayName} 👋
             </div>
+
+            {/* Program table or empty-state CTA */}
+            {milestones.length > 0 ? (
+              <>
+                {/* Column headers */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'max-content max-content 1fr max-content 28px', gap: '3px 10px', marginBottom: 6, overflow: 'hidden' }}>
+                  {['SOBER', 'FLSHP', 'PROGRAM', 'SINCE', ''].map(h => (
+                    <div key={h} style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.8px', textTransform: 'uppercase' as const, color: 'rgba(255,255,255,0.3)' }}>{h}</div>
+                  ))}
+                </div>
+                {/* Data rows */}
+                {sortedMilestones.map(m => {
+                  const days = mounted ? calcDays(m.sobriety_date) : null
+                  const row = programRowMap.get(m.id)
+                  const programLabel = row ? getProgramLabel({
+                    fellowshipId: row.fellowshipId,
+                    activeSponseesInFellowship: row.activeSponseesInFellowship,
+                    workbookName: row.workbookName,
+                    currentStep: row.currentStep,
+                    maxStep: row.maxStep,
+                  }) : 'Just Tracking'
+                  const abbr = row?.fellowshipAbbr ?? getFellowshipAbbr(m.fellowship_id) ?? '—'
+                  const since = new Date(m.sobriety_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                  return (
+                    <div
+                      key={m.id}
+                      suppressHydrationWarning
+                      style={{ display: 'grid', gridTemplateColumns: 'max-content max-content 1fr max-content 28px', gap: '3px 10px', alignItems: 'center', marginBottom: 7, overflow: 'hidden' }}
+                    >
+                      <div style={{ fontWeight: 700, color: '#f0c040', fontSize: 13, whiteSpace: 'nowrap' as const }}>
+                        {days !== null ? fmtSober(days) : '—'}
+                      </div>
+                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', whiteSpace: 'nowrap' as const }}>
+                        {abbr}
+                      </div>
+                      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+                        {programLabel}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap' as const }}>
+                        {since}
+                      </div>
+                      <button
+                        onClick={() => { startEdit(m); setShowPanel(true) }}
+                        title={`Edit ${m.label}`}
+                        style={{ padding: 0, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.3)', fontSize: 13, textAlign: 'right' as const }}
+                        onMouseEnter={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.75)' }}
+                        onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.3)' }}
+                      >
+                        ✏
+                      </button>
+                    </div>
+                  )
+                })}
+                {/* + Add program */}
+                <button
+                  onClick={() => { setEditingId('new'); setFLabel(''); setFDate(''); setFFellowshipId(''); setFIsPrimary(false); setShowPanel(true) }}
+                  style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', marginTop: 2, padding: 0, fontFamily: 'var(--font-body)', transition: 'color 0.15s', textAlign: 'left' as const }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.65)' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.35)' }}
+                >
+                  + Add program
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => { setEditingId('new'); setFLabel(''); setFDate(''); setFFellowshipId(''); setFIsPrimary(false); setShowPanel(true) }}
+                style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1px dashed rgba(255,255,255,0.3)', background: 'transparent', color: 'rgba(255,255,255,0.65)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)', textAlign: 'center' as const }}
+              >
+                + Add your sobriety date
+              </button>
+            )}
 
             {/* Row 2: next milestone + current step, separated by thin divider */}
             {(nextMLabel !== null || (!allStepsDone && stepLabel)) && (
@@ -375,14 +439,6 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
               </div>
             )}
 
-            <button
-              onClick={() => setShowPanel(true)}
-              style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', background: 'none', border: 'none', cursor: 'pointer', marginTop: 10, padding: 0, fontFamily: 'var(--font-body)', transition: 'color 0.15s' }}
-              onMouseEnter={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.6)' }}
-              onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.3)' }}
-            >
-              {milestones.length === 0 ? '+ Add milestone' : 'Edit milestones →'}
-            </button>
           </>
         )}
       </div>

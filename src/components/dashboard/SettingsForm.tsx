@@ -34,12 +34,20 @@ const NOTIF_ITEMS: { key: keyof NotifPrefs; label: string }[] = [
   { key: 'sponsee_completes_task',        label: 'Sponsee completes a task'                 },
 ]
 
+interface FellowshipOption {
+  fellowshipId: string
+  fellowshipName: string
+  sobrietyDate: string
+}
+
 interface Props {
   email:  string | null
   userId: string
+  primaryFellowshipId?: string | null
+  fellowshipOptions?: FellowshipOption[]
 }
 
-export default function SettingsForm({ email, userId }: Props) {
+export default function SettingsForm({ email, userId, primaryFellowshipId, fellowshipOptions = [] }: Props) {
   const supabase = createClient()
 
   // ── Password state ──────────────────────────────────────────────────────────
@@ -48,6 +56,26 @@ export default function SettingsForm({ email, userId }: Props) {
   const [pwSaving, setPwSaving]               = useState(false)
   const [pwError, setPwError]                 = useState<string | null>(null)
   const [pwSaved, setPwSaved]                 = useState(false)
+
+  // ── Primary fellowship state ────────────────────────────────────────────────
+  const [selectedFellowship, setSelectedFellowship] = useState<string>(primaryFellowshipId ?? '')
+  const [savingFellowship, setSavingFellowship]     = useState(false)
+  const [savedFellowship, setSavedFellowship]       = useState(false)
+
+  async function savePrimaryFellowship() {
+    if (!selectedFellowship) return
+    setSavingFellowship(true)
+    const opt = fellowshipOptions.find(o => o.fellowshipId === selectedFellowship)
+    await supabase.from('sobriety_milestones').update({ is_primary: false }).eq('user_id', userId)
+    await supabase.from('sobriety_milestones').update({ is_primary: true }).eq('user_id', userId).eq('fellowship_id', selectedFellowship)
+    await supabase.from('user_profiles').update({
+      primary_fellowship_id: selectedFellowship,
+      ...(opt ? { sobriety_date: opt.sobrietyDate } : {}),
+    }).eq('id', userId)
+    setSavedFellowship(true)
+    setTimeout(() => setSavedFellowship(false), 3000)
+    setSavingFellowship(false)
+  }
 
   // ── Notification preferences state ─────────────────────────────────────────
   const [prefs, setPrefs]           = useState<NotifPrefs>(DEFAULT_PREFS)
@@ -200,6 +228,44 @@ export default function SettingsForm({ email, userId }: Props) {
           </div>
         </div>
       </div>
+
+      {/* ── Primary fellowship (only shown when user has 2+ declared fellowships) ── */}
+      {fellowshipOptions.length > 1 && (
+        <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)', marginBottom: 4 }}>Primary Fellowship</div>
+          <div style={{ fontSize: 13, color: 'var(--mid)', marginBottom: 12, lineHeight: 1.6 }}>
+            The primary fellowship drives your main sobriety counter on the dashboard.
+          </div>
+          <div style={{ position: 'relative', marginBottom: 12 }}>
+            <select
+              value={selectedFellowship}
+              onChange={e => setSelectedFellowship(e.target.value)}
+              style={{ ...inputStyle, padding: '10px 32px 10px 14px', appearance: 'none' as const, cursor: 'pointer' }}
+            >
+              {fellowshipOptions.map(o => (
+                <option key={o.fellowshipId} value={o.fellowshipId}>{o.fellowshipName}</option>
+              ))}
+            </select>
+            <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: 11, color: 'var(--mid)' }}>▾</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button
+              onClick={savePrimaryFellowship}
+              disabled={savingFellowship || selectedFellowship === (primaryFellowshipId ?? '')}
+              style={{
+                fontSize: 13, fontWeight: 700, color: '#fff',
+                background: 'var(--navy)', border: 'none', borderRadius: 10,
+                padding: '10px 24px',
+                cursor: savingFellowship || selectedFellowship === (primaryFellowshipId ?? '') ? 'default' : 'pointer',
+                opacity: selectedFellowship === (primaryFellowshipId ?? '') ? 0.5 : 1,
+              }}
+            >
+              {savingFellowship ? 'Saving…' : 'Save Primary Fellowship'}
+            </button>
+            {savedFellowship && <span style={{ fontSize: 13, color: '#27AE60', fontWeight: 600 }}>✓ Saved</span>}
+          </div>
+        </div>
+      )}
 
       {/* ── Notification Preferences ── */}
       <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20 }}>
