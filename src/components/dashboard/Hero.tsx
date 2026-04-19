@@ -285,8 +285,9 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
               <>
                 {/* Responsive table styles — desktop grid / mobile stacked block */}
                 <style>{`
-                  .sa-hero-hdr,.sa-hero-row-d{display:grid;grid-template-columns:auto auto minmax(120px,1fr) auto auto;gap:20px;align-items:center;}
+                  .sa-hero-hdr,.sa-hero-row-d{display:grid;grid-template-columns:auto auto auto auto auto;gap:24px;align-items:center;width:fit-content;}
                   .sa-hero-row-m{display:none;}
+                  @media(max-width:719px){.sa-hero-hdr,.sa-hero-row-d{gap:16px;}}
                   @media(max-width:559px){
                     .sa-hero-hdr,.sa-hero-row-d{display:none;}
                     .sa-hero-row-m{display:block;}
@@ -324,7 +325,7 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
                         <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', whiteSpace: 'nowrap' as const }}>
                           {abbr}
                         </div>
-                        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+                        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', whiteSpace: 'nowrap' as const }}>
                           {programLabel}
                         </div>
                         <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap' as const }}>
