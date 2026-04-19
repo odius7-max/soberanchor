@@ -27,6 +27,7 @@ import type { JourneyTab } from './nav/JourneySubNav'
 import SponseesTab from './nav/SponseesTab'
 import Hero from './Hero'
 import RightRail from './RightRail'
+import ProgramPills from './ProgramPills'
 
 type Mode = 'my' | 'sponsees' | 'checkin' | 'facility'
 type Tab = 'today' | 'overview' | 'stepwork' | 'journal' | 'meetings' | 'tasks' | 'saved'
@@ -94,6 +95,7 @@ interface Props {
   dailyQuote?: DailyQuote | null
   sponseeAlertCount?: number
   programRows: ProgramRowData[]
+  workingPrograms?: { fellowshipId: string; fellowshipAbbr: string }[]
 }
 
 const TODAY_QUEUE_ENABLED = process.env.NEXT_PUBLIC_TODAY_QUEUE_ENABLED === 'true'
@@ -108,7 +110,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'saved',     label: '❤️ Saved' },
 ]
 
-export default function DashboardShell({ userId, phone, onboardingCompleted, isProvider, providerData, profile, stepCompletions, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsors, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships, todayQueueItems, todayQueueOverflow, todayMemberCaughtUp, todaySummaryParts, dailyQuote, sponseeAlertCount = 0, programRows }: Props) {
+export default function DashboardShell({ userId, phone, onboardingCompleted, isProvider, providerData, profile, stepCompletions, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsors, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships, todayQueueItems, todayQueueOverflow, todayMemberCaughtUp, todaySummaryParts, dailyQuote, sponseeAlertCount = 0, programRows, workingPrograms = [] }: Props) {
   const router = useRouter()
   // Provider-only users (no recovery onboarding) default to facility mode
   const defaultMode: Mode = (isProvider && !onboardingCompleted) ? 'facility' : 'my'
@@ -304,17 +306,24 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
                 is_available_sponsor) so people asked to sponsor can respond. */}
             <PendingRequests requests={sponsorPendingRequests} perspective="as_sponsor" />
             {TODAY_QUEUE_ENABLED ? (
-              <Hero
-                userId={userId}
-                displayName={displayName}
-                milestones={initialMilestones}
-                fellowships={fellowships}
-                currentStep={currentStep}
-                completedStepNumbers={completedStepNumbers}
-                dailyQuote={dailyQuote ?? null}
-                onActiveFellowshipChange={handleActiveFellowshipChange}
-                programRows={programRows}
-              />
+              <>
+                <Hero
+                  userId={userId}
+                  displayName={displayName}
+                  milestones={initialMilestones}
+                  fellowships={fellowships}
+                  currentStep={currentStep}
+                  completedStepNumbers={completedStepNumbers}
+                  dailyQuote={dailyQuote ?? null}
+                  onActiveFellowshipChange={handleActiveFellowshipChange}
+                  programRows={programRows}
+                />
+                <ProgramPills
+                  programs={workingPrograms}
+                  defaultFellowshipId={(typeof activeFellowshipId === 'string' ? activeFellowshipId : null) ?? workingPrograms[0]?.fellowshipId ?? ''}
+                  onChange={handleActiveFellowshipChange}
+                />
+              </>
             ) : (
               <DashboardBanner
                 userId={userId}

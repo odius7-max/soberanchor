@@ -10,6 +10,7 @@ import { getDailyQuote } from '@/lib/daily-quote'
 import { buildMemberTodayQueue, buildSponsorTodayItems, getTodaySummaryParts } from '@/lib/today-queue'
 import { getTodayDateStr } from '@/lib/today-window'
 import { getUpcomingMilestones } from '@/lib/milestone-windows'
+import { deriveWorkingFellowshipIds } from '@/lib/fellowship-engagement'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -339,6 +340,22 @@ export default async function DashboardPage() {
       activeSponseesInFellowship: sponseeCountByFellowship.get(m.fellowship_id ?? '__null__') ?? 0,
       sobrietyDate: m.sobriety_date,
     }
+  })
+
+  // ── Working programs (Phase 3) ─────────────────────────────────────────────
+  const stepCompletionFellowshipIds = [
+    ...new Set(stepCompletions.map(sc => sc.fellowship_id).filter((id): id is string => id !== null))
+  ]
+  const workingFellowshipIds = deriveWorkingFellowshipIds({
+    milestoneFellowshipIds,
+    activeSponsorRels: activeSponsorRels.map(r => ({ fellowship_id: r.fellowship_id })),
+    activeSponseeRels: (activeAsSponsorRowsForFilter ?? []).map(r => ({ fellowship_id: r.fellowship_id as string | null })),
+    stepCompletionFellowshipIds,
+    fellowships,
+  })
+  const workingPrograms = workingFellowshipIds.map(fid => {
+    const f = fellowships.find(f => f.id === fid)
+    return { fellowshipId: fid, fellowshipAbbr: f ? (f.abbreviation ?? f.name) : fid }
   })
 
   const rawPendingAsSponsee = rawPendingAsSponseeWithFellowship.filter(r => {
@@ -844,6 +861,7 @@ export default async function DashboardPage() {
       dailyQuote={dailyQuote}
       sponseeAlertCount={sponseeAlertCount}
       programRows={programRows}
+      workingPrograms={workingPrograms}
     />
   )
 }
