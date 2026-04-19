@@ -1,7 +1,5 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-
 interface Program {
   fellowshipId: string
   fellowshipAbbr: string
@@ -9,27 +7,12 @@ interface Program {
 
 interface Props {
   programs: Program[]
-  defaultFellowshipId: string
-  onChange: (fellowshipId: string) => void
+  selected: string
+  onSelect: (fellowshipId: string) => void
   dark?: boolean
 }
 
-const STORAGE_KEY = 'sa:selectedFellowship'
-
-export default function ProgramPills({ programs, defaultFellowshipId, onChange, dark = false }: Props) {
-  const [selected, setSelected] = useState<string>(() => {
-    if (typeof window === 'undefined') return defaultFellowshipId
-    const stored = sessionStorage.getItem(STORAGE_KEY)
-    return stored && programs.some(p => p.fellowshipId === stored) ? stored : defaultFellowshipId
-  })
-
-  useEffect(() => {
-    if (programs.length <= 1) return
-    sessionStorage.setItem(STORAGE_KEY, selected)
-    onChange(selected)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected])
-
+export default function ProgramPills({ programs, selected, onSelect, dark = false }: Props) {
   if (programs.length <= 1) return null
 
   return (
@@ -41,7 +24,7 @@ export default function ProgramPills({ programs, defaultFellowshipId, onChange, 
             key={p.fellowshipId}
             role="tab"
             aria-selected={active}
-            onClick={() => setSelected(p.fellowshipId)}
+            onClick={() => onSelect(p.fellowshipId)}
             style={{
               padding: '4px 12px', borderRadius: 999, fontSize: 11, fontWeight: 700,
               border: dark
@@ -53,8 +36,7 @@ export default function ProgramPills({ programs, defaultFellowshipId, onChange, 
               color: dark
                 ? (active ? '#7dd3da' : 'rgba(255,255,255,0.55)')
                 : (active ? 'var(--teal)' : 'var(--mid)'),
-              cursor: 'pointer', fontFamily: 'var(--font-body)',
-              letterSpacing: '0.4px',
+              cursor: 'pointer', fontFamily: 'var(--font-body)', letterSpacing: '0.4px',
             }}
           >
             {p.fellowshipAbbr}

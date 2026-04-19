@@ -52,6 +52,8 @@ const LABEL_STYLE: React.CSSProperties = {
   marginBottom: 5, letterSpacing: '0.6px', textTransform: 'uppercase',
 }
 
+type StepWorkEntry = { label: string; slug: string }
+
 interface Props {
   userId: string
   displayName: string
@@ -63,15 +65,18 @@ interface Props {
   onActiveFellowshipChange: (fid: string | null) => void
   programRows: ProgramRowData[]
   workingPrograms: { fellowshipId: string; fellowshipAbbr: string }[]
+  stepCompletions: { step_number: number; fellowship_id: string | null }[]
+  stepWorkData: Record<string, Record<number, StepWorkEntry>>
 }
 
-export default function Hero({ userId, displayName, milestones: initialMilestones, fellowships, currentStep, completedStepNumbers = [], dailyQuote, onActiveFellowshipChange, programRows, workingPrograms }: Props) {
+const PILL_STORAGE_KEY = 'sa:selectedFellowship'
+
+export default function Hero({ userId, displayName, milestones: initialMilestones, fellowships, currentStep, completedStepNumbers = [], dailyQuote, onActiveFellowshipChange, programRows, workingPrograms, stepCompletions, stepWorkData }: Props) {
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const [milestones, setMilestones] = useState<SobrietyMilestone[]>(initialMilestones)
   const [showPanel, setShowPanel] = useState(false)
   const { ref: stepsScrollRef, fadeLeft: stepsFadeLeft, fadeRight: stepsFadeRight } = useScrollFade()
-  const completedStepSet = new Set(completedStepNumbers)
   const [saving, setSaving] = useState(false)
   const [editingId, setEditingId] = useState<string | 'new' | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
@@ -84,12 +89,38 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
 
   const greeting = mounted ? `Good ${getGreeting(new Date())}` : 'Good morning'
   const primaryMilestone = milestones.find(m => m.is_primary) ?? milestones[0] ?? null
+  const primaryFellowshipId = primaryMilestone?.fellowship_id ?? workingPrograms[0]?.fellowshipId ?? ''
+
+  // ── Selected fellowship (drives step grid + label + routing) ───────────────
+  const [selectedFellowshipId, setSelectedFellowshipId] = useState<string>(() => {
+    if (typeof window === 'undefined') return primaryFellowshipId
+    const stored = sessionStorage.getItem(PILL_STORAGE_KEY)
+    return stored && workingPrograms.some(p => p.fellowshipId === stored) ? stored : primaryFellowshipId
+  })
+
+  useEffect(() => {
+    if (selectedFellowshipId) sessionStorage.setItem(PILL_STORAGE_KEY, selectedFellowshipId)
+    onActiveFellowshipChange(selectedFellowshipId || null)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedFellowshipId])
+
+  // ── Per-selected-fellowship step state ────────────────────────────────────
+  const selCompletedSet = new Set(
+    stepCompletions.filter(sc => sc.fellowship_id === selectedFellowshipId).map(sc => sc.step_number)
+  )
+  const selAllStepsDone = selCompletedSet.size >= 12
+  const selCurrentStep = (() => {
+    if (selAllStepsDone) return 12
+    for (let i = 1; i <= 12; i++) if (!selCompletedSet.has(i)) return i
+    return 12
+  })()
+  const selStepData = stepWorkData[selectedFellowshipId] ?? {}
+  const selStepLabel = selStepData[selCurrentStep]?.label ?? STEPS.find(s => s.n === selCurrentStep)?.s ?? null
+
   const daysClean = (mounted && primaryMilestone) ? calcDays(primaryMilestone.sobriety_date) : null
   const nextMDays = daysClean !== null ? getNextMilestone(daysClean) : null
   const daysToNext = (nextMDays !== null && daysClean !== null) ? nextMDays - daysClean : null
   const nextMLabel = nextMDays !== null ? fmtMilestoneLabel(nextMDays) : null
-  const stepLabel = STEPS.find(s => s.n === currentStep)?.s ?? null
-  const allStepsDone = currentStep > 12
 
   function getFellowshipAbbr(fid: string | null): string | null {
     if (!fid) return null
@@ -382,7 +413,7 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
             )}
 
             {/* Row 2: next milestone + current step, separated by thin divider */}
-            {(nextMLabel !== null || (!allStepsDone && stepLabel)) && (
+            {(nextMLabel !== null || (!selAllStepsDone && selStepLabel)) && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.12)', fontSize: 13 }}>
                 {nextMLabel !== null && daysToNext !== null && (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: '#fff' }}>
@@ -394,18 +425,18 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
                     </span>
                   </span>
                 )}
-                {nextMLabel !== null && !allStepsDone && stepLabel && (
+                {nextMLabel !== null && !selAllStepsDone && selStepLabel && (
                   <span aria-hidden style={{ width: 1, height: 14, background: 'rgba(255,255,255,0.18)' }} />
                 )}
-                {!allStepsDone && stepLabel && (
+                {!selAllStepsDone && selStepLabel && (
                   <span style={{ color: 'rgba(255,255,255,0.7)' }}>
                     Currently on{' '}
                     <strong style={{ color: '#f0c040', fontWeight: 600 }}>
-                      Step {currentStep} · {stepLabel}
+                      Step {selCurrentStep} · {selStepLabel}
                     </strong>
                   </span>
                 )}
-                {allStepsDone && (
+                {selAllStepsDone && (
                   <span style={{ color: '#27AE60', fontWeight: 600 }}>All 12 steps complete ✓</span>
                 )}
               </div>
@@ -416,8 +447,8 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
               <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                 <ProgramPills
                   programs={workingPrograms}
-                  defaultFellowshipId={primaryMilestone?.fellowship_id ?? workingPrograms[0]?.fellowshipId ?? ''}
-                  onChange={onActiveFellowshipChange}
+                  selected={selectedFellowshipId}
+                  onSelect={setSelectedFellowshipId}
                   dark
                 />
               </div>
@@ -437,16 +468,19 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
                   style={{ display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none' as const, paddingBottom: 2 }}
                 >
                   {STEPS.map(({ n, s }) => {
-                    const isDone = completedStepSet.has(n)
-                    const isCurrent = !allStepsDone && n === currentStep
+                    const isDone = selCompletedSet.has(n)
+                    const isCurrent = !selAllStepsDone && n === selCurrentStep
+                    const stepSlug = selStepData[n]?.slug
+                    const stepTitle = selStepData[n]?.label ?? s
                     return (
-                      <div
+                      <a
                         key={n}
-                        title={`Step ${n} · ${s}`}
+                        href={`/dashboard/step-work/${stepSlug ?? 'pending'}`}
+                        title={`Step ${n} · ${stepTitle}`}
                         style={{
                           width: 28, height: 28, borderRadius: 8, flexShrink: 0,
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: 12, fontWeight: 700,
+                          fontSize: 12, fontWeight: 700, textDecoration: 'none',
                           background: isDone
                             ? 'linear-gradient(135deg, #3a7ca5, #2a9d8f)'
                             : isCurrent
@@ -459,10 +493,11 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
                               : '1px solid rgba(255,255,255,0.12)',
                           color: isDone ? '#fff' : isCurrent ? '#1a2332' : 'rgba(255,255,255,0.5)',
                           boxShadow: isCurrent ? '0 0 0 3px rgba(240,192,64,0.25)' : 'none',
+                          cursor: 'pointer',
                         }}
                       >
                         {isDone ? '✓' : n}
-                      </div>
+                      </a>
                     )
                   })}
                 </div>

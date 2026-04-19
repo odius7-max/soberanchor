@@ -300,16 +300,25 @@ export default async function DashboardPage() {
   // One entry per sobriety_milestone, used to drive the SOBER/FELLOWSHIP/PROGRAM/SINCE table.
   const milestoneFellowshipIds = initialMilestones.map(m => m.fellowship_id).filter(Boolean) as string[]
   const workbookByFellowship = new Map<string, { workbook_name: string | null }>()
+  const stepWorkData: Record<string, Record<number, { label: string; slug: string }>> = {}
   if (milestoneFellowshipIds.length > 0) {
     const { data: wbRows } = await supabase
       .from('program_workbooks')
-      .select('fellowship_id, workbook_name')
+      .select('fellowship_id, workbook_name, step_number, title, slug')
       .eq('is_active', true)
       .in('fellowship_id', milestoneFellowshipIds)
       .order('sort_order')
     for (const wb of (wbRows ?? [])) {
       const fid = wb.fellowship_id as string
       if (!workbookByFellowship.has(fid)) workbookByFellowship.set(fid, { workbook_name: (wb as any).workbook_name as string | null })
+      const stepNum = wb.step_number as number | null
+      if (stepNum !== null) {
+        if (!stepWorkData[fid]) stepWorkData[fid] = {}
+        if (!stepWorkData[fid][stepNum]) {
+          const label = (wb.title as string).replace(/^Step \d+:\s*/i, '')
+          stepWorkData[fid][stepNum] = { label, slug: wb.slug as string }
+        }
+      }
     }
   }
   const sponseeCountByFellowship = new Map<string, number>()
@@ -854,6 +863,7 @@ export default async function DashboardPage() {
       sponseeAlertCount={sponseeAlertCount}
       programRows={programRows}
       workingPrograms={workingPrograms}
+      stepWorkData={stepWorkData}
     />
   )
 }
