@@ -43,19 +43,89 @@ export default function PendingRequests({ requests, perspective }: Props) {
     if (!user) throw new Error('Not signed in')
 
     const nowIso = new Date().toISOString()
-    const update: Record<string, unknown> = accept
-      ? { status: 'active', started_at: nowIso }
-      : { status: 'ended', ended_at: nowIso }
+
+    if (!accept) {
+      // Decline path — straightforward end.
+      const { error } = await supabase
+        .from('sponsor_relationships')
+        .update({ status: 'ended', ended_at: nowIso })
+        .eq('id', id)
+      if (error) throw new Error(error.message)
+      return
+    }
+
+    // Accept path. Look up the target row so we can (a) pre-check for
+    // collisions with an existing active row and (b) end sibling duplicates
+    // after a successful accept.
+    const { data: targetRow } = await supabase
+      .from('sponsor_relationships')
+      .select('sponsor_id, sponsee_id, fellowship_id')
+      .eq('id', id)
+      .maybeSingle()
+
+    // Pre-check: does an active row already exist for (sponsee_id, fellowship_id)?
+    // That would collide on idx_sponsor_per_fellowship (or, when fellowship_id
+    // IS NULL, unique_active_pair_null_fellowship). If so, silently mark this
+    // pending as 'ended' — accepting it is impossible without ending the
+    // other sponsor first.
+    if (targetRow) {
+      const conflictQ = supabase
+        .from('sponsor_relationships')
+        .select('id')
+        .eq('sponsee_id', targetRow.sponsee_id)
+        .eq('status', 'active')
+      const { data: existingActive } = targetRow.fellowship_id
+        ? await conflictQ.eq('fellowship_id', targetRow.fellowship_id).maybeSingle()
+        : await conflictQ.is('fellowship_id', null).maybeSingle()
+
+      if (existingActive) {
+        const { error } = await supabase
+          .from('sponsor_relationships')
+          .update({ status: 'ended', ended_at: nowIso })
+          .eq('id', id)
+        if (error) throw new Error(error.message)
+        return
+      }
+    }
 
     const { error } = await supabase
       .from('sponsor_relationships')
-      .update(update)
+      .update({ status: 'active', started_at: nowIso })
       .eq('id', id)
-    if (error) throw new Error(error.message)
+    if (error) {
+      // Defensive: unique-constraint violations can still land here under a
+      // concurrent write. Translate to the same silent-end outcome rather
+      // than surfacing "duplicate key violates unique constraint" to the user.
+      const msg = error.message || ''
+      if (/duplicate key|unique constraint/i.test(msg)) {
+        await supabase
+          .from('sponsor_relationships')
+          .update({ status: 'ended', ended_at: nowIso })
+          .eq('id', id)
+        return
+      }
+      throw new Error(msg)
+    }
+
+    // Auto-end sibling pending rows for the same pair so a second "Accept"
+    // card can never appear for a relationship that's already active.
+    if (targetRow) {
+      const siblingQ = supabase
+        .from('sponsor_relationships')
+        .update({ status: 'ended', ended_at: nowIso })
+        .eq('sponsor_id', targetRow.sponsor_id)
+        .eq('sponsee_id', targetRow.sponsee_id)
+        .eq('status', 'pending')
+        .neq('id', id)
+      const { error: sibErr } = targetRow.fellowship_id
+        ? await siblingQ.eq('fellowship_id', targetRow.fellowship_id)
+        : await siblingQ.is('fellowship_id', null)
+      if (sibErr) console.warn('[PendingRequests] sibling cleanup failed', sibErr)
+    }
 
     // If we're accepting AS the sponsor, flip is_available_sponsor so the
     // Sponsees tab becomes available.
-    if (accept && perspective === 'as_sponsor') {
+    if (perspective === 'as_sponsor') {
       await supabase
         .from('user_profiles')
         .update({ is_available_sponsor: true })
