@@ -43,28 +43,29 @@ export function getTodaySummaryParts(input: TodaySummaryInput): string[] {
   return parts
 }
 
-interface MemberQueueInput {
-  checkedInToday: boolean
+export interface MemberProgram {
+  fellowshipId: string
+  fellowshipAbbr: string
   currentStep: number | null
   stepWorkCount: number
-  /**
-   * True when the sponsee has submitted step work for the current step to their
-   * sponsor and is awaiting (or has received) sponsor review. derivedCurrentStep
-   * only advances once the sponsor writes a step_completions row, so between
-   * "sponsee hits submit" and "sponsor marks complete" the Today card otherwise
-   * keeps saying "Continue Step X". See CLAUDE.md pitfall #5 (step completion sync).
-   */
+  /** True when step has been submitted to sponsor and is awaiting review. */
   stepWorkSubmitted?: boolean
+  stepWorkHref?: string
   meetingsThisWeek: number
   weeklyMeetingTarget?: number
-  stepWorkHref?: string
+}
+
+interface MemberQueueInput {
+  checkedInToday: boolean
+  programs: MemberProgram[]
 }
 
 export function buildMemberTodayQueue(input: MemberQueueInput): TodayQueueResult {
-  const target = input.weeklyMeetingTarget ?? DEFAULT_MEETING_TARGET
+  const { programs } = input
+  const multi = programs.length > 1
   const items: TodayItemData[] = []
 
-  // Priority 500 — daily check-in (always shown; completed if already done today)
+  // Priority 500 — daily check-in (always shown)
   items.push({
     id: 'checkin',
     icon: '⚓',
@@ -76,53 +77,59 @@ export function buildMemberTodayQueue(input: MemberQueueInput): TodayQueueResult
     completed: input.checkedInToday,
   })
 
-  // Priority 450 — step work in progress (only when a resolvable href is available).
-  // When the sponsee has already submitted this step to their sponsor, render the
-  // item as done so it doesn't keep pushing them to "Continue" work they finished.
-  if (input.currentStep && input.stepWorkHref) {
-    const submitted = !!input.stepWorkSubmitted
+  // Priority 450 — step work per program (only when currentStep + href are set)
+  for (const p of programs) {
+    if (!p.currentStep || !p.stepWorkHref) continue
+    const submitted = !!p.stepWorkSubmitted
+    const baseLabel = submitted
+      ? `Step ${p.currentStep} submitted`
+      : `Continue Step ${p.currentStep}`
     items.push({
-      id: 'stepwork',
+      id: multi ? `stepwork-${p.fellowshipId}` : 'stepwork',
       icon: '📝',
       variant: 'default',
-      label: submitted
-        ? `Step ${input.currentStep} submitted`
-        : `Continue Step ${input.currentStep}`,
+      label: multi ? `${baseLabel} · ${p.fellowshipAbbr}` : baseLabel,
       sub: submitted
         ? 'Awaiting sponsor review'
-        : input.stepWorkCount > 0
-          ? `${input.stepWorkCount} prompt${input.stepWorkCount !== 1 ? 's' : ''} answered`
+        : p.stepWorkCount > 0
+          ? `${p.stepWorkCount} prompt${p.stepWorkCount !== 1 ? 's' : ''} answered`
           : 'Ready to begin',
       cta: submitted ? 'Submitted' : 'Continue →',
-      href: input.stepWorkHref,
+      href: p.stepWorkHref,
       priority: 450,
       completed: submitted,
     })
   }
 
-  // Priority 400 — weekly meeting target
-  items.push({
-    id: 'meeting',
-    icon: '🤝',
-    variant: 'default',
-    label: 'Log a meeting this week',
-    sub: `${input.meetingsThisWeek} of ${target} weekly target`,
-    cta: 'Find meetings →',
-    href: '/find/meetings',
-    priority: 400,
-    completed: input.meetingsThisWeek >= target,
-  })
+  // Priority 400 — weekly meeting target per program
+  for (const p of programs) {
+    const target = p.weeklyMeetingTarget ?? DEFAULT_MEETING_TARGET
+    items.push({
+      id: multi ? `meeting-${p.fellowshipId}` : 'meeting',
+      icon: '🤝',
+      variant: 'default',
+      label: multi ? `Log ${p.fellowshipAbbr} meeting this week` : 'Log a meeting this week',
+      sub: `${p.meetingsThisWeek} of ${target} weekly target`,
+      cta: 'Find meetings →',
+      href: '/find/meetings',
+      priority: 400,
+      completed: p.meetingsThisWeek >= target,
+    })
+  }
 
   items.sort((a, b) => b.priority - a.priority)
   const visible = items.slice(0, 6)
   const overflowCount = Math.max(0, items.length - 6)
-  const memberCaughtUp = isCaughtUp({
-    checkedInToday: input.checkedInToday,
-    stepWorkCount: input.stepWorkCount,
-    currentStep: input.currentStep,
-    meetingsThisWeek: input.meetingsThisWeek,
-    weeklyMeetingTarget: input.weeklyMeetingTarget,
-  })
+  const p0 = programs[0]
+  const memberCaughtUp = p0
+    ? isCaughtUp({
+        checkedInToday: input.checkedInToday,
+        stepWorkCount: p0.stepWorkCount,
+        currentStep: p0.currentStep,
+        meetingsThisWeek: p0.meetingsThisWeek,
+        weeklyMeetingTarget: p0.weeklyMeetingTarget,
+      })
+    : input.checkedInToday
 
   return {
     items: visible,
