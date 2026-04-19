@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -50,8 +50,12 @@ export default function AuthModal() {
   const nameRef = useRef<HTMLInputElement>(null)
   const backdropRef = useRef<HTMLDivElement>(null)
 
-  // When modal opens, start at the requested step
-  useEffect(() => {
+  // When modal opens, start at the requested step.
+  // useLayoutEffect (not useEffect) so the sync happens BEFORE the browser
+  // paints the first render of the opened modal — otherwise the modal briefly
+  // shows "Welcome back" (login) before flipping to "Create Account" (signup)
+  // when AuthQueryOpener triggers open from ?auth=signup.
+  useLayoutEffect(() => {
     if (isAuthModalOpen) setStep(authModalInitialStep)
   }, [isAuthModalOpen, authModalInitialStep])
 
