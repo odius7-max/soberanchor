@@ -429,9 +429,12 @@ export default async function DashboardPage() {
     readingAssignments = (data ?? []) as ReadingAssignment[]
   }
 
-  // Sponsees (if is_available_sponsor)
+  // Sponsees — always fetch active sponsor_relationships where this user is the sponsor.
+  // Previously gated on is_available_sponsor, but that flag controls "accepts NEW sponsees",
+  // not "has existing sponsees". A user can toggle availability off while still having
+  // live relationships (e.g. Travis sponsoring TJ but not taking new ones).
   let sponsees: SponseeFull[] = []
-  if (profile?.is_available_sponsor) {
+  {
     const { data: relData } = await supabase
       .from('sponsor_relationships')
       .select('id,sponsee_id,fellowship_id')
@@ -777,8 +780,10 @@ export default async function DashboardPage() {
     ? buildMemberTodayQueue({ checkedInToday, programs: memberPrograms })
     : null
 
-  // Sponsor pull-through: merge Tier 1 alerts + Tier 3 tasks into Today queue
-  if (todayQueueEnabled && todayQueue && profile?.is_available_sponsor && sponsees.length > 0) {
+  // Sponsor pull-through: merge Tier 1 alerts + Tier 3 tasks into Today queue.
+  // Gate on sponsees.length (has active sponsees), not is_available_sponsor — a user with
+  // live sponsees should see their alerts even if they've toggled off taking new sponsees.
+  if (todayQueueEnabled && todayQueue && sponsees.length > 0) {
     // Upsert upcoming milestone reminders (ON CONFLICT DO NOTHING via ignoreDuplicates)
     const milestoneUpserts = sponsees.flatMap(s => {
       if (!s.sobrietyDate) return []

@@ -58,7 +58,10 @@ export default async function SponsorProgramPage({
   ])
 
   const profile = profileRes.data
-  if (!profile?.is_available_sponsor) redirect('/dashboard')
+  // Gate on having active sponsor_relationships, not on is_available_sponsor.
+  // A sponsor who stopped taking new sponsees still needs to manage existing ones' programs.
+  const hasActiveSponsees = (sponseeRelsRes.data ?? []).length > 0
+  if (!profile || !hasActiveSponsees) redirect('/dashboard')
 
   const milestones = (milestonesRes.data ?? []) as { fellowship_id: string | null; is_primary: boolean }[]
   const sponseeRels = (sponseeRelsRes.data ?? []) as { sponsee_id: string; fellowship_id: string | null }[]
