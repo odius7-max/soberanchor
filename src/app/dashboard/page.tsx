@@ -324,7 +324,8 @@ export default async function DashboardPage() {
   }
   const sponseeCountByFellowship = new Map<string, number>()
   for (const r of (activeAsSponsorRowsForFilter ?? [])) {
-    const fid = (r.fellowship_id as string | null) ?? '__null__'
+    const fid = r.fellowship_id as string | null
+    if (!fid) continue
     sponseeCountByFellowship.set(fid, (sponseeCountByFellowship.get(fid) ?? 0) + 1)
   }
   function getStepForFellowship(fellowshipId: string | null): number | null {
@@ -346,7 +347,7 @@ export default async function DashboardPage() {
       workbookName: wb?.workbook_name ?? null,
       currentStep: getStepForFellowship(m.fellowship_id ?? null),
       maxStep: wb ? 12 : null,
-      activeSponseesInFellowship: sponseeCountByFellowship.get(m.fellowship_id ?? '__null__') ?? 0,
+      activeSponseesInFellowship: m.fellowship_id ? (sponseeCountByFellowship.get(m.fellowship_id) ?? 0) : 0,
       sobrietyDate: m.sobriety_date,
     }
   })

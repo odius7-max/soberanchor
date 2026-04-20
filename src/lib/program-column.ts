@@ -5,6 +5,7 @@ export function getProgramLabel(args: {
   currentStep: number | null
   maxStep: number | null
 }): string {
+  if (!args.fellowshipId) return ''
   if (args.activeSponseesInFellowship > 0) {
     return `Sponsor · ${args.activeSponseesInFellowship} active`
   }
