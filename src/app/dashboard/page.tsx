@@ -11,6 +11,7 @@ import { buildMemberTodayQueue, buildSponsorTodayItems, getTodaySummaryParts } f
 import type { MemberProgram } from '@/lib/today-queue'
 import { getTodayDateStr } from '@/lib/today-window'
 import { getUpcomingMilestones } from '@/lib/milestone-windows'
+import { canSponsor as computeCanSponsor } from '@/lib/can-sponsor'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -160,7 +161,7 @@ export default async function DashboardPage() {
     milestonesRes,
     fellowshipsRes,
   ] = await Promise.all([
-    supabase.from('user_profiles').select('display_name,sobriety_date,primary_fellowship_id,current_step,is_available_sponsor,onboarding_completed').eq('id', userId).single(),
+    supabase.from('user_profiles').select('display_name,sobriety_date,primary_fellowship_id,current_step,is_available_sponsor,onboarding_completed,sponsor_marked_ready_at').eq('id', userId).single(),
     supabase.from('check_ins').select('id,check_in_date,mood,notes,sober_today,meetings_attended').eq('user_id', userId).order('check_in_date', { ascending: false }).limit(4),
     supabase.from('journal_entries').select('id,title,entry_date,body,step_number,is_shared_with_sponsor').eq('user_id', userId).order('entry_date', { ascending: false }).limit(10),
     supabase.from('journal_entries').select('id', { count: 'exact', head: true }).eq('user_id', userId),
@@ -852,6 +853,16 @@ export default async function DashboardPage() {
     ? await getDailyQuote(supabase, userId)
     : null
 
+  // Ready-to-sponsor gate: marked by sponsor OR completed all steps in primary fellowship workbook
+  const primaryFellowshipId = profile?.primary_fellowship_id ?? null
+  const primaryWorkbookExists = primaryFellowshipId ? workbookByFellowship.has(primaryFellowshipId) : false
+  const primaryCompletedCount = stepCompletions.filter(sc => sc.fellowship_id === primaryFellowshipId).length
+  const userCanSponsor = computeCanSponsor({
+    markedReadyAt: (profile as { sponsor_marked_ready_at?: string | null })?.sponsor_marked_ready_at ?? null,
+    workbookStepCount: primaryWorkbookExists ? 12 : null,
+    completedStepsCount: primaryCompletedCount,
+  })
+
   return (
     <DashboardShell
       userId={userId}
@@ -886,6 +897,7 @@ export default async function DashboardPage() {
       programRows={programRows}
       workingPrograms={workingPrograms}
       stepWorkData={stepWorkData}
+      canSponsor={userCanSponsor}
     />
   )
 }
