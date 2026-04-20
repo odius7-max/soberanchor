@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import SobrietyMilestonesSection from '@/components/dashboard/SobrietyMilestonesSection'
 
-interface Props { userId: string; displayName: string | null; phone: string | null; journalCount: number; stepWorkCount: number; checkInsTotal: number; meetingsTotal: number; isAvailableSponsor: boolean }
+interface Props { userId: string; displayName: string | null; phone: string | null; journalCount: number; stepWorkCount: number; checkInsTotal: number; meetingsTotal: number; isAvailableSponsor: boolean; canSponsor: boolean }
 
-export default function PrivacyTab({ userId, displayName, phone, journalCount, stepWorkCount, checkInsTotal, meetingsTotal, isAvailableSponsor }: Props) {
+export default function PrivacyTab({ userId, displayName, phone, journalCount, stepWorkCount, checkInsTotal, meetingsTotal, isAvailableSponsor, canSponsor }: Props) {
   const router = useRouter()
   const [editingName, setEditingName] = useState(false)
   const [newName, setNewName] = useState(displayName ?? '')
@@ -84,16 +84,22 @@ export default function PrivacyTab({ userId, displayName, phone, journalCount, s
         <div className="flex items-center justify-between py-3">
           <div style={{ flex: 1, paddingRight: '16px' }}>
             <div className="font-medium text-dark" style={{ fontSize: '14px' }}>Available as a sponsor</div>
-            <div className="text-mid" style={{ fontSize: '13px', marginTop: '2px', lineHeight: 1.5 }}>Enable this when you&apos;re ready to sponsor others. This unlocks the Sponsor View tab on your dashboard.</div>
+            <div className="text-mid" style={{ fontSize: '13px', marginTop: '2px', lineHeight: 1.5 }}>
+              {canSponsor
+                ? 'Enable this when you\'re ready to sponsor others. This unlocks the Sponsor View tab on your dashboard.'
+                : 'Your sponsor can mark you ready, or it unlocks automatically when you complete your steps.'}
+            </div>
           </div>
           <button
-            onClick={toggleSponsor}
-            disabled={savingSponsor}
+            onClick={canSponsor ? toggleSponsor : undefined}
+            disabled={savingSponsor || !canSponsor}
             style={{
               flexShrink: 0,
-              width: '44px', height: '24px', borderRadius: '12px', border: 'none', cursor: savingSponsor ? 'wait' : 'pointer',
+              width: '44px', height: '24px', borderRadius: '12px', border: 'none',
+              cursor: !canSponsor ? 'not-allowed' : savingSponsor ? 'wait' : 'pointer',
               background: sponsorEnabled ? '#2A8A99' : '#D1CCC7',
-              position: 'relative', transition: 'background 0.2s', opacity: savingSponsor ? 0.6 : 1,
+              position: 'relative', transition: 'background 0.2s',
+              opacity: savingSponsor || !canSponsor ? 0.45 : 1,
             }}
             aria-label={sponsorEnabled ? 'Disable sponsor mode' : 'Enable sponsor mode'}
           >

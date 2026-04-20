@@ -96,6 +96,7 @@ interface Props {
   programRows: ProgramRowData[]
   workingPrograms?: { fellowshipId: string; fellowshipAbbr: string }[]
   stepWorkData?: Record<string, Record<number, { label: string; slug: string }>>
+  canSponsor?: boolean
 }
 
 const TODAY_QUEUE_ENABLED = process.env.NEXT_PUBLIC_TODAY_QUEUE_ENABLED === 'true'
@@ -110,7 +111,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'saved',     label: '❤️ Saved' },
 ]
 
-export default function DashboardShell({ userId, phone, onboardingCompleted, isProvider, providerData, profile, stepCompletions, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsors, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships, todayQueueItems, todayQueueOverflow, todayMemberCaughtUp, todaySummaryParts, dailyQuote, sponseeAlertCount = 0, programRows, workingPrograms = [], stepWorkData = {} }: Props) {
+export default function DashboardShell({ userId, phone, onboardingCompleted, isProvider, providerData, profile, stepCompletions, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsors, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships, todayQueueItems, todayQueueOverflow, todayMemberCaughtUp, todaySummaryParts, dailyQuote, sponseeAlertCount = 0, programRows, workingPrograms = [], stepWorkData = {}, canSponsor = false }: Props) {
   const router = useRouter()
   // Provider-only users (no recovery onboarding) default to facility mode
   const defaultMode: Mode = (isProvider && !onboardingCompleted) ? 'facility' : 'my'
@@ -385,7 +386,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
               </div>
             )}
             {activeTab === 'overview' && (
-              <OverviewTab userId={userId} activeFellowshipId={activeFellowshipId} currentStep={currentStep} completedSteps={completedSteps} allStepsDone={allStepsDone} journalCount={journalCount} stepWorkCount={stepWorkCount} recentCheckIns={recentCheckIns} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} recentMeetings={meetingAttendance.slice(0,3)} readingAssignments={readingAssignments} activeSponsors={activeSponsors} isAvailableSponsor={isSponsor} activityItems={activityItems} displayName={displayName} onCheckIn={() => setCheckInOpen(true)} onJournal={() => setActiveTab('journal')} onViewTasks={() => setActiveTab('tasks')} />
+              <OverviewTab userId={userId} activeFellowshipId={activeFellowshipId} currentStep={currentStep} completedSteps={completedSteps} allStepsDone={allStepsDone} journalCount={journalCount} stepWorkCount={stepWorkCount} recentCheckIns={recentCheckIns} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} recentMeetings={meetingAttendance.slice(0,3)} readingAssignments={readingAssignments} activeSponsors={activeSponsors} isAvailableSponsor={isSponsor} canSponsor={canSponsor} activityItems={activityItems} displayName={displayName} onCheckIn={() => setCheckInOpen(true)} onJournal={() => setActiveTab('journal')} onViewTasks={() => setActiveTab('tasks')} />
             )}
             {activeTab === 'stepwork' && <StepWorkTab userId={userId} fellowshipId={activeFellowshipId} />}
             {activeTab === 'journal' && <JournalTab userId={userId} entries={journalEntries} />}

@@ -60,6 +60,7 @@ interface Props {
   readingAssignments: ReadingAssignment[]
   activeSponsors: ActiveSponsor[]
   isAvailableSponsor: boolean
+  canSponsor: boolean
   activityItems: ActivityItem[]
   displayName?: string
   onCheckIn: () => void
@@ -67,7 +68,7 @@ interface Props {
   onViewTasks: () => void
 }
 
-export default function OverviewTab({ userId, activeFellowshipId, currentStep, completedSteps, allStepsDone, journalCount, stepWorkCount, recentCheckIns, meetingsThisWeek, meetingsTotal, recentMeetings, readingAssignments, activeSponsors, isAvailableSponsor, activityItems, displayName, onCheckIn, onJournal, onViewTasks }: Props) {
+export default function OverviewTab({ userId, activeFellowshipId, currentStep, completedSteps, allStepsDone, journalCount, stepWorkCount, recentCheckIns, meetingsThisWeek, meetingsTotal, recentMeetings, readingAssignments, activeSponsors, isAvailableSponsor, canSponsor, activityItems, displayName, onCheckIn, onJournal, onViewTasks }: Props) {
   const router = useRouter()
   const step = STEPS[currentStep - 1]
   const [mounted, setMounted] = useState(false)
@@ -372,19 +373,24 @@ export default function OverviewTab({ userId, activeFellowshipId, currentStep, c
           <div style={{ flex: 1, paddingRight: '12px' }}>
             <div className="font-semibold text-dark" style={{ fontSize: '13px' }}>Sponsor</div>
             <div className="text-mid" style={{ fontSize: '12px', marginTop: '2px', lineHeight: 1.4 }}>
-              {sponsorAvailable ? 'Accepting sponsees — Sponsor View unlocked' : 'Toggle on when you\'re ready to sponsor others'}
+              {sponsorAvailable
+                ? 'Accepting sponsees — Sponsor View unlocked'
+                : canSponsor
+                  ? 'Toggle on when you\'re ready to sponsor others'
+                  : 'Your sponsor can mark you ready, or it unlocks automatically when you complete your steps.'}
             </div>
           </div>
           <button
-            onClick={toggleSponsorAvailability}
-            disabled={togglingRole}
+            onClick={canSponsor ? toggleSponsorAvailability : undefined}
+            disabled={togglingRole || !canSponsor}
             aria-label={sponsorAvailable ? 'Disable sponsor availability' : 'Enable sponsor availability'}
             style={{
               flexShrink: 0,
               width: '44px', height: '24px', borderRadius: '12px', border: 'none',
-              cursor: togglingRole ? 'wait' : 'pointer',
+              cursor: !canSponsor ? 'not-allowed' : togglingRole ? 'wait' : 'pointer',
               background: sponsorAvailable ? 'var(--teal)' : '#D1CCC7',
-              position: 'relative', transition: 'background 0.2s', opacity: togglingRole ? 0.6 : 1,
+              position: 'relative', transition: 'background 0.2s',
+              opacity: togglingRole || !canSponsor ? 0.45 : 1,
             }}>
             <span style={{
               position: 'absolute', top: '3px',
