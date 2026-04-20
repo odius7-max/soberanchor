@@ -69,7 +69,7 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
     sponsorNotesRes,
     milestonesRes,
   ] = await Promise.all([
-    admin.from('user_profiles').select('display_name, sobriety_date, current_step, primary_fellowship_id').eq('id', sponseeId).single(),
+    admin.from('user_profiles').select('display_name, sobriety_date, current_step, primary_fellowship_id, sponsor_marked_ready_at, sponsor_marked_ready_by').eq('id', sponseeId).single(),
     admin.from('check_ins').select('id, check_in_date, mood, notes, sober_today, meetings_attended').eq('user_id', sponseeId).eq('is_shared_with_sponsor', true).order('check_in_date', { ascending: false }).limit(5),
     admin.from('journal_entries').select('id, title, entry_date, body, step_number').eq('user_id', sponseeId).eq('is_shared_with_sponsor', true).order('entry_date', { ascending: false }).limit(10),
     admin.from('step_work_entries')
@@ -181,6 +181,8 @@ export default async function SponseePage({ params }: { params: Promise<{ userId
         completedTasksCount={sponsorTasks.filter(t => t.status === 'completed').length}
         lastSubmittedAt={submittedEntries[0]?.submitted_at ?? null}
         initialTasks={sponsorTasks}
+        sponsorMarkedReadyAt={(profile as { sponsor_marked_ready_at?: string | null }).sponsor_marked_ready_at ?? null}
+        sponsorId={user.id}
       />
       {/* (Tasks card now rendered inside SponseeDetailClient above) */}
 
