@@ -8,6 +8,7 @@ import type { FacilityData } from '@/components/providers/ListingTab'
 import type { Lead } from '@/components/providers/LeadsTab'
 import { getDailyQuote } from '@/lib/daily-quote'
 import { buildMemberTodayQueue, buildSponsorTodayItems, getTodaySummaryParts } from '@/lib/today-queue'
+import type { MemberProgram } from '@/lib/today-queue'
 import { getTodayDateStr } from '@/lib/today-window'
 import { getUpcomingMilestones } from '@/lib/milestone-windows'
 
@@ -323,7 +324,8 @@ export default async function DashboardPage() {
   }
   const sponseeCountByFellowship = new Map<string, number>()
   for (const r of (activeAsSponsorRowsForFilter ?? [])) {
-    const fid = (r.fellowship_id as string | null) ?? '__null__'
+    const fid = r.fellowship_id as string | null
+    if (!fid) continue
     sponseeCountByFellowship.set(fid, (sponseeCountByFellowship.get(fid) ?? 0) + 1)
   }
   function getStepForFellowship(fellowshipId: string | null): number | null {
@@ -345,7 +347,7 @@ export default async function DashboardPage() {
       workbookName: wb?.workbook_name ?? null,
       currentStep: getStepForFellowship(m.fellowship_id ?? null),
       maxStep: wb ? 12 : null,
-      activeSponseesInFellowship: sponseeCountByFellowship.get(m.fellowship_id ?? '__null__') ?? 0,
+      activeSponseesInFellowship: m.fellowship_id ? (sponseeCountByFellowship.get(m.fellowship_id) ?? 0) : 0,
       sobrietyDate: m.sobriety_date,
     }
   })
@@ -743,15 +745,35 @@ export default async function DashboardPage() {
     }
   }
 
+  const memberPrograms: MemberProgram[] = workingPrograms.map(wp => {
+    const fid = wp.fellowshipId
+    const felCompleted = new Set(
+      stepCompletions.filter(sc => sc.fellowship_id === fid).map(sc => sc.step_number)
+    )
+    const felAllDone = felCompleted.size >= 12
+    const felCurrentStep: number | null = felAllDone ? null : (() => {
+      for (let i = 1; i <= 12; i++) if (!felCompleted.has(i)) return i
+      return null
+    })()
+    const isPrimary = fid === stepWorkFellowshipId
+    const fellowshipHref = isPrimary
+      ? stepWorkHref
+      : (felCurrentStep !== null && stepWorkData[fid]?.[felCurrentStep]?.slug
+          ? `/dashboard/step-work/${stepWorkData[fid][felCurrentStep].slug}`
+          : undefined)
+    return {
+      fellowshipId: fid,
+      fellowshipAbbr: wp.fellowshipAbbr,
+      currentStep: felCurrentStep,
+      stepWorkCount: isPrimary ? stepWorkCount : 0,
+      stepWorkSubmitted: isPrimary ? stepWorkSubmitted : false,
+      stepWorkHref: fellowshipHref,
+      meetingsThisWeek,
+    }
+  })
+
   let todayQueue = todayQueueEnabled
-    ? buildMemberTodayQueue({
-        checkedInToday,
-        currentStep: derivedCurrentStep,
-        stepWorkCount,
-        stepWorkSubmitted,
-        meetingsThisWeek,
-        stepWorkHref,
-      })
+    ? buildMemberTodayQueue({ checkedInToday, programs: memberPrograms })
     : null
 
   // Sponsor pull-through: merge Tier 1 alerts + Tier 3 tasks into Today queue

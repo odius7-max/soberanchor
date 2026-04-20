@@ -92,11 +92,17 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
   const primaryFellowshipId = primaryMilestone?.fellowship_id ?? workingPrograms[0]?.fellowshipId ?? ''
 
   // ── Selected fellowship (drives step grid + label + routing) ───────────────
-  const [selectedFellowshipId, setSelectedFellowshipId] = useState<string>(() => {
-    if (typeof window === 'undefined') return primaryFellowshipId
+  // Initialize with primaryFellowshipId so server and client first render match.
+  // After hydration, restore any sessionStorage selection if it's still valid.
+  const [selectedFellowshipId, setSelectedFellowshipId] = useState<string>(primaryFellowshipId)
+
+  useEffect(() => {
     const stored = sessionStorage.getItem(PILL_STORAGE_KEY)
-    return stored && workingPrograms.some(p => p.fellowshipId === stored) ? stored : primaryFellowshipId
-  })
+    if (stored && stored !== primaryFellowshipId && workingPrograms.some(p => p.fellowshipId === stored)) {
+      setSelectedFellowshipId(stored)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     if (selectedFellowshipId) sessionStorage.setItem(PILL_STORAGE_KEY, selectedFellowshipId)
@@ -198,8 +204,10 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
     if (target?.is_primary) {
       await supabase.from('user_profiles').update({ sobriety_date: null, primary_fellowship_id: null }).eq('id', userId)
       onActiveFellowshipChange(null)
-      router.refresh()
     }
+    // Always refresh — re-fetches milestones from DB so workingPrograms + Today queue
+    // drop the removed fellowship immediately regardless of whether it was primary.
+    router.refresh()
   }
 
   function startEdit(m: SobrietyMilestone) {
