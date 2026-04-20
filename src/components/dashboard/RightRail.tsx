@@ -17,7 +17,8 @@ interface Props {
   meetingsTotal: number
   activeSponsors: ActiveSponsor[]
   sponsees: SponseeFull[]
-  isSponsor: boolean
+  isAvailableSponsor: boolean
+  canSponsor: boolean
   recentCheckIns: CheckIn[]
   today: string
 }
@@ -28,8 +29,10 @@ function relH(dateStr: string): string {
   return `${Math.round(hours / 24)}d`
 }
 
-export default function RightRail({ userId, displayName, currentStep, completedSteps, allStepsDone, journalCount, stepWorkCount, meetingsThisWeek, meetingsTotal, activeSponsors, sponsees, isSponsor, recentCheckIns, today }: Props) {
-  const hasSponseesWithAlerts = isSponsor && sponsees.length > 0
+export default function RightRail({ userId, displayName, currentStep, completedSteps, allStepsDone, journalCount, stepWorkCount, meetingsThisWeek, meetingsTotal, activeSponsors, sponsees, isAvailableSponsor, canSponsor, recentCheckIns, today }: Props) {
+  // Show sponsor-role rail whenever the user has active sponsees, regardless of availability
+  // — someone who stopped taking new sponsees still needs to see alerts on their existing ones.
+  const hasSponseesWithAlerts = sponsees.length > 0
 
   if (hasSponseesWithAlerts) {
     /* ── Sponsor-role right rail ── */
@@ -76,7 +79,8 @@ export default function RightRail({ userId, displayName, currentStep, completedS
           displayName={displayName}
           activeSponsors={activeSponsors}
           sponsees={sponsees}
-          isSponsor={isSponsor}
+          isAvailableSponsor={isAvailableSponsor}
+          canSponsor={canSponsor}
         />
 
         {/* Your Recovery */}
@@ -91,19 +95,14 @@ export default function RightRail({ userId, displayName, currentStep, completedS
               <span style={{ color: 'var(--mid)' }}>Meetings this week</span>
               <span className="font-semibold text-navy">{meetingsThisWeek}</span>
             </div>
-            {activeSponsors.length > 0 ? (
-              activeSponsors.map(s => (
-                <div key={s.relationshipId} style={{ fontSize: 13 }}>
-                  <span style={{ color: 'var(--mid)' }}>Sponsor: </span>
-                  <span className="font-semibold text-navy">{s.name}</span>
-                  {s.fellowshipAbbr && <span style={{ color: 'var(--mid)' }}> · {s.fellowshipAbbr}</span>}
-                </div>
-              ))
-            ) : (
-              <a href="/dashboard?intent=add_sponsor" style={{ fontSize: 13, color: 'var(--teal)', fontWeight: 600, textDecoration: 'none' }}>
-                + Add a sponsor
-              </a>
-            )}
+            {activeSponsors.length > 0 && activeSponsors.map(s => (
+              <div key={s.relationshipId} style={{ fontSize: 13 }}>
+                <span style={{ color: 'var(--mid)' }}>Sponsor: </span>
+                <span className="font-semibold text-navy">{s.name}</span>
+                {s.fellowshipAbbr && <span style={{ color: 'var(--mid)' }}> · {s.fellowshipAbbr}</span>}
+              </div>
+            ))}
+            {/* "+ Add a sponsor" CTA moved to PEOPLE card to avoid duplication */}
           </div>
         </div>
       </div>
@@ -127,7 +126,8 @@ export default function RightRail({ userId, displayName, currentStep, completedS
         displayName={displayName}
         activeSponsors={activeSponsors}
         sponsees={sponsees}
-        isSponsor={isSponsor}
+        isAvailableSponsor={isAvailableSponsor}
+        canSponsor={canSponsor}
       />
       <RecentCard recentCheckIns={recentCheckIns} />
     </div>

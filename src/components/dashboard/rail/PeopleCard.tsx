@@ -11,7 +11,8 @@ interface Props {
   displayName: string
   activeSponsors: ActiveSponsor[]
   sponsees: SponseeFull[]
-  isSponsor: boolean
+  isAvailableSponsor: boolean  // user has toggled "accept new sponsees" on
+  canSponsor: boolean           // gate satisfied (marked ready or all steps done)
 }
 
 const secondaryBtn: React.CSSProperties = {
@@ -50,7 +51,7 @@ const fellowshipChip: React.CSSProperties = {
 
 const SPONSEE_DISPLAY_LIMIT = 3
 
-export default function PeopleCard({ userId, displayName, activeSponsors, sponsees, isSponsor }: Props) {
+export default function PeopleCard({ userId, displayName, activeSponsors, sponsees, isAvailableSponsor, canSponsor }: Props) {
   const router = useRouter()
   const [showFindSponsor, setShowFindSponsor] = useState(false)
   const [showAddSponsee, setShowAddSponsee] = useState(false)
@@ -114,12 +115,7 @@ export default function PeopleCard({ userId, displayName, activeSponsors, sponse
           marginBottom: 12,
         }}
       >
-        <div
-          className="font-semibold"
-          style={{ fontSize: 11, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--mid)' }}
-        >
-          People
-        </div>
+        <div className="font-semibold text-navy" style={{ fontSize: 13, marginBottom: 12 }}>People</div>
 
         {/* Sponsor rows */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
@@ -155,13 +151,15 @@ export default function PeopleCard({ userId, displayName, activeSponsors, sponse
           )}
         </div>
 
-        {/* Sponsees (only when user is a sponsor) */}
-        {isSponsor && (
+        {/* Sponsees — show whenever user has any active sponsees, regardless of availability flag.
+            The is_available_sponsor flag controls whether they accept NEW sponsees, not whether
+            existing ones render. */}
+        {sponsees.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: 13 }}>
               <span style={{ color: 'var(--mid)' }}>Sponsees</span>
               <span style={{ color: 'var(--mid)', fontSize: 12 }}>
-                Accepting · <span className="font-semibold text-navy">{sponsees.length}</span>
+                {isAvailableSponsor ? 'Accepting' : 'Not accepting'} · <span className="font-semibold text-navy">{sponsees.length}</span>
               </span>
             </div>
             {visibleSponsees.map(s => {
@@ -203,22 +201,38 @@ export default function PeopleCard({ userId, displayName, activeSponsors, sponse
         )}
 
         {/* Action row */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
-          <div style={{ display: 'flex', gap: 6 }}>
-            {isSponsor && (
-              <button type="button" onClick={() => setShowAddSponsee(true)} style={secondaryBtn}>
-                + Invite sponsee
-              </button>
-            )}
-            <button type="button" onClick={() => setShowFindSponsor(true)} style={secondaryBtn}>
-              + Add {hasSponsor ? 'sponsor' : 'a sponsor'}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+          {isAvailableSponsor && canSponsor && (
+            <button type="button" onClick={() => setShowAddSponsee(true)} style={secondaryBtn}>
+              + Invite sponsee
             </button>
-          </div>
-          {hasSponsor && (
-            <div style={{ fontSize: 11, color: 'var(--mid)', textAlign: 'right', paddingRight: 4 }}>
-              for another fellowship
+          )}
+          {isAvailableSponsor && !canSponsor && (
+            <div style={{ fontSize: 11, color: 'var(--mid)' }}>
+              You can invite sponsees once your sponsor marks you ready or you complete your steps.
             </div>
           )}
+          <button
+            type="button"
+            onClick={() => setShowFindSponsor(true)}
+            style={{
+              fontSize: 13,
+              color: 'var(--teal)',
+              fontWeight: 600,
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              textAlign: 'left',
+            }}
+          >
+            + Add {hasSponsor ? 'another sponsor' : 'a sponsor'}
+            {hasSponsor && (
+              <span style={{ fontSize: 11, color: 'var(--mid)', fontWeight: 400, marginLeft: 6 }}>
+                for another fellowship
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
