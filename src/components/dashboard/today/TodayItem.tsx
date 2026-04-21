@@ -140,7 +140,11 @@ export default function TodayItem({ item, onCheckIn }: Props) {
     </div>
   )
 
-  if (item.id === 'checkin' && onCheckIn) {
+  const isModalTrigger =
+    item.id === 'checkin' ||
+    item.id === 'meeting' ||
+    item.id.startsWith('meeting-')
+  if (isModalTrigger && onCheckIn) {
     return (
       <button
         onClick={onCheckIn}

@@ -1,122 +1,81 @@
 'use client'
+
+// Phase R.3 — Saved-meeting chips backed by user_custom_meetings.
+//
+// Before Phase R this component built chips by bucketing the last 90 days of
+// meeting_attendance. That produced good "usual" signal but made the source of
+// truth ambiguous: public directory hits and text-only rows all competed for
+// chip slots. Phase R makes user_custom_meetings the authoritative saved list
+// — chips now render that table sorted by last_attended_at DESC (the MRU index
+// added in migration 20260420010000).
+//
+// Same Props surface as the old component so CheckInModal wiring stays small.
+
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { CHECKIN_COPY } from '@/lib/copy/checkin'
-import type { MeetingChipData, SelectedMeeting } from './checkin-types'
+import type { SelectedMeeting } from './checkin-types'
 
 interface Props {
   userId: string
   value: SelectedMeeting | null | 'none'
   onChange: (v: SelectedMeeting | 'none' | null) => void
-  onCustom: () => void
+  /** Opens the Add-a-meeting modal. CheckInModal prefills the typed name. */
+  onAdd: () => void
 }
 
-interface RawAttendance {
-  meeting_id: string | null
-  custom_meeting_id: string | null
-  meeting_name: string
-  attended_at: string
+interface SavedMeetingRow {
+  id: string
+  name: string
+  day_of_week: number | null
+  time_local: string | null
+  last_attended_at: string | null
 }
 
-function buildChips(rows: RawAttendance[]): MeetingChipData[] {
-  const map = new Map<string, { name: string; kind: 'public' | 'custom'; id: string; dates: string[] }>()
+const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-  for (const r of rows) {
-    const key = r.meeting_id
-      ? `pub:${r.meeting_id}`
-      : r.custom_meeting_id
-        ? `cus:${r.custom_meeting_id}`
-        : `txt:${r.meeting_name}`
-
-    const existing = map.get(key)
-    if (existing) {
-      existing.dates.push(r.attended_at)
-    } else {
-      map.set(key, {
-        name: r.meeting_name,
-        kind: r.meeting_id ? 'public' : 'custom',
-        id: (r.meeting_id ?? r.custom_meeting_id ?? '') as string,
-        dates: [r.attended_at],
-      })
-    }
-  }
-
-  const now = Date.now()
-  const scored = Array.from(map.entries()).map(([key, v]) => {
-    const freq = v.dates.length
-    const lastMs = Math.max(...v.dates.map(d => new Date(d).getTime()))
-    const daysSinceLast = (now - lastMs) / 86_400_000
-    const score = freq * 10 - daysSinceLast
-
-    // "usual" if attended in at least 3 of the last 4 weeks
-    const weekNums = v.dates.map(d => {
-      const ms = new Date(d).getTime()
-      return Math.floor((now - ms) / (7 * 86_400_000))
-    })
-    const recentWeeks = new Set(weekNums.filter(w => w < 4))
-    const isUsual = recentWeeks.size >= 3
-
-    return { key, name: v.name, kind: v.kind as 'public' | 'custom', id: v.id, score, isUsual }
-  })
-
-  scored.sort((a, b) => b.score - a.score)
-
-  return scored.slice(0, 3).map(s => ({
-    key: s.key,
-    kind: s.kind,
-    id: s.id,
-    name: s.name,
-    isUsual: s.isUsual,
-  }))
+function formatChipMeta(row: SavedMeetingRow): string {
+  const parts: string[] = []
+  if (row.day_of_week !== null) parts.push(DAY_SHORT[row.day_of_week])
+  if (row.time_local) parts.push(row.time_local.slice(0, 5))
+  return parts.join(' . ')
 }
 
-export default function MeetingChips({ userId, value, onChange, onCustom }: Props) {
-  const [chips, setChips] = useState<MeetingChipData[]>([])
+export default function MeetingChips({ userId, value, onChange, onAdd }: Props) {
+  const [rows, setRows] = useState<SavedMeetingRow[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const supabase = createClient()
-    const ninetyDaysAgo = new Date(Date.now() - 90 * 86_400_000).toISOString()
-
     supabase
-      .from('meeting_attendance')
-      .select('meeting_id, custom_meeting_id, meeting_name, attended_at')
+      .from('user_custom_meetings')
+      .select('id, name, day_of_week, time_local, last_attended_at')
       .eq('user_id', userId)
-      .gte('attended_at', ninetyDaysAgo)
-      .order('attended_at', { ascending: false })
-      .limit(100)
+      .eq('is_active', true)
+      .order('last_attended_at', { ascending: false, nullsFirst: false })
+      .limit(6)
       .then(({ data }) => {
-        setChips(buildChips((data ?? []) as RawAttendance[]))
+        setRows((data ?? []) as SavedMeetingRow[])
         setLoading(false)
       })
   }, [userId])
 
-  function isSelected(chip: MeetingChipData) {
-    if (value === 'none') return false
-    if (!value) return false
-    // Match by the chip's unique key. Comparing id+kind alone would highlight
-    // every text-only attendance row at once (they all share id='' + kind='custom').
-    return value.key === chip.key
+  function isSelectedRow(row: SavedMeetingRow) {
+    if (!value || value === 'none') return false
+    return value.kind === 'custom' && value.id === row.id
   }
 
-  function select(chip: MeetingChipData) {
-    if (chip.kind === 'public' || chip.kind === 'custom') {
-      if (isSelected(chip)) {
-        onChange(null) // deselect
-      } else {
-        onChange({ key: chip.key, kind: chip.kind, id: chip.id ?? '', name: chip.name })
-      }
+  function selectRow(row: SavedMeetingRow) {
+    if (isSelectedRow(row)) {
+      onChange(null)
+      return
     }
-  }
-
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {[1, 2].map(i => (
-          <div key={i} className="animate-pulse" style={{ height: 44, borderRadius: 10, background: 'var(--warm-gray)' }} />
-        ))}
-      </div>
-    )
+    onChange({
+      key: `cus:${row.id}`,
+      kind: 'custom',
+      id: row.id,
+      name: row.name,
+    })
   }
 
   const chipStyle = (selected: boolean): React.CSSProperties => ({
@@ -135,44 +94,67 @@ export default function MeetingChips({ userId, value, onChange, onCustom }: Prop
 
   const noMeetingSelected = value === 'none'
 
-  return (
-    <div role="radiogroup" aria-label="Meeting today?" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {chips.map(chip => (
-        <button
-          key={chip.key}
-          role="radio"
-          aria-checked={isSelected(chip)}
-          onClick={() => select(chip)}
-          style={chipStyle(isSelected(chip))}
-        >
-          <span style={{ fontSize: 14, color: isSelected(chip) ? 'var(--navy)' : 'var(--dark)', fontWeight: isSelected(chip) ? 600 : 400, flex: 1 }}>
-            {chip.name}
-          </span>
-          {chip.isUsual && (
-            <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: 'var(--teal-bg)', border: '1px solid var(--teal)', color: 'var(--teal)' }}>
-              {CHECKIN_COPY.usualBadge}
-            </span>
-          )}
-          {chip.kind === 'custom' && !chip.isUsual && (
-            <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 20, background: 'var(--navy-10)', color: 'var(--mid)' }}>
-              {CHECKIN_COPY.personalBadge}
-            </span>
-          )}
-        </button>
-      ))}
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {[1, 2].map(i => (
+          <div key={i} className="animate-pulse" style={{ height: 44, borderRadius: 10, background: 'var(--warm-gray)' }} />
+        ))}
+      </div>
+    )
+  }
 
-      {/* + Custom meeting — action button, not a radio selection */}
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {rows.length > 0 && (
+        <>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--mid)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2 }}>
+            {CHECKIN_COPY.savedMeetingsLabel}
+          </div>
+          <div role="radiogroup" aria-label="Saved meetings" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {rows.map(row => {
+              const selected = isSelectedRow(row)
+              const meta = formatChipMeta(row)
+              return (
+                <button
+                  key={row.id}
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => selectRow(row)}
+                  style={chipStyle(selected)}
+                >
+                  <span style={{ fontSize: 14, color: selected ? 'var(--navy)' : 'var(--dark)', fontWeight: selected ? 600 : 400, flex: 1 }}>
+                    {row.name}
+                  </span>
+                  {meta && (
+                    <span style={{ fontSize: 11, color: 'var(--mid)', fontWeight: 500 }}>
+                      {meta}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </>
+      )}
+
+      {/* Add-a-meeting CTA - delegates to CheckInModal which opens AddMeetingModal */}
       <button
         type="button"
-        onClick={onCustom}
-        style={chipStyle(false)}
+        onClick={onAdd}
+        style={{
+          ...chipStyle(false),
+          borderStyle: 'dashed',
+          background: '#fff',
+        }}
       >
         <span style={{ fontSize: 14, color: 'var(--teal)', fontWeight: 500 }}>
-          {CHECKIN_COPY.customLabel}
+          {rows.length > 0 ? CHECKIN_COPY.saveForNextTime : CHECKIN_COPY.addMeetingLabel}
         </span>
       </button>
 
-      {/* No meeting today */}
+      {/* No meeting today - below a visual gap to separate from entry path */}
+      <div style={{ height: 4 }} />
       <button
         role="radio"
         aria-checked={noMeetingSelected}
