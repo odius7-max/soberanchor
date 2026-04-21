@@ -60,6 +60,8 @@ export default function CheckInModal({ userId, onClose, hasActiveSponsor = false
   const [error, setError] = useState<string | null>(null)
   const [saveResult, setSaveResult] = useState<SaveResult | null>(null)
   const [mounted, setMounted] = useState(false)
+  const [moodError, setMoodError] = useState(false)
+  const moodSectionRef = useRef<HTMLDivElement>(null)
 
   // Portal mount guard
   useEffect(() => { setMounted(true) }, [])
@@ -151,7 +153,8 @@ export default function CheckInModal({ userId, onClose, hasActiveSponsor = false
   }
 
   async function handleSave() {
-    if (!form.mood) { setError("Please select how you're feeling."); return }
+    if (!form.mood) { setMoodError(true); return }
+    setMoodError(false)
     setSubmitting(true)
     setError(null)
     const supabase = createClient()
@@ -293,15 +296,37 @@ export default function CheckInModal({ userId, onClose, hasActiveSponsor = false
             <div className="overflow-y-auto flex-1 px-6 py-5" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
 
               {/* Mood */}
-              <div>
+              <div ref={moodSectionRef}>
                 <div className="font-semibold text-navy mb-3" style={{ fontSize: 14 }}>
-                  {CHECKIN_COPY.moodQ}
+                  {CHECKIN_COPY.moodQ} <span style={{ color: 'var(--red-alert)', fontWeight: 500 }} aria-hidden="true">*</span>
                 </div>
-                <MoodScale
-                  value={form.mood}
-                  onChange={mood => setForm(f => ({ ...f, mood }))}
-                  firstButtonRef={firstFocusRef}
-                />
+                <div
+                  style={{
+                    border: moodError ? '1.5px solid var(--red-alert)' : '1.5px solid transparent',
+                    background: moodError ? 'var(--red-alert-bg, #FEE)' : 'transparent',
+                    borderRadius: 12,
+                    padding: moodError ? 10 : 0,
+                    transition: 'border-color 0.15s, background 0.15s, padding 0.15s',
+                  }}
+                >
+                  <MoodScale
+                    value={form.mood}
+                    onChange={mood => {
+                      setForm(f => ({ ...f, mood }))
+                      if (mood) setMoodError(false)
+                    }}
+                    firstButtonRef={firstFocusRef}
+                  />
+                </div>
+                {moodError && (
+                  <div
+                    role="alert"
+                    style={{ fontSize: 13, color: 'var(--red-alert)', fontWeight: 500, marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}
+                  >
+                    <span aria-hidden="true">{'\u26A0'}</span>
+                    <span>Select how you&rsquo;re feeling to save your check-in.</span>
+                  </div>
+                )}
               </div>
 
               {/* Sharing notice */}
@@ -376,22 +401,35 @@ export default function CheckInModal({ userId, onClose, hasActiveSponsor = false
             {/* Footer */}
             <div className="px-6 pb-6 pt-3 flex-shrink-0" style={{ borderTop: '1px solid var(--border)' }}>
               <button
-                onClick={handleSave}
-                disabled={submitting || !form.mood}
+                onClick={() => {
+                  if (submitting) return
+                  if (!form.mood) {
+                    // Flag the mood section with an inline field-level error
+                    // (like the "insecure password" pattern) and scroll it into view,
+                    // rather than leaving the user staring at a silent disabled button.
+                    setMoodError(true)
+                    moodSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                    return
+                  }
+                  handleSave()
+                }}
+                aria-disabled={submitting}
                 className="w-full rounded-xl font-semibold text-white"
                 style={{
                   padding: '13px',
                   fontSize: 15,
-                  background: 'var(--teal)',
+                  background: form.mood ? 'var(--teal)' : 'var(--mid)',
                   border: 'none',
-                  opacity: submitting || !form.mood ? 0.55 : 1,
-                  cursor: submitting || !form.mood ? 'not-allowed' : 'pointer',
-                  transition: 'opacity 0.15s',
+                  opacity: submitting ? 0.55 : 1,
+                  cursor: submitting ? 'not-allowed' : 'pointer',
+                  transition: 'background 0.15s, opacity 0.15s',
                 }}
               >
                 {submitting
                   ? (existingCheckInId ? CHECKIN_COPY.updating : CHECKIN_COPY.saving)
-                  : (existingCheckInId ? CHECKIN_COPY.update : CHECKIN_COPY.save)}
+                  : !form.mood
+                    ? 'Pick a mood to save'
+                    : (existingCheckInId ? CHECKIN_COPY.update : CHECKIN_COPY.save)}
               </button>
             </div>
           </>
