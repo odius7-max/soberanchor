@@ -159,7 +159,7 @@ function MoodTrend({ history }: { history: SponseeCheckIn[] }) {
       </div>
 
       {/* Navigation row: ‹ date range › */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 7 }}>
         <button
           onClick={() => { setPage(p => Math.min(p + 1, maxPage)); setPopover(null) }}
           disabled={page >= maxPage}
