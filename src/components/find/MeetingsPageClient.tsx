@@ -5,7 +5,7 @@
 // Directory demoted to a <details> collapse at bottom.
 // Unauthenticated users see a signup prompt instead of the Save button.
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -194,31 +194,32 @@ function InlineAddForm({ userId, availableFellowships, primaryFellowshipId, onSa
         </div>
       </div>
 
-      {/* Time + Format row */}
-      <div className="grid grid-cols-2 gap-3 mb-3">
-        <div>
-          <label className={labelCls}>Start time <span className="normal-case font-normal">(optional)</span></label>
-          <input
-            type="time"
-            value={timeLocal}
-            onChange={e => setTimeLocal(e.target.value)}
-            className={inputCls}
-          />
-        </div>
-        <div>
-          <div className={labelCls}>Format</div>
-          <div className="flex gap-1.5">
-            {FORMAT_LABELS.map(f => (
-              <button
-                key={f.value}
-                type="button"
-                onClick={() => setFormat(prev => prev === f.value ? null : f.value)}
-                className={`flex-1 py-2 rounded-lg border text-xs cursor-pointer transition-colors ${format === f.value ? pillActive : pillInactive}`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
+      {/* Time */}
+      <div className="mb-3">
+        <label className={labelCls}>Start time <span className="normal-case font-normal">(optional)</span></label>
+        <input
+          type="time"
+          value={timeLocal}
+          onChange={e => setTimeLocal(e.target.value)}
+          className={inputCls}
+          style={{ maxWidth: 180 }}
+        />
+      </div>
+
+      {/* Format — full width so "In-person" chip isn't cramped on mobile */}
+      <div className="mb-3">
+        <div className={labelCls}>Format</div>
+        <div className="flex gap-2">
+          {FORMAT_LABELS.map(f => (
+            <button
+              key={f.value}
+              type="button"
+              onClick={() => setFormat(prev => prev === f.value ? null : f.value)}
+              className={`flex-1 py-2 rounded-lg border text-xs cursor-pointer transition-colors ${format === f.value ? pillActive : pillInactive}`}
+            >
+              {f.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -285,6 +286,17 @@ interface ArchiveConfirmProps {
 }
 
 function ArchiveConfirm({ name, onConfirm, onCancel }: ArchiveConfirmProps) {
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel() }
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = prev
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [onCancel])
+
   return createPortal(
     <div
       style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
