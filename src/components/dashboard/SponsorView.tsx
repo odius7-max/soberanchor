@@ -715,44 +715,60 @@ export default function SponsorView({ sponsees, pendingRequests, displayName, us
     <>
       <PendingRequests requests={pendingRequests} perspective="as_sponsor" />
 
-      {/* ── Summary stats row ── */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-        <div style={{ flex: 1, minWidth: 130, borderRadius: 14, padding: '18px 20px', background: 'linear-gradient(135deg,#003366,#1a4a5e)' }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 2 }}>Active Sponsees</div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 700, color: '#fff', letterSpacing: '-1px', lineHeight: 1.15 }}>{sponsees.length}</div>
+      {/* ── Workflow CTAs (Build → Assign) ── */}
+      <div className="sponsor-workflow">
+        <Link href="/dashboard/sponsees/program" className="wf-card wf-card-build" style={{ textDecoration: 'none' }}>
+          <span className="wf-step">1</span>
+          <div className="wf-label">Build your program</div>
+          <div className="wf-desc">
+            Start from a built-in template, adapt it to your program, or build your own — whatever fits your sponsee/lineage.
+          </div>
+          <div className="wf-cta">
+            Open Program Builder
+            <svg className="wf-cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
+          </div>
+        </Link>
+
+        <div className="wf-arrow" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12" />
+            <polyline points="12 5 19 12 12 19" />
+          </svg>
         </div>
-        <div style={{ flex: 1, minWidth: 130, borderRadius: 14, padding: '18px 20px', background: '#fff', border: '1px solid var(--border)' }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--mid)', marginBottom: 2 }}>Pending Reviews</div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 700, letterSpacing: '-1px', lineHeight: 1.15, color: pendingTotal > 0 ? '#D4A574' : 'var(--navy)' }}>{pendingTotal}</div>
-        </div>
-        <div style={{ flex: 1, minWidth: 130, borderRadius: 14, padding: '18px 20px', background: '#fff', border: '1px solid var(--border)' }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--mid)', marginBottom: 2 }}>Checked In Today</div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 700, letterSpacing: '-1px', lineHeight: 1.15, color: '#2A8A99' }}>{checkInsToday}</div>
+
+        <div className="wf-card wf-card-assign">
+          <span className="wf-step">2</span>
+          <div className="wf-label">Assign tasks</div>
+          <div className="wf-desc">
+            Click any sponsee below to assign them tasks from your program.
+          </div>
+          <div className="wf-cta wf-cta-teal">
+            Pick a sponsee
+            <svg className="wf-cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <polyline points="19 12 12 19 5 12" />
+            </svg>
+          </div>
         </div>
       </div>
 
-      {/* ── Header + add button ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 8, flexWrap: 'wrap' }}>
-        <h3 style={{ fontWeight: 700, color: 'var(--navy)', fontSize: 15, margin: 0 }}>Your Sponsees</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Link
-            href="/dashboard/sponsees/program"
-            style={{
-              background: '#fff', color: 'var(--navy)',
-              border: '1.5px solid var(--border)', borderRadius: 8,
-              padding: '7px 14px', fontSize: 13, fontWeight: 600,
-              cursor: 'pointer', fontFamily: 'var(--font-body)',
-              textDecoration: 'none', whiteSpace: 'nowrap',
-            }}>
-            Task Library →
-          </Link>
-          <button
-            onClick={() => setShowAddModal(true)}
-            style={{ background: 'var(--navy)', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
-            + Add Sponsee
-          </button>
+      {/* ── Thin utility row (inline stats + Add Sponsee) ── */}
+      <div className="sponsor-util-row">
+        <div className="sponsor-util-stats">
+          <strong>{sponsees.length}</strong> active sponsee{sponsees.length !== 1 ? 's' : ''} · <strong>{pendingTotal}</strong> review{pendingTotal !== 1 ? 's' : ''} pending · <strong>{checkInsToday}</strong> checked in today
         </div>
+        <button onClick={() => setShowAddModal(true)} className="sponsor-util-add">
+          + Add Sponsee
+        </button>
       </div>
+
+      {/* ── Sponsee list header ── */}
+      <h3 style={{ fontWeight: 700, color: 'var(--navy)', fontSize: 15, margin: '0 0 14px' }}>
+        Your Sponsees
+      </h3>
 
       {/* ── Sponsee cards ── */}
       {sponsees.length === 0 ? (
