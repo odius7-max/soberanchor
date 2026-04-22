@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import DashboardShell from '@/components/dashboard/DashboardShell'
 import type { CheckIn, JournalEntry, MeetingAttendance, ReadingAssignment, SponseeFull, SponseeCheckIn, ActivityItem, SobrietyMilestone, Fellowship, ActiveSponsor, ProviderData, ProgramRowData } from '@/components/dashboard/DashboardShell'
+import type { UserCustomMeeting } from '@/components/dashboard/meetings/types'
 import type { PendingRequest } from '@/components/dashboard/PendingRequests'
 import type { FacilityData } from '@/components/providers/ListingTab'
 import type { Lead } from '@/components/providers/LeadsTab'
@@ -160,6 +161,7 @@ export default async function DashboardPage() {
     activityFeedRes,
     milestonesRes,
     fellowshipsRes,
+    userCustomMeetingsRes,
   ] = await Promise.all([
     supabase.from('user_profiles').select('display_name,sobriety_date,primary_fellowship_id,current_step,is_available_sponsor,onboarding_completed,sponsor_marked_ready_at').eq('id', userId).single(),
     supabase.from('check_ins').select('id,check_in_date,mood,notes,sober_today,meetings_attended').eq('user_id', userId).order('check_in_date', { ascending: false }).limit(4),
@@ -182,6 +184,14 @@ export default async function DashboardPage() {
     supabase.from('sobriety_milestones').select('id,label,sobriety_date,fellowship_id,is_primary,notes').eq('user_id', userId).order('is_primary', { ascending: false }).order('sobriety_date'),
     // Fellowships for the add-milestone form
     supabase.from('fellowships').select('id,name,abbreviation').order('name'),
+    // Phase R.4 - User's saved meetings (both active + archived so the UI can
+    // offer a Show archived toggle). RLS limits to the current user.
+    supabase.from('user_custom_meetings')
+      .select('id,user_id,fellowship_id,name,day_of_week,time_local,format,location,topic,is_active,last_attended_at,created_at,updated_at,type,recurrence,is_private')
+      .eq('user_id', userId)
+      .order('is_active', { ascending: false })
+      .order('last_attended_at', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false }),
   ])
 
   const stepCompletions = (stepCompletionsRes.data ?? []) as { step_number: number; fellowship_id: string | null }[]
@@ -210,6 +220,7 @@ export default async function DashboardPage() {
   const stepWorkCount = stepWorkCountRes.count ?? 0
   const meetingAttendance: MeetingAttendance[] = (meetingAttendanceRes.data ?? []) as MeetingAttendance[]
   const meetingsTotal = meetingsTotalRes.count ?? 0
+  const userCustomMeetings = (userCustomMeetingsRes.data ?? []) as UserCustomMeeting[]
   const checkInsTotal = checkInsTotalRes.count ?? 0
   const activityItems: ActivityItem[] = (activityFeedRes.data ?? []) as ActivityItem[]
 
@@ -884,6 +895,8 @@ export default async function DashboardPage() {
       meetingAttendance={meetingAttendance}
       meetingsThisWeek={meetingsThisWeek}
       meetingsTotal={meetingsTotal}
+      userCustomMeetings={userCustomMeetings}
+      primaryFellowshipId={primaryFellowshipId}
       readingAssignments={readingAssignments}
       checkInsTotal={checkInsTotal}
       activeSponsors={activeSponsors}
