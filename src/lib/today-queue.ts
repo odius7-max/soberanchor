@@ -110,8 +110,8 @@ export function buildMemberTodayQueue(input: MemberQueueInput): TodayQueueResult
       variant: 'default',
       label: multi ? `Log ${p.fellowshipAbbr} meeting this week` : 'Log a meeting this week',
       sub: `${p.meetingsThisWeek} of ${target} weekly target`,
-      cta: 'Find meetings →',
-      href: '/find/meetings',
+      cta: 'Log meeting →',
+      // Phase R: route through check-in modal entry-first surface, not /find/meetings
       priority: 400,
       completed: p.meetingsThisWeek >= target,
     })

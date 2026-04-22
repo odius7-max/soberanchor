@@ -101,7 +101,7 @@ export default function TodayCard({ items: initialItems, overflowCount, caughtUp
           <TodayItem
             key={item.id}
             item={item}
-            onCheckIn={item.id === 'checkin' ? onCheckIn : undefined}
+            onCheckIn={item.id === 'checkin' || item.id === 'meeting' || item.id.startsWith('meeting-') ? onCheckIn : undefined}
           />
         ))}
         {overflowCount > 0 && (

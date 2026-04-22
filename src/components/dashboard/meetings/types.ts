@@ -2,7 +2,7 @@
 //
 // Backed by the public.user_custom_meetings table. The table predates Phase R
 // (it had a dormant save path via CheckInModal), so the schema carries some
-// legacy columns — type/recurrence/is_private — that we don't surface in the
+// legacy columns - type/recurrence/is_private - that we don't surface in the
 // Phase R UI. Writes default them to ('public', 'weekly'|'once' depending on
 // day_of_week, false) so the existing CHECK constraints stay satisfied.
 
@@ -13,16 +13,15 @@ export interface UserCustomMeeting {
   user_id: string
   fellowship_id: string | null
   name: string
-  day_of_week: number | null         // 0 = Sun .. 6 = Sat
-  time_local: string | null          // 'HH:mm' or 'HH:mm:ss'
+  day_of_week: number | null
+  time_local: string | null
   format: MeetingFormat | null
   location: string | null
   topic: string | null
   is_active: boolean
-  last_attended_at: string | null    // ISO timestamp
+  last_attended_at: string | null
   created_at: string
   updated_at: string
-  // Legacy columns. Defaults below are what AddMeetingModal writes.
   type: 'public' | 'personal' | 'sponsor' | 'other'
   recurrence: 'once' | 'daily' | 'weekly' | 'custom'
   is_private: boolean
@@ -34,7 +33,6 @@ export interface FellowshipOption {
   abbreviation: string | null
 }
 
-// Day-of-week display labels (Sun-first to match Postgres EXTRACT(DOW).)
 export const DAY_LABELS: { value: number; short: string; long: string }[] = [
   { value: 0, short: 'Sun', long: 'Sunday' },
   { value: 1, short: 'Mon', long: 'Monday' },

@@ -2,32 +2,47 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
-import MeetingsDirectory from '@/components/find/MeetingsDirectory'
+import MeetingsPageClient from '@/components/find/MeetingsPageClient'
 import { getUserSavedIds } from '../actions'
+import type { FellowshipOption, UserCustomMeeting } from '@/components/dashboard/meetings/types'
 
 export const metadata: Metadata = {
-  title: 'Find Meetings — SoberAnchor',
-  description: 'Find AA, NA, SMART Recovery, and other recovery meetings near you. Filter by fellowship, day, time, and format.',
+  title: 'Meetings — SoberAnchor',
+  description: 'Add the meetings you attend and find new ones. Your personal list is always ready at check-in.',
 }
 
 export default async function MeetingsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Build a meetingId → savedListingId map, and grab profile city/state for geo fallback
   let savedIds: Record<string, string> = {}
   let userCity: string | null = null
   let userState: string | null = null
+  let availableFellowships: FellowshipOption[] = []
+  let primaryFellowshipId: string | null = null
+  let initialMeetings: UserCustomMeeting[] = []
+
   if (user) {
-    const [saved, profileRes] = await Promise.all([
+    const [saved, profileRes, fellowshipsRes, meetingsRes] = await Promise.all([
       getUserSavedIds(),
-      supabase.from('user_profiles').select('city, state').eq('id', user.id).maybeSingle(),
+      supabase.from('user_profiles').select('city, state, primary_fellowship_id').eq('id', user.id).maybeSingle(),
+      supabase.from('fellowships').select('id,name,abbreviation').order('name'),
+      supabase.from('user_custom_meetings')
+        .select('id,user_id,fellowship_id,name,day_of_week,time_local,format,location,topic,is_active,last_attended_at,created_at,updated_at,type,recurrence,is_private')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .order('last_attended_at', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false }),
     ])
+
     for (const s of saved) {
       if (s.meeting_id) savedIds[s.meeting_id] = s.id
     }
     userCity = profileRes.data?.city ?? null
     userState = profileRes.data?.state ?? null
+    primaryFellowshipId = profileRes.data?.primary_fellowship_id ?? null
+    availableFellowships = (fellowshipsRes.data ?? []) as FellowshipOption[]
+    initialMeetings = (meetingsRes.data ?? []) as UserCustomMeeting[]
   }
 
   return (
@@ -37,21 +52,18 @@ export default async function MeetingsPage() {
       </Link>
 
       <div className="mt-5 mb-8">
-        <p className="text-xs font-bold tracking-[2px] uppercase text-teal mb-2">Directory</p>
-        <h1
-          className="text-[clamp(28px,3.5vw,40px)] font-semibold leading-[1.15] mb-2"
-          style={{ fontFamily: 'var(--font-display)', color: 'var(--navy)', letterSpacing: '-1.0px' }}
-        >
-          Meetings &amp; Support Groups
-        </h1>
-        <p className="text-mid text-base leading-relaxed max-w-[560px]">
-          Find AA, NA, Al-Anon, SMART Recovery, and other recovery meetings near you — in-person and online.
-        </p>
+        <Suspense>
+          <MeetingsPageClient
+            userId={user?.id ?? null}
+            availableFellowships={availableFellowships}
+            primaryFellowshipId={primaryFellowshipId}
+            initialMeetings={initialMeetings}
+            savedIds={savedIds}
+            userCity={userCity}
+            userState={userState}
+          />
+        </Suspense>
       </div>
-
-      <Suspense>
-        <MeetingsDirectory savedIds={savedIds} userCity={userCity} userState={userState} />
-      </Suspense>
     </div>
   )
 }

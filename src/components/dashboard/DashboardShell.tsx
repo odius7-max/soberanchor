@@ -7,12 +7,12 @@ import DashboardBanner, { type SobrietyMilestone, type Fellowship } from './Dash
 import OverviewTab from './tabs/OverviewTab'
 import JournalTab from './tabs/JournalTab'
 import MeetingsTab from './tabs/MeetingsTab'
+import type { UserCustomMeeting } from './meetings/types'
 import TasksTab from './tabs/TasksTab'
 import SavedTab from './tabs/SavedTab'
 import StepWorkTab from './tabs/StepWorkTab'
 import SponsorView from './SponsorView'
 import OnboardingCard from './OnboardingCard'
-import MeetingCheckin from './MeetingCheckin'
 import CheckInModal from './CheckInModal'
 import PendingRequests from './PendingRequests'
 import type { PendingRequest } from './PendingRequests'
@@ -28,7 +28,7 @@ import SponseesTab from './nav/SponseesTab'
 import Hero from './Hero'
 import RightRail from './RightRail'
 
-type Mode = 'my' | 'sponsees' | 'checkin' | 'facility'
+type Mode = 'my' | 'sponsees' | 'facility'
 type Tab = 'today' | 'overview' | 'stepwork' | 'journal' | 'meetings' | 'tasks' | 'saved'
 
 export interface CheckIn { id:string; check_in_date:string; mood:string|null; notes:string|null; sober_today:boolean; meetings_attended:number }
@@ -80,6 +80,8 @@ interface Props {
   meetingAttendance: MeetingAttendance[]
   meetingsThisWeek: number
   meetingsTotal: number
+  userCustomMeetings: UserCustomMeeting[]
+  primaryFellowshipId: string | null
   readingAssignments: ReadingAssignment[]
   checkInsTotal: number
   activeSponsors: ActiveSponsor[]
@@ -111,7 +113,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'saved',     label: '❤️ Saved' },
 ]
 
-export default function DashboardShell({ userId, phone, onboardingCompleted, isProvider, providerData, profile, stepCompletions, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, readingAssignments, checkInsTotal, activeSponsors, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships, todayQueueItems, todayQueueOverflow, todayMemberCaughtUp, todaySummaryParts, dailyQuote, sponseeAlertCount = 0, programRows, workingPrograms = [], stepWorkData = {}, canSponsor = false }: Props) {
+export default function DashboardShell({ userId, phone, onboardingCompleted, isProvider, providerData, profile, stepCompletions, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, userCustomMeetings, primaryFellowshipId, readingAssignments, checkInsTotal, activeSponsors, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships, todayQueueItems, todayQueueOverflow, todayMemberCaughtUp, todaySummaryParts, dailyQuote, sponseeAlertCount = 0, programRows, workingPrograms = [], stepWorkData = {}, canSponsor = false }: Props) {
   const router = useRouter()
   // Provider-only users (no recovery onboarding) default to facility mode
   const defaultMode: Mode = (isProvider && !onboardingCompleted) ? 'facility' : 'my'
@@ -271,7 +273,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
             {/* Check In — right-aligned action button, not a mode */}
             {onboardingCompleted && (
               <button
-                onClick={() => setMode('checkin')}
+                onClick={() => setCheckInOpen(true)}
                 className="flex-shrink-0 font-semibold transition-colors"
                 style={{
                   marginLeft: 'auto',
@@ -279,7 +281,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
                   fontSize: '14px',
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
-                  background: mode === 'checkin' ? 'rgba(42, 157, 143, 0.1)' : 'rgba(42, 157, 143, 0.06)',
+                  background: 'rgba(42, 157, 143, 0.06)',
                   color: '#2a9d8f',
                   border: 'none',
                   borderRadius: '8px 8px 0 0',
@@ -397,13 +399,12 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
             )}
             {activeTab === 'stepwork' && <StepWorkTab userId={userId} fellowshipId={activeFellowshipId} />}
             {activeTab === 'journal' && <JournalTab userId={userId} entries={journalEntries} />}
-            {activeTab === 'meetings' && <MeetingsTab userId={userId} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} meetingAttendance={meetingAttendance} fellowships={fellowships} />}
+            {activeTab === 'meetings' && <MeetingsTab userId={userId} meetingsThisWeek={meetingsThisWeek} meetingsTotal={meetingsTotal} meetingAttendance={meetingAttendance} fellowships={fellowships} userCustomMeetings={userCustomMeetings} primaryFellowshipId={primaryFellowshipId} />}
             {activeTab === 'tasks' && <TasksTab userId={userId} readingAssignments={readingAssignments} hasSponsor={activeSponsors.length > 0} />}
             {activeTab === 'saved' && <SavedTab userId={userId} />}
           </>
         )}
 
-        {mode === 'checkin' && <MeetingCheckin userId={userId} />}
         {mode === 'sponsees' && isSponsor && <SponsorView sponsees={sponsees} pendingRequests={sponsorPendingRequests} displayName={displayName} userId={userId} />}
         {mode === 'facility' && isProvider && providerData && (
           <ProviderDashboardShell
