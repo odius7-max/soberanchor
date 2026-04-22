@@ -114,6 +114,17 @@ function MoodTrend({ history }: { history: SponseeCheckIn[] }) {
   const popoverRef = useRef<HTMLDivElement>(null)
   const maxPage = 3 // 4 pages × 14 days = 56 days (within our 60-day fetch window)
 
+  const [isNarrow, setIsNarrow] = useState(false)
+  useEffect(() => {
+    const check = () => setIsNarrow(window.innerWidth < 480)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+  const dotSize = isNarrow ? 20 : 26
+  const dotGap = isNarrow ? 2 : 3
+  const dotFontSize = isNarrow ? 11 : 14
+
   const dateMap = useMemo(() => {
     const m: Record<string, SponseeCheckIn> = {}
     for (const ci of history) m[ci.date] = ci
@@ -167,14 +178,14 @@ function MoodTrend({ history }: { history: SponseeCheckIn[] }) {
       </div>
 
       {/* Dots row */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 3, justifyContent: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: dotGap, justifyContent: 'center' }}>
         {days.map((date, idx) => {
           const ci = dateMap[date]
           const mood = ci?.mood ? MOOD_META[ci.mood] : null
           const isActive = popover?.date === date
 
           return (
-            <div key={date} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <div key={date} style={{ display: 'flex', alignItems: 'center', gap: dotGap }}>
               {/* Dashed divider between week 1 (idx 0-6) and week 2 (idx 7-13) */}
               {idx === 7 && (
                 <div style={{ height: 22, width: 0, borderLeft: '1.5px dashed var(--border)', marginLeft: 2, marginRight: 2 }} />
@@ -183,14 +194,14 @@ function MoodTrend({ history }: { history: SponseeCheckIn[] }) {
                 onClick={() => ci ? setPopover(p => p?.date === date ? null : { date, ci }) : undefined}
                 title={ci ? `${date}: ${mood?.label ?? 'checked in'}` : `${date}: no check-in`}
                 style={{
-                  width: 26, height: 26, borderRadius: '50%',
+                  width: dotSize, height: dotSize, borderRadius: '50%',
                   border: 'none', padding: 0,
                   cursor: ci ? 'pointer' : 'default',
                   background: ci
                     ? (mood ? mood.color + '28' : 'rgba(42,138,153,0.14)')
                     : 'var(--warm-gray)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: ci ? 14 : 7,
+                  fontSize: ci ? dotFontSize : 7,
                   outline: isActive ? '2px solid var(--teal)' : 'none',
                   outlineOffset: 1,
                   transform: isActive ? 'scale(1.15)' : 'scale(1)',
@@ -316,13 +327,9 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
   }
 
   return (
-    <div style={{
-      background: '#fff',
-      borderRadius: 16,
+    <div className="bg-white rounded-2xl p-4 sm:p-[22px] relative" style={{
       border: '1px solid var(--border)',
       borderLeft: hasAlert ? '3px solid #D4A574' : '1px solid var(--border)',
-      padding: '20px 22px',
-      position: 'relative',
     }}>
       {/* Toast */}
       {toast && (
@@ -437,7 +444,7 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
       </div>
 
       {/* ── Vitals — 3 columns ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 10 }}>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2.5">
         <div
           onClick={() => setShowReport(true)}
           title="View check-in report"
@@ -491,7 +498,7 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
       </div>
 
       {/* ── Vitals row 2 — 2 columns ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 8, marginBottom: 16 }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
         <div style={{ background: 'rgba(212,165,116,0.07)', border: '1px solid rgba(212,165,116,0.2)', borderRadius: 10, padding: '10px 11px' }}>
           <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--mid)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 4 }}>Next Milestone</div>
           {nextM ? (
