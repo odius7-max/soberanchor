@@ -270,8 +270,8 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
                 </button>
               </div>
             )}
-            {/* Check In — right-aligned action button, not a mode */}
-            {onboardingCompleted && (
+            {/* Check In — only shown on My Journey, not Sponsees or Facility */}
+            {onboardingCompleted && mode === 'my' && (
               <button
                 onClick={() => setCheckInOpen(true)}
                 className="flex-shrink-0 font-semibold transition-colors"
