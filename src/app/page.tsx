@@ -3,21 +3,32 @@ import { useState } from "react";
 import Link from "next/link";
 import GuidedDiscovery from "@/components/GuidedDiscovery";
 
-const angelYears = Math.floor((Date.now() - new Date('2021-12-04').getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+const angelYears = Math.floor(
+  (Date.now() - new Date("2021-12-04").getTime()) / (365.25 * 24 * 60 * 60 * 1000)
+);
 
-const categories = [
-  { icon: "🏥", title: "Treatment Centers", sub: "Find professional help", href: "/find#facilities" },
-  { icon: "🏠", title: "Sober Living", sub: "Homes & residences", href: "/find#facilities" },
-  { icon: "👥", title: "Meetings", sub: "AA, NA, GA, OA & more", href: "/find#meetings" },
-  { icon: "🍹", title: "Sober Venues", sub: "Bars, cafes & events", href: "/find#facilities" },
-  { icon: "💆", title: "Therapists", sub: "Counselors & specialists", href: "/find#facilities" },
-  { icon: "⚓", title: "Track Your Journey", sub: "Check-ins, journal & sponsor tools", href: "/my-recovery", special: true, pills: ["Check-ins", "Journal", "Steps", "Sponsor"] },
+const directoryCategories = [
+  { icon: "🏥", title: "Treatment Centers", sub: "Professional care",        href: "/find#facilities" },
+  { icon: "🏠", title: "Sober Living",      sub: "Homes & residences",       href: "/find#facilities" },
+  { icon: "🤝", title: "Fellowships",       sub: "AA, NA, SMART & more",     href: "/fellowships"     },
+  { icon: "🧠", title: "Therapists",        sub: "Counselors & specialists", href: "/find#facilities" },
+  { icon: "🍹", title: "Sober Venues",      sub: "Bars, cafés & events",     href: "/find#facilities" },
 ];
 
-const fellowships = [
-  "AA","NA","GA","OA","Al-Anon","SMART Recovery","CA","SAA","DA",
-  "Nar-Anon","SLAA","CMA","ACA","Celebrate Recovery","LifeRing","FA",
-  "OSPA","Gam-Anon","+ dozens more",
+const findHelpBullets = [
+  "Treatment centers & rehabs",
+  "Sober living homes",
+  "Fellowships (AA, NA, SMART & more)",
+  "Licensed therapists",
+  "Sober-friendly venues & events",
+];
+
+const programBullets = [
+  "Daily check-ins & mood tracking",
+  "Step work for any fellowship",
+  "Sponsor & sponsee management tools",
+  "Meeting tracking & milestones",
+  "Program builder & task assignment",
 ];
 
 export default function Home() {
@@ -25,98 +36,268 @@ export default function Home() {
 
   return (
     <>
-      {/* Hero */}
-      {!showDiscovery && (
-        <section className="relative overflow-hidden py-[72px] px-6">
-          {/* Dot texture */}
-          <div
-            className="absolute inset-0 pointer-events-none opacity-[0.025]"
-            style={{
-              backgroundImage: "radial-gradient(circle, var(--navy) 1px, transparent 1px)",
-              backgroundSize: "24px 24px",
-            }}
-          />
-          <div className="relative max-w-[1120px] mx-auto flex flex-wrap gap-12 items-center">
-            <div className="flex-1 min-w-[400px] max-w-[560px]">
-              <p className="text-xs font-bold tracking-[2px] uppercase text-teal mb-2">
+      {showDiscovery ? (
+        <GuidedDiscovery onClose={() => setShowDiscovery(false)} />
+      ) : (
+        <>
+          {/* Hero + two-path grid */}
+          <section className="relative overflow-hidden bg-off-white py-[72px] px-6">
+            <div
+              className="absolute inset-0 pointer-events-none opacity-[0.025]"
+              style={{
+                backgroundImage: "radial-gradient(circle, var(--navy) 1px, transparent 1px)",
+                backgroundSize: "24px 24px",
+              }}
+            />
+            <div className="relative max-w-[1120px] mx-auto text-center">
+              <p className="text-xs font-bold tracking-[2px] uppercase text-teal mb-3">
                 Your Anchor to Living Sober
               </p>
               <h1
-                className="text-[clamp(36px,5vw,52px)] font-semibold leading-[1.1] mb-4"
-                style={{ fontFamily: "var(--font-display)", color: "var(--navy)", letterSpacing: "-1.5px" }}
+                className="text-[clamp(26px,4vw,40px)] font-semibold leading-[1.1] mb-4"
+                style={{ fontFamily: "var(--font-display)", color: "var(--navy)", letterSpacing: "-1px" }}
               >
-                Find the right help,
+                Find the right help.
                 <br />
-                whatever you&apos;re facing.
+                Work your program, every day.
               </h1>
-              <p className="text-[17px] text-mid leading-[1.7] mb-8">
-                The definitive resource for recovery — from alcohol and drugs to
-                gambling, eating disorders, and compulsive behaviors. For you, or
-                for someone you love.
+              <p className="text-base text-mid leading-[1.7] mb-8 max-w-[540px] mx-auto">
+                Whether you need to find treatment, meetings, or support — or
+                you&apos;re in recovery doing the daily work — SoberAnchor has
+                both paths covered.
               </p>
-              <div className="flex gap-3 flex-wrap">
-                <button
-                  onClick={() => setShowDiscovery(true)}
-                  className="bg-navy text-white font-semibold text-base px-8 py-3.5 rounded-xl hover:bg-navy-dark transition-colors"
+
+              {/* Two-path grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-[900px] mx-auto text-left">
+                {/* Find Help card */}
+                <div className="bg-white border border-border rounded-2xl p-6 card-hover flex flex-col">
+                  <p className="text-[10px] uppercase tracking-[1.2px] font-bold text-teal mb-2">
+                    Looking for help?
+                  </p>
+                  <h2
+                    className="text-lg font-bold text-navy mb-4"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    Search our directory.
+                  </h2>
+                  <button
+                    onClick={() => setShowDiscovery(true)}
+                    className="w-full bg-navy text-white font-semibold text-sm py-3 rounded-xl hover:bg-navy-dark transition-colors mb-5"
+                  >
+                    Help me find resources →
+                  </button>
+                  <ul className="space-y-2 flex-1">
+                    {findHelpBullets.map((b) => (
+                      <li key={b} className="flex items-start gap-2 text-sm text-dark">
+                        <span className="text-teal font-bold mt-0.5 flex-shrink-0">✓</span>
+                        <span>{b}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Work Your Program card */}
+                <div
+                  className="rounded-2xl p-6 card-hover flex flex-col border bg-gradient-to-br from-navy-dark to-navy"
+                  style={{ borderColor: "rgba(255,255,255,0.12)" }}
                 >
-                  Help Me Find Resources →
-                </button>
-                <Link
-                  href="/find"
-                  className="border-[1.5px] border-navy text-navy font-semibold text-base px-8 py-3.5 rounded-xl hover:bg-[var(--navy-10)] transition-colors"
-                >
-                  Search the Directory
-                </Link>
+                  <p className="text-[10px] uppercase tracking-[1.2px] font-bold text-gold mb-2">
+                    Already in recovery?
+                  </p>
+                  <h2
+                    className="text-lg font-bold text-white mb-4"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    Work your program, every day.
+                  </h2>
+                  <Link
+                    href="/program"
+                    className="w-full bg-teal text-white font-semibold text-sm py-3 rounded-xl text-center hover:opacity-90 transition-opacity mb-5 block"
+                  >
+                    Explore the program →
+                  </Link>
+                  <ul className="space-y-2 flex-1">
+                    {programBullets.map((b) => (
+                      <li key={b} className="flex items-start gap-2 text-sm">
+                        <span className="text-gold font-bold mt-0.5 flex-shrink-0">✓</span>
+                        <span className="text-white/80">{b}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
-              <p className="text-[13px] text-mid mt-4">
-                No account needed. Free. Confidential.
-              </p>
+
+              {/* Trust line */}
+              <div className="mt-6 text-center text-xs text-mid">
+                <span>No account required to browse</span>
+                <span className="mx-3 text-teal">•</span>
+                <span>Anonymous by default</span>
+              </div>
             </div>
-            <div className="flex-1 min-w-[300px] max-w-[420px]">
-              <div className="grid grid-cols-2 gap-2.5">
-                {categories.map((c) => (
+          </section>
+
+          {/* Directory band */}
+          <section className="border-t border-border bg-white py-14 px-6">
+            <div className="max-w-[1120px] mx-auto">
+              <p className="text-xs font-bold tracking-[2px] uppercase text-teal mb-2">
+                Directory
+              </p>
+              <h2
+                className="text-[clamp(24px,3vw,36px)] font-semibold mb-2"
+                style={{ fontFamily: "var(--font-display)", color: "var(--navy)", letterSpacing: "-0.75px" }}
+              >
+                Find what you need.
+              </h2>
+              <p className="text-mid text-base leading-relaxed max-w-[480px] mb-8">
+                From professional treatment to local fellowships — search the
+                full directory for free.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
+                {directoryCategories.map((c) => (
                   <Link
                     key={c.title}
                     href={c.href}
-                    className={`bg-white rounded-[14px] p-[18px] card-hover ${
-                      c.special
-                        ? "border-2 border-[var(--teal)]"
-                        : "border border-border"
-                    }`}
+                    className="bg-white border border-border rounded-[14px] p-5 card-hover text-center"
                   >
-                    <div className="text-[28px] mb-1.5">{c.icon}</div>
-                    <div className="text-sm font-semibold text-navy">
-                      {c.title}
-                    </div>
+                    <div className="text-[28px] mb-2">{c.icon}</div>
+                    <div className="text-sm font-semibold text-navy">{c.title}</div>
                     <div className="text-xs text-mid mt-0.5">{c.sub}</div>
-                    {c.pills && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {c.pills.map((p) => (
-                          <span
-                            key={p}
-                            className="bg-[var(--teal-10)] text-teal text-[10px] font-medium rounded-full px-2 py-0.5"
-                          >
-                            {p}
-                          </span>
-                        ))}
-                      </div>
-                    )}
                   </Link>
                 ))}
               </div>
+              <div className="flex gap-3 justify-center flex-wrap">
+                <Link
+                  href="/find"
+                  className="bg-navy text-white font-semibold text-sm px-6 py-2.5 rounded-lg hover:bg-navy-dark transition-colors"
+                >
+                  Search the full directory →
+                </Link>
+                <button
+                  onClick={() => setShowDiscovery(true)}
+                  className="border-[1.5px] border-navy text-navy font-semibold text-sm px-6 py-2.5 rounded-lg hover:bg-[var(--navy-10)] transition-colors"
+                >
+                  Talk to AI search
+                </button>
+              </div>
             </div>
-          </div>
-        </section>
-      )}
+          </section>
 
-      {/* Guided Discovery */}
-      {showDiscovery && (
-        <GuidedDiscovery onClose={() => setShowDiscovery(false)} />
-      )}
+          {/* Program teaser band */}
+          <section className="bg-gradient-to-br from-navy-dark to-navy text-white py-14 px-6">
+            <div className="max-w-[1120px] mx-auto">
+              <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-10 items-center">
+                {/* Left: copy */}
+                <div>
+                  <p className="text-[10px] uppercase tracking-[1.2px] font-bold text-gold mb-3">
+                    The program tools
+                  </p>
+                  <h2
+                    className="text-[clamp(26px,3.5vw,40px)] font-semibold leading-[1.15] mb-4"
+                    style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.75px" }}
+                  >
+                    Built for the work that happens every day.
+                  </h2>
+                  <p className="text-white/70 text-base leading-[1.7] mb-8 max-w-[480px]">
+                    Whether you&apos;re doing the steps with a sponsor or carrying
+                    the message as one — SoberAnchor has the tools for both sides
+                    of the relationship.
+                  </p>
+                  <div className="flex gap-3 flex-wrap">
+                    <Link
+                      href="/program"
+                      className="bg-teal text-white font-semibold px-6 py-3 rounded-xl hover:opacity-90 transition-opacity"
+                    >
+                      Explore the program →
+                    </Link>
+                    <Link
+                      href="/my-recovery"
+                      className="border border-white/35 text-white font-semibold px-6 py-3 rounded-xl hover:border-white hover:bg-white/10 transition-colors"
+                    >
+                      Sign in
+                    </Link>
+                  </div>
+                </div>
 
-      {/* Angel's Story */}
-      {!showDiscovery && (
-        <>
+                {/* Right: floating product-preview cards — hidden below lg */}
+                <div className="hidden lg:block relative h-[340px]">
+                  {/* Card 1: Today's check-in */}
+                  <div
+                    className="absolute top-0 left-4 w-[280px] rounded-xl p-4"
+                    style={{
+                      background: "rgba(255,255,255,0.05)",
+                      border: "1px solid rgba(255,255,255,0.18)",
+                      backdropFilter: "blur(8px)",
+                      transform: "rotate(-2deg)",
+                    }}
+                  >
+                    <p className="text-[10px] uppercase tracking-[1px] font-bold text-gold mb-1.5">
+                      Today&apos;s check-in
+                    </p>
+                    <p className="text-sm font-semibold text-white mb-1">
+                      Good day · 2 meetings this week
+                    </p>
+                    <p className="text-xs text-white/60 mb-2.5">Mood 7 · 127 days sober</p>
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
+                      <div className="h-full bg-teal rounded-full" style={{ width: "71%" }} />
+                    </div>
+                  </div>
+
+                  {/* Card 2: Step work */}
+                  <div
+                    className="absolute top-[112px] left-[56px] w-[280px] rounded-xl p-4"
+                    style={{
+                      background: "rgba(255,255,255,0.05)",
+                      border: "1px solid rgba(255,255,255,0.18)",
+                      backdropFilter: "blur(8px)",
+                      transform: "rotate(1.5deg)",
+                    }}
+                  >
+                    <p className="text-[10px] uppercase tracking-[1px] font-bold text-teal mb-1.5">
+                      Step 4 · Inventory
+                    </p>
+                    <p className="text-sm font-semibold text-white mb-1">
+                      List 5 examples of powerlessness
+                    </p>
+                    <p className="text-xs text-white/60">Assigned by sponsor · due Apr 28</p>
+                  </div>
+
+                  {/* Card 3: Sponsor dashboard */}
+                  <div
+                    className="absolute top-[224px] left-2 w-[300px] rounded-xl p-4"
+                    style={{
+                      background: "rgba(255,255,255,0.05)",
+                      border: "1px solid rgba(255,255,255,0.18)",
+                      backdropFilter: "blur(8px)",
+                      transform: "rotate(-1deg)",
+                    }}
+                  >
+                    <p className="text-[10px] uppercase tracking-[1px] font-bold text-gold mb-1.5">
+                      Sponsor dashboard
+                    </p>
+                    <p className="text-xs text-white/60 mb-2.5">3 sponsees · 1 needs attention</p>
+                    <div className="space-y-1.5">
+                      {[
+                        { name: "TJ",     status: "ok",      color: "var(--green-ok)"           },
+                        { name: "Sarah",  status: "alert",   color: "var(--red-alert)"           },
+                        { name: "Marcus", status: "neutral", color: "rgba(255,255,255,0.45)"     },
+                      ].map((s) => (
+                        <div key={s.name} className="flex items-center justify-between text-xs">
+                          <span className="font-medium" style={{ color: "rgba(255,255,255,0.8)" }}>
+                            {s.name}
+                          </span>
+                          <span className="font-semibold" style={{ color: s.color }}>
+                            {s.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Our Story */}
           <section className="bg-off-white py-16 px-6">
             <div className="max-w-[1120px] mx-auto">
               <div className="flex flex-wrap overflow-hidden border border-border rounded-[14px]">
@@ -218,9 +399,7 @@ export default function Home() {
                     >
                       {a.title}
                     </h3>
-                    <p className="text-sm text-mid leading-relaxed mb-3">
-                      {a.desc}
-                    </p>
+                    <p className="text-sm text-mid leading-relaxed mb-3">{a.desc}</p>
                     <div className="text-[13px] text-mid">{a.author}</div>
                   </Link>
                 ))}
@@ -233,43 +412,6 @@ export default function Home() {
                   Browse All Resources →
                 </Link>
               </div>
-            </div>
-          </section>
-
-          {/* Beyond Alcohol */}
-          <section className="bg-warm-gray py-16 px-6">
-            <div className="max-w-[720px] mx-auto text-center">
-              <p className="text-xs font-bold tracking-[2px] uppercase text-teal mb-2">
-                Beyond Alcohol & Drugs
-              </p>
-              <h2
-                className="text-[clamp(28px,3.5vw,40px)] font-semibold leading-[1.15] mb-4"
-                style={{ fontFamily: "var(--font-display)", color: "var(--navy)", letterSpacing: "-1.0px" }}
-              >
-                Recovery isn&apos;t one-size-fits-all.
-              </h2>
-              <p className="text-mid text-base leading-[1.7] mb-8">
-                SoberAnchor covers the full spectrum — gambling, eating
-                disorders, compulsive behaviors, and dozens of fellowships most
-                people don&apos;t know exist. Whatever you&apos;re facing, there&apos;s
-                help for it.
-              </p>
-              <div className="flex flex-wrap gap-2 justify-center mb-7">
-                {fellowships.map((f) => (
-                  <span
-                    key={f}
-                    className="bg-white border border-border rounded-full px-3 py-1 text-[13px] font-medium text-dark"
-                  >
-                    {f}
-                  </span>
-                ))}
-              </div>
-              <Link
-                href="/find"
-                className="inline-block bg-navy text-white font-semibold px-6 py-3 rounded-lg hover:bg-navy-dark transition-colors"
-              >
-                Explore the Full Directory →
-              </Link>
             </div>
           </section>
         </>
