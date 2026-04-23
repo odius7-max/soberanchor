@@ -199,7 +199,7 @@ export default function SponseeProgram({
             <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--navy)', marginBottom: 3 }}>📋 Program</div>
             <div style={{ fontSize: 13, color: 'var(--mid)' }}>Select the fellowship {sponseeName} is working</div>
           </div>
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', flex: '1 1 220px', minWidth: 0, maxWidth: '100%' }}>
             <select
               value={fellowshipId ?? ''}
               onChange={e => handleFellowshipChange(e.target.value)}
@@ -212,7 +212,7 @@ export default function SponseeProgram({
                   : '1.5px solid var(--border)',
                 background: highlightMissing ? 'rgba(192,57,43,0.04)' : '#fff',
                 cursor: updatingFellowship ? 'wait' : 'pointer',
-                appearance: 'none' as const, minWidth: 220,
+                appearance: 'none' as const, width: '100%', maxWidth: '100%',
                 fontFamily: 'var(--font-body)',
                 opacity: updatingFellowship ? 0.6 : 1,
                 boxShadow: highlightMissing ? '0 0 0 3px rgba(192,57,43,0.12)' : 'none',
