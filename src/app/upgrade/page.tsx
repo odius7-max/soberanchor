@@ -16,7 +16,7 @@ export default function UpgradePage() {
           </svg>
         </div>
 
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 10 }}>Sponsor Pro</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 10 }}>Pro</div>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 600, color: 'var(--navy)', letterSpacing: '-0.5px', margin: '0 0 12px' }}>
           Payment processing coming soon
         </h1>
@@ -27,7 +27,7 @@ export default function UpgradePage() {
 
         <div style={{ background: 'rgba(42,138,153,0.05)', border: '1px solid rgba(42,138,153,0.15)', borderRadius: 12, padding: '16px 20px', marginBottom: 28, textAlign: 'left' }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 10 }}>Coming soon</div>
-          {['$9.99 / month', '$79.99 / year — save 33%'].map(plan => (
+          {['$7 / month', '$59 / year — save ~30%'].map(plan => (
             <div key={plan} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--teal)', flexShrink: 0 }} />
               <span style={{ fontSize: 14, color: 'var(--dark)', fontWeight: 500 }}>{plan}</span>

@@ -24,16 +24,19 @@ export async function GET(request: NextRequest) {
     { data: authData },
     { data: sponsorRels },
     { data: providerAccounts },
+    { data: subscriptions },
   ] = await Promise.all([
     admin.from('user_profiles').select('id, display_name, is_available_sponsor, onboarding_completed, created_at'),
     admin.auth.admin.listUsers(),
     admin.from('sponsor_relationships').select('sponsor_id, sponsee_id, status'),
     admin.from('provider_accounts').select('auth_user_id, subscription_tier, is_active'),
+    admin.from('user_subscriptions').select('user_id, plan'),
   ])
 
   const authUsers = authData?.users ?? []
   const rels = sponsorRels ?? []
   const providers = providerAccounts ?? []
+  const subMap = new Map((subscriptions ?? []).map(s => [s.user_id, s.plan as string]))
 
   let members = (profiles ?? []).map(p => {
     const au = authUsers.find(u => u.id === p.id)
@@ -53,6 +56,7 @@ export async function GET(request: NextRequest) {
       is_sponsee: isSponsee,
       is_provider: !!providerAccount,
       provider_tier: providerAccount?.subscription_tier ?? null,
+      plan: subMap.get(p.id) ?? 'free',
     }
   })
 

@@ -25,6 +25,7 @@ export async function GET(
     { data: asSponsor },
     { data: stepWork },
     { data: providerAccount },
+    { data: subscription },
   ] = await Promise.all([
     admin.from('user_profiles')
       .select('*, fellowships(id, name, abbreviation)')
@@ -41,6 +42,10 @@ export async function GET(
     admin.from('provider_accounts')
       .select('id, organization_name, subscription_tier, is_active')
       .eq('auth_user_id', id)
+      .maybeSingle(),
+    admin.from('user_subscriptions')
+      .select('plan, status, granted_by, granted_note, granted_at')
+      .eq('user_id', id)
       .maybeSingle(),
   ])
 
@@ -91,6 +96,13 @@ export async function GET(
       draft: stepWork?.filter(e => e.review_status === 'draft').length ?? 0,
     },
     provider_account: providerAccount ?? null,
+    subscription: subscription ? {
+      plan:        subscription.plan,
+      status:      subscription.status,
+      granted_by:  subscription.granted_by,
+      granted_note: subscription.granted_note,
+      granted_at:  subscription.granted_at,
+    } : null,
   })
 }
 

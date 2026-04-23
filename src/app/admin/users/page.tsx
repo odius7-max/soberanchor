@@ -28,6 +28,7 @@ interface Member {
   is_sponsee: boolean
   is_provider: boolean
   provider_tier: string | null
+  plan: string
 }
 
 type RoleFilter = 'all' | 'sponsor' | 'sponsee' | 'provider'
@@ -50,6 +51,20 @@ function RoleBadge({ label, color }: { label: string; color: string }) {
       display: 'inline-block',
     }}>
       {label}
+    </span>
+  )
+}
+
+function PlanBadge({ plan }: { plan: string }) {
+  if (plan === 'free') return null
+  const styles: Record<string, { bg: string; color: string }> = {
+    pro:      { bg: 'rgba(42,138,153,0.1)',   color: 'var(--teal)' },
+    founding: { bg: 'rgba(212,165,116,0.15)', color: '#9A7B54' },
+  }
+  const s = styles[plan] ?? styles.pro
+  return (
+    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: s.bg, color: s.color, textTransform: 'capitalize', display: 'inline-block' }}>
+      {plan}
     </span>
   )
 }
@@ -237,6 +252,7 @@ export default function AdminUsersPage() {
                   {m.is_sponsor && <RoleBadge label="sponsor" color="var(--teal)" />}
                   {m.is_sponsee && <RoleBadge label="sponsee" color="#7B5EA7" />}
                   {m.is_provider && <RoleBadge label="provider" color="var(--gold)" />}
+                  <PlanBadge plan={m.plan} />
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--mid)' }}>{timeAgo(m.created_at)}</div>
                 <div style={{ fontSize: 12, color: 'var(--mid)' }}>{timeAgo(m.last_sign_in_at)}</div>

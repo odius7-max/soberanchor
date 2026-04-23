@@ -33,6 +33,13 @@ interface UserDetail {
   as_sponsee: SponseeRel[]
   step_work: { total: number; reviewed: number; submitted: number; draft: number }
   provider_account: ProviderAccount | null
+  subscription: {
+    plan: string
+    status: string
+    granted_by: string | null
+    granted_note: string | null
+    granted_at: string | null
+  } | null
 }
 
 function fmt(dateStr: string | null) {
@@ -146,6 +153,18 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
     setSaving(false)
     if (res.ok) { toast(action === 'suspend' ? 'Account suspended' : 'Account reinstated'); await loadUser() }
     else { const d = await res.json(); toast(d.error ?? 'Action failed', false) }
+  }
+
+  async function grantPlan(plan: string, note: string) {
+    setSaving(true)
+    const res = await fetch('/api/admin/grant-subscription', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ target_user_id: id, plan, note }),
+    })
+    setSaving(false)
+    if (res.ok) { toast(`Plan set to ${plan}`); await loadUser() }
+    else { const d = await res.json(); toast(d.error ?? 'Grant failed', false) }
   }
 
   async function handleSignOut() {
@@ -315,6 +334,42 @@ export default function AdminUserDetailPage({ params }: { params: Promise<{ id: 
                     {row.value}
                   </span>
                 </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Subscription */}
+          <Card>
+            <CardLabel>Subscription</CardLabel>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+              {[
+                { label: 'Plan', value: user.subscription?.plan ?? 'free' },
+                { label: 'Granted by', value: user.subscription?.granted_by ?? '—' },
+                { label: 'Granted at', value: user.subscription?.granted_at ? fmt(user.subscription.granted_at) : '—' },
+                ...(user.subscription?.granted_note ? [{ label: 'Note', value: user.subscription.granted_note }] : []),
+              ].map(row => (
+                <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, borderBottom: '1px solid var(--border)', paddingBottom: 10 }}>
+                  <span style={{ fontSize: 12, color: 'var(--mid)', fontWeight: 600 }}>{row.label}</span>
+                  <span style={{ fontSize: 12, color: 'var(--dark)', textTransform: row.label === 'Plan' ? 'capitalize' : 'none' }}>{row.value}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {(['pro', 'founding', 'free'] as const).map(p => (
+                <button
+                  key={p}
+                  onClick={() => grantPlan(p, p === 'founding' ? 'Founding member — admin grant' : p === 'pro' ? 'Admin grant' : 'Reverted to free')}
+                  disabled={saving || user.subscription?.plan === p}
+                  style={{
+                    fontSize: 12, fontWeight: 600, padding: '7px 14px', borderRadius: 8, cursor: 'pointer',
+                    fontFamily: 'var(--font-body)', border: '1px solid var(--border)',
+                    background: user.subscription?.plan === p ? 'var(--off-white)' : '#fff',
+                    color: p === 'founding' ? '#9A7B54' : p === 'pro' ? 'var(--teal)' : 'var(--mid)',
+                    opacity: saving ? 0.6 : 1,
+                  }}
+                >
+                  {p === 'founding' ? 'Grant Founding' : p === 'pro' ? 'Grant Pro' : 'Revert to Free'}
+                </button>
               ))}
             </div>
           </Card>
