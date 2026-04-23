@@ -181,38 +181,43 @@ export default function FromProgramTab({
                 style={{
                   width: '100%', textAlign: 'left' as const, background: 'none', border: 'none',
                   padding: '12px 14px', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  flexWrap: 'wrap',
+                  display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 4,
                   fontFamily: 'var(--font-body)',
                 }}
               >
-                <span style={{ fontSize: 11, color: 'var(--mid)', width: 10, flexShrink: 0 }}>
-                  {isExpanded ? '▼' : '▶'}
-                </span>
-                <span style={{
-                  fontSize: 13, fontWeight: 700, color: 'var(--navy)',
-                  flex: '1 1 auto', minWidth: 0,
-                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                }}>
-                  Step {step.step_number} · {step.name}
-                </span>
-                {isCurrent && (
-                  <span style={{
-                    fontSize: 9, fontWeight: 700, letterSpacing: '0.5px',
-                    padding: '2px 7px', borderRadius: 20,
-                    background: 'rgba(240,192,64,0.18)', color: '#9A7B54',
-                    flexShrink: 0,
-                  }}>
-                    CURRENT STEP
+                {/* Row 1: chevron + step name (truncated if long) + CURRENT STEP pill */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                  <span style={{ fontSize: 11, color: 'var(--mid)', width: 10, flexShrink: 0 }}>
+                    {isExpanded ? '▼' : '▶'}
                   </span>
-                )}
-                <span style={{
+                  <span style={{
+                    fontSize: 13, fontWeight: 700, color: 'var(--navy)',
+                    flex: '1 1 0', minWidth: 0,
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
+                    Step {step.step_number} · {step.name}
+                  </span>
+                  {isCurrent && (
+                    <span style={{
+                      fontSize: 9, fontWeight: 700, letterSpacing: '0.5px',
+                      padding: '2px 7px', borderRadius: 20,
+                      background: 'rgba(240,192,64,0.18)', color: '#9A7B54',
+                      flexShrink: 0,
+                    }}>
+                      CURRENT STEP
+                    </span>
+                  )}
+                </div>
+
+                {/* Row 2: counter, right-aligned, on its own line always */}
+                <div style={{
                   fontSize: 11, color: 'var(--mid)',
-                  flexShrink: 0, marginLeft: 'auto',
+                  textAlign: 'right' as const,
+                  paddingLeft: 20,
                 }}>
                   {tasks.length} task{tasks.length !== 1 ? 's' : ''}
                   {assignedCount > 0 && ` · ${assignedCount} assigned`}
-                </span>
+                </div>
               </button>
 
               {isExpanded && tasks.length === 0 && (
@@ -355,13 +360,12 @@ export default function FromProgramTab({
       {/* Footer */}
       <div style={{
         marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--border)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
-        flexWrap: 'wrap',
+        display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 12,
       }}>
         <span style={{ fontSize: 13, color: 'var(--mid)' }}>
           {selected.size} task{selected.size !== 1 ? 's' : ''} selected
         </span>
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0, marginLeft: 'auto' }}>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' as const }}>
           <button
             onClick={onCancel}
             style={{

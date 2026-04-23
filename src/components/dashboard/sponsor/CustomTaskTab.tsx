@@ -206,30 +206,34 @@ export default function CustomTaskTab({
 
           {error && <div style={{ fontSize: 13, color: '#c0392b' }}>{error}</div>}
 
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 4, flexWrap: 'wrap' }}>
-            <button
-              onClick={onCancel}
-              style={{
-                background: 'none', border: '1.5px solid var(--border)', borderRadius: 9,
-                padding: '9px 18px', fontSize: 13, fontWeight: 600,
-                cursor: 'pointer', color: 'var(--mid)', fontFamily: 'var(--font-body)',
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={goReview}
-              disabled={!canContinue}
-              style={{
-                background: 'var(--navy)', color: '#fff', border: 'none', borderRadius: 9,
-                padding: '9px 20px', fontSize: 13, fontWeight: 700,
-                cursor: canContinue ? 'pointer' : 'not-allowed',
-                opacity: canContinue ? 1 : 0.5,
-                fontFamily: 'var(--font-body)',
-              }}
-            >
-              Review Task →
-            </button>
+          <div style={{
+            display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 4,
+          }}>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' as const }}>
+              <button
+                onClick={onCancel}
+                style={{
+                  background: 'none', border: '1.5px solid var(--border)', borderRadius: 9,
+                  padding: '9px 18px', fontSize: 13, fontWeight: 600,
+                  cursor: 'pointer', color: 'var(--mid)', fontFamily: 'var(--font-body)',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={goReview}
+                disabled={!canContinue}
+                style={{
+                  background: 'var(--navy)', color: '#fff', border: 'none', borderRadius: 9,
+                  padding: '9px 20px', fontSize: 13, fontWeight: 700,
+                  cursor: canContinue ? 'pointer' : 'not-allowed',
+                  opacity: canContinue ? 1 : 0.5,
+                  fontFamily: 'var(--font-body)',
+                }}
+              >
+                Review Task →
+              </button>
+            </div>
           </div>
         </div>
       ) : (
@@ -297,30 +301,34 @@ export default function CustomTaskTab({
 
           {error && <div style={{ fontSize: 13, color: '#c0392b', marginBottom: 10 }}>{error}</div>}
 
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'space-between', paddingTop: 4, flexWrap: 'wrap' }}>
-            <button
-              onClick={() => setStage('create')}
-              style={{
-                background: 'none', border: '1.5px solid var(--border)', borderRadius: 9,
-                padding: '9px 18px', fontSize: 13, fontWeight: 600,
-                cursor: 'pointer', color: 'var(--mid)', fontFamily: 'var(--font-body)',
-              }}
-            >
-              ← Edit
-            </button>
-            <button
-              onClick={handleAssign}
-              disabled={saving}
-              style={{
-                background: 'var(--navy)', color: '#fff', border: 'none', borderRadius: 9,
-                padding: '9px 20px', fontSize: 13, fontWeight: 700,
-                cursor: saving ? 'wait' : 'pointer',
-                opacity: saving ? 0.7 : 1,
-                fontFamily: 'var(--font-body)',
-              }}
-            >
-              {saving ? 'Assigning…' : `Create & Assign to ${sponseeName}`}
-            </button>
+          <div style={{
+            display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 4,
+          }}>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'space-between', flexWrap: 'wrap' as const }}>
+              <button
+                onClick={() => setStage('create')}
+                style={{
+                  background: 'none', border: '1.5px solid var(--border)', borderRadius: 9,
+                  padding: '9px 18px', fontSize: 13, fontWeight: 600,
+                  cursor: 'pointer', color: 'var(--mid)', fontFamily: 'var(--font-body)',
+                }}
+              >
+                ← Edit
+              </button>
+              <button
+                onClick={handleAssign}
+                disabled={saving}
+                style={{
+                  background: 'var(--navy)', color: '#fff', border: 'none', borderRadius: 9,
+                  padding: '9px 20px', fontSize: 13, fontWeight: 700,
+                  cursor: saving ? 'wait' : 'pointer',
+                  opacity: saving ? 0.7 : 1,
+                  fontFamily: 'var(--font-body)',
+                }}
+              >
+                {saving ? 'Assigning…' : `Create & Assign to ${sponseeName}`}
+              </button>
+            </div>
           </div>
         </div>
       )}
