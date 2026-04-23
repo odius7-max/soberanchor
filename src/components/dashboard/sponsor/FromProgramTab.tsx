@@ -160,7 +160,7 @@ export default function FromProgramTab({
   })()
 
   return (
-    <div style={{ padding: '14px 24px 20px' }}>
+    <div style={{ padding: '14px 16px 20px' }}>
       {/* Step accordions */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {stepsToRender.map(step => {
@@ -182,13 +182,18 @@ export default function FromProgramTab({
                   width: '100%', textAlign: 'left' as const, background: 'none', border: 'none',
                   padding: '12px 14px', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 10,
+                  flexWrap: 'wrap',
                   fontFamily: 'var(--font-body)',
                 }}
               >
-                <span style={{ fontSize: 11, color: 'var(--mid)', width: 10 }}>
+                <span style={{ fontSize: 11, color: 'var(--mid)', width: 10, flexShrink: 0 }}>
                   {isExpanded ? '▼' : '▶'}
                 </span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)' }}>
+                <span style={{
+                  fontSize: 13, fontWeight: 700, color: 'var(--navy)',
+                  flex: '1 1 auto', minWidth: 0,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
                   Step {step.step_number} · {step.name}
                 </span>
                 {isCurrent && (
@@ -196,11 +201,15 @@ export default function FromProgramTab({
                     fontSize: 9, fontWeight: 700, letterSpacing: '0.5px',
                     padding: '2px 7px', borderRadius: 20,
                     background: 'rgba(240,192,64,0.18)', color: '#9A7B54',
+                    flexShrink: 0,
                   }}>
                     CURRENT STEP
                   </span>
                 )}
-                <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--mid)' }}>
+                <span style={{
+                  fontSize: 11, color: 'var(--mid)',
+                  flexShrink: 0, marginLeft: 'auto',
+                }}>
                   {tasks.length} task{tasks.length !== 1 ? 's' : ''}
                   {assignedCount > 0 && ` · ${assignedCount} assigned`}
                 </span>
@@ -272,7 +281,10 @@ export default function FromProgramTab({
                             )}
                           </div>
                           {task.description && (
-                            <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 3, lineHeight: 1.5 }}>
+                            <div style={{
+                              fontSize: 12, color: 'var(--mid)', marginTop: 3, lineHeight: 1.5,
+                              overflowWrap: 'anywhere',
+                            }}>
                               {task.description}
                             </div>
                           )}
@@ -344,11 +356,12 @@ export default function FromProgramTab({
       <div style={{
         marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--border)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+        flexWrap: 'wrap',
       }}>
         <span style={{ fontSize: 13, color: 'var(--mid)' }}>
           {selected.size} task{selected.size !== 1 ? 's' : ''} selected
         </span>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0, marginLeft: 'auto' }}>
           <button
             onClick={onCancel}
             style={{

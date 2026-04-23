@@ -188,14 +188,21 @@ export default function AssignTaskModal({
         style={{
           background: '#fff', borderRadius: 18,
           width: '100%', maxWidth: 560,
-          maxHeight: '92vh', overflowY: 'auto',
+          maxHeight: '92vh', overflow: 'hidden auto',
           boxShadow: '0 16px 48px rgba(0,0,0,0.2)',
           display: 'flex', flexDirection: 'column',
         }}
       >
         {/* Header */}
-        <div style={{ padding: '20px 24px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--navy)' }}>
+        <div style={{
+          padding: '20px 20px 0',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          gap: 8,
+        }}>
+          <div style={{
+            fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--navy)',
+            minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
             Assign task to {sponseeName}
           </div>
           <button
@@ -209,7 +216,7 @@ export default function AssignTaskModal({
 
         {/* Sponsee context bar */}
         <div style={{
-          margin: '12px 24px 0',
+          margin: '12px 20px 0',
           padding: '10px 14px',
           borderRadius: 10,
           background: 'var(--warm-gray)',
@@ -229,7 +236,7 @@ export default function AssignTaskModal({
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: 4, padding: '14px 24px 0', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', gap: 4, padding: '14px 20px 0', borderBottom: '1px solid var(--border)' }}>
           {([
             { k: 'program', label: 'From Program' },
             { k: 'custom',  label: 'Custom Task' },

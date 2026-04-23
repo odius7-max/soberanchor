@@ -83,7 +83,7 @@ export default function CustomTaskTab({
   const cat = CATEGORIES.find(c => c.value === category) ?? CATEGORIES[2]
 
   return (
-    <div style={{ padding: '16px 24px 20px' }}>
+    <div style={{ padding: '16px 16px 20px' }}>
       {/* Stepper */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontSize: 11 }}>
         <span style={{
@@ -147,7 +147,7 @@ export default function CustomTaskTab({
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
             <div>
               <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--mid)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
                 Step
@@ -206,7 +206,7 @@ export default function CustomTaskTab({
 
           {error && <div style={{ fontSize: 13, color: '#c0392b' }}>{error}</div>}
 
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 4 }}>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 4, flexWrap: 'wrap' }}>
             <button
               onClick={onCancel}
               style={{
@@ -297,7 +297,7 @@ export default function CustomTaskTab({
 
           {error && <div style={{ fontSize: 13, color: '#c0392b', marginBottom: 10 }}>{error}</div>}
 
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'space-between', paddingTop: 4 }}>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'space-between', paddingTop: 4, flexWrap: 'wrap' }}>
             <button
               onClick={() => setStage('create')}
               style={{
