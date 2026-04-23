@@ -1,8 +1,13 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { BookOpen, Compass, Users, Library, MapPin, HelpCircle } from 'lucide-react'
 import { FELLOWSHIPS, getFellowshipBySlug, type FellowshipTagTone } from '@/data/fellowships'
 import { FELLOWSHIP_CONTENT } from '@/data/fellowship-content'
+import PullQuote from '@/components/fellowships/PullQuote'
+import SectionHeading from '@/components/fellowships/SectionHeading'
+import LiteratureGrid from '@/components/fellowships/LiteratureGrid'
 
 export async function generateStaticParams() {
   return FELLOWSHIPS.map(f => ({ slug: f.slug }))
@@ -36,14 +41,6 @@ function Prose({ text }: { text: string }) {
   )
 }
 
-function SectionHeading({ children }: { children: React.ReactNode }) {
-  return (
-    <h2 className="text-[19px] font-bold text-navy mb-4 mt-10 pb-2 border-b border-[var(--border)]">
-      {children}
-    </h2>
-  )
-}
-
 export default async function FellowshipDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const f = getFellowshipBySlug(slug)
@@ -62,6 +59,24 @@ export default async function FellowshipDetailPage({ params }: { params: Promise
       <Link href="/fellowships" className="text-teal text-sm font-semibold hover:underline">
         ← All fellowships
       </Link>
+
+      {/* Hero image — renders only when art is commissioned */}
+      {content?.heroImage && (
+        <div className="mb-6 rounded-2xl overflow-hidden aspect-[21/9] relative">
+          <Image
+            src={content.heroImage.src}
+            alt={content.heroImage.alt}
+            fill
+            className="object-cover"
+            priority
+          />
+          {content.heroImage.credit && (
+            <div className="absolute bottom-2 right-3 text-[10px] text-white/70">
+              {content.heroImage.credit}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Header */}
       <div className="mt-5 mb-4">
@@ -100,15 +115,17 @@ export default async function FellowshipDetailPage({ params }: { params: Promise
           {/* Overview */}
           {content.overview && (
             <>
-              <SectionHeading>Overview</SectionHeading>
+              <SectionHeading icon={BookOpen}>Overview</SectionHeading>
               <Prose text={content.overview} />
             </>
           )}
 
+          {content.pullQuotes?.[0] && <PullQuote>{content.pullQuotes[0]}</PullQuote>}
+
           {/* How it works */}
           {content.howItWorks && (
             <>
-              <SectionHeading>How it works</SectionHeading>
+              <SectionHeading icon={Compass}>How it works</SectionHeading>
               <Prose text={content.howItWorks} />
             </>
           )}
@@ -116,9 +133,19 @@ export default async function FellowshipDetailPage({ params }: { params: Promise
           {/* What to expect */}
           {content.whatToExpect && (
             <>
-              <SectionHeading>What to expect at a meeting</SectionHeading>
+              <SectionHeading icon={Users}>What to expect at a meeting</SectionHeading>
               <Prose text={content.whatToExpect} />
             </>
+          )}
+
+          {content.pullQuotes?.[1] && <PullQuote>{content.pullQuotes[1]}</PullQuote>}
+
+          {/* Literature */}
+          {content.literature && content.literature.length > 0 && (
+            <section>
+              <SectionHeading icon={Library}>Key literature</SectionHeading>
+              <LiteratureGrid books={content.literature} />
+            </section>
           )}
 
           {/* Best for / Not ideal if */}
@@ -153,8 +180,10 @@ export default async function FellowshipDetailPage({ params }: { params: Promise
             </div>
           )}
 
+          {content.pullQuotes?.[2] && <PullQuote>{content.pullQuotes[2]}</PullQuote>}
+
           {/* Meeting finders */}
-          <SectionHeading>Find a meeting</SectionHeading>
+          <SectionHeading icon={MapPin}>Find a meeting</SectionHeading>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {content.meetingFinders.map(mf => (
               <a
@@ -178,7 +207,7 @@ export default async function FellowshipDetailPage({ params }: { params: Promise
           {/* FAQs */}
           {content.faqs && content.faqs.length > 0 && (
             <>
-              <SectionHeading>Frequently asked questions</SectionHeading>
+              <SectionHeading icon={HelpCircle}>Frequently asked questions</SectionHeading>
               <div className="space-y-0 divide-y divide-[var(--border)] border border-[var(--border)] rounded-xl overflow-hidden">
                 {content.faqs.map((faq, i) => (
                   <details key={i} className="group">
