@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import AuthAwareCTA from "@/components/auth/AuthAwareCTA";
 
 export const metadata: Metadata = {
   title: "The Program — Work your program every day | SoberAnchor",
@@ -190,12 +191,13 @@ export default function ProgramPage() {
                 >
                   Start working your program →
                 </Link>
-                <Link
-                  href="/?auth=login"
+                <AuthAwareCTA
+                  signedOutHref="/?auth=login"
+                  signedInHref="/my-recovery"
                   className="border border-white/35 text-white font-bold px-7 py-3.5 rounded-xl hover:border-white hover:bg-white/10 transition-colors text-[15px]"
                 >
                   Sign in
-                </Link>
+                </AuthAwareCTA>
               </div>
               <div className="flex gap-5 flex-wrap text-[12.5px] text-white/65">
                 <span>🔒 Anonymous by default</span>
@@ -807,13 +809,14 @@ export default function ProgramPage() {
                   </li>
                 ))}
               </ul>
-              <Link
-                href="/?auth=signup"
+              <AuthAwareCTA
+                signedOutHref="/?auth=signup"
+                signedInHref="/my-recovery"
                 className="block w-full py-3 rounded-[10px] text-sm font-bold text-center text-navy bg-white hover:bg-navy hover:text-white transition-colors"
                 style={{ border: "1.5px solid var(--navy)" }}
               >
                 Get started free
-              </Link>
+              </AuthAwareCTA>
             </div>
 
             {/* Pro card */}
@@ -925,12 +928,13 @@ export default function ProgramPage() {
             Free to start. Anonymous by default. Delete anytime. Everything built to
             help you show up to your recovery — one day at a time.
           </p>
-          <Link
-            href="/?auth=signup"
+          <AuthAwareCTA
+            signedOutHref="/?auth=signup"
+            signedInHref="/my-recovery"
             className="inline-flex items-center gap-2 bg-teal text-white font-bold px-7 py-3.5 rounded-xl hover:opacity-90 transition-opacity text-[15px]"
           >
             Create your free account →
-          </Link>
+          </AuthAwareCTA>
         </div>
       </section>
     </>
