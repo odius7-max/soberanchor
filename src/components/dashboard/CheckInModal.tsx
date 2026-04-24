@@ -387,7 +387,7 @@ export default function CheckInModal({ userId, onClose, hasActiveSponsor = false
                   onBlur={e => (e.target.style.borderColor = 'var(--border)')}
                 />
                 <div style={{ fontSize: 11, color: 'var(--mid)', marginTop: 4 }}>
-                  {CHECKIN_COPY.noteHelper}
+                  {hasActiveSponsor ? CHECKIN_COPY.noteHelperShared : CHECKIN_COPY.noteHelperPrivate}
                 </div>
               </div>
 
