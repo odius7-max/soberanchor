@@ -191,7 +191,7 @@ export default function ProgramPage() {
                   Start working your program →
                 </Link>
                 <Link
-                  href="/auth/signin"
+                  href="/?auth=login"
                   className="border border-white/35 text-white font-bold px-7 py-3.5 rounded-xl hover:border-white hover:bg-white/10 transition-colors text-[15px]"
                 >
                   Sign in
@@ -808,7 +808,7 @@ export default function ProgramPage() {
                 ))}
               </ul>
               <Link
-                href="/auth/signin"
+                href="/?auth=signup"
                 className="block w-full py-3 rounded-[10px] text-sm font-bold text-center text-navy bg-white hover:bg-navy hover:text-white transition-colors"
                 style={{ border: "1.5px solid var(--navy)" }}
               >
@@ -926,7 +926,7 @@ export default function ProgramPage() {
             help you show up to your recovery — one day at a time.
           </p>
           <Link
-            href="/auth/signin"
+            href="/?auth=signup"
             className="inline-flex items-center gap-2 bg-teal text-white font-bold px-7 py-3.5 rounded-xl hover:opacity-90 transition-opacity text-[15px]"
           >
             Create your free account →
