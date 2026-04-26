@@ -72,7 +72,7 @@ export default function UpgradeToProModal({ onClose }: Props) {
           href="/upgrade"
           style={{ display: 'block', background: 'var(--teal)', color: '#fff', borderRadius: 10, padding: '14px', fontSize: 15, fontWeight: 600, fontFamily: 'var(--font-body)', marginBottom: 10, letterSpacing: '-0.2px', textDecoration: 'none', textAlign: 'center' }}
         >
-          See pricing
+          Upgrade to Pro →
         </Link>
         <button
           onClick={onClose}
