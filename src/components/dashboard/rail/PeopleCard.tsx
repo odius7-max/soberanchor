@@ -3,7 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AddSponseeModal from '../AddSponseeModal'
+import UpgradeToProModal from '../UpgradeToProModal'
 import { createClient } from '@/lib/supabase/client'
+import { useSubscription } from '@/hooks/useSponsorAccess'
 import type { ActiveSponsor, SponseeFull } from '../DashboardShell'
 
 interface Props {
@@ -55,7 +57,14 @@ export default function PeopleCard({ userId, displayName, activeSponsors, sponse
   const router = useRouter()
   const [showFindSponsor, setShowFindSponsor] = useState(false)
   const [showAddSponsee, setShowAddSponsee] = useState(false)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [unlinking, setUnlinking] = useState<string | null>(null)
+
+  // Pre-check at intent: if a Free sponsor at cap clicks "+ Invite sponsee",
+  // we open UpgradeToProModal directly instead of walking them through the
+  // search form only to disable Send. AddSponseeModal's Send-disable + the
+  // server 402 remain as defensive fallbacks.
+  const { canAddSponsee } = useSubscription(userId)
 
   const hasSponsor = activeSponsors.length > 0
   const visibleSponsees = sponsees.slice(0, SPONSEE_DISPLAY_LIMIT)
@@ -203,7 +212,17 @@ export default function PeopleCard({ userId, displayName, activeSponsors, sponse
         {/* Action row */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
           {isAvailableSponsor && canSponsor && (
-            <button type="button" onClick={() => setShowAddSponsee(true)} style={secondaryBtn}>
+            <button
+              type="button"
+              onClick={() => {
+                if (!canAddSponsee) {
+                  setShowUpgradeModal(true)
+                  return
+                }
+                setShowAddSponsee(true)
+              }}
+              style={secondaryBtn}
+            >
               + Invite sponsee
             </button>
           )}
@@ -251,6 +270,9 @@ export default function PeopleCard({ userId, displayName, activeSponsors, sponse
           onClose={() => setShowAddSponsee(false)}
           sponsorName={displayName}
         />
+      )}
+      {showUpgradeModal && (
+        <UpgradeToProModal onClose={() => setShowUpgradeModal(false)} />
       )}
     </>
   )

@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import AddSponseeModal from './AddSponseeModal'
+import UpgradeToProModal from './UpgradeToProModal'
 import PendingRequests from './PendingRequests'
 import type { PendingRequest } from './PendingRequests'
 import { createClient } from '@/lib/supabase/client'
@@ -694,7 +695,8 @@ interface Props {
 
 export default function SponsorView({ sponsees, pendingRequests, displayName, userId }: Props) {
   const [showAddModal, setShowAddModal] = useState(false)
-  const { isPro, isFounding } = useSubscription(userId)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const { isPro, isFounding, canAddSponsee } = useSubscription(userId)
 
   const today = new Date().toISOString().slice(0, 10)
   const pendingTotal = sponsees.reduce((s, sp) => s + sp.pendingReviews, 0)
@@ -760,7 +762,16 @@ export default function SponsorView({ sponsees, pendingRequests, displayName, us
         <div className="sponsor-util-stats">
           <strong>{sponsees.length}</strong> active sponsee{sponsees.length !== 1 ? 's' : ''} · <strong>{pendingTotal}</strong> review{pendingTotal !== 1 ? 's' : ''} pending · <strong>{checkInsToday}</strong> checked in today
         </div>
-        <button onClick={() => setShowAddModal(true)} className="sponsor-util-add">
+        <button
+          onClick={() => {
+            if (!canAddSponsee) {
+              setShowUpgradeModal(true)
+              return
+            }
+            setShowAddModal(true)
+          }}
+          className="sponsor-util-add"
+        >
           + Add Sponsee
         </button>
       </div>
@@ -804,6 +815,7 @@ export default function SponsorView({ sponsees, pendingRequests, displayName, us
       {dashboardContent}
 
       {showAddModal && <AddSponseeModal userId={userId} onClose={() => setShowAddModal(false)} sponsorName={displayName} />}
+      {showUpgradeModal && <UpgradeToProModal onClose={() => setShowUpgradeModal(false)} />}
     </div>
   )
 }
