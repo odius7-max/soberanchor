@@ -28,6 +28,19 @@ export async function POST(request: NextRequest) {
 
     const admin = createAdminClient()
 
+    // Entitlement gate — the prospective sponsor here is the *target* user,
+    // not the requester. A Free sponsee can request a Pro sponsor; they cannot
+    // request a Free sponsor who is already at their 1-active-sponsee cap.
+    // We surface a friendly capacity message rather than upgrade pressure
+    // (it isn't the sponsee's decision to upgrade someone else's plan).
+    const { data: subState } = await admin.rpc('get_subscription_state', { p_user_id: sponsorUserId })
+    if (subState && !subState.can_add_sponsee) {
+      return NextResponse.json({
+        error: 'sponsor_at_capacity',
+        message: 'This sponsor has reached their sponsee capacity right now. Try a different sponsor, or check back later.',
+      }, { status: 402 })
+    }
+
     // Per-fellowship duplicate check
     const dupQuery = admin
       .from('sponsor_relationships')

@@ -27,6 +27,18 @@ export async function POST(request: NextRequest) {
 
     const admin = createAdminClient()
 
+    // Entitlement gate — current user is the prospective sponsor here.
+    // Free tier supports 1 active sponsee; Pro/Founding are unlimited.
+    const { data: subState } = await admin.rpc('get_subscription_state', { p_user_id: user.id })
+    if (subState && !subState.can_add_sponsee) {
+      return NextResponse.json({
+        error: 'sponsee_limit_reached',
+        message: 'Free tier supports 1 active sponsee. Upgrade to Pro for unlimited.',
+        sponsee_count: subState.sponsee_count,
+        is_pro:        subState.is_pro,
+      }, { status: 402 })
+    }
+
     // Per-fellowship duplicate check (DB constraint is the backstop, this gives a clear message)
     const dupQuery = admin
       .from('sponsor_relationships')

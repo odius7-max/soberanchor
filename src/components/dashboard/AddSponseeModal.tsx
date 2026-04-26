@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { SearchResult, ExistingRelationship } from '@/app/dashboard/sponsor-search-types'
+import { useSubscription } from '@/hooks/useSponsorAccess'
+import UpgradeToProModal from './UpgradeToProModal'
 
 interface FellowshipOption { id: string; abbreviation: string; name: string }
 
@@ -56,7 +58,15 @@ export default function AddSponseeModal({ onClose, mode = 'add_sponsee', sponsor
   const [error, setError] = useState<string | null>(null)
   const [fellowships, setFellowships] = useState<FellowshipOption[]>([])
   const [selectedFellowshipId, setSelectedFellowshipId] = useState<string>('')
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [capacityMessage, setCapacityMessage] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // For sponsor-initiated adds, the cap is on the current user. We disable the
+  // Send button proactively when they're already at the limit so the 402 is a
+  // backstop rather than the primary signal.
+  const { canAddSponsee, loading: subLoading } = useSubscription(userId)
+  const blockedByCap = !isFindSponsor && !subLoading && !canAddSponsee
 
   useEffect(() => {
     inputRef.current?.focus()
@@ -109,6 +119,7 @@ export default function AddSponseeModal({ onClose, mode = 'add_sponsee', sponsor
   function handleSend() {
     if (!result?.found) return
     setError(null)
+    setCapacityMessage(null)
     const fid = selectedFellowshipId || null
     startTransition(async () => {
       try {
@@ -124,6 +135,19 @@ export default function AddSponseeModal({ onClose, mode = 'add_sponsee', sponsor
           body: JSON.stringify(payload),
         })
         const data = await res.json().catch(() => ({}))
+
+        if (res.status === 402) {
+          if (data.error === 'sponsee_limit_reached') {
+            // Sponsor-initiated: current user is at their own cap.
+            setShowUpgradeModal(true)
+          } else {
+            // Sponsee-initiated against a sponsor at capacity. No upgrade
+            // pressure — that isn't this user's decision to make.
+            setCapacityMessage(data.message ?? 'This sponsor has reached their capacity right now. Try a different sponsor, or check back later.')
+          }
+          return
+        }
+
         if (!res.ok) throw new Error(data.error ?? `Request failed (${res.status})`)
         setSent(true)
         router.refresh()
@@ -333,10 +357,21 @@ export default function AddSponseeModal({ onClose, mode = 'add_sponsee', sponsor
               <p style={{ fontSize: 13, color: 'var(--mid)', lineHeight: 1.6, marginBottom: 14 }}>
                 They&apos;ll see your request on their dashboard and can accept or decline.
               </p>
+              {blockedByCap && (
+                <div style={{ background: 'rgba(255,193,7,0.08)', border: '1px solid rgba(255,193,7,0.4)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: 'var(--navy)', lineHeight: 1.55, marginBottom: 10 }}>
+                  You&apos;ve reached your free sponsee limit. Upgrade to Pro for unlimited sponsees.
+                </div>
+              )}
+              {capacityMessage && (
+                <div style={{ background: 'rgba(255,193,7,0.08)', border: '1px solid rgba(255,193,7,0.4)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: 'var(--navy)', lineHeight: 1.55, marginBottom: 10 }}>
+                  {capacityMessage}
+                </div>
+              )}
               <button
                 onClick={handleSend}
-                disabled={isPending}
-                style={{ width: '100%', background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 8, padding: '12px', fontSize: 14, fontWeight: 600, cursor: isPending ? 'not-allowed' : 'pointer', opacity: isPending ? 0.7 : 1, fontFamily: 'var(--font-body)' }}>
+                disabled={isPending || blockedByCap}
+                title={blockedByCap ? 'Free tier supports 1 active sponsee. Upgrade to Pro for unlimited.' : undefined}
+                style={{ width: '100%', background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 8, padding: '12px', fontSize: 14, fontWeight: 600, cursor: isPending || blockedByCap ? 'not-allowed' : 'pointer', opacity: isPending || blockedByCap ? 0.5 : 1, fontFamily: 'var(--font-body)' }}>
                 {isPending ? 'Sending…' : isFindSponsor ? 'Send Sponsor Request →' : 'Send Sponsorship Request →'}
               </button>
             </div>
@@ -383,6 +418,9 @@ export default function AddSponseeModal({ onClose, mode = 'add_sponsee', sponsor
 
         </ModalErrorBoundary>
       </div>
+      {showUpgradeModal && (
+        <UpgradeToProModal onClose={() => setShowUpgradeModal(false)} />
+      )}
     </div>
   )
 }

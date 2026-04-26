@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import AcceptAtCapModal from './AcceptAtCapModal'
 
 export interface PendingRequest {
   id: string
@@ -31,113 +31,41 @@ export default function PendingRequests({ requests, perspective }: Props) {
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
   const [isPending, startTransition] = useTransition()
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [capModal, setCapModal] = useState<{ requesterName: string | null } | null>(null)
+  const [capacityError, setCapacityError] = useState<string | null>(null)
 
   const visible = requests.filter(r => !dismissed.has(r.id))
-  if (visible.length === 0) return null
+  if (visible.length === 0 && !capModal && !capacityError) return null
 
-  // Direct client-side Supabase — RLS enforces participant-only writes.
-  // Same pattern as PeopleCard's unlink flow.
-  async function respondDirect(id: string, accept: boolean): Promise<void> {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Not signed in')
-
-    const nowIso = new Date().toISOString()
-
-    if (!accept) {
-      // Decline path — straightforward end.
-      const { error } = await supabase
-        .from('sponsor_relationships')
-        .update({ status: 'ended', ended_at: nowIso })
-        .eq('id', id)
-      if (error) throw new Error(error.message)
-      return
-    }
-
-    // Accept path. Look up the target row so we can (a) pre-check for
-    // collisions with an existing active row and (b) end sibling duplicates
-    // after a successful accept.
-    const { data: targetRow } = await supabase
-      .from('sponsor_relationships')
-      .select('sponsor_id, sponsee_id, fellowship_id')
-      .eq('id', id)
-      .maybeSingle()
-
-    // Pre-check: does an active row already exist for (sponsee_id, fellowship_id)?
-    // That would collide on idx_sponsor_per_fellowship (or, when fellowship_id
-    // IS NULL, unique_active_pair_null_fellowship). If so, silently mark this
-    // pending as 'ended' — accepting it is impossible without ending the
-    // other sponsor first.
-    if (targetRow) {
-      const conflictQ = supabase
-        .from('sponsor_relationships')
-        .select('id')
-        .eq('sponsee_id', targetRow.sponsee_id)
-        .eq('status', 'active')
-      const { data: existingActive } = targetRow.fellowship_id
-        ? await conflictQ.eq('fellowship_id', targetRow.fellowship_id).maybeSingle()
-        : await conflictQ.is('fellowship_id', null).maybeSingle()
-
-      if (existingActive) {
-        const { error } = await supabase
-          .from('sponsor_relationships')
-          .update({ status: 'ended', ended_at: nowIso })
-          .eq('id', id)
-        if (error) throw new Error(error.message)
-        return
-      }
-    }
-
-    const { error } = await supabase
-      .from('sponsor_relationships')
-      .update({ status: 'active', started_at: nowIso })
-      .eq('id', id)
-    if (error) {
-      // Defensive: unique-constraint violations can still land here under a
-      // concurrent write. Translate to the same silent-end outcome rather
-      // than surfacing "duplicate key violates unique constraint" to the user.
-      const msg = error.message || ''
-      if (/duplicate key|unique constraint/i.test(msg)) {
-        await supabase
-          .from('sponsor_relationships')
-          .update({ status: 'ended', ended_at: nowIso })
-          .eq('id', id)
-        return
-      }
-      throw new Error(msg)
-    }
-
-    // Auto-end sibling pending rows for the same pair so a second "Accept"
-    // card can never appear for a relationship that's already active.
-    if (targetRow) {
-      const siblingQ = supabase
-        .from('sponsor_relationships')
-        .update({ status: 'ended', ended_at: nowIso })
-        .eq('sponsor_id', targetRow.sponsor_id)
-        .eq('sponsee_id', targetRow.sponsee_id)
-        .eq('status', 'pending')
-        .neq('id', id)
-      const { error: sibErr } = targetRow.fellowship_id
-        ? await siblingQ.eq('fellowship_id', targetRow.fellowship_id)
-        : await siblingQ.is('fellowship_id', null)
-      if (sibErr) console.warn('[PendingRequests] sibling cleanup failed', sibErr)
-    }
-
-    // If we're accepting AS the sponsor, flip is_available_sponsor so the
-    // Sponsees tab becomes available.
-    if (perspective === 'as_sponsor') {
-      await supabase
-        .from('user_profiles')
-        .update({ is_available_sponsor: true })
-        .eq('id', user.id)
-    }
-  }
-
+  // Routed through /api/dashboard/respond-sponsor-request so the cap check
+  // (get_subscription_state.can_add_sponsee on the prospective sponsor) runs
+  // server-side. The route handles conflict detection and sibling cleanup.
   function respond(id: string, accept: boolean) {
     setActiveId(id)
+    setCapacityError(null)
     startTransition(async () => {
       try {
-        await respondDirect(id, accept)
+        const res = await fetch('/api/dashboard/respond-sponsor-request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ relationshipId: id, accept }),
+        })
+        const data = await res.json().catch(() => ({}))
+
+        if (res.status === 402 && accept) {
+          // Cap reached. Sponsor side gets the contextual upgrade modal;
+          // sponsee side gets a friendly inline capacity message. Either way
+          // we leave the request visible so the user can retry after acting.
+          if (data.error === 'sponsee_limit_reached' && perspective === 'as_sponsor') {
+            setCapModal({ requesterName: data.requesterName ?? null })
+          } else {
+            setCapacityError(data.message ?? 'This request can’t be accepted right now.')
+          }
+          return
+        }
+
+        if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`)
+
         setDismissed(prev => new Set([...prev, id]))
         router.refresh()
       } catch (err) {
@@ -151,6 +79,17 @@ export default function PendingRequests({ requests, perspective }: Props) {
 
   return (
     <div style={{ marginBottom: 20 }}>
+      {capacityError && (
+        <div style={{ background: 'rgba(255,193,7,0.08)', border: '1.5px solid rgba(255,193,7,0.4)', borderRadius: 12, padding: '12px 16px', marginBottom: 12, fontSize: 13, color: 'var(--navy)', lineHeight: 1.55 }}>
+          {capacityError}
+        </div>
+      )}
+      {capModal && (
+        <AcceptAtCapModal
+          requesterName={capModal.requesterName}
+          onClose={() => setCapModal(null)}
+        />
+      )}
       {visible.map(req => {
         const loading = activeId === req.id && isPending
         const label = perspective === 'as_sponsee'
