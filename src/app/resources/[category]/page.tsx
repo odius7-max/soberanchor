@@ -111,37 +111,40 @@ export default async function CategoryPage({
                 {articles.length} article{articles.length !== 1 ? "s" : ""}
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {articles.map((a) => (
-                  <Link
-                    key={a.id}
-                    href={`/resources/${category}/${a.slug}`}
-                    className="bg-white border border-border rounded-[14px] p-7 card-hover block"
-                  >
-                    <h3
-                      className="text-xl font-semibold mb-2"
-                      style={{
-                        fontFamily: "var(--font-display)",
-                        color: "var(--navy)",
-                        letterSpacing: "-0.3px",
-                      }}
+                {articles.map((a) => {
+                  const href = a.slug ? `/resources/${category}/${a.slug}` : `/resources/${category}`;
+                  return (
+                    <Link
+                      key={a.id}
+                      href={href}
+                      className="bg-white border border-border rounded-[14px] p-7 card-hover block"
                     >
-                      {a.title}
-                    </h3>
-                    {a.excerpt && (
-                      <p className="text-sm text-mid leading-relaxed mb-3 line-clamp-3">
-                        {a.excerpt}
-                      </p>
-                    )}
-                    <div className="flex items-center justify-between mt-auto">
-                      <span className="text-[13px] text-mid">
-                        {a.author ?? "SoberAnchor Team"} · {readTime(a.body)} min
-                      </span>
-                      <span className="text-teal font-semibold text-sm">
-                        Read →
-                      </span>
-                    </div>
-                  </Link>
-                ))}
+                      <h3
+                        className="text-xl font-semibold mb-2"
+                        style={{
+                          fontFamily: "var(--font-display)",
+                          color: "var(--navy)",
+                          letterSpacing: "-0.3px",
+                        }}
+                      >
+                        {a.title}
+                      </h3>
+                      {a.excerpt && (
+                        <p className="text-sm text-mid leading-relaxed mb-3 line-clamp-3">
+                          {a.excerpt}
+                        </p>
+                      )}
+                      <div className="flex items-center justify-between mt-auto">
+                        <span className="text-[13px] text-mid">
+                          {a.author ?? "SoberAnchor Team"} · {readTime(a.body)} min
+                        </span>
+                        <span className="text-teal font-semibold text-sm">
+                          Read →
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             </>
           )}

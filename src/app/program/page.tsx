@@ -865,7 +865,7 @@ export default function ProgramPage() {
                 href="/upgrade"
                 className="block w-full py-3 rounded-[10px] text-sm font-bold text-center text-white bg-teal hover:opacity-90 transition-opacity"
               >
-                Try Pro — 14 day trial
+                View Pro options
               </Link>
             </div>
           </div>

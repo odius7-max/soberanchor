@@ -116,10 +116,11 @@ export default async function ResourcesPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {featured.map((a) => {
                 const cat = pillarToCategory(a.pillar ?? "");
+                const href = a.slug ? `/resources/${cat}/${a.slug}` : `/resources/${cat}`;
                 return (
                   <Link
                     key={a.id}
-                    href={`/resources/${cat}/${a.slug}`}
+                    href={href}
                     className="bg-white border border-border rounded-[14px] p-7 card-hover block"
                   >
                     {a.pillar && (

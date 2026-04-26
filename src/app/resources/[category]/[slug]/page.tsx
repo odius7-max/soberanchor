@@ -191,31 +191,38 @@ export default async function ArticlePage({
               Related articles
             </h2>
             <div className="space-y-4">
-              {related.map((r) => (
-                <Link
-                  key={r.id}
-                  href={`/resources/${pillarToCategory(r.pillar ?? "")}/${r.slug}`}
-                  className="bg-white border border-border rounded-[14px] p-5 card-hover flex justify-between items-center gap-4"
-                >
-                  <div>
-                    <div
-                      className="font-semibold text-[16px] mb-0.5"
-                      style={{
-                        fontFamily: "var(--font-display)",
-                        color: "var(--navy)",
-                      }}
-                    >
-                      {r.title}
+              {related.map((r) => {
+                const relatedCategory = pillarToCategory(r.pillar ?? "");
+                const href = r.slug
+                  ? `/resources/${relatedCategory}/${r.slug}`
+                  : `/resources/${relatedCategory}`;
+
+                return (
+                  <Link
+                    key={r.id}
+                    href={href}
+                    className="bg-white border border-border rounded-[14px] p-5 card-hover flex justify-between items-center gap-4"
+                  >
+                    <div>
+                      <div
+                        className="font-semibold text-[16px] mb-0.5"
+                        style={{
+                          fontFamily: "var(--font-display)",
+                          color: "var(--navy)",
+                        }}
+                      >
+                        {r.title}
+                      </div>
+                      <div className="text-[13px] text-mid">
+                        {r.author ?? "SoberAnchor Team"} · {readTime(r.body)} min
+                      </div>
                     </div>
-                    <div className="text-[13px] text-mid">
-                      {r.author ?? "SoberAnchor Team"} · {readTime(r.body)} min
-                    </div>
-                  </div>
-                  <span className="text-teal font-semibold text-sm shrink-0">
-                    Read →
-                  </span>
-                </Link>
-              ))}
+                    <span className="text-teal font-semibold text-sm shrink-0">
+                      Read →
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </section>

@@ -399,7 +399,7 @@ function InviteComposer({ email, senderName, direction }: { email: string; sende
   const defaultBody = isInvitingSponsor
     ? `Hey,
 
-I'd like you to be my sponsor through SoberAnchor. It keeps us connected with daily check-ins, step work, and meeting tracking — all in one place. Sponsors get a free 30-day trial.
+I'd like you to be my sponsor through SoberAnchor. It keeps us connected with daily check-ins, step work, and meeting tracking — all in one place.
 
 Click below to create your account. You'll see my request waiting when you sign in — no searching, just tap Accept.
 

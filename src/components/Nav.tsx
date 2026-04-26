@@ -68,6 +68,8 @@ export default function Nav() {
     { href: '/find',          label: 'Find Help'   },
     { href: '/fellowships',   label: 'Fellowships' },
     { href: '/resources',     label: 'Resources'   },
+    { href: '/our-story',     label: 'Our Story'   },
+    { href: '/for-providers', label: 'For Providers' },
   ]
 
   const isActive = (href: string) =>
@@ -112,16 +114,6 @@ export default function Nav() {
                 {l.label}
               </Link>
             ))}
-
-            {/* Our Story — shown to all users */}
-            <Link
-              href="/our-story"
-              className={`px-3.5 py-2 rounded-lg text-[13.5px] font-medium transition-colors whitespace-nowrap ${
-                pathname === '/our-story' ? 'text-teal bg-[var(--teal-10)]' : 'text-dark hover:bg-warm-gray'
-              }`}
-            >
-              Our Story
-            </Link>
           </div>
 
           {/* Desktop auth */}
@@ -267,16 +259,6 @@ export default function Nav() {
               {l.label}
             </Link>
           ))}
-
-          <Link
-            href="/our-story"
-            onClick={() => setMobileOpen(false)}
-            className={`block py-3.5 text-[15px] font-medium border-b border-[var(--border)] ${
-              pathname === '/our-story' ? 'text-teal' : 'text-dark'
-            }`}
-          >
-            Our Story
-          </Link>
 
           {!loading && (
             user ? (
