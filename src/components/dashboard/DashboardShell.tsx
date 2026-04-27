@@ -124,7 +124,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
   const { ref: modeScrollRef,  fadeLeft: modeFadeLeft,  fadeRight: modeFadeRight  } = useScrollFade()
   const { ref: tabsScrollRef,  fadeLeft: tabsFadeLeft,  fadeRight: tabsFadeRight  } = useScrollFade()
 
-  const displayName = profile?.display_name ?? 'Friend'
+  const displayName = profile?.display_name?.trim() || ''
   // is_available_sponsor = "I will accept new sponsees" (user toggle in Settings).
   // hasActiveSponsees = "I currently have at least one live sponsee relationship".
   // The two can diverge: user can toggle availability off while keeping existing sponsees.

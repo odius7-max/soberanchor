@@ -43,11 +43,15 @@ export default function Footer() {
               Directory
             </h4>
             <div className="flex flex-col gap-1">
-              {["Treatment Centers", "Sober Living", "Meetings", "Therapists"].map(
-                (label) => (
+              {[
+                ["/find", "Treatment Centers"],
+                ["/find", "Sober Living"],
+                ["/fellowships", "Fellowships"],
+                ["/find", "Therapists"],
+              ].map(([href, label]) => (
                   <Link
-                    key={label}
-                    href="/find"
+                    key={`${href}-${label}`}
+                    href={href}
                     className="text-white/60 text-sm py-1 hover:text-white transition-colors"
                   >
                     {label}

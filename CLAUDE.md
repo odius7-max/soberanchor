@@ -129,8 +129,8 @@ the pattern is reproducible. Use this decision tree instead:
 - All prompts must be self-contained (no external book/page references)
 
 ### Navigation
-- Authenticated nav: Find Help, Meetings, Resources, For Providers, My Recovery pill
-- Unauthenticated nav: Find Help, Meetings, Resources, Our Story, For Providers, Sign In, Get Started
+- Authenticated nav: Find Help, Fellowships, Resources, For Providers, My Recovery pill
+- Unauthenticated nav: Find Help, Fellowships, Resources, Our Story, For Providers, Sign In, Get Started
 - My Recovery pill format: "My Recovery | [display_name] ▾" — no avatar circle
 - Dropdown order: Dashboard, Profile, Settings, Sign Out (with divider before Sign Out)
 - Provider Dashboard only shows if user has provider_accounts record

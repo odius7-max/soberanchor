@@ -308,7 +308,7 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
               suppressHydrationWarning
               style={{ fontSize: 22, fontWeight: 600, color: '#fff', letterSpacing: '-0.3px', marginBottom: 16 }}
             >
-              {greeting}, {displayName} 👋
+              {displayName ? `${greeting}, ${displayName}` : `${greeting}!`} 👋
             </div>
 
             {/* Program table or empty-state CTA */}
