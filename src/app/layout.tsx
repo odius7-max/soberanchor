@@ -3,6 +3,7 @@ import "./globals.css";
 import Providers from "./providers";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
+import AuthHydrationListener from "@/components/auth/AuthHydrationListener";
 
 export const metadata: Metadata = {
   title: "SoberAnchor — Your Anchor to Sober Living",
@@ -29,6 +30,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <Providers>
+          <AuthHydrationListener />
           <Nav />
           <main className="flex-1">{children}</main>
           <Footer />
