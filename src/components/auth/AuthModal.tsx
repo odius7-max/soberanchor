@@ -130,7 +130,13 @@ export default function AuthModal() {
     if (password.length < 8) { setError('Password must be at least 8 characters.'); return }
     if (password !== confirm) { setError('Passwords do not match.'); return }
     setLoading(true); setError(null)
-    const { data, error: err } = await supabase.auth.signUp({ email: email.trim(), password })
+    const { data, error: err } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/my-recovery`,
+      },
+    })
     setLoading(false)
     if (err) { setError(friendlyAuthError(err.message)); return }
     // If email confirmation is required, user won't have a session yet
