@@ -13,6 +13,7 @@ import Link from 'next/link'
 import CheckInReportModal from './CheckInReportModal'
 import StepWorkReportModal from './StepWorkReportModal'
 import MeetingReportModal from './MeetingReportModal'
+import { getNextMilestone, fmtSobrietyDuration } from '@/lib/sobriety'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -23,8 +24,6 @@ const MOOD_META: Record<string, { emoji: string; label: string; color: string }>
   struggling: { emoji: '😔', label: 'Struggling', color: '#E67E22' },
   crisis:     { emoji: '😰', label: 'Crisis',     color: '#C0392B' },
 }
-
-const MILESTONE_DAYS = [7, 14, 21, 30, 60, 90, 120, 180, 270, 365, 500, 730, 1000, 1095, 1461, 1826, 2557, 3650]
 
 // ─── Utilities ───────────────────────────────────────────────────────────────
 
@@ -84,27 +83,6 @@ function calcStreak(history: SponseeCheckIn[]): { current: number; longest: numb
     else streak = 1
   }
   return { current, longest }
-}
-
-function fmtMilestoneLabel(days: number): string {
-  if (days < 365) return `${days} Days`
-  const years = Math.round(days / 365)
-  return `${years} Year${years !== 1 ? 's' : ''}`
-}
-
-function getNextMilestone(sobrietyDate: string | null) {
-  const days = calcDays(sobrietyDate)
-  if (days === null) return null
-  const next = MILESTONE_DAYS.find(m => m > days)
-  if (!next) return null
-  const daysAway = next - days
-  const target = new Date()
-  target.setDate(target.getDate() + daysAway)
-  return {
-    label: fmtMilestoneLabel(next),
-    daysAway,
-    targetDate: target.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-  }
 }
 
 // ─── Mood Trend ───────────────────────────────────────────────────────────────
@@ -283,8 +261,21 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
   const lastCheckIn = sponsee.checkInHistory[0] ?? null
   const mood = lastCheckIn?.mood ? MOOD_META[lastCheckIn.mood] : null
   const days = calcDays(sponsee.sobrietyDate)
+  const sobrietyDuration = useMemo(
+    () => (sponsee.sobrietyDate ? fmtSobrietyDuration(sponsee.sobrietyDate) : null),
+    [sponsee.sobrietyDate]
+  )
   const streak = useMemo(() => calcStreak(sponsee.checkInHistory), [sponsee.checkInHistory])
-  const nextM = useMemo(() => getNextMilestone(sponsee.sobrietyDate), [sponsee.sobrietyDate])
+  const nextM = useMemo(
+    () => (sponsee.sobrietyDate ? getNextMilestone(sponsee.sobrietyDate) : null),
+    [sponsee.sobrietyDate]
+  )
+  const nextTargetDate = useMemo(() => {
+    if (!nextM) return null
+    const target = new Date()
+    target.setDate(target.getDate() + nextM.daysAway)
+    return target.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  }, [nextM])
   const pct = sponsee.totalSteps > 0 ? Math.round((sponsee.completedSteps / sponsee.totalSteps) * 100) : 0
   const allDone = sponsee.completedSteps >= sponsee.totalSteps && sponsee.totalSteps > 0
 
@@ -367,7 +358,7 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
                   {abbr}
                 </span>
               ))}
-              <span>{days !== null ? `${days.toLocaleString()} days sober` : 'No sobriety date'}</span>
+              <span>{sobrietyDuration ? `${sobrietyDuration} sober` : 'No sobriety date'}</span>
               {sponsee.sobrietyDate && <span style={{ color: 'var(--border)' }}>·</span>}
               {sponsee.sobrietyDate && (
                 <span>
@@ -506,7 +497,7 @@ function SponseeCard({ sponsee }: { sponsee: SponseeFull }) {
             <>
               <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--navy)' }}>{nextM.label}</div>
               <div style={{ fontSize: 11, color: 'var(--mid)', marginTop: 2 }}>
-                In {nextM.daysAway} day{nextM.daysAway !== 1 ? 's' : ''} · {nextM.targetDate}
+                In {nextM.daysAway} day{nextM.daysAway !== 1 ? 's' : ''}{nextTargetDate ? ` · ${nextTargetDate}` : ''}
               </div>
             </>
           ) : (
