@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 import { HeroCTAButtons, GetStartedButton } from "./AuthCTAButtons";
 
 const recoveryFeatures = [
@@ -29,7 +31,14 @@ const steps = [
   { n: "3", title: "Connect with a sponsor", desc: "Optional. Invite your sponsor by email, or use the tools on your own." },
 ];
 
-export default function MyRecoveryPage() {
+export default async function MyRecoveryPage() {
+  // Authenticated users belong on /dashboard (the actual app). This page is
+  // marketing for prospective users — bookmarks, direct links, and stale nav
+  // entries shouldn't dump signed-in users back into "Sign up free" CTAs.
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) redirect('/dashboard')
+
   return (
     <>
       {/* Hero */}

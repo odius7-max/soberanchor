@@ -134,7 +134,7 @@ export default function AuthModal() {
       email: email.trim(),
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/my-recovery`,
+        emailRedirectTo: `${window.location.origin}/dashboard`,
       },
     })
     setLoading(false)
