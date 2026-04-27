@@ -5,6 +5,7 @@ import Link from 'next/link'
 import SponseeDetailClient from '@/components/dashboard/SponseeDetailClient'
 import SponsorNotesSection from '@/components/dashboard/SponsorNotesSection'
 import type { SponsorTask } from '@/app/actions/sponsorTasks'
+import { daysClean } from '@/lib/sobriety'
 
 const MOOD_META: Record<string, { emoji: string; label: string; color: string }> = {
   great:      { emoji: '😊', label: 'great',      color: '#38a169' },
@@ -23,7 +24,7 @@ const STATUS_META: Record<string, { label: string; color: string; bg: string }> 
 
 function calcDays(d: string | null): number | null {
   if (!d) return null
-  return Math.floor((Date.now() - new Date(d + 'T00:00:00').getTime()) / 86400000)
+  return daysClean(d)
 }
 
 function fmtDate(s: string) {

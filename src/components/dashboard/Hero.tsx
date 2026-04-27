@@ -9,6 +9,7 @@ import type { SobrietyMilestone, Fellowship } from './DashboardBanner'
 import type { ProgramRowData } from './DashboardShell'
 import { getProgramLabel } from '@/lib/program-column'
 import ProgramPills from './ProgramPills'
+import { daysClean, fmtSobrietyShort, getNextMilestone } from '@/lib/sobriety'
 
 const STEPS = [
   { n: 1, s: 'Powerlessness' }, { n: 2, s: 'Hope' }, { n: 3, s: 'Decision' },
@@ -16,31 +17,6 @@ const STEPS = [
   { n: 7, s: 'Humility' }, { n: 8, s: 'Amends List' }, { n: 9, s: 'Amends' },
   { n: 10, s: 'Daily Inventory' }, { n: 11, s: 'Spiritual Growth' }, { n: 12, s: 'Service' },
 ]
-
-const EARLY_MILESTONES = [1, 7, 14, 30, 60, 90, 120, 180, 270]
-
-function getNextMilestone(daysClean: number): number {
-  const early = EARLY_MILESTONES.find(m => m > daysClean)
-  if (early !== undefined) return early
-  const yearsCompleted = Math.floor(daysClean / 365)
-  return (yearsCompleted + 1) * 365
-}
-
-function fmtMilestoneLabel(days: number): string {
-  if (days < 365) return `${days} Days`
-  const years = Math.round(days / 365)
-  return `${years} Year${years !== 1 ? 's' : ''}`
-}
-
-function calcDays(dateStr: string): number {
-  return Math.floor((Date.now() - new Date(dateStr + 'T00:00:00').getTime()) / 86400000)
-}
-
-function fmtSober(days: number): string {
-  if (days < 365) return `${days.toLocaleString()} days`
-  const years = Math.round(days / 365)
-  return `${years} year${years !== 1 ? 's' : ''}`
-}
 
 const FIELD_STYLE: React.CSSProperties = {
   width: '100%', fontSize: 13, padding: '9px 12px', borderRadius: 8,
@@ -123,10 +99,9 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
   const selStepData = stepWorkData[selectedFellowshipId] ?? {}
   const selStepLabel = selStepData[selCurrentStep]?.label ?? STEPS.find(s => s.n === selCurrentStep)?.s ?? null
 
-  const daysClean = (mounted && primaryMilestone) ? calcDays(primaryMilestone.sobriety_date) : null
-  const nextMDays = daysClean !== null ? getNextMilestone(daysClean) : null
-  const daysToNext = (nextMDays !== null && daysClean !== null) ? nextMDays - daysClean : null
-  const nextMLabel = nextMDays !== null ? fmtMilestoneLabel(nextMDays) : null
+  const nextM = (mounted && primaryMilestone) ? getNextMilestone(primaryMilestone.sobriety_date) : null
+  const nextMLabel = nextM?.label ?? null
+  const daysToNext = nextM?.daysAway ?? null
 
   function getFellowshipAbbr(fid: string | null): string | null {
     if (!fid) return null
@@ -223,7 +198,7 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
   })
   const programRowMap = new Map(programRows.map(r => [r.milestoneId, r]))
   const tableRows = sortedMilestones.map(m => {
-    const days = mounted ? calcDays(m.sobriety_date) : null
+    const soberLabel = mounted ? fmtSobrietyShort(m.sobriety_date) : null
     const row = programRowMap.get(m.id)
     const programLabel = row ? getProgramLabel({
       fellowshipId: row.fellowshipId,
@@ -235,7 +210,7 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
     const abbr = row?.fellowshipAbbr ?? getFellowshipAbbr(m.fellowship_id) ?? '—'
     const since = new Date(m.sobriety_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     const onEdit = () => { startEdit(m); setShowPanel(true) }
-    return { m, days, programLabel, abbr, since, onEdit }
+    return { m, soberLabel, programLabel, abbr, since, onEdit }
   })
 
   return (
@@ -266,7 +241,7 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
               {milestones.map(m => {
-                const days = mounted ? calcDays(m.sobriety_date) : 0
+                const days = mounted ? daysClean(m.sobriety_date) : 0
                 const abbr = getFellowshipAbbr(m.fellowship_id)
 
                 if (confirmDeleteId === m.id) return (
@@ -358,10 +333,10 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
                   <div className="sa-col-hdr">PROGRAM</div>
                   <div className="sa-col-hdr">SINCE</div>
                   <div />
-                  {tableRows.map(({ m, days, abbr, programLabel, since, onEdit }) => (
+                  {tableRows.map(({ m, soberLabel, abbr, programLabel, since, onEdit }) => (
                     <Fragment key={m.id}>
                       <div suppressHydrationWarning style={{ fontWeight: 700, color: '#f0c040', fontSize: 13, whiteSpace: 'nowrap' as const }}>
-                        {days !== null ? fmtSober(days) : '—'}
+                        {soberLabel ?? '—'}
                       </div>
                       <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', whiteSpace: 'nowrap' as const }}>
                         {abbr}
@@ -383,11 +358,11 @@ export default function Hero({ userId, displayName, milestones: initialMilestone
                 </div>
 
                 {/* Mobile: stacked blocks (hidden above 559px) */}
-                {tableRows.map(({ m, days, abbr, programLabel, since, onEdit }) => (
+                {tableRows.map(({ m, soberLabel, abbr, programLabel, since, onEdit }) => (
                   <div key={m.id} className="sa-hero-row-m" suppressHydrationWarning style={{ marginBottom: 8 }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
                       <div style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const, minWidth: 0 }}>
-                        <span style={{ fontWeight: 700, color: '#f0c040' }}>{days !== null ? fmtSober(days) : '—'}</span>
+                        <span style={{ fontWeight: 700, color: '#f0c040' }}>{soberLabel ?? '—'}</span>
                         <span style={{ color: 'rgba(255,255,255,0.75)' }}>{` · ${abbr} · ${programLabel}`}</span>
                       </div>
                       <button

@@ -3,13 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { daysClean } from '@/lib/sobriety'
 
 interface Fellowship { id: string; name: string; abbreviation: string | null }
 interface Milestone { id: string; label: string; sobriety_date: string; fellowship_id: string | null; is_primary: boolean | null; notes: string | null }
-
-function calcDays(d: string): number {
-  return Math.floor((Date.now() - new Date(d + 'T00:00:00').getTime()) / 86400000)
-}
 
 function fmtDate(d: string) {
   return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
@@ -134,7 +131,7 @@ export default function SobrietyMilestonesSection({ userId }: { userId: string }
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: showForm ? 16 : 0 }}>
           {milestones.map(m => {
-            const days = calcDays(m.sobriety_date)
+            const days = daysClean(m.sobriety_date)
             const fname = fellowshipName(m.fellowship_id)
             return (
               <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, border: `1.5px solid ${m.is_primary ? 'rgba(212,165,116,0.4)' : 'var(--border)'}`, background: m.is_primary ? 'rgba(212,165,116,0.04)' : '#fafaf9' }}>

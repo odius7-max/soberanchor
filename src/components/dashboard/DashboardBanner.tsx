@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useScrollFade } from '@/hooks/useScrollFade'
+import { daysClean, getNextMilestone } from '@/lib/sobriety'
 
 const QUOTES = [
   { text: "One day at a time. That's all anyone can do.", attr: "The Program" },
@@ -22,33 +23,16 @@ const STEPS = [
   { n: 10, s: 'Daily Inventory' }, { n: 11, s: 'Spiritual Growth' }, { n: 12, s: 'Service' },
 ]
 
-// Early milestones (days)
+// Early milestones used by checkIsMilestoneDay (which still lives locally —
+// it's a "today is a milestone" check, distinct from "next upcoming
+// milestone" which uses lib/sobriety.getNextMilestone). The yearly anniversary
+// check is intentionally a simple % 365 here; for next-milestone display we
+// already use the calendar-correct canonical helper.
 const EARLY_MILESTONES = [1, 7, 14, 30, 60, 90, 120, 180, 270]
 
-/** Returns the next milestone day count after daysClean (always exists — annual milestones are infinite). */
-function getNextMilestone(daysClean: number): number {
-  const early = EARLY_MILESTONES.find(m => m > daysClean)
-  if (early !== undefined) return early
-  // Annual: 365, 730, 1095, ... — find the next year boundary
-  const yearsCompleted = Math.floor(daysClean / 365)
-  return (yearsCompleted + 1) * 365
-}
-
-/** True on any milestone day. */
-function checkIsMilestoneDay(daysClean: number): boolean {
-  if (EARLY_MILESTONES.includes(daysClean)) return true
-  return daysClean > 0 && daysClean % 365 === 0
-}
-
-/**
- * Human-readable milestone label.
- * < 365 days → "X Days"
- * ≥ 365 days → "X Years" (365 = 1 Year, 730 = 2 Years, etc.)
- */
-function fmtMilestoneLabel(days: number): string {
-  if (days < 365) return `${days} Days`
-  const years = Math.round(days / 365)
-  return `${years} Year${years !== 1 ? 's' : ''}`
+function checkIsMilestoneDay(daysCount: number): boolean {
+  if (EARLY_MILESTONES.includes(daysCount)) return true
+  return daysCount > 0 && daysCount % 365 === 0
 }
 
 // Dot colors cycling through fellowship rows
@@ -70,10 +54,6 @@ function getGreeting() {
   if (h < 12) return 'Good morning'
   if (h < 17) return 'Good afternoon'
   return 'Good evening'
-}
-
-function calcDays(dateStr: string): number {
-  return Math.floor((Date.now() - new Date(dateStr + 'T00:00:00').getTime()) / 86400000)
 }
 
 function fmtDate(d: string) {
@@ -264,13 +244,13 @@ export default function DashboardBanner({
   // ── Normal banner derived state ──
   const activeMilestone = milestones[activeIdx] ?? null
   // Only compute after mount — avoids UTC vs local-timezone day-count mismatch
-  const daysClean = (mounted && activeMilestone) ? calcDays(activeMilestone.sobriety_date) : null
-  const nextMDays = daysClean !== null ? getNextMilestone(daysClean) : null
-  const daysToNext = nextMDays !== null && daysClean !== null ? nextMDays - daysClean : null
-  const nextMLabel = nextMDays !== null ? fmtMilestoneLabel(nextMDays) : null
-  const isMilestoneDay = daysClean !== null && checkIsMilestoneDay(daysClean)
+  const activeDays = (mounted && activeMilestone) ? daysClean(activeMilestone.sobriety_date) : null
+  const nextM = (mounted && activeMilestone) ? getNextMilestone(activeMilestone.sobriety_date) : null
+  const nextMLabel = nextM?.label ?? null
+  const daysToNext = nextM?.daysAway ?? null
+  const isMilestoneDay = activeDays !== null && checkIsMilestoneDay(activeDays)
   // Stable quote index (0) on SSR/initial render; correct index after mount.
-  const quote = QUOTES[mounted ? (daysClean ?? 0) % QUOTES.length : 0]
+  const quote = QUOTES[mounted ? (activeDays ?? 0) % QUOTES.length : 0]
 
   function getFellowshipAbbr(fid: string | null): string | null {
     if (!fid) return null
@@ -472,7 +452,7 @@ export default function DashboardBanner({
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
               {milestones.map(m => {
                 const badge = getFellowshipAbbr(m.fellowship_id)
-                const days = mounted ? calcDays(m.sobriety_date) : 0
+                const days = mounted ? daysClean(m.sobriety_date) : 0
 
                 if (confirmDeleteId === m.id) {
                   return (
@@ -590,7 +570,7 @@ export default function DashboardBanner({
                     {milestones.map((m, i) => {
                       const isActive = i === activeIdx
                       const abbr = getFellowshipAbbr(m.fellowship_id)
-                      const days = mounted ? calcDays(m.sobriety_date) : 0
+                      const days = mounted ? daysClean(m.sobriety_date) : 0
                       const dot = DOT_COLORS[i % DOT_COLORS.length]
 
                       return (
