@@ -69,6 +69,8 @@ export interface FacilityInsert {
   last_synced_at:      string
   services:            string[] | null
   payments:            string[] | null
+  service_detail:      Record<string, { label: string; values: string[] }> | null
+  last_enriched_at:    string
   description:         null
   email:               null
   provider_account_id: null
@@ -179,6 +181,28 @@ function parseServiceCategories(
     }
   }
   return map
+}
+
+/**
+ * Build the full service_detail map preserving every SAMHSA category and its
+ * semicolon-split values. This is the rich detail the original import parsed
+ * (into `categories`) but discarded — we now persist it for the detail page.
+ * Returns null when there are no {f1,f2,f3} object entries (legacy string arrays
+ * carry no descriptions, so there's nothing to preserve).
+ */
+function buildServiceDetail(
+  raw: Array<{ f1?: string; f2?: string; f3?: string }> | string[] | null | undefined
+): Record<string, { label: string; values: string[] }> | null {
+  if (!Array.isArray(raw)) return null
+  const out: Record<string, { label: string; values: string[] }> = {}
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue
+    const code   = (item.f2 ?? '').trim()
+    const label  = (item.f1 ?? '').trim()
+    const values = (item.f3 ?? '').split(';').map(v => v.trim()).filter(Boolean)
+    if (code && values.length) out[code] = { label, values }
+  }
+  return Object.keys(out).length > 0 ? out : null
 }
 
 /**
@@ -312,6 +336,8 @@ export function transformFacility(raw: SamhsaRawRecord): FacilityInsert | null {
     last_synced_at:      new Date().toISOString(),
     services:            serviceCodes.length > 0 ? serviceCodes : null,
     payments:            legacyPayments,
+    service_detail:      buildServiceDetail(raw.services as Array<{ f1?: string; f2?: string; f3?: string }> | string[] | null),
+    last_enriched_at:    new Date().toISOString(),
     description:         null,
     email:               null,
     provider_account_id: null,
