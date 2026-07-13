@@ -57,11 +57,17 @@ export default async function FindPage() {
     return acc
   }, {})
 
-  // Meetings — count separately so the card shows the real total
-  const [{ count: meetingsCount }, { data: meetings }] = await Promise.all([
-    supabase.from('meetings').select('*', { count: 'exact', head: true }),
-    supabase.from('meetings').select('*, fellowships(name, abbreviation)').order('day_of_week').limit(10),
-  ])
+  // Default browse content: a preview of treatment centers (premium/featured first).
+  const { data: treatment } = await supabase
+    .from('facilities')
+    .select('id, name, city, state, is_featured, is_verified, is_claimed, source')
+    .eq('facility_type', 'treatment')
+    .order('listing_tier', { ascending: false })
+    .order('is_featured', { ascending: false })
+    .order('name')
+    .limit(12)
+
+  const treatmentCount = counts['treatment'] ?? 0
 
   return (
     <>
@@ -76,7 +82,7 @@ export default async function FindPage() {
             Find what you need.
           </h1>
           <p className="text-mid text-base leading-relaxed max-w-[560px] mb-8">
-            Browse treatment centers, sober living, therapists, outpatient programs, sober venues, and meetings — all in one place.
+            Browse treatment centers, sober living, therapists, outpatient programs, and sober venues — all in one place.
           </p>
 
           {/* Category cards */}
@@ -108,9 +114,9 @@ export default async function FindPage() {
               )
             })}
 
-            {/* Meetings card */}
+            {/* Find a meeting — hand-off to fellowships' official finders (we are not a meeting finder) */}
             <Link
-              href="/find/meetings"
+              href="/fellowships"
               className="card-hover block bg-white border border-border rounded-[16px] overflow-hidden"
             >
               <div className="flex items-center gap-4 p-5">
@@ -121,11 +127,11 @@ export default async function FindPage() {
                   👥
                 </div>
                 <div className="min-w-0">
-                  <div className="font-semibold text-navy text-[15px] leading-snug">Meetings & Support Groups</div>
-                  <div className="text-mid text-[13px] mt-0.5 leading-snug">AA, NA, SMART Recovery, and more.</div>
-                  {!!meetingsCount && (
-                    <div className="text-teal text-[12px] font-semibold mt-1">{meetingsCount.toLocaleString()} meetings listed</div>
-                  )}
+                  <div className="font-semibold text-navy text-[15px] leading-snug">Find a Meeting</div>
+                  <div className="text-mid text-[13px] mt-0.5 leading-snug">
+                    Browse fellowships and their official meeting finders — AA, NA, SMART, and more.
+                  </div>
+                  <div className="text-teal text-[12px] font-semibold mt-1">Explore fellowships →</div>
                 </div>
               </div>
             </Link>
@@ -133,55 +139,67 @@ export default async function FindPage() {
         </div>
       </section>
 
-      {/* Meetings section */}
-      {meetings && meetings.length > 0 && (
-        <section id="meetings" className="px-6 pb-16 scroll-mt-24">
+      {/* Default listing: Treatment Centers */}
+      {treatment && treatment.length > 0 && (
+        <section className="px-6 pb-16">
           <div className="max-w-[1120px] mx-auto">
-            <h2
-              className="text-[22px] font-semibold mb-1"
-              style={{ fontFamily: 'var(--font-display)', color: 'var(--navy)', letterSpacing: '-0.5px' }}
-            >
-              Meetings &amp; Support Groups
-            </h2>
-            <p className="text-sm text-mid mb-5">{(meetingsCount ?? meetings!.length).toLocaleString()} meetings found</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              {meetings.map((m: any) => {
-                const fellowship = m.fellowships
-                const inner = (
+            <div className="flex items-baseline justify-between gap-4 mb-1">
+              <h2
+                className="text-[22px] font-semibold"
+                style={{ fontFamily: 'var(--font-display)', color: 'var(--navy)', letterSpacing: '-0.5px' }}
+              >
+                Treatment Centers
+              </h2>
+              <Link href="/find/treatment" className="text-teal text-sm font-semibold hover:underline whitespace-nowrap">
+                View all{treatmentCount ? ` ${treatmentCount.toLocaleString()}` : ''} →
+              </Link>
+            </div>
+            <p className="text-sm text-mid mb-5">Inpatient, residential, and detox programs.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {treatment.map((f) => (
+                <Link
+                  key={f.id}
+                  href={`/find/${f.id}`}
+                  className="card-hover block bg-white border border-border rounded-[14px] overflow-hidden"
+                >
                   <div className="flex flex-wrap">
                     <div
-                      className="shrink-0 flex items-center justify-center text-[36px]"
-                      style={{ width: 120, minHeight: 100, background: 'var(--gold-10)' }}
+                      className="shrink-0 flex items-center justify-center text-[40px]"
+                      style={{ width: 120, minHeight: 100, background: 'var(--teal-10)' }}
                     >
-                      👥
+                      🏥
                     </div>
                     <div className="flex-1 p-4 px-5 min-w-0">
-                      <h3 className="text-[15px] text-navy font-semibold">{m.name}</h3>
-                      <div className="text-[13px] text-mid mt-1">
-                        📍 {m.location_name || 'Online'}
-                        {m.day_of_week && <> · {m.day_of_week}</>}
-                        {m.start_time && <> {m.start_time}</>}
-                        {m.format && <> · {m.format}</>}
+                      <div className="flex flex-wrap gap-2 mb-1.5">
+                        {f.is_featured && (
+                          <span className="inline-flex items-center gap-1 bg-[var(--gold-10)] border border-[rgba(212,165,116,0.2)] text-[#9A7B54] text-xs font-semibold rounded-full px-3 py-0.5">
+                            ⭐ Featured
+                          </span>
+                        )}
+                        {f.is_verified && f.is_claimed && (
+                          <span className="inline-flex items-center gap-1 bg-[var(--teal-10)] border border-[var(--teal-20)] text-teal text-xs font-semibold rounded-full px-3 py-0.5">
+                            ✓ Verified
+                          </span>
+                        )}
+                        {!f.is_verified && f.source === 'samhsa' && (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-0.5" style={{ color: '#4A6785', background: 'rgba(74,103,133,0.08)', border: '1px solid rgba(74,103,133,0.2)' }}>
+                            SAMHSA Listed
+                          </span>
+                        )}
                       </div>
-                      {fellowship && (
-                        <span className="inline-block mt-2 bg-warm-gray border border-border rounded-full px-3 py-0.5 text-xs font-medium text-dark">
-                          {fellowship.abbreviation || fellowship.name}
-                        </span>
+                      <h3 className="text-[16px] text-navy font-semibold leading-snug">{f.name}</h3>
+                      {(f.city || f.state) && (
+                        <p className="text-[13px] text-mid mt-1">
+                          📍 {[f.city, f.state].filter(Boolean).join(', ')}
+                        </p>
                       )}
+                      <div className="flex justify-end mt-2">
+                        <span className="text-teal font-semibold text-sm">View Details →</span>
+                      </div>
                     </div>
                   </div>
-                )
-                return m.slug ? (
-                  <Link key={m.id} href={`/find/meetings/${m.slug}`} className="card-hover bg-white border border-border rounded-[14px] overflow-hidden block" style={{ textDecoration: 'none', color: 'inherit' }}>
-                    {inner}
-                  </Link>
-                ) : (
-                  <div key={m.id} className="card-hover bg-white border border-border rounded-[14px] overflow-hidden">
-                    {inner}
-                  </div>
-                )
-              })}
+                </Link>
+              ))}
             </div>
           </div>
         </section>
