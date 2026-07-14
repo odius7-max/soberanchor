@@ -106,6 +106,10 @@ export type SearchIntent = {
   meeting_types?: string[];
   meeting_languages?: string[];
   meeting_access?: string;
+  // Facility search facets (normalized tokens; mapped to service_detail in the route)
+  payment_types?: string[];        // medicaid, medicare, private_insurance, self_pay, military
+  care_levels?: string[];          // detox, residential, inpatient, outpatient, iop, php
+  special_populations?: string[];  // veterans, men, women, young_adult, seniors, co_occurring, trauma
 };
 
 export type MeetingResult = {

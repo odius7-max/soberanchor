@@ -162,7 +162,10 @@ Given a user's natural-language query, classify their intent and return ONLY a J
   "name_keywords": string[],
   "meeting_types": string[],
   "meeting_languages": string[],
-  "meeting_access": string
+  "meeting_access": string,
+  "payment_types": string[],
+  "care_levels": string[],
+  "special_populations": string[]
 }
 
 query_intent rules:
@@ -181,6 +184,9 @@ Field rules:
 - "meeting_types": exact values from the types[] DB field that match the query. Use the synonym map below. Leave [] if none apply.
 - "meeting_languages": exact language values from the types[] DB field. Use [] unless query mentions a language.
 - "meeting_access": "Open" if user wants open meetings, "Closed" if members-only, "" if unspecified.
+- "payment_types": array of normalized payment tokens the user mentions for a treatment center. Map: medicaid → "medicaid"; medicare → "medicare"; private insurance/BCBS/blue cross/aetna/cigna/united/"my insurance"/"take my insurance" → "private_insurance"; self pay/cash/out of pocket/private pay/no insurance → "self_pay"; tricare/military/VA insurance → "military". [] if none mentioned.
+- "care_levels": array of normalized level-of-care tokens for a treatment center. Map: detox/detoxification/withdrawal/"medically supervised withdrawal" → "detox"; residential/"live-in"/"stay overnight" → "residential"; inpatient/hospital → "inpatient"; outpatient/OP → "outpatient"; IOP/"intensive outpatient" → "iop"; PHP/"partial hospitalization"/"day program" → "php". [] if none mentioned.
+- "special_populations": array of normalized population tokens for a treatment center. Map: veterans/vets → "veterans"; men/male/"men's" → "men"; women/female/"women's"/pregnant → "women"; "young adults"/youth/teens/"college age" → "young_adult"; seniors/"older adults"/elderly → "seniors"; "dual diagnosis"/"co-occurring"/"mental health" → "co_occurring"; trauma/PTSD/abuse survivors → "trauma". [] if none mentioned.
 
 Inference rules:
 - Loved one + alcohol → fellowship_slugs includes both "aa" (for them) AND "al-anon" (for the asker)
@@ -296,7 +302,7 @@ async function classifyIntent(query: string, context: SearchContext, nowPST: Dat
     const client = new Anthropic({ apiKey });
     const msg = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 400,
+      max_tokens: 550,
       system: buildSystemPrompt(nowPST),
       messages: [{ role: "user", content: `[Context: ${CONTEXT_HINTS[context]}]\n\nQuery: ${query}` }],
     });
@@ -452,11 +458,112 @@ async function queryMeetings(
   return results.slice(0, limit);
 }
 
+// ─── Facility facet mapping ───────────────────────────────────────────────────
+// facilities.state stores 2-letter codes, and the enriched SAMHSA service_detail
+// JSONB holds payment, level-of-care, and population facts. These tables translate
+// the classifier's normalized tokens into exact DB values so search actually filters.
+
+// US state name / abbreviation → 2-letter code
+const US_STATES: Record<string, string> = {
+  alabama:"AL", alaska:"AK", arizona:"AZ", arkansas:"AR", california:"CA",
+  colorado:"CO", connecticut:"CT", delaware:"DE", "district of columbia":"DC",
+  florida:"FL", georgia:"GA", hawaii:"HI", idaho:"ID", illinois:"IL",
+  indiana:"IN", iowa:"IA", kansas:"KS", kentucky:"KY", louisiana:"LA",
+  maine:"ME", maryland:"MD", massachusetts:"MA", michigan:"MI", minnesota:"MN",
+  mississippi:"MS", missouri:"MO", montana:"MT", nebraska:"NE", nevada:"NV",
+  "new hampshire":"NH", "new jersey":"NJ", "new mexico":"NM", "new york":"NY",
+  "north carolina":"NC", "north dakota":"ND", ohio:"OH", oklahoma:"OK",
+  oregon:"OR", pennsylvania:"PA", "rhode island":"RI", "south carolina":"SC",
+  "south dakota":"SD", tennessee:"TN", texas:"TX", utah:"UT", vermont:"VT",
+  virginia:"VA", washington:"WA", "west virginia":"WV", wisconsin:"WI",
+  wyoming:"WY", "puerto rico":"PR", "washington dc":"DC", "d.c.":"DC",
+};
+const STATE_ABBRS = new Set(Object.values(US_STATES));
+
+type ResolvedLocation = { state: string | null; city: string | null };
+
+/**
+ * Resolve free-text location into a state code and/or city. "Texas"/"TX" → state,
+ * "Austin" → city, "Austin, TX" → both. This fixes the old city-only match that
+ * silently missed every state-name search.
+ */
+function resolveLocation(loc: string | null): ResolvedLocation {
+  if (!loc) return { state: null, city: null };
+  const raw = loc.trim();
+  if (!raw) return { state: null, city: null };
+
+  const parts = raw.split(",").map((s) => s.trim()).filter(Boolean);
+  if (parts.length === 2) {
+    const st = US_STATES[parts[1].toLowerCase()]
+      ?? (STATE_ABBRS.has(parts[1].toUpperCase()) ? parts[1].toUpperCase() : null);
+    return { state: st, city: parts[0] };
+  }
+
+  const lower = raw.toLowerCase();
+  if (US_STATES[lower]) return { state: US_STATES[lower], city: null };
+  if (raw.length === 2 && STATE_ABBRS.has(raw.toUpperCase())) return { state: raw.toUpperCase(), city: null };
+  return { state: null, city: raw };
+}
+
+// normalized care_level token → exact service_detail value (TC = Type of Care, SET = Service Setting)
+const CARE_LEVEL_MATCH: Record<string, { key: string; value: string }> = {
+  detox:       { key: "TC",  value: "Detoxification" },
+  residential: { key: "SET", value: "Residential/24-hour residential" },
+  inpatient:   { key: "SET", value: "Hospital inpatient/24-hour hospital inpatient" },
+  outpatient:  { key: "SET", value: "Outpatient" },
+  iop:         { key: "SET", value: "Intensive outpatient treatment" },
+  php:         { key: "SET", value: "Outpatient day treatment or partial hospitalization" },
+};
+
+// normalized payment token → exact service_detail PAY value
+const PAYMENT_MATCH: Record<string, string> = {
+  medicaid:          "Medicaid",
+  medicare:          "Medicare",
+  private_insurance: "Private health insurance",
+  self_pay:          "Cash or self-payment",
+  military:          "Federal military insurance (e.g., TRICARE)",
+};
+
+// normalized population token → exact service_detail SG value
+const POPULATION_MATCH: Record<string, string> = {
+  veterans:     "Veterans",
+  men:          "Adult men",
+  women:        "Adult women",
+  young_adult:  "Young adults",
+  seniors:      "Seniors or older adults",
+  co_occurring: "Clients with co-occurring mental and substance use disorders",
+  trauma:       "Clients who have experienced trauma",
+};
+
+/**
+ * Build a jsonb containment object for `service_detail` from the classifier's
+ * facet tokens. Different SAMHSA keys are AND-ed (facility must have all).
+ * Returns null when no facet was requested.
+ */
+function buildServiceContainment(intent: SearchIntent): Record<string, { values: string[] }> | null {
+  const acc: Record<string, string[]> = {};
+  const add = (key: string, val: string) => {
+    (acc[key] ??= []);
+    if (!acc[key].includes(val)) acc[key].push(val);
+  };
+
+  for (const t of intent.care_levels ?? [])         { const m = CARE_LEVEL_MATCH[t]; if (m) add(m.key, m.value); }
+  for (const t of intent.payment_types ?? [])       { const v = PAYMENT_MATCH[t];    if (v) add("PAY", v); }
+  for (const t of intent.special_populations ?? []) { const v = POPULATION_MATCH[t]; if (v) add("SG", v); }
+
+  const keys = Object.keys(acc);
+  if (!keys.length) return null;
+  const out: Record<string, { values: string[] }> = {};
+  for (const k of keys) out[k] = { values: acc[k] };
+  return out;
+}
+
 async function queryFacilities(
   types: string[],
-  location: string | null,
+  loc: ResolvedLocation,
   limit: number,
   nameKeywords?: string[] | null,
+  serviceContainment?: Record<string, { values: string[] }> | null,
 ): Promise<FacilityResult[]> {
   // Need at least a type filter or a name keyword to run a meaningful query
   if (!types.length && !nameKeywords?.length) return [];
@@ -471,26 +578,21 @@ async function queryFacilities(
   let q: any = supabase.from("facilities").select(FACILITY_SELECT)
     .order("is_featured", { ascending: false })
     .order("is_verified",  { ascending: false })
+    .order("name")
     .limit(limit);
 
-  if (types.length)           q = q.in("facility_type", types);
-  if (location)               q = q.ilike("city", `%${location}%`);
-  if (nameKeywords?.length)   q = q.or(facilityNameOrFilter(nameKeywords));
+  if (types.length)          q = q.in("facility_type", types);
+  if (loc.state)             q = q.eq("state", loc.state);
+  if (loc.city)              q = q.ilike("city", `%${loc.city}%`);
+  if (nameKeywords?.length)  q = q.or(facilityNameOrFilter(nameKeywords));
+  if (serviceContainment)    q = q.contains("service_detail", serviceContainment);
 
   const { data } = await q;
 
-  // Retry without location filter if no results
-  if (!data?.length && location) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let qFallback: any = supabase.from("facilities").select(FACILITY_SELECT)
-      .order("is_featured", { ascending: false })
-      .limit(limit);
-    if (types.length)         qFallback = qFallback.in("facility_type", types);
-    if (nameKeywords?.length) qFallback = qFallback.or(facilityNameOrFilter(nameKeywords));
-    const { data: fallback } = await qFallback;
-    return (fallback ?? []) as FacilityResult[];
-  }
-
+  // NOTE: intentionally NO silent location/facet fallback. If the filters match
+  // nothing, an empty result is the honest answer ("no centers match these
+  // filters") — the UI should offer to relax a filter rather than us quietly
+  // returning an unrelated, unfiltered list.
   return (data ?? []) as FacilityResult[];
 }
 
@@ -522,7 +624,9 @@ async function fetchFacilities(intent: SearchIntent, limit: number): Promise<Fac
   }
 
   const nameKeywords = intent.name_keywords?.length ? intent.name_keywords : null;
-  return queryFacilities(types, intent.location, limit, nameKeywords);
+  const loc = resolveLocation(intent.location);
+  const serviceContainment = buildServiceContainment(intent);
+  return queryFacilities(types, loc, limit, nameKeywords, serviceContainment);
 }
 
 async function fetchArticles(intent: SearchIntent, context: SearchContext): Promise<ArticleResult[]> {
@@ -704,7 +808,7 @@ async function keywordSearch(q: string, context: SearchContext): Promise<SmartSe
 
   const [meetings, facilities, articleData] = await Promise.all([
     wantsMeetings  ? queryMeetings(slugsToQuery, location, limits.meetings || 6)  : Promise.resolve([] as MeetingResult[]),
-    wantsFacilities ? queryFacilities(typesUniq, location, limits.facilities || 5) : Promise.resolve([] as FacilityResult[]),
+    wantsFacilities ? queryFacilities(typesUniq, resolveLocation(location), limits.facilities || 5) : Promise.resolve([] as FacilityResult[]),
     terms.length > 0
       ? supabase.from("articles").select("id, title, slug, excerpt, author, body, pillar").eq("is_published", true)
       : Promise.resolve({ data: null }),
