@@ -65,7 +65,7 @@ export default function Nav() {
   }
 
   const coreLinks = [
-    { href: '/find',          label: 'Find Help'   },
+    { href: '/find',          label: 'Find'        },
     { href: '/fellowships',   label: 'Fellowships' },
     { href: '/resources',     label: 'Resources'   },
     { href: '/our-story',     label: 'Our Story'   },
