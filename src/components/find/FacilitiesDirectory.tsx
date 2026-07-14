@@ -482,14 +482,14 @@ export default function FacilitiesDirectory({ facilityType, savedIds = {} }: Pro
                 <strong>We&rsquo;re actively building our {facilityType === 'sober_living' ? 'sober living' : 'therapist'} directory.</strong>{' '}
                 In the meantime, try searching on{' '}
                 <a
-                  href={`https://www.google.com/maps/search/${facilityType === 'sober_living' ? 'sober+living+homes' : 'addiction+therapist'}+near+me`}
+                  href={facilityType === 'sober_living' ? 'https://www.oxfordvacancies.com/' : 'https://www.google.com/maps/search/addiction+therapist+near+me'}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{ color: 'var(--teal)', fontWeight: 600 }}
                 >
-                  Google Maps
+                  {facilityType === 'sober_living' ? 'Oxford House vacancies' : 'Google Maps'}
                 </a>{' '}
-                for {facilityType === 'sober_living' ? 'sober living homes' : 'addiction therapists'} near you, or help us grow by{' '}
+                {facilityType === 'sober_living' ? 'for live bed openings in 3,500+ recovery homes' : 'for addiction therapists near you'}, or help us grow by{' '}
                 <Link href="/for-providers" style={{ color: 'var(--teal)', fontWeight: 600 }}>
                   suggesting a listing
                 </Link>
