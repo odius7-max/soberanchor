@@ -778,7 +778,7 @@ const FACILITY_KEYWORD_MAP: [RegExp, string[]][] = [
 
 function detectLocation(q: string): string | null {
   // Match "in [Location]" or "near [Location]" patterns
-  const m = q.match(/\b(?:in|near)\s+([A-Za-z][A-Za-z\s]{1,30?)(?=\s*(?:$|[,\.?!]|\s+(?:and|or|for|that|with|where)))/i);
+  const m = q.match(/\b(?:in|near)\s+([A-Za-z][A-Za-z\s]{1,30}?)(?=\s*(?:$|[,\.?!]|\s+(?:and|or|for|that|with|where)))/i);
   return m?.[1]?.trim() ?? null;
 }
 
