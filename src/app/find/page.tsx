@@ -84,8 +84,6 @@ async function previewFor(key: CategoryKey, limit: number): Promise<FacilityCard
       .select(CARD_SELECT)
       .eq('facility_type', 'treatment')
       .not('service_detail->DETOX', 'is', null)
-      .order('listing_tier', { ascending: false })
-      .order('is_featured', { ascending: false })
       .order('name')
       .limit(limit)
     return (data ?? []) as FacilityCard[]
@@ -94,8 +92,6 @@ async function previewFor(key: CategoryKey, limit: number): Promise<FacilityCard
     .from('facilities')
     .select(CARD_SELECT)
     .eq('facility_type', TYPE_MAP[key])
-    .order('listing_tier', { ascending: false })
-    .order('is_featured', { ascending: false })
     .order('name')
     .limit(limit)
   return (data ?? []) as FacilityCard[]
@@ -108,7 +104,6 @@ async function keywordSearch(term: string, limit: number): Promise<FacilityCard[
     .from('facilities')
     .select(`${CARD_SELECT}, facility_type`)
     .or(`name.ilike.%${clean}%,city.ilike.%${clean}%`)
-    .order('is_featured', { ascending: false })
     .order('name')
     .limit(limit)
   return (data ?? []) as FacilityCard[]

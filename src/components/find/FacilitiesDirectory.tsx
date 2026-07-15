@@ -151,7 +151,7 @@ export default function FacilitiesDirectory({ facilityType, savedIds = {} }: Pro
   const [insuranceOnlyTherapist, setInsuranceOnlyTherapist] = useState(false)
   const [telehealthOnly, setTelehealthOnly]             = useState(false)
   const [venueType, setVenueType]                       = useState('')
-  const [sort, setSort]                                 = useState('featured')
+  const [sort, setSort]                                 = useState('recommended')
 
   // Track load generation to prevent stale responses from overwriting newer ones
   const loadGenRef = useRef(0)
@@ -282,12 +282,14 @@ export default function FacilitiesDirectory({ facilityType, savedIds = {} }: Pro
         return da - db
       }
       if (sort === 'alphabetical') return a.name.localeCompare(b.name)
-      // featured: premium first, then enhanced, then featured flag, then basic
-      const tierOrder: Record<string, number> = { premium: 3, enhanced: 2, basic: 0 }
-      const tierA = tierOrder[a.listing_tier ?? 'basic'] ?? 0
-      const tierB = tierOrder[b.listing_tier ?? 'basic'] ?? 0
-      if (tierB !== tierA) return tierB - tierA
-      if (a.is_featured !== b.is_featured) return b.is_featured ? 1 : -1
+      // recommended: verified first (free/earned signal), then distance when geo
+      // is active, else name. No paid signals — see PROVIDER-PREMIUM-SPEC.md.
+      if (a.is_verified !== b.is_verified) return b.is_verified ? 1 : -1
+      if (hasGeo) {
+        const da = a._distance ?? Infinity
+        const db = b._distance ?? Infinity
+        if (da !== db) return da - db
+      }
       return a.name.localeCompare(b.name)
     })
 

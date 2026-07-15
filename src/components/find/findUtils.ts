@@ -156,7 +156,7 @@ export const QUICK_FELLOWSHIP_CHIPS: Array<{ label: string; slug: string }> = [
 ]
 
 export const FACILITY_SORT_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: 'featured', label: 'Featured' },
+  { value: 'recommended', label: 'Recommended' },
   { value: 'nearest', label: 'Nearest' },
   { value: 'alphabetical', label: 'A–Z' },
 ]

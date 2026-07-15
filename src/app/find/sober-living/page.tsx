@@ -74,8 +74,6 @@ export default async function SoberLivingPage({
     .select('id, name, city, state, is_featured, is_verified, is_claimed, source')
     .eq('facility_type', 'treatment')
     .contains('service_detail', RECOVERY_HOUSING_CONTAINMENT)
-    .order('listing_tier', { ascending: false })
-    .order('is_featured', { ascending: false })
     .order('name')
     .limit(20)
   if (stateFilter) rowsQ = rowsQ.eq('state', stateFilter)

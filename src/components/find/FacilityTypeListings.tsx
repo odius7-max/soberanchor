@@ -19,8 +19,6 @@ export default async function FacilityTypeListings({ facilityType }: Props) {
     .from('facilities')
     .select('id, name, city, state, facility_type, description, is_featured, is_verified, is_claimed, source, listing_tier')
     .eq('facility_type', facilityType)
-    .order('listing_tier', { ascending: false }) // premium → enhanced → basic
-    .order('is_featured', { ascending: false })
     .order('name')
 
   const icon = TYPE_ICONS[facilityType] ?? '📍'
