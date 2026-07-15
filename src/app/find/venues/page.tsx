@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import FacilitiesDirectory from '@/components/find/FacilitiesDirectory'
+import FeaturedBand from '@/components/find/FeaturedBand'
 import { getUserSavedIds } from '../actions'
 
 export const metadata: Metadata = { title: 'Sober Venues — SoberAnchor' }
@@ -37,6 +38,7 @@ export default async function VenuesPage() {
         </p>
       </div>
 
+      <FeaturedBand facilityType="venue" />
       <FacilitiesDirectory facilityType="venue" savedIds={savedIds} />
     </div>
   )

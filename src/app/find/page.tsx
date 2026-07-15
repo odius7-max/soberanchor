@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import DirectorySearch from '@/components/find/DirectorySearch'
 import CategoryLane, { type LaneTile } from '@/components/find/CategoryLane'
+import FeaturedBand from '@/components/find/FeaturedBand'
 
 // ── Category model ───────────────────────────────────────────────────────────
 
@@ -237,12 +238,16 @@ export default async function FindPage({ searchParams }: FindPageProps) {
           {q ? (
             <SearchResults q={q} results={searchResults} />
           ) : (
-            <CategoryPreview
-              category={category}
-              meta={activeMeta}
-              count={counts[category]}
-              results={activePreview}
-            />
+            <>
+              {/* Labeled Featured band above the organic preview (payment-blind). */}
+              <FeaturedBand facilityType={category === 'detox' ? 'treatment' : category} />
+              <CategoryPreview
+                category={category}
+                meta={activeMeta}
+                count={counts[category]}
+                results={activePreview}
+              />
+            </>
           )}
         </div>
       </section>

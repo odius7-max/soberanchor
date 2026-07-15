@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import FacilitiesDirectory from '@/components/find/FacilitiesDirectory'
+import FeaturedBand from '@/components/find/FeaturedBand'
 import { getUserSavedIds } from '../actions'
 
 export const metadata: Metadata = { title: 'Treatment Centers — SoberAnchor' }
@@ -37,6 +38,7 @@ export default async function TreatmentPage() {
         </p>
       </div>
 
+      <FeaturedBand facilityType="treatment" />
       <FacilitiesDirectory facilityType="treatment" savedIds={savedIds} />
     </div>
   )

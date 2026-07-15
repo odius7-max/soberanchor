@@ -9,6 +9,8 @@ export default function LeadForm({ facilityId, facilityName }: Props) {
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Honeypot: bots fill hidden fields; humans never see this one.
+  const [company, setCompany] = useState('')
   const [form, setForm] = useState({
     first_name: '',
     phone: '',
@@ -17,12 +19,29 @@ export default function LeadForm({ facilityId, facilityName }: Props) {
     who_for: 'self',
   })
 
+  // Basic rate limiting: a short client-side cooldown between submissions,
+  // keyed per facility (mirrors the smart-search throttle intent). The leads
+  // RLS allows anon inserts, so this is a friction guard, not the security
+  // boundary.
+  const COOLDOWN_MS = 20_000
+  function throttleKey() { return `sa_lead_ts_${facilityId}` }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    // Silently succeed for bots that trip the honeypot — never insert.
+    if (company.trim()) { setSubmitted(true); return }
     if (!form.first_name.trim() || !form.phone.trim()) {
       setError('Please enter your name and phone number.')
       return
     }
+    try {
+      const last = Number(localStorage.getItem(throttleKey()) ?? 0)
+      if (Date.now() - last < COOLDOWN_MS) {
+        setError('You just sent a request — please wait a moment before sending another.')
+        return
+      }
+    } catch { /* localStorage unavailable — proceed */ }
+
     setSubmitting(true); setError(null)
     const supabase = createClient()
     const { error: err } = await supabase.from('leads').insert({
@@ -36,6 +55,7 @@ export default function LeadForm({ facilityId, facilityName }: Props) {
     })
     setSubmitting(false)
     if (err) { setError('Something went wrong. Please try again.'); return }
+    try { localStorage.setItem(throttleKey(), String(Date.now())) } catch { /* ignore */ }
     setSubmitted(true)
   }
 
@@ -45,7 +65,7 @@ export default function LeadForm({ facilityId, facilityName }: Props) {
         <div style={{ fontSize: 40, textAlign: 'center', marginBottom: 12 }}>✅</div>
         <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 22, letterSpacing: '-0.5px', textAlign: 'center', marginBottom: 8 }} className="text-navy">Request Sent</h3>
         <p className="text-mid text-sm text-center leading-relaxed">
-          {facilityName} will be in touch shortly. If you need immediate help, call the SAMHSA National Helpline:{' '}
+          Your request went directly to {facilityName}. They&rsquo;ll be in touch shortly. If you need immediate help, call the SAMHSA National Helpline:{' '}
           <a href="tel:18006624357" className="text-teal font-semibold hover:underline">1-800-662-4357</a> (free, 24/7).
         </p>
       </div>
@@ -55,9 +75,21 @@ export default function LeadForm({ facilityId, facilityName }: Props) {
   return (
     <form onSubmit={handleSubmit} className="bg-warm-gray rounded-[14px] p-7">
       <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 22, letterSpacing: '-0.5px', marginBottom: 4 }} className="text-navy font-semibold">
-        Get in Touch
+        Request a callback
       </h3>
       <p className="text-sm text-mid mb-5">Request information about this facility. Free and confidential.</p>
+
+      {/* Honeypot — hidden from users; bots that fill it are silently dropped. */}
+      <input
+        type="text"
+        name="company"
+        tabIndex={-1}
+        autoComplete="off"
+        value={company}
+        onChange={e => setCompany(e.target.value)}
+        aria-hidden="true"
+        style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
+      />
 
       <label className="block text-[13px] font-semibold text-navy mb-1.5">First Name</label>
       <input
@@ -130,7 +162,7 @@ export default function LeadForm({ facilityId, facilityName }: Props) {
         style={{ opacity: submitting ? 0.7 : 1, cursor: submitting ? 'not-allowed' : 'pointer', border: 'none', fontFamily: 'var(--font-body)' }}>
         {submitting ? 'Sending…' : 'Request Information →'}
       </button>
-      <p className="text-xs text-mid text-center mt-2">🔒 Your information is confidential and will only be shared with this facility.</p>
+      <p className="text-xs text-mid text-center mt-2">🔒 Your request goes only to this facility. SoberAnchor never sells or shares your information, and facilities never pay per referral.</p>
     </form>
   )
 }
