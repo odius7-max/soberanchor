@@ -576,7 +576,6 @@ async function queryFacilities(
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let q: any = supabase.from("facilities").select(FACILITY_SELECT)
-    .order("is_featured", { ascending: false })
     .order("is_verified",  { ascending: false })
     .order("name")
     .limit(limit);
