@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { supabase } from "@/lib/supabase";
 import type {
   SearchIntent,
-  MeetingResult,
   FacilityResult,
   ArticleResult,
   SmartSearchResponse,
@@ -24,40 +23,16 @@ const AI_THROTTLE_MS = 3_000;
 const MAX_DAILY_AUTH = 50;
 const MAX_DAILY_ANON = 10;
 
+// Common facility-search patterns get a longer cache TTL.
 const COMMON_PATTERNS = [
-  /\baa\s+meetings?\b/i,
-  /\bna\s+meetings?\b/i,
-  /\bal.?anon\b/i,
-  /\bsmart\s+recovery\b/i,
   /\brehab\b/i,
   /\bdetox\b/i,
   /\bsober\s+living\b/i,
-  /\bgamblers?\s+anonymous\b/i,
-  /\bovereaters?\s+anonymous\b/i,
 ];
 
 function isCommonQuery(q: string): boolean {
   return COMMON_PATTERNS.some((p) => p.test(q));
 }
-
-// ─── Issue → fellowship defaults (used when Haiku doesn't classify slugs) ────
-
-const ISSUE_FELLOWSHIP_MAP: Record<string, string[]> = {
-  alcohol:         ["aa", "al-anon"],
-  opioids:         ["na", "nar-anon"],
-  gambling:        ["ga", "gam-anon"],
-  eating_disorder: ["oa", "fa"],
-  meth:            ["na", "cma"],
-  cocaine:         ["na", "ca"],
-  marijuana:       ["na", "ma"],
-  nicotine:        ["nicotine-anonymous"],
-  sex_addiction:   ["saa", "sa"],
-  debt:            ["da"],
-  internet_gaming: ["itaa", "cgaa"],
-  work:            ["aa"],
-  family_support:  ["al-anon", "nar-anon", "gam-anon"],
-  general:         ["aa", "na"],
-};
 
 // ─── Input sanitisation ───────────────────────────────────────────────────────
 
@@ -120,20 +95,6 @@ function getPSTDate(): Date {
 
 const DOW = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"] as const;
 
-/**
- * Detects whether a query is asking about today/now/near-me and returns
- * the matching day-of-week string (e.g. "Monday") or null.
- * Also handles explicit day names ("AA meetings Saturday").
- */
-function detectDayFilter(query: string, nowPST: Date): string | null {
-  if (/\b(today|tonight|this morning|this afternoon|this evening|right now|near me|nearby|close to me)\b/i.test(query)) {
-    return DOW[nowPST.getDay()];
-  }
-  const m = query.match(/\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i);
-  if (m) return m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase();
-  return null;
-}
-
 function buildSystemPrompt(nowPST: Date): string {
   const dayName   = DOW[nowPST.getDay()];
   const month     = nowPST.toLocaleString("en-US", { month: "long" });
@@ -145,7 +106,7 @@ function buildSystemPrompt(nowPST: Date): string {
 
   return `You are a recovery resource classifier for SoberAnchor.com, a comprehensive addiction recovery directory.
 
-Today is ${dateStr}. The current time is ${timeStr}. When users ask for meetings today, this week, or near me, use this date to filter results by day of week. If no time context is given, show meetings for today first, then upcoming days.
+Today is ${dateStr}. The current time is ${timeStr}. Use this for any time-sensitive context.
 
 Given a user's natural-language query, classify their intent and return ONLY a JSON object with these exact fields:
 
@@ -156,21 +117,17 @@ Given a user's natural-language query, classify their intent and return ONLY a J
   "location": string | null,
   "urgency": "low" | "moderate" | "high",
   "include_crisis": boolean,
-  "fellowship_slugs": string[],
   "facility_types": string[],
   "query_intent": "meeting_search" | "informational" | "facility_search" | "step_work" | "crisis",
   "name_keywords": string[],
-  "meeting_types": string[],
-  "meeting_languages": string[],
-  "meeting_access": string,
   "payment_types": string[],
   "care_levels": string[],
   "special_populations": string[]
 }
 
 query_intent rules:
-- "meeting_search": user wants to find specific meetings ("AA meetings near me", "meetings today", "NA meetings Saturday")
-- "informational": user is asking a general question about recovery ("what happens at a first AA meeting", "how does NA work", "what is a sponsor", "what should I expect") — for this intent, prioritize articles/resources and suppress meeting listings
+- "meeting_search": user wants to find in-person/online recovery meetings ("AA meetings near me", "meetings today", "NA meetings Saturday"). SoberAnchor does not host a meeting directory — the UI hands these queries off to fellowship meeting finders.
+- "informational": user is asking a general question about recovery ("what happens at a first AA meeting", "how does NA work", "what is a sponsor", "what should I expect") — for this intent, prioritize articles/resources
 - "facility_search": user wants treatment centers, sober living, therapists, outpatient programs
 - "step_work": user is asking about step work, a specific step, or recovery concepts related to working a program ("what does powerlessness mean", "how do I do a moral inventory", "what is step 4 about", "working step 9", "amends list", "searching and fearless", "step 1", "step work help", "I'm on step 3") — will search program_workbooks for relevant sections
 - "crisis": user is in distress (want to die, can't go on, relapsed and scared, emergency, overdose, suicide)
@@ -178,86 +135,20 @@ query_intent rules:
 Field rules:
 - "issue": one of: alcohol, opioids, gambling, eating_disorder, meth, cocaine, marijuana, nicotine, sex_addiction, debt, internet_gaming, work, family_support, general
 - "help_type": array of: meetings, treatment, sober_living, therapist, information, crisis, family_meetings
-- "fellowship_slugs": choose from: aa, na, al-anon, alateen, smart-recovery, ga, gam-anon, oa, fa, eda, aba, ca, cma, ma, sa, saa, cosa, s-anon, da, itaa, cgaa, nicotine-anonymous, nar-anon, celebrate-recovery, lifering, pills-anonymous, heroin-anonymous, refuge-recovery, aca, families-anonymous
 - "facility_types": array of: treatment, sober_living, therapist, venue, outpatient
-- "name_keywords": if the user appears to be looking for a specific meeting or place by name, extract the distinctive name words (not fellowship names, not generic words like "meeting"/"group"/"anonymous"). Examples: "find the village meeting" → ["village"]; "serenity group AA" → ["serenity"]; "lighthouse NA meeting" → ["lighthouse"]; "AA meetings near me" → []. Leave [] for general searches with no specific name.
-- "meeting_types": exact values from the types[] DB field that match the query. Use the synonym map below. Leave [] if none apply.
-- "meeting_languages": exact language values from the types[] DB field. Use [] unless query mentions a language.
-- "meeting_access": "Open" if user wants open meetings, "Closed" if members-only, "" if unspecified.
+- "name_keywords": if the user appears to be looking for a specific place by name, extract the distinctive name words (not generic words like "center"/"rehab"). Examples: "serenity ranch rehab" → ["serenity"]; "sunrise detox" → ["sunrise"]; "detox in Texas" → []. Leave [] for general searches with no specific name.
 - "payment_types": array of normalized payment tokens the user mentions for a treatment center. Map: medicaid → "medicaid"; medicare → "medicare"; private insurance/BCBS/blue cross/aetna/cigna/united/"my insurance"/"take my insurance" → "private_insurance"; self pay/cash/out of pocket/private pay/no insurance → "self_pay"; tricare/military/VA insurance → "military". [] if none mentioned.
 - "care_levels": array of normalized level-of-care tokens for a treatment center. Map: detox/detoxification/withdrawal/"medically supervised withdrawal" → "detox"; residential/"live-in"/"stay overnight" → "residential"; inpatient/hospital → "inpatient"; outpatient/OP → "outpatient"; IOP/"intensive outpatient" → "iop"; PHP/"partial hospitalization"/"day program" → "php". [] if none mentioned.
 - "special_populations": array of normalized population tokens for a treatment center. Map: veterans/vets → "veterans"; men/male/"men's" → "men"; women/female/"women's"/pregnant → "women"; "young adults"/youth/teens/"college age" → "young_adult"; seniors/"older adults"/elderly → "seniors"; "dual diagnosis"/"co-occurring"/"mental health" → "co_occurring"; trauma/PTSD/abuse survivors → "trauma". [] if none mentioned.
 
 Inference rules:
-- Loved one + alcohol → fellowship_slugs includes both "aa" (for them) AND "al-anon" (for the asker)
-- Loved one + drugs → include both "na" AND "nar-anon"
-- Loved one + gambling → include both "ga" AND "gam-anon"
 - Treatment/rehab/detox language → facility_types includes "treatment"
 - Sober house/halfway/sober living → facility_types includes "sober_living"
 - Counselor/therapist/therapy → facility_types includes "therapist"
 - Crisis language (want to die, can't go on, overdose, emergency, suicide) → urgency="high", include_crisis=true, query_intent="crisis"
-- Any query mentioning "meeting" or a fellowship by name → always populate fellowship_slugs
 - Any query mentioning treatment, rehab, detox, facility, center, sober living → always populate facility_types
-- For general recovery queries with no specific issue → aa and na as fellowship_slugs
-- Multi-attribute queries like "women's AA meeting in Spanish on Saturday morning" should extract ALL attributes: fellowship_slugs=["aa"], meeting_types=["Women"], meeting_languages=["Spanish"], day=Saturday, time=morning
 
 SYNONYM MAP — map colloquial user language to exact DB values:
-
-MEETING TYPES → populate meeting_types[] with these exact strings:
-outside/outdoors/open air/park/patio → "Outdoor"
-ladies/women-only/female/womens/sisters → "Women"
-guys/men-only/male/mens/brothers → "Men"
-gay/queer/pride/rainbow/LGBTQ/LGBT → "LGBTQ+"
-newcomer/newbie/first time/just starting/never been → "Beginners"
-book study/big book/BB study → "Big Book Study"
-steps/step meeting/working steps/step study → "Step Study"
-speaker meeting/sharing/lead → "Speaker"
-talk/sharing/crosstalk/discussion meeting → "Discussion"
-kids/children/family friendly/bring kids → "Child-Friendly"
-candle/candlelit/candlelight → "Candlelight"
-meditation/mindfulness/quiet/silent → "Meditation"
-young/youth/young people/college age/20s → "Young People"
-wheelchair/accessible/handicap/ADA/disability → "Wheelchair Accessible"
-traditions/tradition study → "Traditions Study"
-12 and 12/twelve and twelve/12x12 → "12x12"
-literature/reading/lit meeting → "Literature"
-as bill sees it/ABSI → "As Bill Sees It"
-
-MEETING ACCESS → populate meeting_access:
-open/anyone can come/visitors welcome/open to public/non-members → "Open"
-closed/members only/private/closed meeting → "Closed"
-
-MEETING LANGUAGE → populate meeting_languages[]:
-english/english-speaking → "English"
-spanish/español/hispanic/latino/latina → "Spanish"
-sign language/ASL/deaf/hearing impaired → "Sign Language"
-
-FELLOWSHIPS → populate fellowship_slugs[]:
-AA/alcoholics anonymous/alcohol meetings/drinking → "aa"
-NA/narcotics anonymous/drug meetings/narcotics → "na"
-al-anon/alanon/loved one drinks/spouse drinks/my husband drinks/my wife drinks/family of alcoholic → "al-anon"
-alateen/teen/teenager/child of alcoholic → "alateen"
-SMART/smart recovery/science-based/CBT/secular recovery → "smart-recovery"
-celebrate recovery/CR/christ-centered/church recovery/faith-based recovery → "celebrate-recovery"
-GA/gamblers anonymous/gambling/betting/sports betting/casino → "ga"
-OA/overeaters anonymous/food addiction/binge eating/compulsive eating → "oa"
-CoDA/coda/codependent/codependency/people pleaser/boundaries → "coda"
-ACA/ACOA/adult children/grew up with alcoholic/childhood trauma/dysfunctional family → "aca"
-SAA/sex addicts/sex addiction/porn addiction/sexual compulsivity → "saa"
-SLAA/love addiction/relationship addiction/love addict → "slaa"
-CA/cocaine anonymous/cocaine/crack/stimulants → "ca"
-CMA/crystal meth/meth/tina → "cma"
-MA/marijuana anonymous/weed/pot/cannabis → "ma"
-HA/heroin anonymous/heroin/opiates/fentanyl → "heroin-anonymous"
-PA/pills anonymous/prescription drugs/painkillers/oxy → "pills-anonymous"
-DA/debtors anonymous/debt/money problems/spending addiction → "da"
-NicA/nicotine anonymous/smoking/vaping/tobacco/juul → "nicotine-anonymous"
-nar-anon/naranon/family of addict/loved one uses drugs → "nar-anon"
-gam-anon/gamanon/family of gambler/spouse gambles → "gam-anon"
-refuge/dharma recovery/buddhist recovery/meditation recovery → "refuge-recovery"
-lifering/secular/non-religious/atheist/agnostic recovery → "lifering"
-WFS/women for sobriety/women-only program → "wfs"
-WA/workaholics/work addiction/workaholic → "wa"
 
 FACILITY TYPES → populate facility_types[]:
 rehab/rehabilitation/treatment center/inpatient/residential/detox → "treatment"
@@ -290,7 +181,7 @@ type SearchContext = "home" | "resources" | "directory" | "member";
 const CONTEXT_HINTS: Record<SearchContext, string> = {
   home:      "General search from the homepage.",
   resources: "User is browsing articles and guides — prioritise information over directories.",
-  directory: "User is in the Find directory — prioritise meetings and facilities.",
+  directory: "User is in the Find directory — prioritise treatment centers, sober living, and therapists.",
   member:    "User is in their personal recovery dashboard — they may be asking about step work, sponsor relationships, or daily recovery practices.",
 };
 
@@ -302,7 +193,7 @@ async function classifyIntent(query: string, context: SearchContext, nowPST: Dat
     const client = new Anthropic({ apiKey });
     const msg = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 550,
+      max_tokens: 400,
       system: buildSystemPrompt(nowPST),
       messages: [{ role: "user", content: `[Context: ${CONTEXT_HINTS[context]}]\n\nQuery: ${query}` }],
     });
@@ -325,138 +216,12 @@ async function classifyIntent(query: string, context: SearchContext, nowPST: Dat
 
 // ─── Context limits ───────────────────────────────────────────────────────────
 
-const CONTEXT_LIMITS: Record<SearchContext, { meetings: number; facilities: number; articles: number; skipMeetings: boolean; skipFacilities: boolean }> = {
-  home:      { meetings: 6, facilities: 5, articles: 4, skipMeetings: false, skipFacilities: false },
-  resources: { meetings: 0, facilities: 0, articles: 8, skipMeetings: true,  skipFacilities: true  },
-  directory: { meetings: 8, facilities: 6, articles: 2, skipMeetings: false, skipFacilities: false },
-  member:    { meetings: 4, facilities: 2, articles: 5, skipMeetings: false, skipFacilities: false },
+const CONTEXT_LIMITS: Record<SearchContext, { facilities: number; articles: number; skipFacilities: boolean }> = {
+  home:      { facilities: 5, articles: 4, skipFacilities: false },
+  resources: { facilities: 0, articles: 8, skipFacilities: true  },
+  directory: { facilities: 6, articles: 2, skipFacilities: false },
+  member:    { facilities: 2, articles: 5, skipFacilities: false },
 };
-
-// ─── Shared helpers ───────────────────────────────────────────────────────────
-
-function toMeeting(m: Record<string, unknown>, idToFellowship: Record<string, { name: string; slug: string }>): MeetingResult {
-  const fid = m.fellowship_id as string;
-  return {
-    id:             m.id as string,
-    name:           m.name as string,
-    fellowship_name: idToFellowship[fid]?.name ?? "",
-    fellowship_slug: idToFellowship[fid]?.slug ?? "",
-    city:       (m.city as string)       ?? null,
-    state:      (m.state as string)      ?? null,
-    format:     (m.format as string)     ?? null,
-    day_of_week:(m.day_of_week as string)?? null,
-    start_time: (m.start_time as string) ?? null,
-    meeting_url:(m.meeting_url as string)?? null,
-    slug:       (m.slug as string)       ?? null,
-  };
-}
-
-/** Parse a time string like "7:00 PM" or "19:00" into minutes since midnight for sorting. */
-function parseTimeMinutes(t: string | null): number {
-  if (!t) return 9999;
-  const pm = /pm/i.test(t);
-  const am = /am/i.test(t);
-  const nums = t.match(/(\d+):(\d+)/);
-  if (!nums) return 9999;
-  let h = parseInt(nums[1], 10);
-  const m = parseInt(nums[2], 10);
-  if (pm && h !== 12) h += 12;
-  if (am && h === 12) h = 0;
-  return h * 60 + m;
-}
-
-async function queryMeetings(
-  slugs: string[],
-  location: string | null,
-  limit: number,
-  dayFilter?: string | null,
-  nameKeywords?: string[] | null,
-  meetingTypes?: string[] | null,
-  meetingLanguages?: string[] | null,
-  meetingAccess?: string | null,
-): Promise<MeetingResult[]> {
-  const { data: fellowships } = await supabase
-    .from("fellowships").select("id, name, slug").in("slug", slugs);
-
-  // If no fellowship matched but we have name keywords, fall back to a name-only
-  // search across all meetings (no fellowship filter) so "village" still finds
-  // meetings even when no fellowship slug was classified.
-  if (!fellowships?.length) {
-    if (!nameKeywords?.length) return [];
-    const MEETING_SELECT = "id, name, fellowship_id, city, state, format, day_of_week, start_time, meeting_url, slug";
-    function nameOnlyOrFilter(keywords: string[]): string {
-      return keywords.map((kw) => `name.ilike.%${kw.replace(/%/g, "")}%`).join(",");
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let qName: any = supabase.from("meetings").select(MEETING_SELECT).or(nameOnlyOrFilter(nameKeywords)).limit(limit);
-    if (location) qName = qName.ilike("city", `%${location}%`);
-    const { data: nameData } = await qName;
-    return ((nameData ?? []) as Record<string, unknown>[]).map((m) => toMeeting(m, {}));
-  }
-
-  const idToFellowship = Object.fromEntries(
-    fellowships.map((f) => [f.id, { name: f.name as string, slug: f.slug as string }])
-  );
-  const fids = fellowships.map((f) => f.id as string);
-
-  const MEETING_SELECT = "id, name, fellowship_id, city, state, format, day_of_week, start_time, meeting_url, slug";
-
-  // Fetch a larger batch so we can sort client-side when day filtering
-  const fetchLimit = dayFilter ? Math.min(limit * 4, 100) : limit;
-
-  /** Build the OR filter string for name keyword ILIKE matching */
-  function nameOrFilter(keywords: string[]): string {
-    return keywords.map((kw) => `name.ilike.%${kw.replace(/%/g, "")}%`).join(",");
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  type AnyQuery = any;
-
-  /** Apply meeting type / language / access filters against the types JSONB array */
-  function applyTypeFilters(q: AnyQuery): AnyQuery {
-    if (meetingTypes?.length)     q = q.overlaps("types", meetingTypes);
-    if (meetingLanguages?.length) q = q.overlaps("types", meetingLanguages);
-    if (meetingAccess)            q = q.filter("types", "cs", JSON.stringify([meetingAccess]));
-    return q;
-  }
-
-  let q: AnyQuery = supabase.from("meetings").select(MEETING_SELECT).in("fellowship_id", fids).limit(fetchLimit);
-  if (location)              q = q.ilike("city", `%${location}%`);
-  if (dayFilter)             q = q.eq("day_of_week", dayFilter);
-  if (nameKeywords?.length)  q = q.or(nameOrFilter(nameKeywords));
-  q = applyTypeFilters(q);
-
-  let { data } = await q;
-
-  // Retry without location if no results
-  if (!data?.length && location) {
-    let qFallback: AnyQuery = supabase.from("meetings").select(MEETING_SELECT).in("fellowship_id", fids).limit(fetchLimit);
-    if (dayFilter)            qFallback = qFallback.eq("day_of_week", dayFilter);
-    if (nameKeywords?.length) qFallback = qFallback.or(nameOrFilter(nameKeywords));
-    qFallback = applyTypeFilters(qFallback);
-    const { data: fb } = await qFallback;
-    data = fb;
-  }
-
-  // Retry without day filter if still no results
-  if (!data?.length && dayFilter) {
-    let qNoDow: AnyQuery = supabase.from("meetings").select(MEETING_SELECT).in("fellowship_id", fids).limit(limit);
-    if (location)             qNoDow = qNoDow.ilike("city", `%${location}%`);
-    if (nameKeywords?.length) qNoDow = qNoDow.or(nameOrFilter(nameKeywords));
-    qNoDow = applyTypeFilters(qNoDow);
-    const { data: fb2 } = await qNoDow;
-    data = fb2;
-  }
-
-  const results = ((data ?? []) as Record<string, unknown>[]).map((m) => toMeeting(m, idToFellowship));
-
-  // Sort by start_time ascending when day filtering so soonest meeting comes first
-  if (dayFilter && results.length > 1) {
-    results.sort((a: MeetingResult, b: MeetingResult) => parseTimeMinutes(a.start_time) - parseTimeMinutes(b.start_time));
-  }
-
-  return results.slice(0, limit);
-}
 
 // ─── Facility facet mapping ───────────────────────────────────────────────────
 // facilities.state stores 2-letter codes, and the enriched SAMHSA service_detail
@@ -597,20 +362,6 @@ async function queryFacilities(
 
 // ─── AI-path DB fetchers ──────────────────────────────────────────────────────
 
-async function fetchMeetings(intent: SearchIntent, limit: number, dayFilter?: string | null): Promise<MeetingResult[]> {
-  // Use classified slugs; fall back to issue-based defaults; then aa+na as last resort
-  const slugs =
-    intent.fellowship_slugs.length > 0
-      ? intent.fellowship_slugs
-      : (ISSUE_FELLOWSHIP_MAP[intent.issue] ?? ["aa", "na"]);
-
-  const nameKeywords    = intent.name_keywords?.length    ? intent.name_keywords    : null;
-  const meetingTypes    = intent.meeting_types?.length    ? intent.meeting_types    : null;
-  const meetingLanguages= intent.meeting_languages?.length? intent.meeting_languages: null;
-  const meetingAccess   = intent.meeting_access || null;
-  return queryMeetings(slugs, intent.location, limit, dayFilter, nameKeywords, meetingTypes, meetingLanguages, meetingAccess);
-}
-
 async function fetchFacilities(intent: SearchIntent, limit: number): Promise<FacilityResult[]> {
   // Use classified types; fall back to help_type-inferred types
   let types = intent.facility_types;
@@ -744,28 +495,7 @@ async function fetchStepWork(
 }
 
 // ─── Keyword fallback (no AI key or classification failure) ───────────────────
-// Searches meetings, facilities, and articles using simple term matching.
-
-// Fellowship name → slug mapping for keyword detection
-const FELLOWSHIP_KEYWORD_MAP: [RegExp, string[]][] = [
-  [/\baa\b|alcoholics\s+anonymous/i,      ["aa"]],
-  [/\bna\b|narcotics\s+anonymous/i,        ["na"]],
-  [/\bal.?anon\b/i,                        ["al-anon"]],
-  [/\bnar.?anon\b/i,                       ["nar-anon"]],
-  [/\bgamblers?\s+anonymous\b|\bga\b/i,    ["ga"]],
-  [/\bgam.?anon\b/i,                       ["gam-anon"]],
-  [/\bsmart\s+recovery\b/i,               ["smart-recovery"]],
-  [/\bovereaters?\s+anonymous\b|\boa\b/i, ["oa"]],
-  [/\bcelebrate\s+recovery\b/i,           ["celebrate-recovery"]],
-  [/\baca\b|adult\s+children/i,            ["aca"]],
-  [/\bsaa\b|sex\s+addict/i,               ["saa"]],
-  [/\bsa\b|sexaholics/i,                  ["sa"]],
-  [/\bda\b|debtors?\s+anonymous/i,        ["da"]],
-  [/\bcma\b|crystal\s+meth/i,             ["cma", "na"]],
-  [/\bca\b|cocaine\s+anonymous/i,         ["ca", "na"]],
-  [/\blifering\b/i,                       ["lifering"]],
-  [/\brefuge\s+recovery\b/i,              ["refuge-recovery"]],
-];
+// Searches facilities and articles using simple term matching.
 
 const FACILITY_KEYWORD_MAP: [RegExp, string[]][] = [
   [/\btreatment\b|\brehab\b|\brehabilitation\b|\binpatient\b|\bdetox\b/i, ["treatment"]],
@@ -784,20 +514,13 @@ function detectLocation(q: string): string | null {
 async function keywordSearch(q: string, context: SearchContext): Promise<SmartSearchResponse> {
   const limits = CONTEXT_LIMITS[context];
 
-  // Detect which fellowships, facility types, and location are in the query
-  const mentionedSlugs: string[] = [];
-  for (const [pattern, slugs] of FELLOWSHIP_KEYWORD_MAP) {
-    if (pattern.test(q)) mentionedSlugs.push(...slugs);
-  }
-
+  // Detect which facility types and location are in the query
   const mentionedTypes: string[] = [];
   for (const [pattern, types] of FACILITY_KEYWORD_MAP) {
     if (pattern.test(q)) mentionedTypes.push(...types);
   }
 
-  const wantsMeetings = !limits.skipMeetings && (mentionedSlugs.length > 0 || /\bmeeting/i.test(q));
   const wantsFacilities = !limits.skipFacilities && mentionedTypes.length > 0;
-  const slugsToQuery = mentionedSlugs.length > 0 ? [...new Set(mentionedSlugs)] : ["aa", "na"];
   const typesUniq    = [...new Set(mentionedTypes)];
 
   const location = detectLocation(q);
@@ -805,8 +528,7 @@ async function keywordSearch(q: string, context: SearchContext): Promise<SmartSe
   // Keyword scoring for articles
   const terms = q.toLowerCase().split(/\s+/).filter((t) => t.length > 2);
 
-  const [meetings, facilities, articleData] = await Promise.all([
-    wantsMeetings  ? queryMeetings(slugsToQuery, location, limits.meetings || 6)  : Promise.resolve([] as MeetingResult[]),
+  const [facilities, articleData] = await Promise.all([
     wantsFacilities ? queryFacilities(typesUniq, resolveLocation(location), limits.facilities || 5) : Promise.resolve([] as FacilityResult[]),
     terms.length > 0
       ? supabase.from("articles").select("id, title, slug, excerpt, author, body, pillar").eq("is_published", true)
@@ -830,11 +552,11 @@ async function keywordSearch(q: string, context: SearchContext): Promise<SmartSe
         .map(({ a }) => a as ArticleResult)
     : [];
 
-  return { query: q, intent: null, meetings, facilities, articles, step_work_results: [], crisis: false, ai_powered: false };
+  return { query: q, intent: null, facilities, articles, step_work_results: [], crisis: false, ai_powered: false };
 }
 
 function emptyResponse(query: string): SmartSearchResponse {
-  return { query, intent: null, meetings: [], facilities: [], articles: [], step_work_results: [], crisis: false, ai_powered: false };
+  return { query, intent: null, facilities: [], articles: [], step_work_results: [], crisis: false, ai_powered: false };
 }
 
 function err429(message: string, retryAfter: number) {
@@ -845,7 +567,7 @@ function err429(message: string, retryAfter: number) {
 
 function errorResponse(query: string, message = "Search unavailable. Please try again."): Response {
   return Response.json(
-    { query, intent: null, meetings: [], facilities: [], articles: [], step_work_results: [], crisis: false, ai_powered: false, error: message },
+    { query, intent: null, facilities: [], articles: [], step_work_results: [], crisis: false, ai_powered: false, error: message },
     { status: 200 }
   );
 }
@@ -869,12 +591,9 @@ async function handleSearch(request: Request, rawQuery: string, context: SearchC
   if (q.length < 2) return Response.json(emptyResponse(q));
 
   // 2. Cache (before auth/rate-limit — cached results don't hit the AI)
-  // Include current day in key for meeting-like queries so "today" doesn't serve yesterday's results
   const nowPST    = getPSTDate();
-  const todayDay  = DOW[nowPST.getDay()];
-  const isMeetingLike = /\bmeeting\b|\btoday\b|\btonight\b|\bnear\s+me\b|\bnearby\b/i.test(q);
-  const cacheKey = `${context}:${q.toLowerCase().slice(0, 150)}${isMeetingLike ? `:${todayDay}` : ""}`;
-  const cached   = queryCache.get(cacheKey);
+  const cacheKey  = `${context}:${q.toLowerCase().slice(0, 150)}`;
+  const cached    = queryCache.get(cacheKey);
   const ttl      = isCommonQuery(q) ? CACHE_TTL_COMMON_MS : CACHE_TTL_MS;
   if (cached && Date.now() - cached.ts < ttl) {
     return Response.json({ ...cached.data, cached: true });
@@ -922,24 +641,13 @@ async function handleSearch(request: Request, rawQuery: string, context: SearchC
   const isInformational = intent.query_intent === "informational";
   const isStepWork      = intent.query_intent === "step_work";
 
-  // Informational and step_work queries → suppress directory results
-  const wantsMeetings = !limits.skipMeetings && !isInformational && !isStepWork && (
-    intent.fellowship_slugs.length > 0 ||
-    intent.help_type.some((h) => ["meetings", "family_meetings"].includes(h))
-  );
-
+  // Informational and step_work queries → suppress directory results.
+  // meeting_search returns no directory results either — the UI hands those off
+  // to fellowship meeting finders (see ODI-57).
   const wantsFacilities = !limits.skipFacilities && !isInformational && !isStepWork && (
     intent.facility_types.length > 0 ||
     intent.help_type.some((h) => ["treatment", "sober_living", "therapist"].includes(h))
   );
-
-  // Day-of-week filter: meeting_search defaults to today UNLESS searching by name
-  // (a name search like "find the village meeting" should find the meeting regardless of what day it meets)
-  const hasNameKeywords = (intent.name_keywords?.length ?? 0) > 0;
-  const dayFilter = (intent.query_intent === "meeting_search" && wantsMeetings)
-    ? (detectDayFilter(q, nowPST) ?? (hasNameKeywords ? null : todayDay))
-    : null;
-  console.log("[smart-search] Meeting query params:", { query_intent: intent.query_intent, wantsMeetings, dayFilter, location: intent.location, fellowship_slugs: intent.fellowship_slugs });
 
   // For step_work intent: get user's primary fellowship to scope workbook results
   let userFellowshipId: string | null = null;
@@ -966,8 +674,7 @@ async function handleSearch(request: Request, rawQuery: string, context: SearchC
   }
 
   // 10. Parallel DB queries
-  const [meetings, facilities, articles, step_work_results] = await Promise.all([
-    wantsMeetings   ? fetchMeetings(intent, limits.meetings, dayFilter)   : Promise.resolve([] as MeetingResult[]),
+  const [facilities, articles, step_work_results] = await Promise.all([
     wantsFacilities ? fetchFacilities(intent, limits.facilities) : Promise.resolve([] as FacilityResult[]),
     fetchArticles(intent, context),
     isStepWork ? fetchStepWork(q, userFellowshipId, 5) : Promise.resolve([] as import("@/lib/resources").StepWorkResult[]),
@@ -976,7 +683,6 @@ async function handleSearch(request: Request, rawQuery: string, context: SearchC
   const result: SmartSearchResponse = {
     query: q,
     intent,
-    meetings,
     facilities,
     articles,
     step_work_results,

@@ -99,31 +99,13 @@ export type SearchIntent = {
   location: string | null;
   urgency: "low" | "moderate" | "high";
   include_crisis: boolean;
-  fellowship_slugs: string[];
   facility_types: string[];
   query_intent: "meeting_search" | "informational" | "facility_search" | "step_work" | "crisis";
   name_keywords?: string[];
-  meeting_types?: string[];
-  meeting_languages?: string[];
-  meeting_access?: string;
   // Facility search facets (normalized tokens; mapped to service_detail in the route)
   payment_types?: string[];        // medicaid, medicare, private_insurance, self_pay, military
   care_levels?: string[];          // detox, residential, inpatient, outpatient, iop, php
   special_populations?: string[];  // veterans, men, women, young_adult, seniors, co_occurring, trauma
-};
-
-export type MeetingResult = {
-  id: string;
-  name: string;
-  fellowship_name: string;
-  fellowship_slug: string;
-  city: string | null;
-  state: string | null;
-  format: string | null;
-  day_of_week: string | null;
-  start_time: string | null;
-  meeting_url: string | null;
-  slug: string | null;
 };
 
 export type FacilityResult = {
@@ -162,7 +144,6 @@ export type StepWorkResult = {
 export type SmartSearchResponse = {
   query: string;
   intent: SearchIntent | null;
-  meetings: MeetingResult[];
   facilities: FacilityResult[];
   articles: ArticleResult[];
   step_work_results: StepWorkResult[];

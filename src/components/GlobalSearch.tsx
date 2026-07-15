@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import Link from 'next/link'
-import type { SmartSearchResponse, MeetingResult, FacilityResult, ArticleResult, StepWorkResult } from '@/lib/resources'
+import type { SmartSearchResponse, FacilityResult, ArticleResult, StepWorkResult } from '@/lib/resources'
 import { pillarToCategory, readTime } from '@/lib/resources'
 
 export type SearchContext = 'home' | 'resources' | 'directory' | 'member'
 
 const PLACEHOLDERS: Record<SearchContext, string> = {
-  home:      'Ask me anything — try "help for my son who\'s gambling" or "AA meetings tonight"',
+  home:      'Ask me anything — try "help for my son who\'s gambling" or "detox in Texas that takes Medicaid"',
   resources: 'Ask me anything — try "what is step work" or "how to support a loved one"',
   directory: 'Ask me anything — try "detox near Phoenix" or "sober living for women"',
   member:    'Ask me anything — try "how to find a sponsor" or "what to expect at first meeting"',
@@ -26,13 +26,6 @@ function getCsrfToken(): string {
   if (typeof document === 'undefined') return ''
   const m = document.cookie.match(/(?:^|;\s*)__sa_csrf=([^;]+)/)
   return m?.[1] ?? ''
-}
-
-function formatTime(t: string | null): string {
-  if (!t) return ''
-  const [h, m] = t.split(':')
-  const hour = parseInt(h, 10)
-  return `${hour % 12 || 12}:${m} ${hour >= 12 ? 'PM' : 'AM'}`
 }
 
 // ─── Compact result rows ──────────────────────────────────────────────────────
@@ -57,22 +50,19 @@ function CrisisBanner({ onClose }: { onClose: () => void }) {
   )
 }
 
-function MeetingRow({ m, onClose }: { m: MeetingResult; onClose: () => void }) {
-  const href = m.slug ? `/find/meetings/${m.slug}` : '/find#meetings'
-  const where = [m.city, m.state].filter(Boolean).join(', ')
-  const when = [m.day_of_week, formatTime(m.start_time)].filter(Boolean).join(' · ')
+function MeetingHandoffCard({ onClose }: { onClose: () => void }) {
   return (
-    <Link href={href} onClick={onClose}
-      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', borderRadius: 10, textDecoration: 'none', gap: 12 }}
+    <Link href="/fellowships" onClick={onClose}
+      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', margin: '0 8px 8px', borderRadius: 12, textDecoration: 'none', background: 'rgba(0,51,102,0.04)', border: '1px solid var(--border)' }}
       className="hover:bg-warm-gray transition-colors"
     >
-      <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--navy)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {m.name}
+      <span style={{ fontSize: 22, flexShrink: 0 }}>👥</span>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--navy)' }}>
+          Looking for a meeting?
         </div>
-        <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 1 }}>
-          {m.fellowship_name}{when ? ` · ${when}` : ''}{where ? ` · ${where}` : ''}
-          {m.meeting_url ? ' · Online' : ''}
+        <div style={{ fontSize: 12, color: 'var(--mid)', marginTop: 2 }}>
+          Browse fellowships and their official meeting finders — AA, NA, SMART, and more.
         </div>
       </div>
       <span style={{ fontSize: 12, color: 'var(--teal)', fontWeight: 600, flexShrink: 0 }}>→</span>
@@ -186,9 +176,9 @@ function ResultSection({ icon, label, count, children }: {
 // ─── Suggestion chips ─────────────────────────────────────────────────────────
 
 const SUGGESTIONS = [
-  'AA meetings near me',
+  'detox in Texas that takes Medicaid',
   'help for my son who drinks',
-  'sober living in my city',
+  'sober living in Phoenix',
   'how to support someone in recovery',
   'gambling addiction help',
   'what happens at a first AA meeting',
@@ -253,7 +243,7 @@ export default function GlobalSearch({ open, context, onClose }: Props) {
         { headers, signal: controller.signal }
       )
 
-      const empty: SmartSearchResponse = { query: q, intent: null, meetings: [], facilities: [], articles: [], step_work_results: [], crisis: false, ai_powered: false }
+      const empty: SmartSearchResponse = { query: q, intent: null, facilities: [], articles: [], step_work_results: [], crisis: false, ai_powered: false }
 
       if (res.status === 429) {
         const body = await res.json().catch(() => ({}))
@@ -272,14 +262,13 @@ export default function GlobalSearch({ open, context, onClose }: Props) {
       const data: SmartSearchResponse = await res.json()
       setResult({
         ...data,
-        meetings: Array.isArray(data.meetings) ? data.meetings : [],
         facilities: Array.isArray(data.facilities) ? data.facilities : [],
         articles: Array.isArray(data.articles) ? data.articles : [],
         step_work_results: Array.isArray(data.step_work_results) ? data.step_work_results : [],
       })
     } catch (e) {
       if ((e as Error).name !== 'AbortError') {
-        setResult({ query: q, intent: null, meetings: [], facilities: [], articles: [], step_work_results: [], crisis: false, ai_powered: false, error: 'Search unavailable. Please try again.' })
+        setResult({ query: q, intent: null, facilities: [], articles: [], step_work_results: [], crisis: false, ai_powered: false, error: 'Search unavailable. Please try again.' })
       }
     } finally {
       setLoading(false)
@@ -305,9 +294,11 @@ export default function GlobalSearch({ open, context, onClose }: Props) {
 
   if (!open) return null
 
+  const isMeetingHandoff = result?.intent?.query_intent === 'meeting_search'
+
   const hasResults = result && (
     result.crisis ||
-    (result.meetings?.length ?? 0) > 0 ||
+    isMeetingHandoff ||
     (result.facilities?.length ?? 0) > 0 ||
     (result.articles?.length ?? 0) > 0 ||
     (result.step_work_results?.length ?? 0) > 0
@@ -466,15 +457,7 @@ export default function GlobalSearch({ open, context, onClose }: Props) {
 
               {result.crisis && <div style={{ padding: '0 8px 4px' }}><CrisisBanner onClose={onClose} /></div>}
 
-              {(result.meetings?.length ?? 0) > 0 && (
-                <ResultSection icon="🤝" label="Meetings" count={result.meetings.length}>
-                  {result.meetings.map(m => <MeetingRow key={m.id} m={m} onClose={onClose} />)}
-                  <Link href="/find#meetings" onClick={onClose}
-                    style={{ display: 'block', padding: '6px 14px', fontSize: 12, color: 'var(--teal)', fontWeight: 600, textDecoration: 'none' }}>
-                    Browse all meetings →
-                  </Link>
-                </ResultSection>
-              )}
+              {isMeetingHandoff && <MeetingHandoffCard onClose={onClose} />}
 
               {(result.facilities?.length ?? 0) > 0 && (
                 <ResultSection icon="🏥" label="Treatment & Support" count={result.facilities.length}>

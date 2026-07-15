@@ -5,7 +5,6 @@ import Link from "next/link";
 import { pillarToCategory, readTime } from "@/lib/resources";
 import type {
   SmartSearchResponse,
-  MeetingResult,
   FacilityResult,
   ArticleResult,
 } from "@/lib/resources";
@@ -17,15 +16,6 @@ const FACILITY_TYPE_LABELS: Record<string, string> = {
   venue: "Sober Venue",
   outpatient: "Outpatient",
 };
-
-function formatTime(t: string | null): string {
-  if (!t) return "";
-  const [h, m] = t.split(":");
-  const hour = parseInt(h, 10);
-  const suffix = hour >= 12 ? "PM" : "AM";
-  const display = hour % 12 || 12;
-  return `${display}:${m} ${suffix}`;
-}
 
 // ─── Result section components ────────────────────────────────────────────────
 
@@ -56,42 +46,26 @@ function CrisisBanner() {
   );
 }
 
-function MeetingCard({ m }: { m: MeetingResult }) {
-  const href = m.slug ? `/find/meetings/${m.slug}` : "/find#meetings";
-  const location =
-    m.city && m.state
-      ? `${m.city}, ${m.state}`
-      : m.city ?? m.state ?? "";
-  const schedule = [m.day_of_week, formatTime(m.start_time)]
-    .filter(Boolean)
-    .join(" · ");
-
+function MeetingHandoffCard() {
   return (
     <Link
-      href={href}
-      className="bg-white border border-border rounded-[14px] p-5 card-hover block"
+      href="/fellowships"
+      className="bg-[rgba(0,51,102,0.04)] border border-border rounded-[14px] p-5 card-hover flex items-center gap-4"
     >
-      <span className="inline-block bg-[var(--teal-10)] border border-[var(--teal-20)] text-teal text-xs font-medium rounded-full px-2.5 py-0.5 mb-2">
-        {m.fellowship_name}
-      </span>
-      <div
-        className="font-semibold text-[16px] mb-1 leading-snug"
-        style={{ fontFamily: "var(--font-display)", color: "var(--navy)" }}
-      >
-        {m.name}
-      </div>
-      <div className="text-[13px] text-mid space-y-0.5">
-        {schedule && <div>{schedule}</div>}
-        {m.format && (
-          <div className="capitalize">{m.format.replace(/_/g, " ")}</div>
-        )}
-        {location && <div>{location}</div>}
-      </div>
-      {m.meeting_url && (
-        <div className="mt-2 text-[12px] text-teal font-medium">
-          Online meeting available
+      <span className="text-[26px] shrink-0">👥</span>
+      <div className="flex-1 min-w-0">
+        <div
+          className="font-semibold text-[16px] mb-0.5 leading-snug"
+          style={{ fontFamily: "var(--font-display)", color: "var(--navy)" }}
+        >
+          Looking for a meeting?
         </div>
-      )}
+        <p className="text-[13px] text-mid leading-relaxed">
+          Browse fellowships and their official meeting finders — AA, NA, SMART,
+          and more.
+        </p>
+      </div>
+      <span className="text-teal font-semibold text-sm shrink-0">→</span>
     </Link>
   );
 }
@@ -229,7 +203,7 @@ export default function SmartSearchBar() {
       if (res.status === 429) {
         const data = await res.json();
         setResult({
-          query: q, intent: null, meetings: [], facilities: [], articles: [], step_work_results: [],
+          query: q, intent: null, facilities: [], articles: [], step_work_results: [],
           crisis: false, ai_powered: false,
           error: data.error ?? "Too many requests. Please wait before searching again.",
         });
@@ -237,7 +211,7 @@ export default function SmartSearchBar() {
       }
       if (res.status === 403) {
         setResult({
-          query: q, intent: null, meetings: [], facilities: [], articles: [], step_work_results: [],
+          query: q, intent: null, facilities: [], articles: [], step_work_results: [],
           crisis: false, ai_powered: false,
           error: "Search unavailable. Please reload the page and try again.",
         });
@@ -248,7 +222,7 @@ export default function SmartSearchBar() {
       setResult({ ...data, step_work_results: Array.isArray(data.step_work_results) ? data.step_work_results : [] });
     } catch {
       setResult({
-        query: q, intent: null, meetings: [], facilities: [], articles: [], step_work_results: [],
+        query: q, intent: null, facilities: [], articles: [], step_work_results: [],
         crisis: false, ai_powered: false,
       });
     } finally {
@@ -264,16 +238,18 @@ export default function SmartSearchBar() {
 
   const examples = [
     "my son is addicted to pills",
-    "AA meetings near me",
-    "sober living in San Diego",
+    "detox in Texas that takes Medicaid",
+    "sober living in Phoenix",
     "how to help someone who relapsed",
     "what's the difference between AA and SMART Recovery",
-    "gambling addiction help for a family member",
+    "therapist for my son",
   ];
+
+  const isMeetingHandoff = result?.intent?.query_intent === "meeting_search";
 
   const hasResults =
     result &&
-    (result.meetings.length > 0 ||
+    (isMeetingHandoff ||
       result.facilities.length > 0 ||
       result.articles.length > 0 ||
       result.crisis);
@@ -390,22 +366,8 @@ export default function SmartSearchBar() {
               {/* Crisis */}
               {result.crisis && <CrisisBanner />}
 
-              {/* Meetings */}
-              {result.meetings.length > 0 && (
-                <div>
-                  <SectionHeader
-                    icon="🤝"
-                    title="Meetings"
-                    count={result.meetings.length}
-                    href="/find#meetings"
-                  />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {result.meetings.map((m) => (
-                      <MeetingCard key={m.id} m={m} />
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Meeting hand-off — SoberAnchor points to fellowship finders */}
+              {isMeetingHandoff && <MeetingHandoffCard />}
 
               {/* Facilities */}
               {result.facilities.length > 0 && (
