@@ -5,48 +5,80 @@ import ClaimSection from "./ClaimSection";
 const angelYears = Math.floor((Date.now() - new Date('2021-12-04').getTime()) / (365.25 * 24 * 60 * 60 * 1000));
 
 const stats = [
-  { value: "3-5x", label: "higher conversion rate than paid search" },
-  { value: "$40-80", label: "average cost per click for rehab keywords on Google" },
+  { value: "11,400+", label: "facilities in the SoberAnchor directory" },
+  { value: "100%", label: "flat pricing — never per-lead, never per-call" },
   { value: "24/7", label: "your listing works around the clock" },
 ];
 
 const steps = [
   {
     n: "1",
-    title: "Claim your listing",
-    desc: "Find your facility in our directory and verify ownership. If you're not listed yet, add your facility in minutes.",
+    title: "Claim your listing — free",
+    desc: "Find your facility in our directory and verify ownership. Claiming protects your listing from unauthorized changes and puts you in control of your information.",
   },
   {
     n: "2",
     title: "Complete your profile",
-    desc: "Add your description, services, insurance accepted, photos, and contact information. The more complete your profile, the more inquiries you'll receive.",
+    desc: "Update your description, hours, contact information, and photos. Accurate listings build trust with the families comparing their options.",
   },
   {
     n: "3",
-    title: "Start receiving leads",
-    desc: "When families submit a contact request through your listing, it goes directly to you. No middleman. No fulfillment on our end.",
+    title: "Upgrade when you're ready to grow",
+    desc: "Enhanced adds your full gallery, branding, and inquiry capture. Premium adds clearly-labeled Featured placement. Flat monthly pricing, cancel anytime.",
   },
 ];
 
-const freeFeatures = [
-  "Listed in the SoberAnchor directory",
-  "Lead capture form on your listing page",
-  "Phone number and contact info displayed",
-  "Edit your description, services, and hours",
-  "Up to 3 facility photos",
-  "Appear in search results and guided discovery flow",
-  "Insurance accepted badges",
-];
-
-const proFeatures = [
-  "Unlimited photos and video tours",
-  "Verified badge — builds trust with families",
-  "Lead analytics — see who's viewing your listing",
-  "Featured placement in search results",
-  "Priority positioning in your market",
-  "Respond to reviews publicly",
-  "Post events and open house announcements",
-  "Dedicated account support",
+const tiers = [
+  {
+    name: "Claimed",
+    price: "Free",
+    period: "forever",
+    accent: "var(--teal)",
+    tagline: "Own and protect your listing.",
+    features: [
+      "Verified ✓ Claimed badge on your page",
+      "Edit your description, hours, and contact info",
+      "Up to 3 facility photos",
+      "Corrections to your SAMHSA-sourced data",
+      "Monthly page-view stats",
+      "Protection against unauthorized listing edits",
+    ],
+    footnote: "No credit card. No time limit. Claiming is free forever.",
+  },
+  {
+    name: "Enhanced",
+    price: "$99",
+    period: "/mo · Founding Partner rate (regularly $199)",
+    accent: "var(--gold)",
+    tagline: "Make your page yours.",
+    features: [
+      "Everything in Claimed",
+      "Full photo gallery and video tour",
+      "Your logo and branding on the page",
+      "Staff profiles and amenities section",
+      "Inquiry capture — families can request a callback, routed only to you",
+      "Highlighted insurance and payment section",
+      "No other centers shown on your page",
+      "Inquiry and page analytics dashboard",
+    ],
+    footnote: "Flat monthly rate. Annual billing: 2 months free.",
+  },
+  {
+    name: "Premium",
+    price: "$299",
+    period: "/mo · Founding Partner rate (regularly $499)",
+    accent: "var(--navy)",
+    tagline: "Stand out — visibly and honestly.",
+    features: [
+      "Everything in Enhanced",
+      "⭐ Featured placement in the directory — always clearly labeled",
+      "Featured badge on your listing page",
+      "Call-tracking analytics on your own number",
+      "Quarterly performance report",
+      "Priority support",
+    ],
+    footnote: "Featured placement is labeled sponsorship. It never changes organic search results.",
+  },
 ];
 
 const providerTypes = [
@@ -59,28 +91,36 @@ const providerTypes = [
 ];
 
 const trustItems = [
-  { icon: "🔒", title: "No contracts", desc: "Month-to-month on all upgrades. Cancel anytime, keep your free listing." },
-  { icon: "🎯", title: "Qualified leads", desc: "Every inquiry comes from a real person or family actively seeking treatment — not bots, not purchased lists." },
+  { icon: "⚖️", title: "Flat pricing, always", desc: "We never charge per lead, per call, or per admission — and we never sell inquiries. Your subscription is a flat monthly rate, full stop." },
+  { icon: "🎯", title: "Ranking is never for sale", desc: "Organic search results are ordered by relevance and data quality — never by who pays. Paid visibility lives only in clearly-labeled Featured placements." },
   { icon: "❤️", title: "Built by people in recovery", desc: `We understand the space because we've lived it. SoberAnchor was founded by Angel J., ${angelYears}+ years sober.` },
-  { icon: "📊", title: "Full transparency", desc: "See exactly what your listing is doing. No black boxes, no mystery metrics." },
+  { icon: "🔒", title: "No contracts", desc: "Month-to-month on all upgrades. Cancel anytime and keep your free claimed listing." },
 ];
 
 const faqs = [
   {
     q: "Is claiming my listing really free?",
-    a: "Yes, permanently. Claiming your listing is free forever — no trial period, no credit card required, no surprise charges. You get a lead capture form, contact info display, photos, and full editing access at no cost.",
+    a: "Yes, permanently. Claiming is free forever — no trial period, no credit card, no surprise charges. You get the Claimed badge, full editing access, photos, and monthly view stats at no cost. It also protects your listing from unauthorized changes.",
+  },
+  {
+    q: "Do you charge per lead or sell inquiries?",
+    a: "Never. Our paid tiers are flat monthly subscriptions. When a family submits an inquiry through an Enhanced or Premium listing, it goes directly to your facility — and only to your facility. We do not sell, share, or broker inquiries, and we never charge referral fees of any kind.",
+  },
+  {
+    q: "Does paying improve our search ranking?",
+    a: "No — and we publish that policy. Organic results are ordered by relevance and data quality, never by payment. Premium buys clearly-labeled Featured placement in a separate band, so families always know what's sponsored and what isn't. We believe that honesty is exactly why they'll trust your listing.",
+  },
+  {
+    q: "How does inquiry capture work?",
+    a: "Enhanced and Premium listings include a callback-request form. When a visitor submits it, their information goes directly to you by email. You handle the follow-up — SoberAnchor never sits between you and the family. On every tier, including free, your real phone number and website are displayed prominently.",
+  },
+  {
+    q: "How do you verify claims?",
+    a: "We verify ownership through a domain-matched email address, a callback to your publicly listed phone number, or licensure documentation. Verification protects your facility and the families relying on accurate information.",
   },
   {
     q: "What if my facility isn't listed yet?",
-    a: "No problem. You can add your facility directly through the claim form. We'll verify your information and have you live in the directory within 24 hours.",
-  },
-  {
-    q: "How do leads work?",
-    a: "When a visitor fills out the contact form on your listing, their information goes directly to you via email. You handle the follow-up. SoberAnchor does not do any fulfillment or sit between you and the potential patient.",
-  },
-  {
-    q: "What's the difference between free and paid tiers?",
-    a: "The free claimed listing gives you everything you need to receive leads. Paid upgrades add visibility features like featured placement, verified badges, analytics, and unlimited media — tools that help you stand out in competitive markets.",
+    a: "You can add your facility directly through the claim form. We'll verify your information and have you live in the directory within 24 hours.",
   },
   {
     q: "Can I remove my listing?",
@@ -118,7 +158,7 @@ export default function ForProvidersPage() {
             <ProviderAuthButton />
           </div>
           <p className="text-[13px] text-mid">
-            No contracts. No hidden fees. Cancel upgrades anytime.
+            Flat pricing. Never per-lead. Cancel upgrades anytime.
           </p>
         </div>
       </section>
@@ -133,7 +173,7 @@ export default function ForProvidersPage() {
             className="text-[clamp(26px,3vw,36px)] font-semibold leading-[1.2] mb-10 text-center"
             style={{ fontFamily: "var(--font-display)", color: "var(--navy)", letterSpacing: "-0.75px" }}
           >
-            Better leads. Less spend. Real results.
+            A directory families can trust — and providers can afford.
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
             {stats.map((s) => (
@@ -149,10 +189,10 @@ export default function ForProvidersPage() {
             ))}
           </div>
           <p className="text-[15px] text-mid leading-[1.8] max-w-[720px] mx-auto text-center">
-            Treatment facilities spend thousands on Google Ads for clicks that rarely convert.
-            Directory leads are different — they come from families actively comparing options with
-            genuine intent to seek treatment. No click fraud. No wasted spend. Just real people
-            looking for real help.
+            Rehab keywords are among the most expensive clicks on the internet, and lead brokers in
+            this industry have earned its worst headlines. SoberAnchor takes the other path: a
+            complete, honest directory where your listing is found by families actively comparing
+            options — and where your costs are flat, predictable, and never tied to a person seeking help.
           </p>
         </div>
       </section>
@@ -167,7 +207,7 @@ export default function ForProvidersPage() {
             className="text-[clamp(26px,3vw,36px)] font-semibold leading-[1.2] mb-12 text-center"
             style={{ fontFamily: "var(--font-display)", color: "var(--navy)", letterSpacing: "-0.75px" }}
           >
-            Three steps to start receiving leads.
+            Three steps to a listing that works for you.
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {steps.map((s) => (
@@ -191,65 +231,60 @@ export default function ForProvidersPage() {
         </div>
       </section>
 
-      {/* ── What you get ── */}
+      {/* ── Pricing tiers ── */}
       <section className="bg-off-white py-[72px] px-6">
         <div className="max-w-[1120px] mx-auto">
           <p className="text-xs font-bold tracking-[2px] uppercase text-teal mb-2 text-center">
-            What&apos;s Included
+            Pricing
           </p>
           <h2
-            className="text-[clamp(26px,3vw,36px)] font-semibold leading-[1.2] mb-10 text-center"
+            className="text-[clamp(26px,3vw,36px)] font-semibold leading-[1.2] mb-3 text-center"
             style={{ fontFamily: "var(--font-display)", color: "var(--navy)", letterSpacing: "-0.75px" }}
           >
-            Everything you need to connect with families seeking care.
+            Simple, flat, and honest.
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Free card */}
-            <div className="card-hover bg-white rounded-[14px] border border-border overflow-hidden">
-              <div className="border-l-4 border-teal p-7">
-                <h3
-                  className="text-xl font-semibold mb-5"
-                  style={{ fontFamily: "var(--font-display)", color: "var(--navy)" }}
-                >
-                  Claimed listing <span className="text-teal">(free forever)</span>
-                </h3>
-                <ul className="space-y-3">
-                  {freeFeatures.map((f) => (
-                    <li key={f} className="flex items-start gap-2.5 text-sm text-dark">
-                      <span className="text-teal font-bold mt-0.5 shrink-0">✓</span>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <p className="text-[12px] text-mid mt-6 pt-5 border-t border-border">
-                  Free. No credit card required. No time limit.
-                </p>
+          <p className="text-[15px] text-mid text-center max-w-[560px] mx-auto mb-10">
+            Founding Partner rates are locked for 12 months. Outpatient-only programs receive 50% off all paid tiers.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+            {tiers.map((t) => (
+              <div key={t.name} className="card-hover bg-white rounded-[14px] border border-border overflow-hidden">
+                <div className="p-7" style={{ borderLeft: `4px solid ${t.accent}` }}>
+                  <h3
+                    className="text-xl font-semibold mb-1"
+                    style={{ fontFamily: "var(--font-display)", color: "var(--navy)" }}
+                  >
+                    {t.name}
+                  </h3>
+                  <div className="mb-1">
+                    <span
+                      className="text-[34px] font-semibold"
+                      style={{ fontFamily: "var(--font-display)", color: "var(--navy)", letterSpacing: "-1px" }}
+                    >
+                      {t.price}
+                    </span>
+                    <span className="text-[13px] text-mid ml-1">{t.period}</span>
+                  </div>
+                  <p className="text-sm font-semibold text-teal mb-5">{t.tagline}</p>
+                  <ul className="space-y-3">
+                    {t.features.map((f) => (
+                      <li key={f} className="flex items-start gap-2.5 text-sm text-dark">
+                        <span className="font-bold mt-0.5 shrink-0" style={{ color: t.accent }}>✓</span>
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-[12px] text-mid mt-6 pt-5 border-t border-border">
+                    {t.footnote}
+                  </p>
+                </div>
               </div>
-            </div>
-
-            {/* Pro card */}
-            <div className="card-hover bg-white rounded-[14px] border border-border overflow-hidden">
-              <div className="border-l-4 border-gold p-7">
-                <h3
-                  className="text-xl font-semibold mb-5"
-                  style={{ fontFamily: "var(--font-display)", color: "var(--navy)" }}
-                >
-                  Pro &amp; Premium upgrades
-                </h3>
-                <ul className="space-y-3">
-                  {proFeatures.map((f) => (
-                    <li key={f} className="flex items-start gap-2.5 text-sm text-dark">
-                      <span className="font-bold mt-0.5 shrink-0" style={{ color: "var(--gold)" }}>✓</span>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <p className="text-[12px] text-mid mt-6 pt-5 border-t border-border">
-                  Contact us for pricing tailored to your facility and market.
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
+          <p className="text-[13px] text-mid text-center mt-8 max-w-[640px] mx-auto">
+            Every listing — free or paid — always shows your facility&apos;s real phone number, website,
+            and SAMHSA-sourced services. Paid tiers add presentation and reach, never access to facts.
+          </p>
         </div>
       </section>
 
@@ -343,7 +378,7 @@ export default function ForProvidersPage() {
             Ready to reach families who need you?
           </h2>
           <p className="text-[17px] leading-[1.7] mb-8" style={{ color: "rgba(255,255,255,0.6)" }}>
-            Claim your free listing today, or reach out to learn about Pro and Premium options.
+            Claim your free listing today, or reach out to learn about Enhanced and Premium.
           </p>
           <div className="flex gap-3 justify-center flex-wrap mb-6">
             <ClaimScrollButton className="bg-teal text-white font-semibold text-base px-8 py-3.5 rounded-xl hover:opacity-90 transition-opacity">
