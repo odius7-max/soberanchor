@@ -4,18 +4,29 @@ import { NextResponse, type NextRequest } from 'next/server'
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request })
 
-  // Set a JS-readable CSRF cookie for the smart-search API (double-submit pattern).
+  // Mint a JS-readable CSRF token for the smart-search API (double-submit pattern).
   // SameSite=Strict prevents cross-origin reads; the API validates header === cookie.
   // Uses globalThis.crypto.randomUUID() — available in Edge Runtime (Web Crypto API).
-  if (!request.cookies.get('__sa_csrf')) {
-    const token = globalThis.crypto.randomUUID()
-    response.cookies.set('__sa_csrf', token, {
-      path: '/',
-      sameSite: 'strict',
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24, // 24 hours
-      httpOnly: false,       // must be JS-readable
-    })
+  //
+  // The cookie is applied via applyCsrf() at every return point rather than here,
+  // because the Supabase SSR setAll callback below reassigns `response` to a fresh
+  // NextResponse — which silently discarded any Set-Cookie written beforehand and
+  // left anonymous visitors without a token (403 from /api/smart-search).
+  const csrfToken = request.cookies.get('__sa_csrf')
+    ? null
+    : globalThis.crypto.randomUUID()
+
+  const applyCsrf = (res: NextResponse) => {
+    if (csrfToken) {
+      res.cookies.set('__sa_csrf', csrfToken, {
+        path: '/',
+        sameSite: 'strict',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24, // 24 hours
+        httpOnly: false,       // must be JS-readable
+      })
+    }
+    return res
   }
 
   const supabase = createServerClient(
@@ -43,16 +54,16 @@ export async function middleware(request: NextRequest) {
 
   // Auth-gate /dashboard (consumer)
   if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
-    return NextResponse.redirect(new URL('/?auth=required', request.url))
+    return applyCsrf(NextResponse.redirect(new URL('/?auth=required', request.url)))
   }
 
   // Auth-gate /providers/dashboard and /providers/claim — use main auth modal
   const providerAuthRoutes = ['/providers/dashboard', '/providers/claim']
   if (!user && providerAuthRoutes.some(r => request.nextUrl.pathname.startsWith(r))) {
-    return NextResponse.redirect(new URL('/?auth=required', request.url))
+    return applyCsrf(NextResponse.redirect(new URL('/?auth=required', request.url)))
   }
 
-  return response
+  return applyCsrf(response)
 }
 
 export const config = {
