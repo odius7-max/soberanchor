@@ -52,6 +52,7 @@ export default function ClaimsQueue({ claims }: { claims: Claim[] }) {
   const [filter, setFilter] = useState<Filter>('pending')
   const [isPending, startTransition] = useTransition()
   const [actionId, setActionId] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
 
   const filtered = claims.filter(c => {
     if (filter === 'pending') return !c.is_verified
@@ -65,19 +66,29 @@ export default function ClaimsQueue({ claims }: { claims: Claim[] }) {
     all: claims.length,
   }
 
-  function handleApprove(id: string) {
-    setActionId(id)
+  // Both actions carry the account the row was rendered for, so a queue left
+  // open in a tab can't apply a stale decision to a replacement claimant.
+  function handleApprove(id: string, accountId: string | null) {
+    if (!accountId) { setActionError('This claim has no linked provider account. Reload the queue.'); return }
+    setActionId(id); setActionError(null)
     startTransition(async () => {
-      await approveClaim(id)
+      try { await approveClaim(id, accountId) }
+      catch (e) { setActionError(e instanceof Error ? e.message : 'Could not approve this claim.') }
       setActionId(null)
     })
   }
 
-  function handleReject(id: string) {
-    if (!confirm('Reject this claim? The provider will be unlinked from this facility.')) return
-    setActionId(id)
+  function handleReject(id: string, accountId: string | null) {
+    if (!accountId) { setActionError('This claim has no linked provider account. Reload the queue.'); return }
+    if (!confirm(
+      'Reject this claim?\n\n' +
+      'This listing will be unlinked from the provider and the rejection recorded. ' +
+      'Their other listings and account access are not affected.'
+    )) return
+    setActionId(id); setActionError(null)
     startTransition(async () => {
-      await rejectClaim(id)
+      try { await rejectClaim(id, accountId) }
+      catch (e) { setActionError(e instanceof Error ? e.message : 'Could not reject this claim.') }
       setActionId(null)
     })
   }
@@ -108,6 +119,12 @@ export default function ClaimsQueue({ claims }: { claims: Claim[] }) {
           </button>
         ))}
       </div>
+
+      {actionError && (
+        <div role="alert" style={{ background: '#FEE', border: '1px solid #F5C6CB', borderRadius: 10, padding: '12px 16px', marginBottom: 16, fontSize: 14, color: '#721C24' }}>
+          {actionError}
+        </div>
+      )}
 
       {filtered.length === 0 ? (
         <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: '40px', textAlign: 'center', color: 'var(--mid)', fontSize: 15 }}>
@@ -165,11 +182,11 @@ export default function ClaimsQueue({ claims }: { claims: Claim[] }) {
                 <div style={{ display: 'flex', gap: 6 }}>
                   {!c.is_verified ? (
                     <>
-                      <button onClick={() => handleApprove(c.id)} disabled={loading}
+                      <button onClick={() => handleApprove(c.id, c.provider_accounts?.id ?? null)} disabled={loading}
                         style={{ background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1, fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>
                         {loading ? '…' : 'Approve'}
                       </button>
-                      <button onClick={() => handleReject(c.id)} disabled={loading}
+                      <button onClick={() => handleReject(c.id, c.provider_accounts?.id ?? null)} disabled={loading}
                         style={{ background: '#fff', color: '#C0392B', border: '1px solid rgba(192,57,43,0.3)', borderRadius: 6, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1, fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>
                         Reject
                       </button>

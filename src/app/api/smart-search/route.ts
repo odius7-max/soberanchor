@@ -575,7 +575,8 @@ function errorResponse(query: string, message = "Search unavailable. Please try 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const rawQuery = searchParams.get("q") ?? "";
-  const context  = (searchParams.get("context") ?? "home") as SearchContext;
+  const rawContext = searchParams.get("context") ?? "home";
+  const context  = (rawContext in CONTEXT_LIMITS ? rawContext : "home") as SearchContext;
 
   try {
     return await handleSearch(request, rawQuery, context);

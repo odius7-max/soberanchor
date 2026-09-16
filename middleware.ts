@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { CONTINUATION_PARAM, validateContinuation } from '@/lib/claim-continuation'
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request })
@@ -52,15 +53,29 @@ export async function middleware(request: NextRequest) {
   await supabase.auth.getSession()
   const { data: { user } } = await supabase.auth.getUser()
 
+  // Send an unauthenticated visitor to the homepage auth modal, carrying where
+  // they were going so the claim survives sign-in (ODI-66). The continuation is
+  // validated by the shared validator, so only an exact /providers/claim target
+  // (optionally with one facility UUID) can ever be attached — never an
+  // arbitrary redirect, and never /providers/claim-evil.
+  function toAuth() {
+    const target = new URL('/?auth=required', request.url)
+    const continuation = validateContinuation(
+      request.nextUrl.pathname + request.nextUrl.search
+    )
+    if (continuation) target.searchParams.set(CONTINUATION_PARAM, continuation)
+    return applyCsrf(NextResponse.redirect(target))
+  }
+
   // Auth-gate /dashboard (consumer)
   if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
-    return applyCsrf(NextResponse.redirect(new URL('/?auth=required', request.url)))
+    return toAuth()
   }
 
   // Auth-gate /providers/dashboard and /providers/claim — use main auth modal
   const providerAuthRoutes = ['/providers/dashboard', '/providers/claim']
   if (!user && providerAuthRoutes.some(r => request.nextUrl.pathname.startsWith(r))) {
-    return applyCsrf(NextResponse.redirect(new URL('/?auth=required', request.url)))
+    return toAuth()
   }
 
   return applyCsrf(response)

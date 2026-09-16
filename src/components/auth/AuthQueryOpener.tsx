@@ -24,13 +24,25 @@ export default function AuthQueryOpener() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const { user, openAuthModal, loading } = useAuth()
-  // Guard against StrictMode double-invoke + repeated navigations to same URL
+  // Guard against StrictMode double-invoke + repeated navigations to same URL.
+  // Scoped to the current ?auth= OCCURRENCE, not to the component's lifetime —
+  // see the reset below.
   const handledFor = useRef<string | null>(null)
 
   useEffect(() => {
     if (loading) return
     const authParam = searchParams.get('auth')
-    if (!authParam) return
+    if (!authParam) {
+      // The param is gone, so this occurrence is finished. Clearing the guard
+      // here is what makes the NEXT ?auth=… count as a fresh occurrence.
+      //
+      // Without it the ref stayed set for the life of the mount, and since this
+      // component is mounted once at the app root, the modal would open exactly
+      // once per session: dismiss → Back (URL regains ?auth=required) → the key
+      // still matched and the effect bailed out, so nothing reopened (ODI-67).
+      handledFor.current = null
+      return
+    }
 
     const key = `${pathname}?auth=${authParam}`
     if (handledFor.current === key) return
