@@ -181,12 +181,20 @@ export default function AuthModal() {
     if (password.length < 8) { setError('Password must be at least 8 characters.'); return }
     if (password !== confirm) { setError('Passwords do not match.'); return }
     setLoading(true); setError(null)
+    // Confirmation links land on the ungated /auth/continue, never on
+    // auth-gated /dashboard — a confirmation arrives before a session exists,
+    // so the gate used to fire first and discard the pending claim. The
+    // validated continuation rides along in the link itself, so opening the
+    // email in a fresh browser still knows where the person was headed.
+    const confirmBase = `${window.location.origin}/auth/continue`
+    const emailRedirectTo = continuation
+      ? `${confirmBase}?${CONTINUATION_PARAM}=${encodeURIComponent(continuation)}`
+      : confirmBase
+
     const { data, error: err } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
-      },
+      options: { emailRedirectTo },
     })
     setLoading(false)
     if (err) { setError(friendlyAuthError(err.message)); return }
