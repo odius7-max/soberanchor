@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { toggleFacilityVerified, toggleFacilityFeatured, updateFacilityTier, deleteFacility } from '@/app/admin/actions'
+import { PROVIDER_TIERS, getTier } from '@/lib/provider-tiers'
 
 interface Facility {
   id: string
@@ -17,7 +18,6 @@ interface Facility {
   lead_count?: number
 }
 
-const TIER_LABELS: Record<string, string> = { basic: 'Basic', enhanced: 'Enhanced', premium: 'Premium' }
 const TYPE_LABELS: Record<string, string> = {
   treatment: 'Treatment', sober_living: 'Sober Living', therapist: 'Therapist',
   venue: 'Venue', outpatient: 'Outpatient', telehealth: 'Telehealth',
@@ -122,9 +122,9 @@ export default function FacilityTable({ facilities }: { facilities: Facility[] }
                     color: f.listing_tier === 'premium' ? 'var(--gold)' : f.listing_tier === 'enhanced' ? 'var(--teal)' : 'var(--mid)',
                     fontWeight: 600,
                   }}>
-                  <option value="basic">Basic</option>
-                  <option value="enhanced">Enhanced</option>
-                  <option value="premium">Premium</option>
+                  {PROVIDER_TIERS.map(t => (
+                    <option key={t.id} value={t.id}>{getTier(t.id).name}</option>
+                  ))}
                 </select>
               </div>
 

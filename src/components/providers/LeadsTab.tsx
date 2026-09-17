@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { getTier, tierPriceQualified } from '@/lib/provider-tiers'
+
+const ENHANCED = getTier('enhanced')
 
 export interface Lead { id:string; first_name:string|null; phone:string|null; insurance_provider:string|null; seeking:string|null; who_for:string|null; notes:string|null; status:string; created_at:string }
 
@@ -41,9 +44,11 @@ export default function LeadsTab({ tier, leads, onGoToPlan }: Props) {
         <p style={{ color: 'var(--mid)', fontSize: 15, marginBottom: 24 }}>People who&apos;ve requested information about your facility.</p>
         <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '48px 32px', textAlign: 'center' }}>
           <div style={{ fontSize: 52, marginBottom: 16 }}>📩</div>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 26, color: 'var(--navy)', marginBottom: 8, letterSpacing: '-0.5px' }}>Unlock Lead Capture</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 26, color: 'var(--navy)', marginBottom: 8, letterSpacing: '-0.5px' }}>Unlock inquiry capture</h2>
           <p style={{ color: 'var(--mid)', fontSize: 15, lineHeight: 1.6, maxWidth: 480, margin: '0 auto 24px' }}>
-            Upgrade to Enhanced to add a &quot;Contact This Facility&quot; form to your listing. Leads are delivered straight to your dashboard — no middleman, no fulfillment work.
+            {ENHANCED.name} ({tierPriceQualified(ENHANCED)}) adds a callback-request form to your listing.
+            Inquiries go straight to you and only to you — no middleman, never sold or shared.
+            Your real phone number and website stay on your listing on every tier, including this one.
           </p>
           <button onClick={onGoToPlan}
             style={{ background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 8, padding: '13px 32px', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>

@@ -1,5 +1,10 @@
 'use client'
 
+import { PAGE_ANALYTICS_LIVE, getTier, tierPriceQualified } from '@/lib/provider-tiers'
+
+const ENHANCED = getTier('enhanced')
+const PREMIUM = getTier('premium')
+
 interface Lead { id:string; first_name:string|null; phone:string|null; insurance_provider:string|null; seeking:string|null; who_for:string|null; status:string; created_at:string }
 
 interface Props {
@@ -91,9 +96,7 @@ function RecentLeads({ recentLeads, onGoToLeads }: { recentLeads: Lead[]; onGoTo
 }
 
 export default function OverviewTab({ tier, facilityName, leadsThisMonth, leadsLastMonth, viewsThisMonth, viewsLastMonth, contactClicks, contactClicksLast, recentLeads, onGoToLeads, onGoToPlan }: Props) {
-  const isEnhanced = tier === 'enhanced'
-  const isPremium = tier === 'premium'
-  const hasAnalytics = isEnhanced || isPremium
+  const hasAnalytics = tier === 'enhanced' || tier === 'premium'
 
   return (
     <div>
@@ -103,27 +106,36 @@ export default function OverviewTab({ tier, facilityName, leadsThisMonth, leadsL
       {/* ── Basic: no analytics, upgrade CTA ── */}
       {!hasAnalytics && (
         <>
-          {/* Analytics upgrade CTA card */}
-          <div style={{ background: 'var(--warm-gray)', border: '1px solid var(--border)', borderRadius: 14, padding: '28px 32px', marginBottom: 20, textAlign: 'center' }}>
-            <div style={{ fontSize: 28, marginBottom: 12 }}>📊</div>
+          {/*
+            Page-view stats belong to the FREE tier in the locked ladder
+            ("Monthly page-view stats" under Claimed), so they must never be
+            dangled as an Enhanced-only unlock — which is exactly what this
+            card used to do. They also aren't instrumented yet, so nobody gets
+            a number. Say both things plainly instead of selling either.
+          */}
+          <div style={{ background: 'var(--warm-gray)', border: '1px solid var(--border)', borderRadius: 14, padding: '24px 28px', marginBottom: 20 }}>
+            <div style={{ fontSize: 24, marginBottom: 10 }}>📊</div>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, color: 'var(--navy)', marginBottom: 8 }}>
-              See how your listing is performing
+              Page-view stats are included with your claimed listing
             </div>
-            <div style={{ fontSize: 14, color: 'var(--mid)', marginBottom: 20, maxWidth: 400, margin: '0 auto 20px' }}>
-              Listing views, contact clicks, and lead analytics. Upgrade to Enhanced to unlock.
+            <div style={{ fontSize: 14, color: 'var(--mid)', lineHeight: 1.6 }}>
+              Monthly view counts come with every claimed listing at no cost. We&apos;re still building
+              the measurement behind them, so there are no numbers to show yet — we&apos;d rather show
+              you nothing than show you something we haven&apos;t actually counted.
             </div>
-            <button onClick={onGoToPlan}
-              style={{ background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 8, padding: '11px 24px', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
-              Upgrade to Enhanced →
-            </button>
           </div>
 
-          {/* Upgrade banner */}
+          {/* Upgrade banner — ladder-true. It previously promised "top
+              placement", which contradicts the published policy that payment
+              never affects organic ranking. */}
           <div style={{ background: 'linear-gradient(135deg, #002244 0%, #1a4a5e 100%)', borderRadius: 14, padding: '28px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 20, marginBottom: 20 }}>
             <div>
               <div style={{ color: 'var(--gold)', fontSize: 11, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 6 }}>Upgrade Your Listing</div>
-              <div style={{ color: '#fff', fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 600, marginBottom: 4 }}>Get more visibility, more leads.</div>
-              <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14 }}>Featured badge, top placement, photos, analytics, and more.</div>
+              <div style={{ color: '#fff', fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 600, marginBottom: 4 }}>Make your page yours.</div>
+              <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14, maxWidth: 460, lineHeight: 1.6 }}>
+                {ENHANCED.name} ({tierPriceQualified(ENHANCED)}) adds your full gallery, branding and inquiry capture.
+                {' '}{PREMIUM.name} ({tierPriceQualified(PREMIUM)}) adds clearly-labeled Featured placement.
+              </div>
             </div>
             <button onClick={onGoToPlan}
               style={{ background: 'var(--gold)', color: '#fff', border: 'none', borderRadius: 8, padding: '13px 28px', fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>
@@ -131,11 +143,14 @@ export default function OverviewTab({ tier, facilityName, leadsThisMonth, leadsL
             </button>
           </div>
 
-          {/* Leads upsell */}
+          {/* Inquiry capture upsell */}
           <div style={{ background: 'rgba(42,138,153,0.05)', border: '1px solid rgba(42,138,153,0.15)', borderRadius: 14, padding: '22px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
             <div>
-              <div style={{ fontWeight: 600, fontSize: 15, color: 'var(--navy)', marginBottom: 4 }}>📩 Want leads delivered to your inbox?</div>
-              <div style={{ fontSize: 14, color: 'var(--mid)' }}>Upgrade to Enhanced to add a contact form to your listing and start receiving leads.</div>
+              <div style={{ fontWeight: 600, fontSize: 15, color: 'var(--navy)', marginBottom: 4 }}>📩 Want inquiries delivered to your inbox?</div>
+              <div style={{ fontSize: 14, color: 'var(--mid)', lineHeight: 1.6 }}>
+                {ENHANCED.name} adds a callback-request form to your listing. Inquiries go only to you —
+                never pooled, shared, or sold. Your phone number and website stay on your listing either way.
+              </div>
             </div>
             <button onClick={onGoToPlan}
               style={{ background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>
@@ -148,38 +163,38 @@ export default function OverviewTab({ tier, facilityName, leadsThisMonth, leadsL
       {/* ── Enhanced + Premium: stat cards ── */}
       {hasAnalytics && (
         <>
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 28 }}>
-            <StatCard icon="👁" label="Listing Views" value={viewsThisMonth} prev={viewsLastMonth} />
+          {/*
+            Inquiry counts are real — they come from the `leads` table. Listing
+            views and contact clicks are NOT instrumented; both were rendering a
+            hardcoded 0 from the page, which presents an uncounted metric as a
+            measurement. Show only what we actually measure (ODI-79).
+          */}
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 16 }}>
             <StatCard icon="📩" label="New Leads" value={leadsThisMonth} prev={leadsLastMonth} />
-            <StatCard icon="📞" label="Contact Clicks" value={contactClicks} prev={contactClicksLast} />
+            {PAGE_ANALYTICS_LIVE && (
+              <>
+                <StatCard icon="👁" label="Listing Views" value={viewsThisMonth} prev={viewsLastMonth} />
+                <StatCard icon="📞" label="Contact Clicks" value={contactClicks} prev={contactClicksLast} />
+              </>
+            )}
           </div>
 
-          {/* Premium: Search Trends card */}
-          {isPremium && (
-            <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 14, padding: '24px 28px', marginBottom: 28 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                <span style={{ fontSize: 20 }}>🔍</span>
-                <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, color: 'var(--navy)', letterSpacing: '-0.4px' }}>Search Trends</h2>
-                <span style={{ fontSize: 11, background: 'var(--teal-10)', border: '1px solid var(--teal-20)', color: 'var(--teal)', borderRadius: 20, padding: '2px 8px', fontWeight: 600 }}>Your Area</span>
-              </div>
-              <p style={{ fontSize: 13, color: 'var(--mid)', marginBottom: 16 }}>Anonymized search data from people looking for help in your area this month.</p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                {[
-                  { label: 'Detox / withdrawal help', count: 38 },
-                  { label: 'Sober living', count: 27 },
-                  { label: 'Outpatient programs', count: 24 },
-                  { label: 'Insurance-covered treatment', count: 19 },
-                  { label: 'Family support', count: 15 },
-                ].map(item => (
-                  <div key={item.label} style={{ background: 'var(--warm-gray)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 13, color: 'var(--dark)', fontWeight: 500 }}>{item.label}</span>
-                    <span style={{ fontSize: 12, color: 'var(--teal)', fontWeight: 700 }}>{item.count}</span>
-                  </div>
-                ))}
-              </div>
-              <p style={{ fontSize: 11, color: 'var(--mid)', marginTop: 14 }}>Search trend data is anonymized and updated weekly. Counts reflect unique searches.</p>
-            </div>
+          {!PAGE_ANALYTICS_LIVE && (
+            <p style={{ fontSize: 13, color: 'var(--mid)', marginBottom: 28, lineHeight: 1.6 }}>
+              Listing views and contact clicks aren&apos;t being measured yet, so we&apos;re not showing a
+              number for them. They&apos;ll appear here once the measurement is live.
+            </p>
           )}
+
+          {/*
+            A "Search Trends" panel used to render here for Premium with five
+            hardcoded counts (38 / 27 / 24 / 19 / 15) under the caption
+            "Anonymized search data from people looking for help in your area
+            this month … updated weekly. Counts reflect unique searches."
+            None of it was real and nothing measured it. Removed rather than
+            relabelled as sample data: it isn't a tier promise in the locked
+            ladder, so there's nothing to hold a placeholder for (ODI-79).
+          */}
 
           <RecentLeads recentLeads={recentLeads} onGoToLeads={onGoToLeads} />
         </>

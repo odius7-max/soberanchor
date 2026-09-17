@@ -1,6 +1,7 @@
 import ProviderAuthButton from "./ProviderAuthButton";
 import ClaimScrollButton from "./ClaimScrollButton";
 import ClaimSection from "./ClaimSection";
+import { PROVIDER_TIERS, tierPricePeriod } from "@/lib/provider-tiers";
 
 const angelYears = Math.floor((Date.now() - new Date('2021-12-04').getTime()) / (365.25 * 24 * 60 * 60 * 1000));
 
@@ -28,58 +29,24 @@ const steps = [
   },
 ];
 
-const tiers = [
-  {
-    name: "Claimed",
-    price: "Free",
-    period: "forever",
-    accent: "var(--teal)",
-    tagline: "Own and protect your listing.",
-    features: [
-      "Verified ✓ Claimed badge on your page",
-      "Edit your description, hours, and contact info",
-      "Up to 3 facility photos",
-      "Corrections to your SAMHSA-sourced data",
-      "Monthly page-view stats",
-      "Protection against unauthorized listing edits",
-    ],
-    footnote: "No credit card. No time limit. Claiming is free forever.",
-  },
-  {
-    name: "Enhanced",
-    price: "$99",
-    period: "/mo · Founding Partner rate (regularly $199)",
-    accent: "var(--gold)",
-    tagline: "Make your page yours.",
-    features: [
-      "Everything in Claimed",
-      "Full photo gallery and video tour",
-      "Your logo and branding on the page",
-      "Staff profiles and amenities section",
-      "Inquiry capture — families can request a callback, routed only to you",
-      "Highlighted insurance and payment section",
-      "No other centers shown on your page",
-      "Inquiry and page analytics dashboard",
-    ],
-    footnote: "Flat monthly rate. Annual billing: 2 months free.",
-  },
-  {
-    name: "Premium",
-    price: "$299",
-    period: "/mo · Founding Partner rate (regularly $499)",
-    accent: "var(--navy)",
-    tagline: "Stand out — visibly and honestly.",
-    features: [
-      "Everything in Enhanced",
-      "⭐ Featured placement in the directory — always clearly labeled",
-      "Featured badge on your listing page",
-      "Call-tracking analytics on your own number",
-      "Quarterly performance report",
-      "Priority support",
-    ],
-    footnote: "Featured placement is labeled sponsorship. It never changes organic search results.",
-  },
-];
+// The ladder itself lives in @/lib/provider-tiers so this page and every
+// dashboard/admin surface quote the same prices and features. Only the visual
+// accent is page-specific.
+const TIER_ACCENTS: Record<string, string> = {
+  basic: "var(--teal)",
+  enhanced: "var(--gold)",
+  premium: "var(--navy)",
+};
+
+const tiers = PROVIDER_TIERS.map((t) => ({
+  name: t.name,
+  price: t.price === 0 ? "Free" : `$${t.price}`,
+  period: tierPricePeriod(t),
+  accent: TIER_ACCENTS[t.id],
+  tagline: t.tagline,
+  features: t.features,
+  footnote: t.footnote,
+}));
 
 const providerTypes = [
   { icon: "🏥", title: "Treatment centers", desc: "Inpatient, outpatient, detox, and residential programs" },
@@ -120,7 +87,7 @@ const faqs = [
   },
   {
     q: "What if my facility isn't listed yet?",
-    a: "You can add your facility directly through the claim form. We'll verify your information and have you live in the directory within 24 hours.",
+    a: "Use the form on this page — it opens a pre-filled email in your mail app for you to send. We'll reply within one business day of receiving it to verify your details and get your listing added.",
   },
   {
     q: "Can I remove my listing?",
