@@ -95,14 +95,19 @@ export function getTier(id: string): ProviderTier {
   return PROVIDER_TIERS.find(t => t.id === id) ?? PROVIDER_TIERS[0]
 }
 
-/** Compact price for dashboard panels and selectors: "Free" / "$99/mo". */
-export function tierPriceLabel(tier: ProviderTier): string {
-  return tier.price === 0 ? 'Free' : `$${tier.price}/mo`
-}
-
-/** The free tier reads better as "Free forever" where there's room. */
-export function tierPriceLabelLong(tier: ProviderTier): string {
-  return tier.price === 0 ? 'Free forever' : `$${tier.price}/mo`
+/**
+ * Compact price for dashboard panels and upsells: "Free forever" /
+ * "$99/mo Founding Partner rate".
+ *
+ * The qualifier is not optional. Founding Partner pricing is locked for 12
+ * months and then rises to `regularPrice`, so a bare "$99/mo" anywhere in the
+ * product is a number that quietly expires. Every compact mention carries it.
+ */
+export function tierPriceQualified(tier: ProviderTier): string {
+  if (tier.price === 0) return 'Free forever'
+  return tier.regularPrice
+    ? `$${tier.price}/mo Founding Partner rate`
+    : `$${tier.price}/mo`
 }
 
 /** Suffix for the big pricing table: "/mo · Founding Partner rate (regularly $199)". */

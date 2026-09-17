@@ -1,6 +1,6 @@
 'use client'
 
-import { PAGE_ANALYTICS_LIVE, getTier } from '@/lib/provider-tiers'
+import { PAGE_ANALYTICS_LIVE, getTier, tierPriceQualified } from '@/lib/provider-tiers'
 
 const ENHANCED = getTier('enhanced')
 const PREMIUM = getTier('premium')
@@ -133,8 +133,8 @@ export default function OverviewTab({ tier, facilityName, leadsThisMonth, leadsL
               <div style={{ color: 'var(--gold)', fontSize: 11, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 6 }}>Upgrade Your Listing</div>
               <div style={{ color: '#fff', fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 600, marginBottom: 4 }}>Make your page yours.</div>
               <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14, maxWidth: 460, lineHeight: 1.6 }}>
-                {ENHANCED.name} (${ENHANCED.price}/mo) adds your full gallery, branding and inquiry capture.
-                {' '}{PREMIUM.name} (${PREMIUM.price}/mo) adds clearly-labeled Featured placement.
+                {ENHANCED.name} ({tierPriceQualified(ENHANCED)}) adds your full gallery, branding and inquiry capture.
+                {' '}{PREMIUM.name} ({tierPriceQualified(PREMIUM)}) adds clearly-labeled Featured placement.
               </div>
             </div>
             <button onClick={onGoToPlan}

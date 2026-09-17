@@ -87,7 +87,7 @@ const faqs = [
   },
   {
     q: "What if my facility isn't listed yet?",
-    a: "You can add your facility directly through the claim form. We'll verify your information and have you live in the directory within 24 hours.",
+    a: "Use the form on this page — it opens a pre-filled email in your mail app for you to send. We'll reply within one business day of receiving it to verify your details and get your listing added.",
   },
   {
     q: "Can I remove my listing?",

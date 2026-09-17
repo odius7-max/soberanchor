@@ -97,8 +97,8 @@ export default function ClaimSection() {
           Claim your free listing
         </h2>
         <p className="text-[15px] text-mid leading-[1.7] mb-8 text-center">
-          Fill this in and we&apos;ll open a pre-filled email for you to send. Once it reaches us we&apos;ll
-          have your listing live within one business day. No contracts, no credit card.
+          Fill this in and we&apos;ll open a pre-filled email for you to send. We&apos;ll reply within one
+          business day of receiving it. No contracts, no credit card.
         </p>
 
         <form
@@ -189,8 +189,8 @@ export default function ClaimSection() {
 
             {handedOff && (
               <p role="status" style={{ fontSize: 13, color: 'var(--navy)', textAlign: 'center', margin: 0, lineHeight: 1.6, background: 'var(--warm-gray)', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 14px' }}>
-                We&apos;ve opened a pre-filled email in your mail app — <strong>send it</strong> and we&apos;ll
-                take it from there. Nothing reaches us until you do. No mail app? Email{' '}
+                Your mail app should have opened with a pre-filled email — <strong>send it</strong> and
+                we&apos;ll take it from there. Nothing reaches us until you do. Nothing opened? Email{' '}
                 <a href="mailto:providers@soberanchor.com" style={{ color: 'var(--teal)', fontWeight: 600, textDecoration: 'none' }}>
                   providers@soberanchor.com
                 </a>{' '}

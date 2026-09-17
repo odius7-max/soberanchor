@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { getTier } from '@/lib/provider-tiers'
+import { getTier, tierPriceQualified } from '@/lib/provider-tiers'
 
 const ENHANCED = getTier('enhanced')
 
@@ -46,7 +46,7 @@ export default function LeadsTab({ tier, leads, onGoToPlan }: Props) {
           <div style={{ fontSize: 52, marginBottom: 16 }}>📩</div>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 26, color: 'var(--navy)', marginBottom: 8, letterSpacing: '-0.5px' }}>Unlock inquiry capture</h2>
           <p style={{ color: 'var(--mid)', fontSize: 15, lineHeight: 1.6, maxWidth: 480, margin: '0 auto 24px' }}>
-            {ENHANCED.name} (${ENHANCED.price}/mo) adds a callback-request form to your listing.
+            {ENHANCED.name} ({tierPriceQualified(ENHANCED)}) adds a callback-request form to your listing.
             Inquiries go straight to you and only to you — no middleman, never sold or shared.
             Your real phone number and website stay on your listing on every tier, including this one.
           </p>
