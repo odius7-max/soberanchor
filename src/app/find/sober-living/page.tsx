@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { supabase } from '@/lib/supabase'
 import FacilitiesDirectory from '@/components/find/FacilitiesDirectory'
+import FeaturedBand from '@/components/find/FeaturedBand'
 import { getUserSavedIds } from '../actions'
 
 export const metadata: Metadata = { title: 'Sober Living Homes — SoberAnchor' }
@@ -126,6 +127,7 @@ export default async function SoberLivingPage({
       </div>
 
       {/* Native sober-living listings (claimed/provider listings) */}
+      <FeaturedBand facilityType="sober_living" />
       <FacilitiesDirectory facilityType="sober_living" savedIds={savedIds} />
 
       {/* Cross-listed: treatment centers that report offering recovery housing */}
