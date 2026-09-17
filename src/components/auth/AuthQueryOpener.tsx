@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
+import { CONTINUATION_PARAM, validateContinuation } from '@/lib/claim-continuation'
 
 /**
  * Reads ?auth=... on any page and opens the AuthModal in the appropriate step,
@@ -51,6 +52,18 @@ export default function AuthQueryOpener() {
     if (!user) {
       if (authParam === 'signup') openAuthModal('signup')
       else if (authParam === 'login' || authParam === 'required') openAuthModal('login')
+    } else {
+      // Already authenticated. Previously this fell straight through to the
+      // strip below, which removed ?auth= and left ?next= sitting in the URL
+      // unused — the visitor landed on the homepage, signed in, with their
+      // claim silently abandoned (ODI-66/R5). If there's a valid continuation,
+      // consume it: that's the whole point of having carried it this far, and
+      // it's what makes the /auth/continue manual fallback recover properly.
+      const continuation = validateContinuation(searchParams.get(CONTINUATION_PARAM))
+      if (continuation) {
+        router.replace(continuation)
+        return
+      }
     }
 
     // Strip the auth param, preserve everything else

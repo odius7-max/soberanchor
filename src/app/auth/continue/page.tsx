@@ -13,20 +13,34 @@ import { CONTINUATION_PARAM, validateContinuation } from '@/lib/claim-continuati
  * exists, so the gate fired first and bounced the visitor to the homepage,
  * dropping whichever claim they were part-way through.
  *
- * Flow-agnostic on purpose. The browser client is created by
- * @supabase/ssr's createBrowserClient with detectSessionInUrl on, which
- * handles BOTH shapes a confirmation link can arrive in:
- *   - PKCE     → `?code=…` is auto-exchanged for a session on load
- *   - implicit → `#access_token=…` is read straight out of the hash
- * Either way the result surfaces as an auth state change, so this page never
- * has to know which one Supabase is configured for.
+ * Flow-agnostic by construction, not by branching. This page never inspects
+ * the link shape: it waits for the client to report a session and then routes.
  *
- * Never a dead end: an error, an expired or already-used link, or a stalled
- * exchange all fall through to the login modal with the claim continuation
- * still attached, so the visitor can sign in and resume where they left off.
+ * The configured path here is PKCE — @supabase/ssr's createBrowserClient
+ * hardcodes flowType 'pkce' and leaves detectSessionInUrl on, so `?code=` is
+ * auto-exchanged on load. supabase-js checks for an implicit `#access_token`
+ * callback first and independently of flowType, so that shape would be picked
+ * up too; note that a magiclink landing in this hash shape did NOT establish a
+ * session in local testing, so treat implicit as unverified here rather than
+ * relied upon. Nothing below depends on which one arrives.
+ *
+ * THIS PAGE OWNS POST-AUTH NAVIGATION (ODI-66/R5). AuthHydrationListener
+ * explicitly stands down here — it used to strip the query and call
+ * router.refresh() on the same SIGNED_IN event, which clobbered the replace
+ * below and stranded an authenticated visitor on this page. Because
+ * createBrowserClient returns a browser singleton, every listener in the app
+ * sees that one event, so ownership has to be settled by path, not by racing.
+ *
+ * Never a dead end: an error, an expired or already-used link, or an exchange
+ * that never resolves all fall through to the login modal with the claim
+ * continuation still attached.
  */
 
 const FALLBACK_DESTINATION = '/dashboard'
+const CONTINUE_PATH = '/auth/continue'
+/** How long to let client-side routing land before forcing a full navigation. */
+const HARD_FALLBACK_MS = 3000
+/** How long to wait for a session at all before offering sign-in. */
 const SETTLE_TIMEOUT_MS = 8000
 
 export default function AuthContinuePage() {
@@ -35,7 +49,8 @@ export default function AuthContinuePage() {
   // The escape-hatch link keeps the continuation too, so using it doesn't
   // quietly drop the claim either.
   const [manualHref, setManualHref] = useState('/?auth=required')
-  const settled = useRef(false)
+  const navigated = useRef(false)
+  const authenticated = useRef(false)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -46,16 +61,30 @@ export default function AuthContinuePage() {
       setManualHref(`/?auth=required&${CONTINUATION_PARAM}=${encodeURIComponent(continuation)}`)
     }
 
+    const timers: ReturnType<typeof setTimeout>[] = []
+
     function succeed() {
-      if (settled.current) return
-      settled.current = true
+      authenticated.current = true
+      if (navigated.current) return
+      navigated.current = true
+
       router.replace(destination)
+
+      // Client routing here is genuinely fragile: a competing refresh, a
+      // replaceState from another listener, or a slow RSC fetch can all leave
+      // us sitting on this page. The session is real by this point, so a full
+      // page load is a safe, correct exit — and it lands authenticated.
+      timers.push(setTimeout(() => {
+        if (window.location.pathname === CONTINUE_PATH) {
+          window.location.assign(destination)
+        }
+      }, HARD_FALLBACK_MS))
     }
 
     /** Recoverable exit: the login modal, continuation preserved. */
     function recover() {
-      if (settled.current) return
-      settled.current = true
+      if (navigated.current) return
+      navigated.current = true
       const q = new URLSearchParams({ auth: 'required' })
       if (continuation) q.set(CONTINUATION_PARAM, continuation)
       router.replace(`/?${q.toString()}`)
@@ -84,17 +113,20 @@ export default function AuthContinuePage() {
       if (session) succeed()
     })
 
-    // A PKCE link opened in a DIFFERENT browser than the one that signed up
-    // has no code_verifier to exchange with, so nothing will ever resolve.
-    // That lands here, and the login modal is the correct recovery.
-    const timer = setTimeout(() => {
+    // Only reached when no session ever materialised — e.g. a PKCE link opened
+    // in a DIFFERENT browser than the one that signed up, which has no
+    // code_verifier to exchange with. Never shown once authentication
+    // succeeded; telling a signed-in person we couldn't finish is a lie that
+    // sends them somewhere useless.
+    timers.push(setTimeout(() => {
+      if (authenticated.current) return
       setStalled(true)
       recover()
-    }, SETTLE_TIMEOUT_MS)
+    }, SETTLE_TIMEOUT_MS))
 
     return () => {
       subscription.unsubscribe()
-      clearTimeout(timer)
+      timers.forEach(clearTimeout)
     }
   }, [router])
 
