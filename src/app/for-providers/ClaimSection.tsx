@@ -44,7 +44,8 @@ export default function ClaimSection() {
     facilityType: '',
   })
   const [submitting, setSubmitting] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
+  // Not "submitted" — we only handed a draft to the visitor's mail client.
+  const [handedOff, setHandedOff] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   function set(key: keyof typeof form) {
@@ -75,33 +76,14 @@ export default function ClaimSection() {
       `?subject=${encodeURIComponent(`Listing claim request — ${form.facilityName}`)}` +
       `&body=${encodeURIComponent(body)}`
 
-    // Show success regardless — mailto may silently fail on some setups
-    setTimeout(() => { setSubmitting(false); setSubmitted(true) }, 400)
-  }
-
-  if (submitted) {
-    return (
-      <section id="claim" className="py-[80px] px-6 bg-off-white">
-        <div className="max-w-[480px] mx-auto text-center">
-          <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
-          <h2
-            className="text-[28px] font-semibold mb-3"
-            style={{ fontFamily: 'var(--font-display)', color: 'var(--navy)', letterSpacing: '-0.5px' }}
-          >
-            Request received
-          </h2>
-          <p className="text-[15px] text-mid leading-[1.7] mb-6">
-            We&apos;ll reach out to <strong style={{ color: 'var(--dark)' }}>{form.email}</strong> within one business day to get your listing live.
-          </p>
-          <p className="text-[13px] text-mid">
-            Questions?{' '}
-            <a href="mailto:providers@soberanchor.com" style={{ color: 'var(--teal)', fontWeight: 600, textDecoration: 'none' }}>
-              providers@soberanchor.com
-            </a>
-          </p>
-        </div>
-      </section>
-    )
+    // ODI-77: this used to flip to a "Request received — we'll reach out within
+    // one business day" screen on a 400ms timer, whether or not a mail client
+    // existed and whether or not the draft was ever sent. Nothing is submitted
+    // here and no record is created anywhere, so asserting receipt was simply
+    // false. We hand off the draft and say exactly that; the provider still has
+    // to press send. Full rework into the real claim flow is a follow-up.
+    setSubmitting(false)
+    setHandedOff(true)
   }
 
   return (
@@ -115,7 +97,8 @@ export default function ClaimSection() {
           Claim your free listing
         </h2>
         <p className="text-[15px] text-mid leading-[1.7] mb-8 text-center">
-          Fill in the form and we&apos;ll have your listing live within one business day. No contracts, no credit card.
+          Fill this in and we&apos;ll open a pre-filled email for you to send. Once it reaches us we&apos;ll
+          have your listing live within one business day. No contracts, no credit card.
         </p>
 
         <form
@@ -201,11 +184,22 @@ export default function ClaimSection() {
                 marginTop: 4,
               }}
             >
-              {submitting ? 'Sending…' : 'Claim My Listing →'}
+              {submitting ? 'Opening your email…' : 'Open email to request your listing'}
             </button>
 
+            {handedOff && (
+              <p role="status" style={{ fontSize: 13, color: 'var(--navy)', textAlign: 'center', margin: 0, lineHeight: 1.6, background: 'var(--warm-gray)', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 14px' }}>
+                We&apos;ve opened a pre-filled email in your mail app — <strong>send it</strong> and we&apos;ll
+                take it from there. Nothing reaches us until you do. No mail app? Email{' '}
+                <a href="mailto:providers@soberanchor.com" style={{ color: 'var(--teal)', fontWeight: 600, textDecoration: 'none' }}>
+                  providers@soberanchor.com
+                </a>{' '}
+                directly.
+              </p>
+            )}
+
             <p style={{ fontSize: 12, color: 'var(--mid)', textAlign: 'center', margin: 0 }}>
-              No contracts · No credit card · We respond within 1 business day
+              No contracts · No credit card · We respond within 1 business day of receiving your email
             </p>
           </div>
         </form>

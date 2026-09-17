@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { updateFacility } from '@/app/admin/actions'
+import { PROVIDER_TIERS, adminTierLabel } from '@/lib/provider-tiers'
 
 const FACILITY_TYPES = [
   { value: 'treatment', label: 'Treatment Center' },
@@ -163,9 +164,12 @@ export default function AdminFacilityEditPage() {
               <div>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--navy)', marginBottom: 5 }}>Listing Tier</label>
                 <select value={form.listing_tier} onChange={e => setForm(f => ({ ...f, listing_tier: e.target.value }))} style={inputStyle}>
-                  <option value="basic">Basic (Free)</option>
-                  <option value="enhanced">Enhanced ($149/mo)</option>
-                  <option value="premium">Premium ($399/mo)</option>
+                  {/* Labels from the shared ladder so admin can't drift from
+                      what providers are actually quoted. This is the FACILITY
+                      listing tier — not the Sponsor Pro ladder. */}
+                  {PROVIDER_TIERS.map(t => (
+                    <option key={t.id} value={t.id}>{adminTierLabel(t)}</option>
+                  ))}
                 </select>
               </div>
               {field('SAMHSA ID', 'samhsa_id')}

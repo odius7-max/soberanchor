@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { getTier, tierPriceLabelLong } from '@/lib/provider-tiers'
 
 export interface FacilityData {
   id: string
@@ -239,8 +240,10 @@ export default function ListingTab({ facility, amenities: initAmenities, insuran
             <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 12 }}>Your Plan</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--navy)', textTransform: 'capitalize' }}>{facility.listing_tier}</div>
-                <div style={{ fontSize: 13, color: 'var(--mid)', marginTop: 2 }}>{facility.listing_tier === 'basic' ? 'Free forever' : facility.listing_tier === 'enhanced' ? '$149/mo' : '$399/mo'}</div>
+                {/* Name and price come from the shared ladder — this panel used
+                    to hardcode paid prices well above the published ones. */}
+                <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--navy)' }}>{getTier(facility.listing_tier).name}</div>
+                <div style={{ fontSize: 13, color: 'var(--mid)', marginTop: 2 }}>{tierPriceLabelLong(getTier(facility.listing_tier))}</div>
               </div>
               {facility.listing_tier !== 'premium' && (
                 <button onClick={onGoToPlan}
