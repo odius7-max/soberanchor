@@ -110,6 +110,19 @@ export default async function FacilityDetail({ params }: { params: Promise<{ id:
   const isEnhanced = tierAtLeast(tier, "enhanced"); // enhanced | premium
   const isPremium = tier === "premium";
 
+  // ODI-84: presentation follows the TIER, but the inquiry path follows
+  // OWNERSHIP. A row can carry listing_tier='enhanced' with no verified owner
+  // attached (admin sets the tier directly, or a claim was reverted), and a
+  // lead submitted against it has nobody to route to — the mirror image of the
+  // "captured and left undelivered" case PROVIDER-PREMIUM-SPEC bans. Such a
+  // facility still gets its gallery, branding and styled contact buttons; it
+  // just never shows the form.
+  const canReceiveInquiries =
+    isEnhanced &&
+    !!facility.is_claimed &&
+    !!facility.is_verified &&
+    facility.provider_account_id != null;
+
   const published = (overrideRow?.published ?? {}) as FacilityPublished;
 
   // Render = override if present, else SAMHSA base. Contact facts fall back to
@@ -186,9 +199,13 @@ export default async function FacilityDetail({ params }: { params: Promise<{ id:
             independently by admin, so a Premium row with the flag off is not in
             the band and must not wear the badge either. */}
         {isPremium && facility.is_featured && <FeaturedBadge />}
-        {isClaimed && (
+        {/* Family-facing surfaces say "Verified" or nothing — never "Claimed".
+            Same condition as the directory cards (FacilitiesDirectory, find/page)
+            so one facility can't read Verified in the list and Claimed on its
+            page. A claimed-but-unverified listing carries no badge here. */}
+        {facility.is_verified && facility.is_claimed && (
           <span className="inline-block bg-[var(--teal-10)] border border-[var(--teal-20)] text-teal text-xs font-medium rounded-full px-3 py-1">
-            ✓ Claimed
+            ✓ Verified
           </span>
         )}
         {facility.source === "samhsa" && (
@@ -503,7 +520,9 @@ export default async function FacilityDetail({ params }: { params: Promise<{ id:
                   </a>
                 )}
               </div>
-              <LeadForm facilityId={facility.id} facilityName={facility.name} />
+              {canReceiveInquiries && (
+                <LeadForm facilityId={facility.id} facilityName={facility.name} />
+              )}
             </>
           ) : (
             /* Unclaimed/Claimed: plain contact links */

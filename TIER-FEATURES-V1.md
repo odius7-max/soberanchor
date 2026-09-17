@@ -1,77 +1,45 @@
-# SoberAnchor Tier FEATURE Fences — v1
+# Provider Tier Feature Fences — v1 (ratified addendum)
 
-*Status: RATIFIED (Travis, 2026-09-17) on ODI-80. Companion to
-PROVIDER-PREMIUM-SPEC.md: that document locks the **ladder and pricing**, this
-one locks **what each tier functionally gets**. Pricing questions
-("Founding Partner" framing, the anchor prices, the Premium gap) remain open on
-ODI-80 and are NOT settled here.*
+*Ratified by Travis 2026-09-17 in tier-planning session with Claude. Extends PROVIDER-PREMIUM-SPEC.md — the locked legal/ranking rules there are unchanged and still control. This document sets the FEATURE fences per tier for the build-out (ODI-52 rebase, ODI-53 editor, analytics work). Any change here is a change to `src/lib/provider-tiers.ts` plus this doc.*
 
-> **Provenance note.** Travis delivered a full `TIER-FEATURES-V1.md` alongside
-> the ODI-80 ratification comment, but it was not attached to the issue and was
-> not in the repo. This file is transcribed from the ratification comment
-> (ODI-80, 2026-09-17T19:03Z) so the fences are version-controlled beside the
-> spec they constrain. If the delivered document differs in any detail, replace
-> this file with it — the comment is the authority, this transcription is not.
+## Ratified fences
 
----
+### 1. Analytics — split three ways
 
-## 1. Analytics — a three-way split
+- **Claimed (free):** monthly page-view count. Exactly what the published card promises, nothing more.
+- **Enhanced:** full analytics dashboard — page views, contact clicks, inquiry counts, trends over time.
+- **Premium:** everything in Enhanced **plus market insight** — real, anonymized search-trend data for the facility's area, only once the real aggregation pipeline exists (never fabricated; ODI-79 rule is permanent).
+- All of it stays behind `PAGE_ANALYTICS_LIVE` until instrumentation ships. Honest "not measuring yet" copy remains until then.
 
-| Tier | Gets |
-|---|---|
-| **Claimed** (free) | Monthly page-view count |
-| **Enhanced** | Full dashboard — views, clicks, inquiries, trends |
-| **Premium** | The above **plus** real area market insight, once the pipeline exists |
+### 2. Media — 3 / unlimited + video
 
-All three are gated behind `PAGE_ANALYTICS_LIVE` in
-`src/lib/provider-tiers.ts` until **ODI-82** (page-view and contact-click
-instrumentation) ships. Nothing may display a number it does not actually
-measure — see ODI-79 for the failure this rule exists to prevent.
+- **Claimed:** up to 3 photos (as published).
+- **Enhanced and above:** unlimited photos, video tour, logo and branding on the page.
+- No middle cap. The old dashboard card's "10 photos" shape is dead.
 
-## 2. Media — no middle cap
+### 3. Leads — identical at every paid tier
 
-- **Claimed (free):** 3 photos.
-- **Enhanced and above:** unlimited photos, plus video and logo/branding.
+- Same form, same routing (only to the chosen facility), same inbox at Enhanced and Premium.
+- **Premium never gets more, faster, or better-routed leads.** Its edge is visibility and insight only. This is a deliberate legal-optics fence (no paying-more-for-more-connections), and it is now as firm as the flat-pricing rule.
+- Lead-management *tooling* upgrades (notes, statuses, templates) were considered and deferred — not in v1 at any tier.
 
-There is deliberately **no intermediate cap**. The free tier's limit of 3 is
-enforced at render time, not at write time, so stored content may exceed it.
+### 4. Premium v1 differentiators — committed set
 
-## 3. Leads are identical at every paid tier — STANDING RULE
+Premium at launch = **labeled Featured placement (ODI-52 scope, directory results band) + quarterly performance report + priority support + the analytics market-insight layer when live.**
 
-Premium **never** receives more leads, faster leads, or better-routed leads than
-Enhanced. The inquiry form, its routing and its delivery are byte-identical
-between the two paid tiers. What Premium buys is **visibility and insight, not
-preferential access to people seeking help.**
+- **Quarterly report:** committed. Starts as a manually assembled PDF (views, clicks, inquiries, market context) per the ODI-80 recommendation; tooling later.
+- **Call tracking:** NOT committed for v1. **Conflict with the published card** (it currently lists "Call-tracking analytics on your own number") — resolve by removing or softening that bullet in the tier config before ODI-54 sells Premium. Suggested replacement bullet: the market-insight analytics line. Revisit call tracking as its own scoped issue when there's a paying Premium base.
+- **Multi-location org tools:** deferred, noted as the most natural future Premium hook for large operators.
+- **Homepage/state-page featured slots:** deferred; v1 Featured = directory results band as ODI-52 already scopes it.
 
-This is elevated to a standing rule alongside flat-pricing-only. Any change that
-would differentiate lead handling by tier is out of bounds without re-ratifying
-this document.
+## What this changes in the build queue
 
-## 4. Premium v1 contents
+1. **ODI-52 rebase scope check:** rendering must respect these fences — unlimited media sections at Enhanced+, Featured band Premium-only, lead form identical at both paid tiers. (Believed already consistent with the July build; verify at review.)
+2. **ODI-53 editor scope:** photo limits enforced per tier (3 / unlimited); video, logo, branding fields Enhanced+; all edits through the override/moderation layer regardless of tier — paying never skips review.
+3. **Tier config edit (rides next branch):** remove/soften the call-tracking bullet on Premium; add market-insight line.
+4. **New issue — page-view & click instrumentation:** powers all three analytics layers; flips PAGE_ANALYTICS_LIVE.
+5. **New issue — quarterly report v1 (manual process):** template + data pull checklist; first real one due one quarter after first Premium subscriber.
 
-**Committed for v1:**
+## Standing rules restated (unchanged, from PROVIDER-PREMIUM-SPEC.md)
 
-- Labeled **Featured** placement (the directory band) — Premium-only, and always
-  visibly labeled as sponsorship
-- Quarterly performance report (**ODI-83**; a manual process at first)
-- Priority support
-
-**Explicitly NOT committed for v1:**
-
-- **Call tracking.** Its bullet comes **off** the published tier card until the
-  feature is actually built. (Removed from the config on the ODI-52 rebase
-  branch, replaced by the fence-1 market-insight line.)
-
-**Deferred Premium ideas** (logged, not promised): multi-location organisation
-tools; homepage and state-level featured slots.
-
----
-
-## Related issues
-
-- **ODI-80** — provider pricing review; this ratification lives in its comments.
-  Pricing itself still open.
-- **ODI-82** — instrumentation. Blocks ODI-54 and ODI-83, and gates every
-  analytics claim above.
-- **ODI-83** — quarterly performance report process (the Premium anchor).
-- **ODI-52** — tier-gated listing rendering; the first consumer of these fences.
+Flat subscriptions only. Real facility phone on every tier. Organic ranking payment-blind. Paid placement labeled, always. Verification free at every tier, never sold. SAMHSA baseline facts never gated. No testimonials. No fabricated data anywhere, at any tier, ever.
