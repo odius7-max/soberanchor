@@ -2,9 +2,16 @@
 //
 // This is the ONLY surface where payment influences placement, and it is
 // explicitly labeled "Featured / Sponsored" per the locked rules. It performs
-// its OWN fetch of is_featured facilities — organic directory/search queries
+// its OWN fetch of featured facilities — organic directory/search queries
 // stay payment-blind (the ODI-51 grep gate: no paid signals in organic
 // `.order()`). Renders nothing when no facility is featured (true until ODI-54).
+//
+// Requires listing_tier = 'premium' AS WELL AS is_featured. Featured placement
+// is a Premium-only entitlement (TIER-FEATURES-V1 fence 4), but is_featured is
+// an independently togglable admin flag — admin/actions.ts#toggleFacilityFeatured
+// and the facility edit checkbox can set it on a basic or enhanced row. Keying
+// the band off the flag alone would have let a non-Premium listing buy
+// placement it isn't entitled to.
 
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -36,6 +43,7 @@ export default async function FeaturedBand({ facilityType, limit = 3 }: Props) {
   let q = supabase
     .from('facilities')
     .select('id, name, city, state, facility_type')
+    .eq('listing_tier', 'premium')
     .eq('is_featured', true)
     .order('name')
     .limit(limit)

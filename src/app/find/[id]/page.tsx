@@ -181,7 +181,11 @@ export default async function FacilityDetail({ params }: { params: Promise<{ id:
             {b.label}
           </span>
         ))}
-        {isPremium && <FeaturedBadge />}
+        {/* Agrees with FeaturedBand: Premium tier AND the is_featured flag.
+            Premium implies is_featured in the ladder, but the flag is set
+            independently by admin, so a Premium row with the flag off is not in
+            the band and must not wear the badge either. */}
+        {isPremium && facility.is_featured && <FeaturedBadge />}
         {isClaimed && (
           <span className="inline-block bg-[var(--teal-10)] border border-[var(--teal-20)] text-teal text-xs font-medium rounded-full px-3 py-1">
             ✓ Claimed

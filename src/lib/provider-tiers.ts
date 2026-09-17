@@ -12,7 +12,10 @@
  * results, in direct contradiction of the published policy that payment never
  * affects organic ranking. Add a tier fact once, here, and every surface agrees.
  *
- * Source: PROVIDER-PREMIUM-SPEC.md ("Listing Tiers — Locked Rules v1").
+ * Sources: PROVIDER-PREMIUM-SPEC.md ("Listing Tiers — Locked Rules v1") for
+ * the ladder and pricing; TIER-FEATURES-V1.md for the ratified functional
+ * fences (media caps, the analytics 3-way split, Premium v1 contents, and
+ * the standing rule that leads are identical at every paid tier).
  *
  * NOT the Sponsor Pro ladder. That's a separate product (free/pro/founding on
  * provider_accounts.subscription_tier, /program, /upgrade) and must not be
@@ -63,7 +66,7 @@ export const PROVIDER_TIERS: ProviderTier[] = [
     tagline: 'Make your page yours.',
     features: [
       'Everything in Claimed',
-      'Full photo gallery and video tour',
+      'Unlimited photos, full gallery and video tour',
       'Your logo and branding on the page',
       'Staff profiles and amenities section',
       'Inquiry capture — families can request a callback, routed only to you',
@@ -83,7 +86,7 @@ export const PROVIDER_TIERS: ProviderTier[] = [
       'Everything in Enhanced',
       '⭐ Featured placement in the directory — always clearly labeled',
       'Featured badge on your listing page',
-      'Call-tracking analytics on your own number',
+      'Area market insight — anonymized regional demand trends (when analytics ship)',
       'Quarterly performance report',
       'Priority support',
     ],
