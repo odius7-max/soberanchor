@@ -411,7 +411,7 @@ export default async function FacilityDetail({ params }: { params: Promise<{ id:
                 🏥 Claim This Listing
               </Link>
               <p className="text-[12.5px] leading-relaxed" style={{ color: "rgba(255,255,255,0.7)" }}>
-                Add photos, respond to leads, and connect with people seeking help — free.
+                Add photos, keep your information accurate, and protect your listing from unauthorized changes — free.
               </p>
             </div>
           )}

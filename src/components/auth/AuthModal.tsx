@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/context/AuthContext'
+import { CONTINUATION_PARAM, validateContinuation } from '@/lib/claim-continuation'
 
 type Step = 'login' | 'signup' | 'forgot' | 'forgot_sent' | 'onboarding'
 
@@ -50,6 +51,41 @@ export default function AuthModal() {
   const nameRef = useRef<HTMLInputElement>(null)
   const backdropRef = useRef<HTMLDivElement>(null)
 
+  // ── Claim continuation (ODI-66) ──
+  // Where this person was headed before we asked them to sign in. Held in
+  // state rather than read from the URL on each render so that switching
+  // between login and signup — and AuthQueryOpener rewriting the query to
+  // strip ?auth= — cannot drop it mid-flow.
+  const [continuation, setContinuation] = useState<string | null>(null)
+  const openedRef = useRef(false)
+  const consumedRef = useRef(false)
+  const isClaimEntry = continuation !== null
+
+  // Snapshot once per opening. Reading window.location directly (rather than
+  // depending on useSearchParams) keeps this tied to the open edge only.
+  useEffect(() => {
+    if (!isAuthModalOpen) { openedRef.current = false; return }
+    if (openedRef.current) return
+    openedRef.current = true
+    consumedRef.current = false
+    setContinuation(
+      validateContinuation(new URLSearchParams(window.location.search).get(CONTINUATION_PARAM))
+    )
+  }, [isAuthModalOpen])
+
+  // Closing without authenticating clears the pending claim intent, so it
+  // cannot silently attach itself to an unrelated sign-in later on.
+  useEffect(() => {
+    if (isAuthModalOpen || consumedRef.current || !continuation) return
+    const params = new URLSearchParams(window.location.search)
+    if (params.has(CONTINUATION_PARAM)) {
+      params.delete(CONTINUATION_PARAM)
+      const qs = params.toString()
+      router.replace(qs ? `${window.location.pathname}?${qs}` : window.location.pathname, { scroll: false })
+    }
+    setContinuation(null)
+  }, [isAuthModalOpen, continuation, router])
+
   // When modal opens, start at the requested step.
   // useLayoutEffect (not useEffect) so the sync happens BEFORE the browser
   // paints the first render of the opened modal — otherwise the modal briefly
@@ -88,6 +124,21 @@ export default function AuthModal() {
   }, [step])
 
   async function afterAuth(userId: string) {
+    // Provider arriving from a claim link: resume that exact claim. Recovery
+    // onboarding is not part of a provider's journey, so it is skipped here —
+    // they can still complete it later from the member side.
+    //
+    // refresh() before push() so the server re-renders with the session cookie
+    // the client just wrote; otherwise the auth-gated claim page can render
+    // against a stale, signed-out view and bounce straight back to the modal.
+    if (continuation) {
+      consumedRef.current = true
+      closeAuthModal()
+      router.refresh()
+      router.push(continuation)
+      return
+    }
+
     const { data: prof } = await supabase
       .from('user_profiles')
       .select('display_name')
@@ -130,12 +181,20 @@ export default function AuthModal() {
     if (password.length < 8) { setError('Password must be at least 8 characters.'); return }
     if (password !== confirm) { setError('Passwords do not match.'); return }
     setLoading(true); setError(null)
+    // Confirmation links land on the ungated /auth/continue, never on
+    // auth-gated /dashboard — a confirmation arrives before a session exists,
+    // so the gate used to fire first and discard the pending claim. The
+    // validated continuation rides along in the link itself, so opening the
+    // email in a fresh browser still knows where the person was headed.
+    const confirmBase = `${window.location.origin}/auth/continue`
+    const emailRedirectTo = continuation
+      ? `${confirmBase}?${CONTINUATION_PARAM}=${encodeURIComponent(continuation)}`
+      : confirmBase
+
     const { data, error: err } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
-      },
+      options: { emailRedirectTo },
     })
     setLoading(false)
     if (err) { setError(friendlyAuthError(err.message)); return }
@@ -198,13 +257,24 @@ export default function AuthModal() {
     onboarding:  { title: 'Almost There!',         sub: 'Just a few quick things to set up your dashboard.' },
   }
 
+  // A provider who clicked "Claim this listing" is not on a recovery journey —
+  // the same modal, read in that context, should say so.
+  if (isClaimEntry) {
+    HEADER.login  = { title: 'Sign in to claim your facility', sub: 'Use the account that manages this listing.' }
+    HEADER.signup = { title: 'Create your provider account',   sub: 'One account manages all of your locations.' }
+  }
+
+  // Claim-entry login/signup get an explicit way out. Elsewhere the modal keeps
+  // its existing dismissal behaviour.
+  const showClose = isClaimEntry && (step === 'login' || step === 'signup')
+
   return (
     <div
       ref={backdropRef}
       className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6"
       style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)', overflowY: 'auto' }}
-      onMouseDown={e => { if (step === 'login' && e.target === backdropRef.current) closeAuthModal() }}
-      onKeyDown={e => { if (step === 'login' && e.key === 'Escape') closeAuthModal() }}
+      onMouseDown={e => { if ((step === 'login' || showClose) && e.target === backdropRef.current) closeAuthModal() }}
+      onKeyDown={e => { if ((step === 'login' || showClose) && e.key === 'Escape') closeAuthModal() }}
     >
       <div
         className="w-full rounded-2xl overflow-hidden"
@@ -213,8 +283,26 @@ export default function AuthModal() {
         {/* Header */}
         <div
           className="px-7 pt-7 pb-5 text-center"
-          style={{ background: 'linear-gradient(135deg,#002244,#1a4a5e)', borderRadius: '16px 16px 0 0' }}
+          style={{ background: 'linear-gradient(135deg,#002244,#1a4a5e)', borderRadius: '16px 16px 0 0', position: 'relative' }}
         >
+          {showClose && (
+            <button
+              type="button"
+              onClick={closeAuthModal}
+              aria-label="Close"
+              style={{
+                position: 'absolute', top: 8, right: 8,
+                width: 44, height: 44,            // 44px touch target (CLAUDE.md §6)
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: 'rgba(255,255,255,0.7)', fontSize: 26, lineHeight: 1,
+              }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}
+            >
+              ×
+            </button>
+          )}
           <div style={{ fontSize: 32, marginBottom: 8 }}>⚓</div>
           <div className="font-semibold text-white" style={{ fontFamily: 'var(--font-display)', fontSize: 22 }}>
             {HEADER[step].title}

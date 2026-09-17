@@ -1,10 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { CONTINUATION_PARAM, buildContinuation, claimCancelHref } from '@/lib/claim-continuation'
 
-type Step = 'search' | 'create' | 'done'
+type Step = 'search' | 'done'
+type Outcome = 'verified' | 'pending'
 
 interface SearchResult { id:string; name:string; city:string|null; state:string|null; facility_type:string; is_claimed:boolean }
 
@@ -19,28 +22,42 @@ const FACILITY_TYPES = [
 
 const TYPE_LABELS: Record<string,string> = Object.fromEntries(FACILITY_TYPES.map(t => [t.value, t.label]))
 
+const SUPPORT_EMAIL = 'providers@soberanchor.com'
+
 interface Props {
-  userId: string
+  // No userId prop: the claim's actor is derived server-side from the session,
+  // never passed in from the client.
   preselectedFacility?: SearchResult | null
+  /** Persisted status when the signed-in user already owns the preselected facility. */
+  initialOutcome?: Outcome | null
+  /** A previous claim by this user for this facility was rejected. */
+  wasRejected?: boolean
+  /** The user's provider account has been suspended by an admin. */
+  accountInactive?: boolean
+  /** The ?facility= id did not resolve to a listing. */
+  missingFacility?: boolean
 }
 
-export default function ClaimFlow({ userId, preselectedFacility = null }: Props) {
+export default function ClaimFlow({
+  preselectedFacility = null,
+  initialOutcome = null,
+  wasRejected = false,
+  accountInactive = false,
+  missingFacility = false,
+}: Props) {
   const router = useRouter()
-  const [step, setStep] = useState<Step>('search')
+  const [step, setStep] = useState<Step>(initialOutcome ? 'done' : 'search')
+  const [outcome, setOutcome] = useState<Outcome | null>(initialOutcome)
   const [query, setQuery] = useState(preselectedFacility?.name ?? '')
   const [results, setResults] = useState<SearchResult[]>(preselectedFacility ? [preselectedFacility] : [])
   const [searching, setSearching] = useState(false)
   const [selected, setSelected] = useState<SearchResult | null>(preselectedFacility ?? null)
+  const [claimedFacility, setClaimedFacility] = useState<SearchResult | null>(
+    initialOutcome ? preselectedFacility : null
+  )
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const isPreselected = preselectedFacility !== null
-
-  // Create new form
-  const [form, setForm] = useState({
-    contact_name: '', contact_email: '', contact_phone: '', organization_name: '',
-    facility_name: '', facility_type: 'treatment', phone: '', email: '', website: '',
-    address_line1: '', city: '', state: '', zip: '', description: '',
-  })
 
   // Track whether results are "live" (from user typing) vs seeded from preselection
   const [resultsFromSearch, setResultsFromSearch] = useState(!isPreselected)
@@ -63,150 +80,130 @@ export default function ClaimFlow({ userId, preselectedFacility = null }: Props)
     return () => clearTimeout(t)
   }, [query, resultsFromSearch])
 
-  function extractDomain(url: string | null): string {
-    if (!url) return ''
-    try {
-      const hostname = new URL(url.startsWith('http') ? url : 'https://' + url).hostname
-      return hostname.replace(/^www\./, '').toLowerCase()
-    } catch {
-      return ''
-    }
-  }
-
+  /**
+   * ODI-68: the claim is a single server-side transaction now.
+   *
+   * The old version wrote provider_accounts and facilities straight from the
+   * browser. RLS refuses both (facilities is SELECT-only; provider_accounts has
+   * no INSERT policy), so the writes silently no-op'd and the user was pushed to
+   * a dashboard that had nothing in it. Verification, account creation and
+   * linking are all decided server-side now — this function only reports.
+   *
+   * On any failure we stay on this page. Navigating away on a failed claim is
+   * what made the original bug invisible.
+   */
   async function claimFacility(facility: SearchResult) {
-    if (facility.is_claimed) { setError('This facility has already been claimed. Contact us if this is your facility.'); return }
     setSubmitting(true); setError(null)
-    const supabase = createClient()
 
-    // Get user email for domain matching
-    const { data: { user } } = await supabase.auth.getUser()
-    const userEmail = user?.email ?? ''
-    const emailDomain = userEmail.split('@')[1]?.toLowerCase() ?? ''
-
-    // Fetch facility website for domain comparison
-    const { data: facilityDetail } = await supabase
-      .from('facilities')
-      .select('website')
-      .eq('id', facility.id)
-      .maybeSingle()
-    const websiteDomain = extractDomain(facilityDetail?.website ?? null)
-
-    // Hybrid auto-verify: domain match → auto-verify; no match → queue for admin review
-    const autoVerify = !!(emailDomain && websiteDomain && emailDomain === websiteDomain)
-
-    // Get/create provider account
-    let { data: existing } = await supabase
-      .from('provider_accounts')
-      .select('id')
-      .eq('auth_user_id', userId)
-      .maybeSingle()
-
-    if (!existing) {
-      const { data: created } = await supabase
-        .from('provider_accounts')
-        .insert({ auth_user_id: userId, contact_name: facility.name, contact_email: userEmail })
-        .select('id')
-        .single()
-      existing = created
-    }
-
-    if (!existing) { setSubmitting(false); setError('Failed to create provider account.'); return }
-
-    // Link facility — auto-verify if email domain matches website domain
-    await supabase.from('facilities').update({
-      provider_account_id: existing.id,
-      is_claimed: true,
-      is_verified: autoVerify,
-      updated_at: new Date().toISOString(),
-    }).eq('id', facility.id)
-
-    setSubmitting(false)
-    router.push('/dashboard')
-  }
-
-  async function createFacility() {
-    if (!form.contact_name.trim() || !form.contact_email.trim() || !form.facility_name.trim()) {
-      setError('Contact name, email, and facility name are required.'); return
-    }
-    setSubmitting(true); setError(null)
-    const supabase = createClient()
-
-    // Get/create provider account
-    let { data: existing } = await supabase
-      .from('provider_accounts')
-      .select('id')
-      .eq('auth_user_id', userId)
-      .maybeSingle()
-
-    if (!existing) {
-      const { data: created } = await supabase
-        .from('provider_accounts')
-        .insert({
-          auth_user_id: userId,
-          contact_name: form.contact_name.trim(),
-          contact_email: form.contact_email.trim(),
-          contact_phone: form.contact_phone.trim() || null,
-          organization_name: form.organization_name.trim() || null,
-        })
-        .select('id')
-        .single()
-      existing = created
-    }
-
-    if (!existing) { setSubmitting(false); setError('Failed to create provider account.'); return }
-
-    // Generate slug
-    const slug = form.facility_name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-      + '-' + Math.random().toString(36).slice(2, 6)
-
-    const { error: facilityErr } = await supabase
-      .from('facilities')
-      .insert({
-        provider_account_id: existing.id,
-        name: form.facility_name.trim(),
-        slug,
-        description: form.description.trim() || null,
-        phone: form.phone.trim() || null,
-        email: form.email.trim() || null,
-        website: form.website.trim() || null,
-        address_line1: form.address_line1.trim() || null,
-        city: form.city.trim() || null,
-        state: form.state.trim() || null,
-        zip: form.zip.trim() || null,
-        facility_type: form.facility_type,
-        listing_tier: 'basic',
-        is_claimed: true,
+    let res: Response
+    try {
+      res = await fetch('/api/providers/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ facility_id: facility.id }),
       })
+    } catch {
+      setSubmitting(false)
+      setError('We could not reach the server. Check your connection and try again.')
+      return
+    }
 
-    if (facilityErr) { setSubmitting(false); setError(facilityErr.message); return }
+    const payload = await res.json().catch(() => null) as
+      { status?: Outcome; error?: string; code?: string } | null
+
     setSubmitting(false)
-    router.push('/dashboard')
+
+    if (!res.ok) {
+      // 401 — the session lapsed mid-flow. Resume authentication against this
+      // same facility rather than dropping the claim.
+      if (res.status === 401) {
+        const continuation = buildContinuation(facility.id)
+        router.replace(`/?auth=required&${CONTINUATION_PARAM}=${encodeURIComponent(continuation)}`)
+        return
+      }
+      setError(payload?.error ?? 'Something went wrong. Your claim was not submitted.')
+      return
+    }
+
+    if (payload?.status !== 'verified' && payload?.status !== 'pending') {
+      setError('Something went wrong. Your claim was not submitted.')
+      return
+    }
+
+    setClaimedFacility(facility)
+    setOutcome(payload.status)
+    setStep('done')
+    // Let the dashboard and listing pages see the committed claim.
+    router.refresh()
   }
 
   const inputStyle = (focused = false) => ({
     width: '100%', padding: '10px 13px', border: `1.5px solid ${focused ? 'var(--teal)' : 'var(--border)'}`,
     borderRadius: 8, fontSize: 14, fontFamily: 'var(--font-body)', background: '#fff', outline: 'none', boxSizing: 'border-box' as const, color: 'var(--dark)',
   })
-  const label = (text: string) => (
-    <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--navy)', marginBottom: 5 }}>{text}</label>
-  )
+
+  const cancelHref = claimCancelHref(preselectedFacility?.id ?? null)
+  const doneFacility = claimedFacility ?? preselectedFacility
+
+  const noticeStyle = {
+    background: '#FEE', border: '1px solid #F5C6CB', borderRadius: 10,
+    padding: '12px 16px', marginBottom: 20, fontSize: 14, color: '#721C24',
+  } as const
 
   return (
     <div style={{ maxWidth: 680, margin: '0 auto', padding: '40px 24px 80px' }}>
-      <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 600, color: 'var(--navy)', letterSpacing: '-0.75px', marginBottom: 6 }}>Claim Your Listing</h1>
-      <p style={{ color: 'var(--mid)', fontSize: 15, marginBottom: 32, lineHeight: 1.6 }}>
-        Your facility may already be in our directory. Search below to find and claim it, or add a new listing.
-      </p>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 6 }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 600, color: 'var(--navy)', letterSpacing: '-0.75px', margin: 0 }}>
+          {step === 'done' ? 'Your Claim' : 'Claim Your Listing'}
+        </h1>
+        {/* Deterministic exit — a shared or direct link may have no same-site
+            history entry, so history.back() can strand the visitor. */}
+        <Link
+          href={cancelHref}
+          aria-label="Close"
+          style={{
+            flexShrink: 0, width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'var(--mid)', fontSize: 26, lineHeight: 1, textDecoration: 'none', marginTop: -4,
+          }}
+        >
+          ×
+        </Link>
+      </div>
 
-      {error && (
-        <div style={{ background: '#FEE', border: '1px solid #F5C6CB', borderRadius: 10, padding: '12px 16px', marginBottom: 20, fontSize: 14, color: '#721C24' }}>{error}</div>
+      {step === 'search' && (
+        <p style={{ color: 'var(--mid)', fontSize: 15, marginBottom: 32, lineHeight: 1.6 }}>
+          Your facility may already be in our directory. Search below to find and claim it.
+        </p>
       )}
+
+      {missingFacility && (
+        <div style={noticeStyle}>
+          We couldn&apos;t find that listing — it may have been removed. Search for your facility below.
+        </div>
+      )}
+
+      {accountInactive && (
+        <div style={noticeStyle}>
+          Your provider account is currently suspended, so new claims are on hold.
+          Contact <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#721C24', fontWeight: 600 }}>{SUPPORT_EMAIL}</a> to restore access.
+        </div>
+      )}
+
+      {wasRejected && (
+        <div style={{ background: '#FFF6E5', border: '1px solid #F0D9A8', borderRadius: 10, padding: '14px 16px', marginBottom: 20, fontSize: 14, color: '#7A5A15', lineHeight: 1.6 }}>
+          <strong style={{ display: 'block', marginBottom: 4 }}>This claim wasn&apos;t approved</strong>
+          A previous claim for {preselectedFacility?.name ?? 'this listing'} was reviewed and not approved.
+          Any other listings on your account are unaffected. To reopen this one, contact{' '}
+          <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#7A5A15', fontWeight: 600 }}>{SUPPORT_EMAIL}</a>.
+        </div>
+      )}
+
+      {error && <div style={noticeStyle} role="alert">{error}</div>}
 
       {step === 'search' && (
         <>
-          {/* Search */}
           {isPreselected && selected && (
-            <div style={{ background: 'rgba(42,138,153,0.07)', border: '1px solid rgba(42,138,153,0.2)', borderRadius: 12, padding: '14px 18px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <div style={{ background: 'rgba(42,138,153,0.07)', border: '1px solid rgba(42,138,153,0.2)', borderRadius: 12, padding: '14px 18px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--teal)' }}>📍 Pre-selected from directory</div>
                 <div style={{ fontSize: 13, color: 'var(--navy)', fontWeight: 600, marginTop: 2 }}>{selected.name}</div>
@@ -257,8 +254,8 @@ export default function ClaimFlow({ userId, preselectedFacility = null }: Props)
                       </div>
                     </div>
                     {!r.is_claimed && (
-                      <button onClick={e => { e.stopPropagation(); claimFacility(r) }} disabled={submitting}
-                        style={{ background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 7, padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'var(--font-body)', opacity: submitting ? 0.7 : 1 }}>
+                      <button onClick={e => { e.stopPropagation(); claimFacility(r) }} disabled={submitting || accountInactive || wasRejected}
+                        style={{ background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 7, padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: submitting ? 'wait' : 'pointer', whiteSpace: 'nowrap', fontFamily: 'var(--font-body)', opacity: (submitting || accountInactive || wasRejected) ? 0.6 : 1 }}>
                         {submitting ? '…' : 'This is mine →'}
                       </button>
                     )}
@@ -272,82 +269,68 @@ export default function ClaimFlow({ userId, preselectedFacility = null }: Props)
             )}
           </div>
 
-          <div style={{ textAlign: 'center', marginBottom: 8 }}>
-            <div style={{ fontSize: 14, color: 'var(--mid)', marginBottom: 12 }}>Don&apos;t see your facility?</div>
-            <button onClick={() => setStep('create')}
-              style={{ background: 'none', color: 'var(--teal)', border: '1.5px solid var(--teal)', borderRadius: 8, padding: '11px 28px', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
-              + Add a New Listing
-            </button>
+          {/*
+            "Add a New Listing" used to post straight into facilities, which RLS
+            refuses — it looked like it worked and silently did nothing. Adding
+            new listings is out of scope for this branch (ODI-53), so the path is
+            honest about being unavailable rather than left looking functional.
+          */}
+          <div style={{ background: 'var(--warm-gray, #F7F5F2)', border: '1px solid var(--border)', borderRadius: 12, padding: '18px 20px', textAlign: 'center' }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--navy)', marginBottom: 4 }}>
+              Don&apos;t see your facility?
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--mid)', lineHeight: 1.6 }}>
+              Adding a brand-new listing isn&apos;t self-serve yet. Email{' '}
+              <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: 'var(--teal)', fontWeight: 600 }}>{SUPPORT_EMAIL}</a>{' '}
+              with your facility details and we&apos;ll add it for you.
+            </div>
           </div>
         </>
       )}
 
-      {step === 'create' && (
-        <>
-          <button onClick={() => setStep('search')} style={{ fontSize: 13, color: 'var(--teal)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 24 }}>← Back to Search</button>
+      {step === 'done' && outcome && (
+        <div className="card-hover" style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: 28 }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>{outcome === 'verified' ? '✅' : '🕒'}</div>
 
-          {/* Contact info */}
-          <div className="card-hover" style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: 28, marginBottom: 20 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 18 }}>Your Contact Info</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <div style={{ marginBottom: 0 }}>
-                {label('Your Name *')}
-                <input style={inputStyle()} value={form.contact_name} onChange={e => setForm(f => ({...f, contact_name: e.target.value}))} placeholder="Jane Smith" />
-              </div>
-              <div style={{ marginBottom: 0 }}>
-                {label('Your Email *')}
-                <input style={inputStyle()} type="email" value={form.contact_email} onChange={e => setForm(f => ({...f, contact_email: e.target.value}))} placeholder="jane@example.com" />
-              </div>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 14 }}>
-              <div>
-                {label('Your Phone')}
-                <input style={inputStyle()} type="tel" value={form.contact_phone} onChange={e => setForm(f => ({...f, contact_phone: e.target.value}))} placeholder="(555) 555-5555" />
-              </div>
-              <div>
-                {label('Organization / Company')}
-                <input style={inputStyle()} value={form.organization_name} onChange={e => setForm(f => ({...f, organization_name: e.target.value}))} placeholder="Optional" />
-              </div>
-            </div>
+          {outcome === 'verified' ? (
+            <>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 600, color: 'var(--navy)', marginBottom: 8 }}>
+                Your claim for {doneFacility?.name ?? 'your facility'} is verified.
+              </h2>
+              <p style={{ fontSize: 14, color: 'var(--mid)', lineHeight: 1.7, marginBottom: 20 }}>
+                We matched your email domain to the listing&apos;s website, so your claim was approved automatically.
+                Your listing now shows a verified badge.
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 600, color: 'var(--navy)', marginBottom: 8 }}>
+                Claim submitted for {doneFacility?.name ?? 'your facility'}.
+              </h2>
+              <p style={{ fontSize: 14, color: 'var(--mid)', lineHeight: 1.7, marginBottom: 12 }}>
+                Your claim is awaiting review. Check this page for updates.
+              </p>
+              <p style={{ fontSize: 14, color: 'var(--mid)', lineHeight: 1.7, marginBottom: 20 }}>
+                Listing changes aren&apos;t available until your claim is approved.
+              </p>
+            </>
+          )}
+
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <Link
+              href={doneFacility ? `/dashboard?mode=facility&facility=${doneFacility.id}` : '/dashboard?mode=facility'}
+              style={{ background: 'var(--navy)', color: '#fff', borderRadius: 8, padding: '11px 22px', fontSize: 14, fontWeight: 600, textDecoration: 'none' }}
+            >
+              Go to your dashboard →
+            </Link>
+            <Link
+              href={cancelHref}
+              style={{ background: 'none', color: 'var(--teal)', border: '1.5px solid var(--teal)', borderRadius: 8, padding: '11px 22px', fontSize: 14, fontWeight: 600, textDecoration: 'none' }}
+            >
+              View your listing
+            </Link>
           </div>
-
-          {/* Facility info */}
-          <div className="card-hover" style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 14, padding: 28, marginBottom: 28 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 18 }}>Facility Information</div>
-            <div style={{ marginBottom: 14 }}>
-              {label('Facility Name *')}
-              <input style={inputStyle()} value={form.facility_name} onChange={e => setForm(f => ({...f, facility_name: e.target.value}))} placeholder="e.g. Serenity Ridge Treatment Center" />
-            </div>
-            <div style={{ marginBottom: 14 }}>
-              {label('Facility Type')}
-              <select style={inputStyle()} value={form.facility_type} onChange={e => setForm(f => ({...f, facility_type: e.target.value}))}>
-                {FACILITY_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-              </select>
-            </div>
-            <div style={{ marginBottom: 14 }}>
-              {label('Description')}
-              <textarea rows={3} style={inputStyle()} value={form.description} onChange={e => setForm(f => ({...f, description: e.target.value}))} placeholder="Brief description of your services…" />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-              <div>{label('Phone')}<input style={inputStyle()} type="tel" value={form.phone} onChange={e => setForm(f => ({...f, phone: e.target.value}))} placeholder="(555) 555-5555" /></div>
-              <div>{label('Website')}<input style={inputStyle()} value={form.website} onChange={e => setForm(f => ({...f, website: e.target.value}))} placeholder="https://example.com" /></div>
-            </div>
-            <div style={{ marginBottom: 14 }}>
-              {label('Street Address')}
-              <input style={inputStyle()} value={form.address_line1} onChange={e => setForm(f => ({...f, address_line1: e.target.value}))} placeholder="123 Main St" />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 12 }}>
-              <div>{label('City')}<input style={inputStyle()} value={form.city} onChange={e => setForm(f => ({...f, city: e.target.value}))} /></div>
-              <div>{label('State')}<input style={inputStyle()} value={form.state} onChange={e => setForm(f => ({...f, state: e.target.value}))} placeholder="CA" maxLength={2} /></div>
-              <div>{label('ZIP')}<input style={inputStyle()} value={form.zip} onChange={e => setForm(f => ({...f, zip: e.target.value}))} placeholder="92001" /></div>
-            </div>
-          </div>
-
-          <button onClick={createFacility} disabled={submitting}
-            style={{ width: '100%', background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 8, padding: '14px', fontSize: 15, fontWeight: 600, cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1, fontFamily: 'var(--font-body)' }}>
-            {submitting ? 'Creating your listing…' : 'Create Listing & Go to Dashboard →'}
-          </button>
-        </>
+        </div>
       )}
     </div>
   )

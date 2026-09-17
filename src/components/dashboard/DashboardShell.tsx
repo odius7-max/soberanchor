@@ -16,7 +16,7 @@ import OnboardingCard from './OnboardingCard'
 import CheckInModal from './CheckInModal'
 import PendingRequests from './PendingRequests'
 import type { PendingRequest } from './PendingRequests'
-import ProviderDashboardShell from '@/components/providers/ProviderDashboardShell'
+import ProviderDashboardShell, { type OwnedFacility } from '@/components/providers/ProviderDashboardShell'
 import type { FacilityData } from '@/components/providers/ListingTab'
 import type { Lead } from '@/components/providers/LeadsTab'
 import TodayCard from './today/TodayCard'
@@ -69,6 +69,14 @@ interface Props {
   onboardingCompleted: boolean
   isProvider: boolean
   providerData: ProviderData | null
+  /** Claim submitted but not yet approved — status only, no editing or leads. */
+  providerPending?: boolean
+  /** Every facility this account owns, for the location switcher. */
+  ownedFacilities?: OwnedFacility[]
+  /** Set when ?facility= named a listing this account doesn't own. */
+  facilitySelectionError?: string | null
+  /** ?mode=facility — arriving from a claim forces facility mode. */
+  requestedMode?: 'facility' | null
   profile: { display_name:string|null; sobriety_date:string|null; primary_fellowship_id:string|null; current_step:number; is_available_sponsor:boolean } | null
   initialMilestones: SobrietyMilestone[]
   fellowships: Fellowship[]
@@ -113,10 +121,15 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'saved',     label: '❤️ Saved' },
 ]
 
-export default function DashboardShell({ userId, phone, onboardingCompleted, isProvider, providerData, profile, stepCompletions, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, userCustomMeetings, primaryFellowshipId, readingAssignments, checkInsTotal, activeSponsors, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships, todayQueueItems, todayQueueOverflow, todayMemberCaughtUp, todaySummaryParts, dailyQuote, sponseeAlertCount = 0, programRows, workingPrograms = [], stepWorkData = {}, canSponsor = false }: Props) {
+export default function DashboardShell({ userId, phone, onboardingCompleted, isProvider, providerData, providerPending = false, ownedFacilities = [], facilitySelectionError = null, requestedMode = null, profile, stepCompletions, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, userCustomMeetings, primaryFellowshipId, readingAssignments, checkInsTotal, activeSponsors, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships, todayQueueItems, todayQueueOverflow, todayMemberCaughtUp, todaySummaryParts, dailyQuote, sponseeAlertCount = 0, programRows, workingPrograms = [], stepWorkData = {}, canSponsor = false }: Props) {
   const router = useRouter()
-  // Provider-only users (no recovery onboarding) default to facility mode
-  const defaultMode: Mode = (isProvider && !onboardingCompleted) ? 'facility' : 'my'
+  // ?mode=facility (arriving from a claim) wins, so a recovery-onboarded
+  // account still lands on the listing it just claimed rather than on its
+  // member view. Otherwise: provider-only users default to facility mode.
+  const defaultMode: Mode =
+    (requestedMode === 'facility' && isProvider) ? 'facility'
+    : (isProvider && !onboardingCompleted) ? 'facility'
+    : 'my'
   const [mode, setMode] = useState<Mode>(defaultMode)
   const [activeTab, setActiveTab] = useState<Tab>(TODAY_QUEUE_ENABLED ? 'today' : 'overview')
   const [checkInOpen, setCheckInOpen] = useState(false)
@@ -406,7 +419,26 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
         )}
 
         {mode === 'sponsees' && isSponsor && <SponsorView sponsees={sponsees} pendingRequests={sponsorPendingRequests} displayName={displayName} userId={userId} />}
-        {mode === 'facility' && isProvider && providerData && (
+        {mode === 'facility' && isProvider && facilitySelectionError && (
+          <div className="text-center py-12" style={{ maxWidth: 480, margin: '0 auto' }}>
+            <div style={{ fontSize: 44, marginBottom: 12 }}>🔒</div>
+            <h3 className="font-bold text-navy" style={{ fontSize: 18, marginBottom: 8 }}>{facilitySelectionError}</h3>
+            <p className="text-mid" style={{ fontSize: 14, marginBottom: 16 }}>
+              Pick one of your locations below, or claim it if it&apos;s yours.
+            </p>
+            {ownedFacilities.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
+                {ownedFacilities.map(f => (
+                  <a key={f.id} href={`/dashboard?mode=facility&facility=${f.id}`}
+                    style={{ color: 'var(--teal)', fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>
+                    {f.name} →
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        {mode === 'facility' && isProvider && !facilitySelectionError && providerData && (
           <ProviderDashboardShell
             facility={providerData.facility}
             amenities={providerData.amenities}
@@ -414,9 +446,11 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
             leads={providerData.leads}
             leadsThisMonth={providerData.leadsThisMonth}
             leadsLastMonth={providerData.leadsLastMonth}
+            pending={providerPending}
+            ownedFacilities={ownedFacilities}
           />
         )}
-        {mode === 'facility' && isProvider && !providerData && (
+        {mode === 'facility' && isProvider && !facilitySelectionError && !providerData && (
           <div className="text-center py-12">
             <div style={{ fontSize: 48, marginBottom: 12 }}>🏥</div>
             <h3 className="font-bold text-navy" style={{ fontSize: 18, marginBottom: 8 }}>No facility linked yet</h3>

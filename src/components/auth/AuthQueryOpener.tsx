@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
+import { CONTINUATION_PARAM, validateContinuation } from '@/lib/claim-continuation'
 
 /**
  * Reads ?auth=... on any page and opens the AuthModal in the appropriate step,
@@ -24,13 +25,25 @@ export default function AuthQueryOpener() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const { user, openAuthModal, loading } = useAuth()
-  // Guard against StrictMode double-invoke + repeated navigations to same URL
+  // Guard against StrictMode double-invoke + repeated navigations to same URL.
+  // Scoped to the current ?auth= OCCURRENCE, not to the component's lifetime —
+  // see the reset below.
   const handledFor = useRef<string | null>(null)
 
   useEffect(() => {
     if (loading) return
     const authParam = searchParams.get('auth')
-    if (!authParam) return
+    if (!authParam) {
+      // The param is gone, so this occurrence is finished. Clearing the guard
+      // here is what makes the NEXT ?auth=… count as a fresh occurrence.
+      //
+      // Without it the ref stayed set for the life of the mount, and since this
+      // component is mounted once at the app root, the modal would open exactly
+      // once per session: dismiss → Back (URL regains ?auth=required) → the key
+      // still matched and the effect bailed out, so nothing reopened (ODI-67).
+      handledFor.current = null
+      return
+    }
 
     const key = `${pathname}?auth=${authParam}`
     if (handledFor.current === key) return
@@ -39,6 +52,18 @@ export default function AuthQueryOpener() {
     if (!user) {
       if (authParam === 'signup') openAuthModal('signup')
       else if (authParam === 'login' || authParam === 'required') openAuthModal('login')
+    } else {
+      // Already authenticated. Previously this fell straight through to the
+      // strip below, which removed ?auth= and left ?next= sitting in the URL
+      // unused — the visitor landed on the homepage, signed in, with their
+      // claim silently abandoned (ODI-66/R5). If there's a valid continuation,
+      // consume it: that's the whole point of having carried it this far, and
+      // it's what makes the /auth/continue manual fallback recover properly.
+      const continuation = validateContinuation(searchParams.get(CONTINUATION_PARAM))
+      if (continuation) {
+        router.replace(continuation)
+        return
+      }
     }
 
     // Strip the auth param, preserve everything else

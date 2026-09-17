@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 /**
@@ -14,13 +14,27 @@ import { createClient } from '@/lib/supabase/client'
  * Mount once in a layout that wraps authenticated routes. Renders nothing in
  * the normal case — only activates when an auth redirect is in progress.
  */
+/**
+ * Pages that own their own post-auth navigation and must not be interfered with.
+ *
+ * /auth/continue exchanges the confirmation code and then routes to the claim
+ * the visitor started. This listener used to fight it: on the SAME SIGNED_IN
+ * event it called history.replaceState(pathname) — wiping ?next= from the URL —
+ * and router.refresh(), which re-rendered the current route and clobbered the
+ * continue page's pending router.replace(). The visitor stayed parked on
+ * /auth/continue with a perfectly good session (ODI-66/R5). One owner per page.
+ */
+const SELF_ROUTING_PATHS = ['/auth/continue']
+
 export default function AuthHydrationListener() {
   const router = useRouter()
+  const pathname = usePathname()
   const [isHydrating, setIsHydrating] = useState(false)
   const handledRef = useRef(false)
 
   useEffect(() => {
     if (handledRef.current) return
+    if (SELF_ROUTING_PATHS.includes(pathname)) return
 
     // Detect post-auth-redirect arrival via URL signals:
     // - hash contains access_token / refresh_token (Supabase implicit grant)
@@ -69,7 +83,7 @@ export default function AuthHydrationListener() {
       clearTimeout(timeout)
       subscription.unsubscribe()
     }
-  }, [router])
+  }, [router, pathname])
 
   if (!isHydrating) return null
 

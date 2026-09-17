@@ -7,6 +7,8 @@ import type { UserCustomMeeting } from '@/components/dashboard/meetings/types'
 import type { PendingRequest } from '@/components/dashboard/PendingRequests'
 import type { FacilityData } from '@/components/providers/ListingTab'
 import type { Lead } from '@/components/providers/LeadsTab'
+import type { OwnedFacility } from '@/components/providers/ProviderDashboardShell'
+import { validateFacilityId } from '@/lib/claim-continuation'
 import { getDailyQuote } from '@/lib/daily-quote'
 import { buildMemberTodayQueue, buildSponsorTodayItems, getTodaySummaryParts } from '@/lib/today-queue'
 import type { MemberProgram } from '@/lib/today-queue'
@@ -14,7 +16,18 @@ import { getTodayDateStr } from '@/lib/today-window'
 import { getUpcomingMilestones } from '@/lib/milestone-windows'
 import { canSponsor as computeCanSponsor } from '@/lib/can-sponsor'
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mode?: string; facility?: string }>
+}) {
+  // Arriving from a claim carries BOTH the mode and the facility identity, so
+  // the dashboard opens on the listing that was just claimed and keeps it on
+  // reload (CLAIM-FLOW-SPEC §4).
+  const { mode: rawMode, facility: rawFacility } = await searchParams
+  const requestedFacilityId = validateFacilityId(rawFacility)
+  const requestedMode = rawMode === 'facility' ? 'facility' : null
+
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -640,7 +653,12 @@ export default async function DashboardPage() {
   // ── Provider data (if user has a provider account) ──
   let isProviderUser = false
   let providerData: ProviderData | null = null
+  let ownedFacilities: OwnedFacility[] = []
+  let providerPending = false
+  let facilitySelectionError: string | null = null
 
+  // Inactive accounts are excluded here, so an admin-suspended provider gets no
+  // facility mode, no edit controls and no lead data through this route.
   const { data: providerAccount } = await supabase
     .from('provider_accounts')
     .select('id, subscription_tier')
@@ -650,22 +668,47 @@ export default async function DashboardPage() {
 
   if (providerAccount) {
     isProviderUser = true
+
+    // ALL owned facilities, not `.limit(1)`. The old oldest-first single row
+    // could never reach a second location, so a multi-location operator who
+    // just claimed their fifth site landed on their first one instead.
     const { data: facilitiesRaw } = await supabase
       .from('facilities')
       .select('id,name,description,phone,email,website,address_line1,city,state,zip,facility_type,listing_tier,is_verified,is_claimed,is_featured,avg_rating,review_count')
       .eq('provider_account_id', providerAccount.id)
       .order('created_at', { ascending: true })
-      .limit(1)
 
-    if (facilitiesRaw && facilitiesRaw.length > 0) {
-      const facility = facilitiesRaw[0] as FacilityData
+    const owned = (facilitiesRaw ?? []) as FacilityData[]
+    ownedFacilities = owned.map(f => ({ id: f.id, name: f.name, is_verified: f.is_verified }))
+
+    // Membership in `owned` IS the authorisation check — the list is scoped to
+    // this account — and it happens before any nonpublic data is loaded.
+    let facility: FacilityData | null = null
+    if (requestedFacilityId) {
+      facility = owned.find(f => f.id === requestedFacilityId) ?? null
+      if (!facility) {
+        // Never silently substitute a different facility: the person asked for
+        // a specific one and either it isn't theirs or it no longer exists.
+        facilitySelectionError = "That listing isn't on your account."
+      }
+    } else {
+      facility = owned[0] ?? null
+    }
+
+    if (facility) {
+      // Pending = claimed but not yet approved. Lead data is simply not fetched,
+      // so it cannot leak to a claimant whose ownership is still unconfirmed.
+      providerPending = facility.is_claimed && !facility.is_verified
+
       const [amenitiesRes2, insuranceRes2, leadsRes2] = await Promise.all([
         supabase.from('facility_amenities').select('amenity_name').eq('facility_id', facility.id),
         supabase.from('facility_insurance').select('insurance_name').eq('facility_id', facility.id),
-        supabase.from('leads').select('id,first_name,phone,insurance_provider,seeking,who_for,notes,status,created_at')
-          .eq('facility_id', facility.id)
-          .order('created_at', { ascending: false })
-          .limit(100),
+        providerPending
+          ? Promise.resolve({ data: [] as Lead[] })
+          : supabase.from('leads').select('id,first_name,phone,insurance_provider,seeking,who_for,notes,status,created_at')
+              .eq('facility_id', facility.id)
+              .order('created_at', { ascending: false })
+              .limit(100),
       ])
       const provLeads: Lead[] = (leadsRes2.data ?? []) as Lead[]
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -888,6 +931,10 @@ export default async function DashboardPage() {
       onboardingCompleted={profile?.onboarding_completed ?? false}
       isProvider={isProviderUser}
       providerData={providerData}
+      providerPending={providerPending}
+      ownedFacilities={ownedFacilities}
+      facilitySelectionError={facilitySelectionError}
+      requestedMode={requestedMode}
       recentCheckIns={recentCheckIns}
       journalEntries={journalEntries}
       journalCount={journalCount}
