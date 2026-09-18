@@ -45,7 +45,11 @@ export default function AuthQueryOpener() {
       return
     }
 
-    const key = `${pathname}?auth=${authParam}`
+    // R2: occurrence identity includes the validated destination and the auth
+    // mode, so a welcome intent and a claim intent on the same path are not
+    // conflated into one already-handled occurrence.
+    const destination = validateContinuation(searchParams.get(CONTINUATION_PARAM)) ?? ''
+    const key = `${pathname}?auth=${authParam}&to=${destination}`
     if (handledFor.current === key) return
     handledFor.current = key
 

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/context/AuthContext'
-import { CONTINUATION_PARAM, validateContinuation } from '@/lib/claim-continuation'
+import { CONTINUATION_PARAM, classifyContinuation, validateContinuation, type ContinuationKind } from '@/lib/claim-continuation'
 
 type Step = 'login' | 'signup' | 'forgot' | 'forgot_sent' | 'onboarding'
 
@@ -57,9 +57,14 @@ export default function AuthModal() {
   // between login and signup — and AuthQueryOpener rewriting the query to
   // strip ?auth= — cannot drop it mid-flow.
   const [continuation, setContinuation] = useState<string | null>(null)
+  const [continuationKind, setContinuationKind] = useState<ContinuationKind | null>(null)
   const openedRef = useRef(false)
   const consumedRef = useRef(false)
-  const isClaimEntry = continuation !== null
+  // A3: copy keys on the DESTINATION KIND, not on "a continuation exists".
+  // Welcome validates too, and telling someone we'll claim "your facility"
+  // when they never picked one is a promise the flow can't keep.
+  const isClaimEntry = continuationKind === 'claim'
+  const isProviderEntry = continuationKind !== null
 
   // Snapshot once per opening. Reading window.location directly (rather than
   // depending on useSearchParams) keeps this tied to the open edge only.
@@ -68,9 +73,11 @@ export default function AuthModal() {
     if (openedRef.current) return
     openedRef.current = true
     consumedRef.current = false
-    setContinuation(
-      validateContinuation(new URLSearchParams(window.location.search).get(CONTINUATION_PARAM))
+    const snapshot = validateContinuation(
+      new URLSearchParams(window.location.search).get(CONTINUATION_PARAM)
     )
+    setContinuation(snapshot)
+    setContinuationKind(classifyContinuation(snapshot))
   }, [isAuthModalOpen])
 
   // Closing without authenticating clears the pending claim intent, so it
@@ -84,6 +91,7 @@ export default function AuthModal() {
       router.replace(qs ? `${window.location.pathname}?${qs}` : window.location.pathname, { scroll: false })
     }
     setContinuation(null)
+    setContinuationKind(null)
   }, [isAuthModalOpen, continuation, router])
 
   // When modal opens, start at the requested step.
@@ -262,11 +270,16 @@ export default function AuthModal() {
   if (isClaimEntry) {
     HEADER.login  = { title: 'Sign in to claim your facility', sub: 'Use the account that manages this listing.' }
     HEADER.signup = { title: 'Create your provider account',   sub: 'One account manages all of your locations.' }
+  } else if (isProviderEntry) {
+    // Provider context WITHOUT a selected facility (welcome). Generic
+    // provider-auth copy — it must not imply a listing was already chosen.
+    HEADER.login  = { title: 'Sign in to SoberAnchor',        sub: 'Use the account that manages your listings.' }
+    HEADER.signup = { title: 'Create your provider account',  sub: 'Set up your account, then find your facility.' }
   }
 
   // Claim-entry login/signup get an explicit way out. Elsewhere the modal keeps
   // its existing dismissal behaviour.
-  const showClose = isClaimEntry && (step === 'login' || step === 'signup')
+  const showClose = isProviderEntry && (step === 'login' || step === 'signup')
 
   return (
     <div

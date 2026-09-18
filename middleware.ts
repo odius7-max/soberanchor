@@ -73,7 +73,12 @@ export async function middleware(request: NextRequest) {
   }
 
   // Auth-gate /providers/dashboard and /providers/claim — use main auth modal
-  const providerAuthRoutes = ['/providers/dashboard', '/providers/claim']
+  // /providers/welcome is an ORDINARY authenticated destination (R5): it gets
+  // the auth guard and the continuation-preserving redirect, and nothing else.
+  // It is deliberately NOT added to SELF_ROUTING_PATHS — /auth/continue stays
+  // the sole callback navigation owner, and a second owner is exactly the race
+  // ODI-66/R5 was fixed to remove.
+  const providerAuthRoutes = ['/providers/dashboard', '/providers/claim', '/providers/welcome']
   if (!user && providerAuthRoutes.some(r => request.nextUrl.pathname.startsWith(r))) {
     return toAuth()
   }
