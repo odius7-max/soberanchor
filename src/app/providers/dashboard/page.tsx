@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { validateFacilityId } from '@/lib/claim-continuation'
+import { validateFacilityId, WELCOME_PATH } from '@/lib/claim-continuation'
+import { providerWorkspaceAvailable, type UserSetup } from '@/lib/workspace'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,7 +37,22 @@ export default async function ProviderDashboardPage({
     .eq('is_active', true)
     .maybeSingle()
 
-  if (!providerAccount) redirect('/providers/claim')
+  // E15: "no active provider account" is not one state but three, and they used
+  // to collapse into a single bounce to /providers/claim.
+  if (!providerAccount) {
+    const { data: setupRow } = await supabase
+      .from('user_setup').select('*').eq('user_id', user.id).maybeSingle()
+    const setup = (setupRow ?? null) as UserSetup | null
+
+    // Provider intent, no claim yet → their own empty workspace, not a claim
+    // form they never asked for. Setup finished already? straight to the shell.
+    if (providerWorkspaceAvailable(setup, false)) {
+      redirect(setup?.provider_setup_completed_at ? '/dashboard?mode=facility' : WELCOME_PATH)
+    }
+
+    // No provider intent at all → the claim route, as before.
+    redirect('/providers/claim')
+  }
 
   redirect('/dashboard?mode=facility')
 }

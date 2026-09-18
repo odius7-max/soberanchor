@@ -24,18 +24,26 @@ export default function ResetPasswordPage() {
         setReady(true)
         // Detect user type to redirect correctly after reset
         if (session?.user) {
-          const { data } = await supabase
-            .from('provider_accounts')
-            .select('id')
-            .eq('auth_user_id', session.user.id)
-            .maybeSingle()
-          setIsProvider(!!data)
+          const [{ data: acct }, { data: setup }] = await Promise.all([
+            supabase.from('provider_accounts').select('id')
+              .eq('auth_user_id', session.user.id).eq('is_active', true).maybeSingle(),
+            supabase.from('user_setup').select('primary_workspace, provider_started_at')
+              .eq('user_id', session.user.id).maybeSingle(),
+          ])
+          setIsProvider(
+            !!acct ||
+            setup?.primary_workspace === 'provider' ||
+            setup?.provider_started_at != null
+          )
         }
       }
     })
     return () => subscription.unsubscribe()
   }, [])
 
+  // E18: the reset landing uses the same workspace signal as everywhere else —
+  // no reset-specific role rules. Covers provider-intent/no-claim users, who
+  // have no provider_account for the old check to find.
   async function handleReset() {
     if (!password) { setError('Enter a new password.'); return }
     if (password.length < 8) { setError('Password must be at least 8 characters.'); return }
@@ -45,7 +53,7 @@ export default function ResetPasswordPage() {
     const { error: err } = await supabase.auth.updateUser({ password })
     setLoading(false)
     if (err) { setError(err.message); return }
-    router.push(isProvider ? '/providers/dashboard' : '/dashboard')
+    router.push(isProvider ? '/dashboard?mode=facility' : '/dashboard')
   }
 
   const inputStyle: React.CSSProperties = {

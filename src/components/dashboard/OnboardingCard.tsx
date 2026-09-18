@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import WrongDoorSwitch from '@/components/auth/WrongDoorSwitch'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -174,6 +175,9 @@ export default function OnboardingCard({ userId }: { userId: string }) {
           <button onClick={dismiss} style={{ fontSize: 12, color: 'var(--mid)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', flexShrink: 0, marginTop: 2 }}>
             Skip for now
           </button>
+          {/* Wrong-door escape, implementation 2 of 2 — the email callback
+              bypasses the modal, so this path needs its own. */}
+          <WrongDoorSwitch compact />
         </div>
 
         {/* Step 1 — Name */}

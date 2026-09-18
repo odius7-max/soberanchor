@@ -9,6 +9,7 @@ import type { FacilityData } from '@/components/providers/ListingTab'
 import type { Lead } from '@/components/providers/LeadsTab'
 import type { OwnedFacility } from '@/components/providers/ProviderDashboardShell'
 import { validateFacilityId } from '@/lib/claim-continuation'
+import { providerWorkspaceAvailable, resolveWorkspaceMode, type UserSetup } from '@/lib/workspace'
 import { getDailyQuote } from '@/lib/daily-quote'
 import { buildMemberTodayQueue, buildSponsorTodayItems, getTodaySummaryParts } from '@/lib/today-queue'
 import type { MemberProgram } from '@/lib/today-queue'
@@ -19,12 +20,12 @@ import { canSponsor as computeCanSponsor } from '@/lib/can-sponsor'
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mode?: string; facility?: string }>
+  searchParams: Promise<{ mode?: string; facility?: string; intent?: string }>
 }) {
   // Arriving from a claim carries BOTH the mode and the facility identity, so
   // the dashboard opens on the listing that was just claimed and keeps it on
   // reload (CLAIM-FLOW-SPEC §4).
-  const { mode: rawMode, facility: rawFacility } = await searchParams
+  const { mode: rawMode, facility: rawFacility, intent: rawIntent } = await searchParams
   const requestedFacilityId = validateFacilityId(rawFacility)
   const requestedMode = rawMode === 'facility' ? 'facility' : null
 
@@ -651,6 +652,12 @@ export default async function DashboardPage({
   }
 
   // ── Provider data (if user has a provider account) ──
+  // Workspace state (self-read; user_setup has no other SELECT policy). An
+  // absent row reads as a plain member, which every legacy user is.
+  const { data: setupRow } = await supabase
+    .from('user_setup').select('*').eq('user_id', userId).maybeSingle()
+  const userSetup = (setupRow ?? null) as UserSetup | null
+
   let isProviderUser = false
   let providerData: ProviderData | null = null
   let ownedFacilities: OwnedFacility[] = []
@@ -723,6 +730,22 @@ export default async function DashboardPage({
       }
     }
   }
+
+  // "Provider workspace available" is STRICTLY WEAKER than isProviderUser
+  // ("active provider account"). It earns the empty provider shell and nothing
+  // else — every private-data branch below still keys on isProviderUser.
+  const providerWorkspace = providerWorkspaceAvailable(userSetup, isProviderUser)
+
+  // E16: the post-auth default honours the resolver even without a `next`.
+  // Facility authorization and pending/rejected/suspended status were already
+  // checked above, before any private data loaded.
+  const resolvedMode = resolveWorkspaceMode({
+    setup: userSetup,
+    pendingContinuation: null,
+    explicitMode: requestedMode,
+    hasActiveProviderAccount: isProviderUser,
+    isSponsor: sponsees.length > 0 || (profile?.is_available_sponsor ?? false),
+  })
 
   // Today queue + daily quote (behind feature flag — avoids extra DB calls when flag is off)
   const todayQueueEnabled = process.env.NEXT_PUBLIC_TODAY_QUEUE_ENABLED === 'true'
@@ -930,6 +953,9 @@ export default async function DashboardPage({
       stepCompletions={stepCompletions}
       onboardingCompleted={profile?.onboarding_completed ?? false}
       isProvider={isProviderUser}
+      providerWorkspace={providerWorkspace}
+      resolvedMode={resolvedMode}
+      onboardIntent={rawIntent === 'onboard'}
       providerData={providerData}
       providerPending={providerPending}
       ownedFacilities={ownedFacilities}

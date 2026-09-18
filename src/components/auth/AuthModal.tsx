@@ -6,6 +6,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/context/AuthContext'
 import { CONTINUATION_PARAM, classifyContinuation, validateContinuation, type ContinuationKind } from '@/lib/claim-continuation'
+import WrongDoorSwitch from './WrongDoorSwitch'
 
 type Step = 'login' | 'signup' | 'forgot' | 'forgot_sent' | 'onboarding'
 
@@ -564,6 +565,8 @@ export default function AuthModal() {
                 style={{ padding: 13, fontSize: 15, background: '#003366', border: 'none', cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1, marginTop: 2 }}>
                 {loading ? 'Saving…' : 'Go to My Dashboard →'}
               </button>
+              {/* Wrong-door escape, implementation 1 of 2. */}
+              <WrongDoorSwitch compact />
             </div>
           )}
 

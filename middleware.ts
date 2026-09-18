@@ -78,6 +78,9 @@ export async function middleware(request: NextRequest) {
   // It is deliberately NOT added to SELF_ROUTING_PATHS — /auth/continue stays
   // the sole callback navigation owner, and a second owner is exactly the race
   // ODI-66/R5 was fixed to remove.
+  // NOTE: matched by startsWith, so decoys like /providers/welcome-evil are
+  // auth-gated too. Known and harmless — over-gating is safe, and the shared
+  // validator still attaches no continuation to a path it doesn't recognise.
   const providerAuthRoutes = ['/providers/dashboard', '/providers/claim', '/providers/welcome']
   if (!user && providerAuthRoutes.some(r => request.nextUrl.pathname.startsWith(r))) {
     return toAuth()

@@ -77,6 +77,19 @@ interface Props {
   facilitySelectionError?: string | null
   /** ?mode=facility — arriving from a claim forces facility mode. */
   requestedMode?: 'facility' | null
+  /**
+   * Mode chosen by the ONE server-side workspace resolver (A4). Already
+   * eligibility-checked, so the shell never has to re-derive precedence.
+   */
+  resolvedMode?: Mode
+  /**
+   * "Provider workspace available" — may this user see the provider SHELL?
+   * Strictly weaker than `isProvider` ("active provider account"), which keeps
+   * guarding leads, edit controls and facility data. Never merge the two.
+   */
+  providerWorkspace?: boolean
+  /** ?intent=onboard — explicit request to start recovery from the provider shell. */
+  onboardIntent?: boolean
   profile: { display_name:string|null; sobriety_date:string|null; primary_fellowship_id:string|null; current_step:number; is_available_sponsor:boolean } | null
   initialMilestones: SobrietyMilestone[]
   fellowships: Fellowship[]
@@ -121,16 +134,20 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'saved',     label: '❤️ Saved' },
 ]
 
-export default function DashboardShell({ userId, phone, onboardingCompleted, isProvider, providerData, providerPending = false, ownedFacilities = [], facilitySelectionError = null, requestedMode = null, profile, stepCompletions, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, userCustomMeetings, primaryFellowshipId, readingAssignments, checkInsTotal, activeSponsors, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships, todayQueueItems, todayQueueOverflow, todayMemberCaughtUp, todaySummaryParts, dailyQuote, sponseeAlertCount = 0, programRows, workingPrograms = [], stepWorkData = {}, canSponsor = false }: Props) {
+export default function DashboardShell({ userId, phone, onboardingCompleted, isProvider, providerData, providerPending = false, ownedFacilities = [], facilitySelectionError = null, requestedMode = null, resolvedMode, providerWorkspace = false, onboardIntent = false, profile, stepCompletions, recentCheckIns, journalEntries, journalCount, stepWorkCount, meetingAttendance, meetingsThisWeek, meetingsTotal, userCustomMeetings, primaryFellowshipId, readingAssignments, checkInsTotal, activeSponsors, sponsees, pendingRequests, sponsorPendingRequests, activityItems, initialMilestones, fellowships, todayQueueItems, todayQueueOverflow, todayMemberCaughtUp, todaySummaryParts, dailyQuote, sponseeAlertCount = 0, programRows, workingPrograms = [], stepWorkData = {}, canSponsor = false }: Props) {
   const router = useRouter()
   // ?mode=facility (arriving from a claim) wins, so a recovery-onboarded
   // account still lands on the listing it just claimed rather than on its
   // member view. Otherwise: provider-only users default to facility mode.
+  // The server resolver owns precedence; this is only a fallback for callers
+  // that haven't been migrated to pass resolvedMode.
+  const canSeeFacility = isProvider || providerWorkspace
   const defaultMode: Mode =
-    (requestedMode === 'facility' && isProvider) ? 'facility'
-    : (isProvider && !onboardingCompleted) ? 'facility'
-    : 'my'
-  const [mode, setMode] = useState<Mode>(defaultMode)
+    resolvedMode ??
+    ((requestedMode === 'facility' && canSeeFacility) ? 'facility'
+      : (canSeeFacility && !onboardingCompleted) ? 'facility'
+      : 'my')
+  const [mode, setModeState] = useState<Mode>(defaultMode)
   const [activeTab, setActiveTab] = useState<Tab>(TODAY_QUEUE_ENABLED ? 'today' : 'overview')
   const [checkInOpen, setCheckInOpen] = useState(false)
   const [recoveryNudgeDismissed, setRecoveryNudgeDismissed] = useState(false)
@@ -153,15 +170,45 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
     }
   }, [])
 
+  // A4: mode was initialised once with useState and never reconciled, so a
+  // later prop change, an explicit ?mode= link, router.refresh() or back/forward
+  // left the shell showing a stale workspace. Re-sync whenever the RESOLVED mode
+  // changes — this is a server-computed, eligibility-checked value, so it can't
+  // fight the user's own in-session switching (that updates state directly).
+  useEffect(() => {
+    if (onboardIntent) { setModeState('my'); return }
+    if (defaultMode !== mode) setModeState(defaultMode)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultMode])
+
+  // Legacy ?tab=sponsees. Kept, but folded in here so there is ONE owner of
+  // mode-from-URL rather than two effects racing on mount.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('tab') === 'sponsees' && isSponsor) {
-      setMode('sponsees')
+      setModeState('sponsees')
       const url = new URL(window.location.href)
       url.searchParams.delete('tab')
       window.history.replaceState({}, '', url.toString())
     }
-  }, [])
+  }, [isSponsor])
+
+  /**
+   * Persist an INTENTIONAL switch only (A4). Never called from the first render,
+   * so a default can't be recorded as a user choice before preferences load, and
+   * never keyed by a shared localStorage key — it goes to the per-user row via
+   * the one writer. Sponsor mode is a member-mode sub-state and is stored as
+   * 'member'.
+   */
+  function setMode(next: Mode) {
+    setModeState(next)
+    const workspace = next === 'facility' ? 'provider' : 'member'
+    void fetch('/api/workspace/initialize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'remember-workspace', workspace }),
+    }).catch(() => { /* preference persistence is best-effort, never blocking */ })
+  }
 
   // Active fellowship driven by which milestone tab the user is viewing.
   // undefined = no milestones → fall back to sponsor_relationships in step work.
@@ -200,7 +247,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
     // Only show My Recovery if user has completed onboarding (has recovery data)
     ...(onboardingCompleted ? [{ id: 'my' as Mode, label: '⚓ My Journey' }] : []),
     ...(isSponsor ? [{ id: 'sponsees' as Mode, label: '👥 My Sponsees' }] : []),
-    ...(isProvider ? [{ id: 'facility' as Mode, label: '🏥 My Facility' }] : []),
+    ...(canSeeFacility ? [{ id: 'facility' as Mode, label: '🏥 My Facility' }] : []),
   ]
 
   // Show recovery nudge for provider-only users who haven't onboarded
@@ -255,7 +302,18 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
             {showRecoveryNudge && (
               <div className="flex items-center flex-shrink-0 gap-2" style={{ marginLeft: modes.length > 1 ? '12px' : '0', padding: '8px 0' }}>
                 <button
-                  onClick={() => router.push('/dashboard?intent=onboard')}
+                  onClick={async () => {
+                    // The link used to be a dead end: it set ?intent=onboard and
+                    // nothing consumed it. Enable recovery for real, preserving
+                    // provider primary and every facility, then switch shells.
+                    await fetch('/api/workspace/initialize', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ action: 'enable-recovery' }),
+                    }).catch(() => null)
+                    setModeState('my')
+                    router.refresh()
+                  }}
                   className="flex-shrink-0 transition-colors"
                   style={{
                     padding: '6px 14px',
@@ -419,7 +477,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
         )}
 
         {mode === 'sponsees' && isSponsor && <SponsorView sponsees={sponsees} pendingRequests={sponsorPendingRequests} displayName={displayName} userId={userId} />}
-        {mode === 'facility' && isProvider && facilitySelectionError && (
+        {mode === 'facility' && canSeeFacility && facilitySelectionError && (
           <div className="text-center py-12" style={{ maxWidth: 480, margin: '0 auto' }}>
             <div style={{ fontSize: 44, marginBottom: 12 }}>🔒</div>
             <h3 className="font-bold text-navy" style={{ fontSize: 18, marginBottom: 8 }}>{facilitySelectionError}</h3>
@@ -450,7 +508,7 @@ export default function DashboardShell({ userId, phone, onboardingCompleted, isP
             ownedFacilities={ownedFacilities}
           />
         )}
-        {mode === 'facility' && isProvider && !facilitySelectionError && !providerData && (
+        {mode === 'facility' && canSeeFacility && !facilitySelectionError && !providerData && (
           <div className="text-center py-12">
             <div style={{ fontSize: 48, marginBottom: 12 }}>🏥</div>
             <h3 className="font-bold text-navy" style={{ fontSize: 18, marginBottom: 8 }}>No facility linked yet</h3>

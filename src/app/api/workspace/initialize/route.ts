@@ -137,13 +137,33 @@ export async function POST(request: Request) {
         if (to === setup.primary_workspace) return NextResponse.json({ ok: true, setup, changed: false })
 
         if (to === 'provider') {
-          const [{ data: prof }, { count: checkIns }] = await Promise.all([
-            admin.from('user_profiles').select('onboarding_completed, sobriety_date').eq('id', user.id).maybeSingle(),
-            admin.from('check_ins').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-          ])
-          if (prof?.onboarding_completed === true || prof?.sobriety_date || (checkIns ?? 0) > 0) {
+          // Ratified blocker set: ANY recovery-personal data blocks the
+          // correction. Saved listings are deliberately NOT here — they are
+          // generic bookmarks a provider would accumulate too, so treating
+          // them as recovery data would block corrections for no reason.
+          const [{ data: prof }, { count: checkIns }, { count: journals }, { count: relationships }] =
+            await Promise.all([
+              admin.from('user_profiles').select('onboarding_completed, sobriety_date').eq('id', user.id).maybeSingle(),
+              admin.from('check_ins').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+              admin.from('journal_entries').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+              admin.from('sponsor_relationships').select('id', { count: 'exact', head: true })
+                .or(`sponsor_id.eq.${user.id},sponsee_id.eq.${user.id}`),
+            ])
+          const hasRecoveryData =
+            prof?.onboarding_completed === true ||
+            !!prof?.sobriety_date ||
+            (checkIns ?? 0) > 0 ||
+            (journals ?? 0) > 0 ||
+            (relationships ?? 0) > 0
+          if (hasRecoveryData) {
+            // 409 + this code is the UI's cue to offer "keep both workspaces"
+            // (dual by capability) instead of a destructive correction.
             return NextResponse.json(
-              { error: 'You already have recovery data on this account, so we kept it. You can use both workspaces.', code: 'origin_not_empty' },
+              {
+                error: 'You already have recovery data on this account, so we kept it. You can use both workspaces instead.',
+                code: 'origin_not_empty',
+                offer: 'keep-both',
+              },
               { status: 409 }
             )
           }
@@ -155,7 +175,7 @@ export async function POST(request: Request) {
             .from('provider_accounts').select('id').eq('auth_user_id', user.id).maybeSingle()
           if (acct) {
             return NextResponse.json(
-              { error: 'This account already manages a listing, so we kept your provider workspace.', code: 'origin_not_empty' },
+              { error: 'This account already manages a listing, so we kept your provider workspace.', code: 'origin_not_empty', offer: 'keep-both' },
               { status: 409 }
             )
           }
