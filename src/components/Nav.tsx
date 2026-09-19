@@ -17,7 +17,7 @@ function getSearchContext(pathname: string): SearchContext {
 export default function Nav() {
   const pathname  = usePathname()
   const router    = useRouter()
-  const { user, profile, loading, openAuthModal, signOut } = useAuth()
+  const { user, profile, setup, loading, openAuthModal, signOut } = useAuth()
   const [mobileOpen,   setMobileOpen]   = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [searchOpen,   setSearchOpen]   = useState(false)
@@ -56,6 +56,20 @@ export default function Nav() {
   }, [])
 
   const displayName = profile?.display_name
+  /**
+   * ODI-85: provider-primary accounts read "Provider | {org or name}".
+   *
+   * "Active workspace" for a dual account is the workspace they last chose,
+   * falling back to their primary — so the label follows where they actually
+   * are rather than how they originally signed up. A member (no user_setup row,
+   * or member primary) is completely unchanged.
+   */
+  const activeWorkspace = setup ? (setup.last_workspace ?? setup.primary_workspace) : 'member'
+  // Text only — the ▾ is rendered separately so truncation can never eat it.
+  const accountLabel =
+    activeWorkspace === 'provider'
+      ? `Provider | ${setup?.organization_name?.trim() || displayName || 'Account'}`
+      : displayName ? `My Journey | ${displayName}` : 'Account'
 
   async function handleSignOut() {
     setDropdownOpen(false)
@@ -132,12 +146,31 @@ export default function Nav() {
                       border: '1px solid rgba(0,51,102,0.12)',
                       borderRadius: 999, padding: '7px 14px',
                       cursor: 'pointer', transition: 'background 0.15s',
+                      minWidth: 0, maxWidth: '100%',
                     }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,51,102,0.11)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,51,102,0.07)')}
                   >
-                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)', whiteSpace: 'nowrap' }}>
-                      {displayName ? `My Journey | ${displayName} ▾` : 'Account ▾'}
+                    {/* Organization names are free text and can be long. The
+                        label was nowrap with no bound, so a long org pushed the
+                        nav past the viewport and gave the page a horizontal
+                        scrollbar (1016px: scrollWidth 1045). Truncate the TEXT
+                        only — the chevron sits outside it so it can't be
+                        clipped — and carry the full value in `title`.
+                        minWidth:0 is required: without it the flex item refuses
+                        to shrink below its content and ellipsis never engages. */}
+                    <span
+                      title={accountLabel}
+                      style={{
+                        fontSize: 13, fontWeight: 600, color: 'var(--navy)',
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        maxWidth: 'min(28ch, 34vw)', minWidth: 0, display: 'block',
+                      }}
+                    >
+                      {accountLabel}
+                    </span>
+                    <span aria-hidden="true" style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)', marginLeft: 4, flexShrink: 0 }}>
+                      ▾
                     </span>
                   </button>
 

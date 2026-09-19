@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { recoveryWorkspaceAvailable, type UserSetup } from '@/lib/workspace'
 import BackButton from '@/components/find/BackButton'
 import ProfileForm from '@/components/dashboard/ProfileForm'
 
@@ -8,6 +9,16 @@ export default async function ProfilePage() {
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/?auth=required')
+
+  // E07: these are recovery-only surfaces. A provider-primary account that has
+  // never enabled recovery gets its provider workspace instead of a page full
+  // of sobriety and fellowship fields that mean nothing to it. Anyone who has
+  // enabled recovery — including dual accounts — still sees Profile normally.
+  const { data: setupRow } = await supabase
+    .from('user_setup').select('*').eq('user_id', user.id).maybeSingle()
+  if (!recoveryWorkspaceAvailable((setupRow ?? null) as UserSetup | null)) {
+    redirect('/dashboard?mode=facility')
+  }
 
   const { data: profile } = await supabase
     .from('user_profiles')

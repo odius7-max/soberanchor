@@ -19,6 +19,12 @@
  */
 
 export const CLAIM_PATH = '/providers/claim'
+/**
+ * Provider welcome. Allowlisted as an EXACT path with ZERO query parameters
+ * (A3) — no `/providers/*` prefix widening, because a prefix would readmit
+ * every future provider route to the redirect surface for free.
+ */
+export const WELCOME_PATH = '/providers/welcome'
 export const CONTINUATION_PARAM = 'next'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -70,6 +76,12 @@ export function validateContinuation(raw: unknown): string | null {
   if (url.origin !== LOCAL_BASE) return null
   if (url.username || url.password) return null
 
+  // Welcome: exact path, zero query. Anything appended is rejected rather than
+  // stripped, matching how the claim shape treats unknown keys.
+  if (url.pathname === WELCOME_PATH) {
+    return [...url.searchParams.keys()].length === 0 ? WELCOME_PATH : null
+  }
+
   if (url.pathname !== CLAIM_PATH) return null
 
   // Query: nothing, or exactly one `facility=<uuid>`. Unknown or duplicated
@@ -105,9 +117,36 @@ export function continuationFacilityId(continuation: string | null): string | nu
   return q === -1 ? null : validated.slice(q + '?facility='.length)
 }
 
-/** True when a continuation points at a specific facility claim. */
+/**
+ * What KIND of destination a continuation names (A3).
+ *
+ * Before welcome existed, "validated" and "claim" were the same thing, so
+ * callers used truthiness as a proxy for claim context. That proxy is now
+ * wrong: welcome validates but is not a claim, and treating it as one makes
+ * the auth modal promise a facility the user never picked.
+ */
+export type ContinuationKind = 'claim' | 'provider-welcome'
+
+export function classifyContinuation(continuation: string | null): ContinuationKind | null {
+  const validated = validateContinuation(continuation)
+  if (!validated) return null
+  return validated === WELCOME_PATH ? 'provider-welcome' : 'claim'
+}
+
+/**
+ * True ONLY for a facility-claim continuation.
+ *
+ * This used to return true for any validated continuation. That was harmless
+ * while claim was the only shape; with welcome allowlisted it would classify
+ * welcome as a claim, so the meaning is now narrowed to match the name.
+ */
 export function isClaimContinuation(continuation: string | null): boolean {
-  return validateContinuation(continuation) !== null
+  return classifyContinuation(continuation) === 'claim'
+}
+
+/** True for any provider-context continuation — claim or welcome. */
+export function isProviderContinuation(continuation: string | null): boolean {
+  return classifyContinuation(continuation) !== null
 }
 
 /**
@@ -120,6 +159,21 @@ export function isClaimContinuation(continuation: string | null): boolean {
  */
 export function claimCancelHref(facilityId: string | null): string {
   return facilityId && UUID_RE.test(facilityId) ? `/find/${facilityId}` : '/for-providers'
+}
+
+/**
+ * Cancel destination for any validated continuation (R1).
+ *
+ * Deliberately derived from the destination itself rather than a referrer:
+ * `from`/referrer carriers can be absent, stale or external, and a valid
+ * facility already tells us its listing URL. Welcome and generic claim both
+ * fall back to the provider landing page.
+ */
+export function continuationCancelHref(continuation: string | null): string {
+  const kind = classifyContinuation(continuation)
+  if (kind === 'provider-welcome') return '/for-providers'
+  if (kind === 'claim') return claimCancelHref(continuationFacilityId(continuation))
+  return '/for-providers'
 }
 
 /** Validate a bare facility id from a query string. */

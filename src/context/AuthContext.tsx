@@ -11,6 +11,7 @@ import {
 } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
+import type { UserSetup } from '@/lib/workspace'
 
 export interface UserProfile {
   display_name: string | null
@@ -28,6 +29,12 @@ export interface AuthPromptOptions {
 interface AuthContextType {
   user: User | null
   profile: UserProfile | null
+  /**
+   * Workspace preference state (ODI-85). Self-read only. Drives the account
+   * label and nothing else here — it is NOT authorization, and `isProvider`
+   * below still means "active provider account".
+   */
+  setup: UserSetup | null
   isProvider: boolean
   loading: boolean
   isAuthModalOpen: boolean
@@ -47,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const supabase = createClient()
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [setup, setSetup] = useState<UserSetup | null>(null)
   const [isProvider, setIsProvider] = useState(false)
   const [loading, setLoading] = useState(true)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
@@ -56,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchProfile = useCallback(
     async (userId: string) => {
-      const [{ data: profileData }, { data: providerData }] = await Promise.all([
+      const [{ data: profileData }, { data: providerData }, { data: setupData }] = await Promise.all([
         supabase
           .from('user_profiles')
           .select('display_name, sobriety_date, primary_fellowship_id, current_step, is_available_sponsor')
@@ -68,9 +76,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .eq('auth_user_id', userId)
           .eq('is_active', true)
           .maybeSingle(),
+        supabase
+          .from('user_setup')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle(),
       ])
       if (mounted.current) {
         setProfile(profileData ?? null)
+        setSetup((setupData ?? null) as UserSetup | null)
         setIsProvider(!!providerData)
       }
       return profileData
@@ -101,6 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         fetchProfile(session.user.id)
       } else {
         setProfile(null)
+        setSetup(null)
         setIsProvider(false)
       }
     })
@@ -135,7 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [fetchProfile, supabase.auth])
 
   return (
-    <AuthContext.Provider value={{ user, profile, isProvider, loading, isAuthModalOpen, authModalInitialStep, openAuthModal, closeAuthModal, authPrompt, openAuthPrompt, closeAuthPrompt, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, setup, isProvider, loading, isAuthModalOpen, authModalInitialStep, openAuthModal, closeAuthModal, authPrompt, openAuthPrompt, closeAuthPrompt, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   )

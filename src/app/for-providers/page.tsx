@@ -1,4 +1,4 @@
-import ProviderAuthButton from "./ProviderAuthButton";
+import ProviderAuthButton, { ProviderSignupButton } from "./ProviderAuthButton";
 import ClaimScrollButton from "./ClaimScrollButton";
 import ClaimSection from "./ClaimSection";
 import { PROVIDER_TIERS, tierPricePeriod } from "@/lib/provider-tiers";
@@ -122,6 +122,7 @@ export default function ForProvidersPage() {
             <ClaimScrollButton className="bg-navy text-white font-semibold text-base px-8 py-3.5 rounded-xl hover:bg-navy-dark transition-colors">
               Claim your listing — free forever
             </ClaimScrollButton>
+            <ProviderSignupButton />
             <ProviderAuthButton />
           </div>
           <p className="text-[13px] text-mid">
