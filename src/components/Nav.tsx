@@ -17,7 +17,7 @@ function getSearchContext(pathname: string): SearchContext {
 export default function Nav() {
   const pathname  = usePathname()
   const router    = useRouter()
-  const { user, profile, loading, openAuthModal, signOut } = useAuth()
+  const { user, profile, setup, loading, openAuthModal, signOut } = useAuth()
   const [mobileOpen,   setMobileOpen]   = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [searchOpen,   setSearchOpen]   = useState(false)
@@ -56,6 +56,19 @@ export default function Nav() {
   }, [])
 
   const displayName = profile?.display_name
+  /**
+   * ODI-85: provider-primary accounts read "Provider | {org or name}".
+   *
+   * "Active workspace" for a dual account is the workspace they last chose,
+   * falling back to their primary — so the label follows where they actually
+   * are rather than how they originally signed up. A member (no user_setup row,
+   * or member primary) is completely unchanged.
+   */
+  const activeWorkspace = setup ? (setup.last_workspace ?? setup.primary_workspace) : 'member'
+  const accountLabel =
+    activeWorkspace === 'provider'
+      ? `Provider | ${setup?.organization_name?.trim() || displayName || 'Account'} ▾`
+      : displayName ? `My Journey | ${displayName} ▾` : 'Account ▾'
 
   async function handleSignOut() {
     setDropdownOpen(false)
@@ -137,7 +150,7 @@ export default function Nav() {
                     onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,51,102,0.07)')}
                   >
                     <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)', whiteSpace: 'nowrap' }}>
-                      {displayName ? `My Journey | ${displayName} ▾` : 'Account ▾'}
+                      {accountLabel}
                     </span>
                   </button>
 

@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/context/AuthContext'
 import { CONTINUATION_PARAM, classifyContinuation, continuationCancelHref, validateContinuation, type ContinuationKind } from '@/lib/claim-continuation'
 import WrongDoorSwitch from './WrongDoorSwitch'
+import { clearAuthCancelled, markAuthCancelled } from '@/lib/auth-cancellation'
 
 type Step = 'login' | 'signup' | 'forgot' | 'forgot_sent' | 'onboarding'
 
@@ -74,6 +75,7 @@ export default function AuthModal() {
     if (openedRef.current) return
     openedRef.current = true
     consumedRef.current = false
+    clearAuthCancelled()   // a fresh opening is never a cancelled occurrence
     const snapshot = validateContinuation(
       new URLSearchParams(window.location.search).get(CONTINUATION_PARAM)
     )
@@ -93,6 +95,12 @@ export default function AuthModal() {
   // cancellation cleanup — this effect — so nothing races it.
   useEffect(() => {
     if (isAuthModalOpen || consumedRef.current || !continuation) return
+    // R1 residual: mark BEFORE navigating. The modal has already closed by the
+    // time this effect runs, but PP-R2 would otherwise see a signed-out page
+    // still carrying `next` mid-transition and restore the prompt on top of the
+    // destination. Close → mark → navigate, in that order, is the atomic unit.
+    markAuthCancelled(continuation)
+
     const exit = continuationCancelHref(continuation)
     if (exit && window.location.pathname !== exit.split('?')[0]) {
       router.push(exit)

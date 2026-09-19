@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { CONTINUATION_PARAM, validateContinuation } from '@/lib/claim-continuation'
+import { clearAuthCancelled, wasAuthCancelled } from '@/lib/auth-cancellation'
 
 /** PP-R2 is deliberately NOT applied here — the callback owns its own screen. */
 const R2_EXCLUDED_PATHS = ['/auth/continue']
@@ -54,7 +55,9 @@ export default function AuthQueryOpener() {
     // when there ISN'T one.
     if (!authParam && !user && !isAuthModalOpen && !R2_EXCLUDED_PATHS.includes(pathname)) {
       const pending = validateContinuation(searchParams.get(CONTINUATION_PARAM))
-      if (pending) {
+      // Never restore a prompt the user just dismissed — that is the R1
+      // residual, where the modal reappeared over the destination listing.
+      if (pending && !wasAuthCancelled(pending)) {
         const key = `${pathname}?reconstructed&to=${pending}`
         if (handledFor.current !== key) {
           handledFor.current = key
@@ -81,6 +84,7 @@ export default function AuthQueryOpener() {
     // conflated into one already-handled occurrence.
     const destination = validateContinuation(searchParams.get(CONTINUATION_PARAM)) ?? ''
     const key = `${pathname}?auth=${authParam}&to=${destination}`
+    clearAuthCancelled()   // explicit ?auth= is a deliberate retry
     if (handledFor.current === key) return
     handledFor.current = key
 
