@@ -65,10 +65,11 @@ export default function Nav() {
    * or member primary) is completely unchanged.
    */
   const activeWorkspace = setup ? (setup.last_workspace ?? setup.primary_workspace) : 'member'
+  // Text only — the ▾ is rendered separately so truncation can never eat it.
   const accountLabel =
     activeWorkspace === 'provider'
-      ? `Provider | ${setup?.organization_name?.trim() || displayName || 'Account'} ▾`
-      : displayName ? `My Journey | ${displayName} ▾` : 'Account ▾'
+      ? `Provider | ${setup?.organization_name?.trim() || displayName || 'Account'}`
+      : displayName ? `My Journey | ${displayName}` : 'Account'
 
   async function handleSignOut() {
     setDropdownOpen(false)
@@ -145,12 +146,31 @@ export default function Nav() {
                       border: '1px solid rgba(0,51,102,0.12)',
                       borderRadius: 999, padding: '7px 14px',
                       cursor: 'pointer', transition: 'background 0.15s',
+                      minWidth: 0, maxWidth: '100%',
                     }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,51,102,0.11)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,51,102,0.07)')}
                   >
-                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)', whiteSpace: 'nowrap' }}>
+                    {/* Organization names are free text and can be long. The
+                        label was nowrap with no bound, so a long org pushed the
+                        nav past the viewport and gave the page a horizontal
+                        scrollbar (1016px: scrollWidth 1045). Truncate the TEXT
+                        only — the chevron sits outside it so it can't be
+                        clipped — and carry the full value in `title`.
+                        minWidth:0 is required: without it the flex item refuses
+                        to shrink below its content and ellipsis never engages. */}
+                    <span
+                      title={accountLabel}
+                      style={{
+                        fontSize: 13, fontWeight: 600, color: 'var(--navy)',
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        maxWidth: 'min(28ch, 34vw)', minWidth: 0, display: 'block',
+                      }}
+                    >
                       {accountLabel}
+                    </span>
+                    <span aria-hidden="true" style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)', marginLeft: 4, flexShrink: 0 }}>
+                      ▾
                     </span>
                   </button>
 
