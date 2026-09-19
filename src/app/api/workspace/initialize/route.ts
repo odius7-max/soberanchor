@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { DEFAULT_SETUP, isWorkspace, type UserSetup, type Workspace } from '@/lib/workspace'
+import { isFreshProviderSignup, signupIntentOf } from '@/lib/workspace-server'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -105,7 +106,10 @@ export async function POST(request: Request) {
         // for an existing user must never rewrite their established identity
         // (A1: an existing member following a provider link keeps member primary).
         if (existing) return NextResponse.json({ ok: true, setup, changed: false })
-        const entry = isWorkspace(b.entry) ? (b.entry as Workspace) : 'member'
+        // Prefer the server-verified signup hint over the body; the body is
+        // only a convenience for callers that already know the intent.
+        const entry: Workspace =
+          signupIntentOf(user) ?? (isWorkspace(b.entry) ? (b.entry as Workspace) : 'member')
         patch.primary_workspace = entry
         if (entry === 'provider') patch.provider_started_at = now
         else patch.recovery_enabled_at = now       // members get recovery without being asked
@@ -196,6 +200,15 @@ export async function POST(request: Request) {
         }
         patch.provider_started_at = setup.provider_started_at ?? now
         patch.provider_setup_completed_at = setup.provider_setup_completed_at ?? now
+
+        // PP-DEFAULT: this set enablement but never chose a primary workspace,
+        // so a provider-first account kept the 'member' column default. Only a
+        // genuinely fresh provider-intent account is promoted; an established
+        // member finishing provider setup gets additive enablement with their
+        // primary and recovery state untouched.
+        if (await isFreshProviderSignup(admin, user, !!existing)) {
+          patch.primary_workspace = 'provider'
+        }
         break
       }
 

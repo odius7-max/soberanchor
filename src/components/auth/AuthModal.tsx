@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/context/AuthContext'
-import { CONTINUATION_PARAM, classifyContinuation, validateContinuation, type ContinuationKind } from '@/lib/claim-continuation'
+import { CONTINUATION_PARAM, classifyContinuation, continuationCancelHref, validateContinuation, type ContinuationKind } from '@/lib/claim-continuation'
 import WrongDoorSwitch from './WrongDoorSwitch'
 
 type Step = 'login' | 'signup' | 'forgot' | 'forgot_sent' | 'onboarding'
@@ -81,15 +81,28 @@ export default function AuthModal() {
     setContinuationKind(classifyContinuation(snapshot))
   }, [isAuthModalOpen])
 
-  // Closing without authenticating clears the pending claim intent, so it
-  // cannot silently attach itself to an unrelated sign-in later on.
+  // Closing without authenticating clears the pending intent so it can't attach
+  // to an unrelated sign-in later.
+  //
+  // PP-R1: it used to stop there — stripping `next` and leaving the visitor
+  // sitting on the homepage with no route back to the listing they came from.
+  // Cancel now goes to the destination's deterministic exit
+  // (specific claim → /find/<uuid>, welcome or generic claim → /for-providers).
+  // Navigating away also removes `next` by construction, which is what stops
+  // the PP-R2 prompt below from immediately reopening. Still ONE owner of
+  // cancellation cleanup — this effect — so nothing races it.
   useEffect(() => {
     if (isAuthModalOpen || consumedRef.current || !continuation) return
-    const params = new URLSearchParams(window.location.search)
-    if (params.has(CONTINUATION_PARAM)) {
-      params.delete(CONTINUATION_PARAM)
-      const qs = params.toString()
-      router.replace(qs ? `${window.location.pathname}?${qs}` : window.location.pathname, { scroll: false })
+    const exit = continuationCancelHref(continuation)
+    if (exit && window.location.pathname !== exit.split('?')[0]) {
+      router.push(exit)
+    } else {
+      const params = new URLSearchParams(window.location.search)
+      if (params.has(CONTINUATION_PARAM)) {
+        params.delete(CONTINUATION_PARAM)
+        const qs = params.toString()
+        router.replace(qs ? `${window.location.pathname}?${qs}` : window.location.pathname, { scroll: false })
+      }
     }
     setContinuation(null)
     setContinuationKind(null)
@@ -203,7 +216,15 @@ export default function AuthModal() {
     const { data, error: err } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: { emailRedirectTo },
+      options: {
+        emailRedirectTo,
+        // PP-DEFAULT: the bootstrap hint. Previously signup recorded no intent
+        // at all, so a provider-first account reached the server with nothing
+        // to distinguish it from a member and kept the 'member' default. This
+        // is a HINT only — the server re-verifies it against getUser() and
+        // still refuses to promote any account that has established state.
+        data: { signup_intent: isProviderEntry ? 'provider' : 'member' },
+      },
     })
     setLoading(false)
     if (err) { setError(friendlyAuthError(err.message)); return }
@@ -469,10 +490,28 @@ export default function AuthModal() {
               </button>
               {/* Trust message — signup only */}
               <div style={{ borderTop: '1px solid #F0EDE8', paddingTop: 14, marginTop: 2 }}>
-                <p style={{ fontSize: 12, color: '#888', lineHeight: 1.7, fontStyle: 'italic' }}>
-                  "I built SoberAnchor because I&apos;ve walked this path myself. Recovery work is deeply personal — your journal entries, step work, and check-ins are yours alone. My commitment to you: your sponsor only sees what you explicitly share, we will never sell your data or share your personal recovery information with anyone, and if you ever want to leave, everything you&apos;ve written can be deleted completely — no retention period, no backups kept."
-                </p>
-                <p style={{ fontSize: 12, fontWeight: 600, color: '#888', marginTop: 6 }}>— Angel, co-founder</p>
+                {isProviderEntry ? (
+                  /* PP-COPY: a provider signing up was shown a paragraph about
+                     journal entries, step work and what their sponsor can see.
+                     Accurate for a member, meaningless (and slightly alarming)
+                     for someone claiming a treatment centre. */
+                  <>
+                    <p style={{ fontSize: 12, color: '#888', lineHeight: 1.7 }}>
+                      Claiming is free forever, and verification is earned rather than sold — we never
+                      charge per lead, per call or per admission, and inquiries go only to the facility
+                      a family chooses. Paid placement is always labelled, and it never changes organic
+                      search results.
+                    </p>
+                    <p style={{ fontSize: 12, fontWeight: 600, color: '#888', marginTop: 6 }}>— The SoberAnchor team</p>
+                  </>
+                ) : (
+                  <>
+                    <p style={{ fontSize: 12, color: '#888', lineHeight: 1.7, fontStyle: 'italic' }}>
+                      "I built SoberAnchor because I&apos;ve walked this path myself. Recovery work is deeply personal — your journal entries, step work, and check-ins are yours alone. My commitment to you: your sponsor only sees what you explicitly share, we will never sell your data or share your personal recovery information with anyone, and if you ever want to leave, everything you&apos;ve written can be deleted completely — no retention period, no backups kept."
+                    </p>
+                    <p style={{ fontSize: 12, fontWeight: 600, color: '#888', marginTop: 6 }}>— Angel, co-founder</p>
+                  </>
+                )}
               </div>
               <button onClick={() => { setError(null); setSuccess(null); setStep('login') }}
                 style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: 13, textAlign: 'center' }}>

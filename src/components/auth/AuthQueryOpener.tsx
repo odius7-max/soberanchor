@@ -5,6 +5,9 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { CONTINUATION_PARAM, validateContinuation } from '@/lib/claim-continuation'
 
+/** PP-R2 is deliberately NOT applied here — the callback owns its own screen. */
+const R2_EXCLUDED_PATHS = ['/auth/continue']
+
 /**
  * Reads ?auth=... on any page and opens the AuthModal in the appropriate step,
  * then strips the query param so it doesn't linger in history / shareable URLs.
@@ -24,7 +27,7 @@ export default function AuthQueryOpener() {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const { user, openAuthModal, loading } = useAuth()
+  const { user, openAuthModal, loading, isAuthModalOpen } = useAuth()
   // Guard against StrictMode double-invoke + repeated navigations to same URL.
   // Scoped to the current ?auth= OCCURRENCE, not to the component's lifetime —
   // see the reset below.
@@ -33,6 +36,34 @@ export default function AuthQueryOpener() {
   useEffect(() => {
     if (loading) return
     const authParam = searchParams.get('auth')
+
+    // ── PP-R2 ──
+    // A signed-out RELOAD keeps `next` but loses `auth` (we strip it after the
+    // first open), so the visitor was left on a page with a pending claim and
+    // no visible way forward. Reconstruct the prompt from `next` alone.
+    //
+    // Scoped, per A3: never on /auth/continue, where opening auth mid-PKCE
+    // would fight the callback for its own screen; only once the session has
+    // resolved; and only while signed out. Cancellation is respected without a
+    // flag because cancelling now NAVIGATES to the destination's exit, which
+    // leaves no `next` behind for this branch to find.
+    // Must not fire while a modal is already open: after the normal branch
+    // strips `auth`, this effect re-runs with `next` still present, and without
+    // this guard it reopened the modal in LOGIN mode — silently overriding a
+    // signup intent the user had just chosen. PP-R2 exists to restore a prompt
+    // when there ISN'T one.
+    if (!authParam && !user && !isAuthModalOpen && !R2_EXCLUDED_PATHS.includes(pathname)) {
+      const pending = validateContinuation(searchParams.get(CONTINUATION_PARAM))
+      if (pending) {
+        const key = `${pathname}?reconstructed&to=${pending}`
+        if (handledFor.current !== key) {
+          handledFor.current = key
+          openAuthModal('login')
+        }
+        return
+      }
+    }
+
     if (!authParam) {
       // The param is gone, so this occurrence is finished. Clearing the guard
       // here is what makes the NEXT ?auth=… count as a fresh occurrence.
@@ -75,7 +106,7 @@ export default function AuthQueryOpener() {
     next.delete('auth')
     const qs = next.toString()
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
-  }, [loading, user, pathname, searchParams, openAuthModal, router])
+  }, [loading, user, isAuthModalOpen, pathname, searchParams, openAuthModal, router])
 
   return null
 }

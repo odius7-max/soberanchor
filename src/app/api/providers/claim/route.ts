@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { isFreshProviderSignup } from '@/lib/workspace-server'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -165,6 +166,32 @@ export async function POST(request: Request) {
     const result = data as { ok?: boolean; code?: string; facility_id?: string; status?: string } | null
     if (!result || typeof result !== 'object') return fail('server_error')
     if (!result.ok) return fail(result.code ?? 'server_error')
+
+    // PP-DEFAULT, claim variant. A provider whose first act is claiming a
+    // facility never passes through provider setup, so without this they too
+    // kept the member default. Runs only AFTER the claim has committed, is
+    // idempotent, and cannot promote an established member: isFreshProviderSignup
+    // requires the signup hint, no existing user_setup row, and no
+    // recovery-personal data. Best-effort — a preference write must never fail
+    // a committed claim.
+    try {
+      if (await isFreshProviderSignup(admin, user, false)) {
+        const { data: existingSetup } = await admin
+          .from('user_setup').select('user_id').eq('user_id', user.id).maybeSingle()
+        if (!existingSetup) {
+          const stamp = new Date().toISOString()
+          await admin.from('user_setup').insert({
+            user_id: user.id,
+            primary_workspace: 'provider',
+            provider_started_at: stamp,
+            provider_setup_completed_at: stamp,
+            updated_at: stamp,
+          })
+        }
+      }
+    } catch (bootstrapErr) {
+      console.error('[providers/claim] workspace bootstrap skipped:', bootstrapErr)
+    }
 
     return NextResponse.json(
       { facility_id: result.facility_id, status: result.status },
