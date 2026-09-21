@@ -34,6 +34,8 @@ export default function GuidedDiscovery({ onClose }: { onClose: () => void }) {
 
   const totalSteps = 4;
   const isLovedOne = who !== "self" && who !== "";
+  // Only people supporting someone else see the family-fellowship link.
+  const supportingSomeone = who === "loved-one" || who === "friend";
 
   const toggle3 = (i: number) => {
     const s = new Set(selected3);
@@ -181,17 +183,18 @@ export default function GuidedDiscovery({ onClose }: { onClose: () => void }) {
           </div>
         )}
 
-        {/* Step 4: Results */}
+        {/* Step 4: Where to start */}
         {step === 4 && (
           <div className="animate-fade-up">
             <h2
               className="text-[28px] font-semibold mb-1.5"
               style={{ fontFamily: "var(--font-display)", color: "var(--navy)" }}
             >
-              Here&apos;s what we found for you
+              Where to start
             </h2>
             <p className="text-mid text-[15px] mb-6">
-              Resources personalized to your situation.
+              Starting points based on your answers. Each link goes to the real
+              directory or meeting finder, where you can search your own area.
             </p>
 
             <h3 className="text-base font-semibold text-navy mt-5 mb-3">
@@ -208,62 +211,78 @@ export default function GuidedDiscovery({ onClose }: { onClose: () => void }) {
             </div>
 
             <h3 className="text-base font-semibold text-navy mt-5 mb-3">
-              👥 Meetings Near You
+              👥 Meetings &amp; Fellowships
             </h3>
-            {[
-              { name: "AA Meetings — San Diego", detail: "47 meetings this week · In-person & online" },
-              { name: "SMART Recovery — San Diego", detail: "8 meetings this week · Science-based approach" },
-              { name: "Al-Anon Family Groups — San Diego", detail: "12 meetings this week · For families & loved ones" },
-            ].map((m) => (
+            <Link
+              href="/fellowships"
+              className="block bg-white border border-border rounded-xl p-4 mb-2 hover:shadow-md transition-shadow"
+            >
+              <div className="flex justify-between items-center gap-3">
+                <div>
+                  <div className="font-semibold text-sm text-navy">
+                    Find meetings
+                  </div>
+                  <div className="text-[13px] text-mid">
+                    Official AA, NA, and SMART Recovery meeting finders
+                  </div>
+                </div>
+                <span className="text-teal text-sm font-semibold shrink-0">
+                  View →
+                </span>
+              </div>
+            </Link>
+            {supportingSomeone && (
               <Link
-                key={m.name}
-                href="/find"
+                href="/fellowships"
                 className="block bg-white border border-border rounded-xl p-4 mb-2 hover:shadow-md transition-shadow"
               >
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center gap-3">
                   <div>
                     <div className="font-semibold text-sm text-navy">
-                      {m.name}
+                      Fellowships for families and friends
                     </div>
-                    <div className="text-[13px] text-mid">{m.detail}</div>
+                    <div className="text-[13px] text-mid">
+                      Al-Anon and Nar-Anon are for the people supporting someone
+                    </div>
                   </div>
-                  <span className="text-teal text-sm font-semibold">
+                  <span className="text-teal text-sm font-semibold shrink-0">
                     View →
                   </span>
                 </div>
               </Link>
-            ))}
+            )}
 
             <h3 className="text-base font-semibold text-navy mt-6 mb-3">
               🏥 Treatment Centers
             </h3>
             <Link
-              href="/find"
+              href="/find?category=treatment"
               className="block bg-white border border-border rounded-xl p-4 mb-2 hover:shadow-md transition-shadow"
             >
-              <span className="inline-block bg-[var(--gold-10)] border border-gold-light/30 text-[#9A7B54] text-xs font-medium rounded-full px-3 py-1 mb-1">
-                Featured
-              </span>
-              <div className="font-semibold text-sm text-navy">
-                Browse Treatment Centers Near You
-              </div>
-              <div className="text-[13px] text-mid">
-                San Diego area · Multiple options · Insurance accepted
+              <div className="flex justify-between items-center gap-3">
+                <div className="font-semibold text-sm text-navy">
+                  Browse the treatment directory
+                </div>
+                <span className="text-teal text-sm font-semibold shrink-0">
+                  View →
+                </span>
               </div>
             </Link>
 
             <h3 className="text-base font-semibold text-navy mt-6 mb-3">
-              📖 Helpful Articles
+              📖 Articles &amp; Guides
             </h3>
             <Link
               href="/resources"
               className="block bg-white border border-border rounded-xl p-4 mb-2 hover:shadow-md transition-shadow"
             >
-              <div className="font-semibold text-sm text-navy">
-                The First 30 Days: What to Expect
-              </div>
-              <div className="text-[13px] text-mid">
-                By Angel · 6 min read
+              <div className="flex justify-between items-center gap-3">
+                <div className="font-semibold text-sm text-navy">
+                  Read the recovery guides
+                </div>
+                <span className="text-teal text-sm font-semibold shrink-0">
+                  View →
+                </span>
               </div>
             </Link>
 
