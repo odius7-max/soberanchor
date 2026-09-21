@@ -50,27 +50,6 @@ const sponsorFeatures = [
   },
 ];
 
-const testimonials = [
-  {
-    quote:
-      "I had a spreadsheet with five sponsees' sobriety dates, step positions, and last-call times. I was missing anniversaries and forgetting which sponsee was on Step 4 vs Step 7. SoberAnchor gave me one page that holds all of it. My anxiety dropped immediately.",
-    name: "Angel J.",
-    role: "Sponsor, AA · 4+ years sober",
-  },
-  {
-    quote:
-      "First time I've worked the steps digitally. My sponsor can see my writing when I'm ready to share, and it's all there when I want to come back to it. I've been through three sponsors and this is the first time the process didn't feel scattered.",
-    name: "M.",
-    role: "Sponsee, NA · 2 years clean",
-  },
-  {
-    quote:
-      "The scheduled due dates changed how I sponsor. I used to text reminders and feel like a nag. Now the app does it, my sponsees show up to our calls with the work done, and we actually talk about recovery instead of logistics.",
-    name: "Chris.",
-    role: "Sponsor, SMART Recovery · 6 years",
-  },
-];
-
 const trustCards = [
   {
     icon: "👤",
@@ -654,63 +633,15 @@ export default function ProgramPage() {
         </div>
       </section>
 
-      {/* ── 4. Testimonials ──────────────────────────────────────────────── */}
-      <section className="bg-white py-20 px-8">
-        <div className="max-w-[1120px] mx-auto">
-          {/*
-            Placeholder testimonials — replace with real opt-in quotes from
-            Founding Members once they've been using Pro for a few weeks.
-            Keep first-name-only attribution and fellowship + role format.
-          */}
-          <div className="text-center mb-12">
-            <p className="text-[11px] uppercase tracking-[1.5px] font-bold text-teal mb-3">
-              What members say
-            </p>
-            <h2
-              className="text-[clamp(26px,3vw,36px)] font-extrabold text-navy mb-3.5 leading-[1.12]"
-              style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.6px" }}
-            >
-              Real stories from active sponsors and sponsees.
-            </h2>
-            <p className="text-base text-mid max-w-[620px] mx-auto leading-[1.55]">
-              Shared with permission. First names only. Every story opt-in from real
-              SoberAnchor members.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {testimonials.map((t) => (
-              <div key={t.name} className="bg-warm-gray rounded-2xl p-6 flex flex-col">
-                <p className="text-[15px] text-dark leading-[1.6] mb-[18px] flex-1">
-                  <span
-                    className="inline-block mr-1"
-                    style={{
-                      fontSize: 48,
-                      lineHeight: 0.3,
-                      color: "var(--teal)",
-                      fontFamily: "Georgia, serif",
-                      verticalAlign: "-10px",
-                    }}
-                  >
-                    &ldquo;
-                  </span>
-                  {t.quote}
-                </p>
-                <div className="text-[12.5px] text-mid border-t border-border pt-3">
-                  <strong className="text-navy font-bold">{t.name}</strong> — {t.role}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <p
-            className="text-center mt-7 text-xs italic"
-            style={{ color: "#9a9a9a" }}
-          >
-            Placeholder testimonials for initial launch — real opt-in quotes replacing these soon.
-          </p>
-        </div>
-      </section>
+      {/*
+        ── 4. Testimonials — REMOVED (ODI-89) ──────────────────────────────
+        The section shipped with fabricated quotes under a heading asserting
+        they were real opt-in stories from members. Removed rather than
+        relabeled: a testimonial block with invented quotes has no honest
+        version. Restore only when real opt-in quotes exist, using the
+        agreed attribution format: first name, fellowship, role
+        (e.g. "Chris — Sponsor, SMART Recovery").
+      */}
 
       {/* ── 5. Trust & Privacy ───────────────────────────────────────────── */}
       <section className="bg-warm-gray py-20 px-8">
