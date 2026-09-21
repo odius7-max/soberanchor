@@ -1,0 +1,163 @@
+{
+  "timestamp": "2026-09-17T04:18:47.662Z",
+  "scope": "Direct production RPC, not authenticated preview HTTP POST",
+  "actor": "59fdecb5-804e-41c6-969e-e48eb5d850f9",
+  "account": "d0ec2915-e46d-4aa6-bf06-1a6e04a0267e",
+  "before": {
+    "facilities": [
+      {
+        "id": "00000000-0000-4000-a000-000000000001",
+        "source": "demo",
+        "website": "https://gmail.com",
+        "is_claimed": true,
+        "is_verified": true,
+        "provider_account_id": "d0ec2915-e46d-4aa6-bf06-1a6e04a0267e",
+        "listing_tier": "basic",
+        "is_featured": false
+      },
+      {
+        "id": "00000000-0000-4000-a000-000000000002",
+        "source": "demo",
+        "website": "https://example.com/soberanchor-demo",
+        "is_claimed": false,
+        "is_verified": false,
+        "provider_account_id": null,
+        "listing_tier": "basic",
+        "is_featured": false
+      },
+      {
+        "id": "00000000-0000-4000-a000-000000000003",
+        "source": "demo",
+        "website": "https://example.com/soberanchor-demo",
+        "is_claimed": true,
+        "is_verified": true,
+        "provider_account_id": null,
+        "listing_tier": "basic",
+        "is_featured": false
+      }
+    ],
+    "provider": {
+      "id": "d0ec2915-e46d-4aa6-bf06-1a6e04a0267e",
+      "auth_user_id": "59fdecb5-804e-41c6-969e-e48eb5d850f9",
+      "is_active": true
+    },
+    "attempts": [
+      {
+        "id": 1,
+        "auth_user_id": "59fdecb5-804e-41c6-969e-e48eb5d850f9",
+        "facility_id": "00000000-0000-4000-a000-000000000002",
+        "created_at": "2026-09-17T03:07:39.839918+00:00"
+      },
+      {
+        "id": 2,
+        "auth_user_id": "59fdecb5-804e-41c6-969e-e48eb5d850f9",
+        "facility_id": "00000000-0000-4000-a000-000000000001",
+        "created_at": "2026-09-17T03:57:02.013696+00:00"
+      },
+      {
+        "id": 3,
+        "auth_user_id": "59fdecb5-804e-41c6-969e-e48eb5d850f9",
+        "facility_id": "00000000-0000-4000-a000-000000000002",
+        "created_at": "2026-09-17T04:10:31.928574+00:00"
+      }
+    ],
+    "rejections": [
+      {
+        "id": "097ba286-6aeb-46bc-b1d4-1b5b957048d2",
+        "facility_id": "00000000-0000-4000-a000-000000000002",
+        "auth_user_id": "59fdecb5-804e-41c6-969e-e48eb5d850f9",
+        "provider_account_id": "d0ec2915-e46d-4aa6-bf06-1a6e04a0267e",
+        "rejected_by": "06909557-b720-43a0-bd64-3d9f0f35a4af",
+        "rejected_at": "2026-09-17T04:14:40.972485+00:00"
+      }
+    ]
+  },
+  "results": [
+    {
+      "ok": true,
+      "status": "verified",
+      "facility_id": "00000000-0000-4000-a000-000000000001",
+      "already_owned": true
+    },
+    {
+      "ok": true,
+      "status": "verified",
+      "facility_id": "00000000-0000-4000-a000-000000000001",
+      "already_owned": true
+    },
+    {
+      "ok": false,
+      "code": "claim_rejected"
+    }
+  ],
+  "after": {
+    "facilities": [
+      {
+        "id": "00000000-0000-4000-a000-000000000001",
+        "source": "demo",
+        "website": "https://gmail.com",
+        "is_claimed": true,
+        "is_verified": true,
+        "provider_account_id": "d0ec2915-e46d-4aa6-bf06-1a6e04a0267e",
+        "listing_tier": "basic",
+        "is_featured": false
+      },
+      {
+        "id": "00000000-0000-4000-a000-000000000002",
+        "source": "demo",
+        "website": "https://example.com/soberanchor-demo",
+        "is_claimed": false,
+        "is_verified": false,
+        "provider_account_id": null,
+        "listing_tier": "basic",
+        "is_featured": false
+      },
+      {
+        "id": "00000000-0000-4000-a000-000000000003",
+        "source": "demo",
+        "website": "https://example.com/soberanchor-demo",
+        "is_claimed": true,
+        "is_verified": true,
+        "provider_account_id": null,
+        "listing_tier": "basic",
+        "is_featured": false
+      }
+    ],
+    "provider": {
+      "id": "d0ec2915-e46d-4aa6-bf06-1a6e04a0267e",
+      "auth_user_id": "59fdecb5-804e-41c6-969e-e48eb5d850f9",
+      "is_active": true
+    },
+    "attempts": [
+      {
+        "id": 1,
+        "auth_user_id": "59fdecb5-804e-41c6-969e-e48eb5d850f9",
+        "facility_id": "00000000-0000-4000-a000-000000000002",
+        "created_at": "2026-09-17T03:07:39.839918+00:00"
+      },
+      {
+        "id": 2,
+        "auth_user_id": "59fdecb5-804e-41c6-969e-e48eb5d850f9",
+        "facility_id": "00000000-0000-4000-a000-000000000001",
+        "created_at": "2026-09-17T03:57:02.013696+00:00"
+      },
+      {
+        "id": 3,
+        "auth_user_id": "59fdecb5-804e-41c6-969e-e48eb5d850f9",
+        "facility_id": "00000000-0000-4000-a000-000000000002",
+        "created_at": "2026-09-17T04:10:31.928574+00:00"
+      }
+    ],
+    "rejections": [
+      {
+        "id": "097ba286-6aeb-46bc-b1d4-1b5b957048d2",
+        "facility_id": "00000000-0000-4000-a000-000000000002",
+        "auth_user_id": "59fdecb5-804e-41c6-969e-e48eb5d850f9",
+        "provider_account_id": "d0ec2915-e46d-4aa6-bf06-1a6e04a0267e",
+        "rejected_by": "06909557-b720-43a0-bd64-3d9f0f35a4af",
+        "rejected_at": "2026-09-17T04:14:40.972485+00:00"
+      }
+    ]
+  },
+  "pass": true
+}

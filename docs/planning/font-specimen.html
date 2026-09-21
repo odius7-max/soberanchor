@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SoberAnchor Display Font Candidates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Lora:wght@400;500;600&family=Literata:opsz,wght@7..72,400;7..72,600&family=Merriweather:wght@400;700&family=Playfair+Display:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #FAF7F2;
+    --sand: #E9DED0;
+    --navy: #003366;
+    --teal: #2A8A99;
+    --charcoal: #2C2C2C;
+    --mid: #6b6b6b;
+    --border: #E8E4DF;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    background: var(--cream);
+    color: var(--charcoal);
+    font-family: 'Outfit', sans-serif;
+    padding: 40px 16px 80px;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  .intro h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 22px; font-weight: 700; color: var(--navy);
+    letter-spacing: -0.3px; margin-bottom: 6px;
+  }
+  .intro p { font-size: 14px; color: var(--mid); max-width: 620px; }
+  .intro { margin-bottom: 36px; }
+  .legend { font-size: 12px; color: var(--mid); margin-top: 10px; }
+  .card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 28px;
+    margin-bottom: 28px;
+  }
+  .card.control { background: var(--sand); }
+  .meta {
+    display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px; margin-bottom: 24px;
+  }
+  .meta .name { font-size: 15px; font-weight: 700; color: var(--teal); text-transform: uppercase; letter-spacing: 1.5px; }
+  .meta .tag { font-size: 12.5px; color: var(--mid); }
+  .hero { font-weight: 600; color: var(--navy); font-size: clamp(34px, 6vw, 52px); line-height: 1.12; letter-spacing: -0.5px; margin-bottom: 14px; }
+  .sub { font-family: 'Outfit', sans-serif; font-size: 16.5px; color: var(--charcoal); line-height: 1.65; max-width: 560px; margin-bottom: 22px; }
+  .ctas { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 26px; }
+  .cta { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600; padding: 11px 22px; border-radius: 999px; text-decoration: none; }
+  .cta.primary { background: var(--navy); color: #fff; }
+  .cta.secondary { border: 1.5px solid var(--navy); color: var(--navy); }
+  .row { display: flex; flex-wrap: wrap; gap: 20px; }
+  .cell { flex: 1 1 240px; background: var(--cream); border-radius: 10px; padding: 16px 18px; }
+  .cell h4 { font-family: 'Outfit', sans-serif; font-size: 10.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--mid); margin-bottom: 8px; }
+  .mobile-h { font-weight: 600; color: var(--navy); font-size: 30px; line-height: 1.15; letter-spacing: -0.3px; }
+  .section-h { font-weight: 600; color: var(--navy); font-size: 21px; line-height: 1.3; }
+  .body-test { font-size: 15px; line-height: 1.6; color: var(--charcoal); }
+  .notes { margin-top: 22px; font-family: 'Outfit', sans-serif; font-size: 13.5px; color: var(--mid); line-height: 1.6; border-left: 3px solid var(--sand); padding-left: 14px; }
+  .notes strong { color: var(--charcoal); font-weight: 600; }
+
+  .f-fraunces  { font-family: 'Fraunces', serif; }
+  .f-sourceserif { font-family: 'Source Serif 4', serif; }
+  .f-lora      { font-family: 'Lora', serif; }
+  .f-literata  { font-family: 'Literata', serif; }
+  .f-merriweather { font-family: 'Merriweather', serif; }
+  .f-playfair  { font-family: 'Playfair Display', serif; }
+  .f-outfit    { font-family: 'Outfit', sans-serif; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="intro">
+    <h1>Display font candidates — hero copy, real palette</h1>
+    <p>Each card sets the same draft hero in one candidate serif on the proposed cream, navy on top, Outfit staying as the body/UI font. Judge the big headline first, then the two smaller cells: the mobile size is where fussy serifs fall apart, and the section-heading size is what most of the site would actually use. Narrow this window to phone width to pressure-test.</p>
+    <p class="legend">All six candidates are free Google Fonts. Body text everywhere below stays Outfit — the serif is display-only.</p>
+  </div>
+
+  <!-- Fraunces -->
+  <div class="card">
+    <div class="meta"><span class="name">Fraunces</span><span class="tag">soft old-style · variable optical sizes · designed to feel warm</span></div>
+    <div class="hero f-fraunces">Find help. Keep working your program.</div>
+    <p class="sub">Find treatment, sober living, and meetings — for yourself or someone you love. If you're working a program, keep your check-ins, step work, and milestones here.</p>
+    <div class="ctas"><span class="cta primary">Find support</span><span class="cta secondary">Explore recovery tools</span></div>
+    <div class="row">
+      <div class="cell"><h4>Mobile hero · 30px</h4><div class="mobile-h f-fraunces">Find help. Keep working your program.</div></div>
+      <div class="cell"><h4>Section heading · 21px</h4><div class="section-h f-fraunces">What kind of help are you looking for?</div><h4 style="margin-top:14px">Serif at body size · 15px</h4><div class="body-test f-fraunces">Check in with yourself, keep track of meetings, and pick up your step work.</div></div>
+    </div>
+    <div class="notes"><strong>Warmth is this face's explicit design goal.</strong> Rounded, gentle, a little humanist. Optical sizing keeps it sturdy small and elegant large. The one to beat for "calm without clinical." Keep its "wonk" axis off.</div>
+  </div>
+
+  <!-- Source Serif 4 -->
+  <div class="card">
+    <div class="meta"><span class="name">Source Serif 4</span><span class="tag">transitional · optical sizes · legibility-first (Adobe)</span></div>
+    <div class="hero f-sourceserif">Find help. Keep working your program.</div>
+    <p class="sub">Find treatment, sober living, and meetings — for yourself or someone you love. If you're working a program, keep your check-ins, step work, and milestones here.</p>
+    <div class="ctas"><span class="cta primary">Find support</span><span class="cta secondary">Explore recovery tools</span></div>
+    <div class="row">
+      <div class="cell"><h4>Mobile hero · 30px</h4><div class="mobile-h f-sourceserif">Find help. Keep working your program.</div></div>
+      <div class="cell"><h4>Section heading · 21px</h4><div class="section-h f-sourceserif">What kind of help are you looking for?</div><h4 style="margin-top:14px">Serif at body size · 15px</h4><div class="body-test f-sourceserif">Check in with yourself, keep track of meetings, and pick up your step work.</div></div>
+    </div>
+    <div class="notes"><strong>The safest legibility pick.</strong> Low-contrast strokes, open counters, screen-tuned. Reads warm-neutral rather than warm — more "trustworthy publication" than "gentle place." Excellent if we want serif texture with zero legibility risk.</div>
+  </div>
+
+  <!-- Lora -->
+  <div class="card">
+    <div class="meta"><span class="name">Lora</span><span class="tag">brushed curves · calm, contemporary · classic therapy-site pick</span></div>
+    <div class="hero f-lora">Find help. Keep working your program.</div>
+    <p class="sub">Find treatment, sober living, and meetings — for yourself or someone you love. If you're working a program, keep your check-ins, step work, and milestones here.</p>
+    <div class="ctas"><span class="cta primary">Find support</span><span class="cta secondary">Explore recovery tools</span></div>
+    <div class="row">
+      <div class="cell"><h4>Mobile hero · 30px</h4><div class="mobile-h f-lora">Find help. Keep working your program.</div></div>
+      <div class="cell"><h4>Section heading · 21px</h4><div class="section-h f-lora">What kind of help are you looking for?</div><h4 style="margin-top:14px">Serif at body size · 15px</h4><div class="body-test f-lora">Check in with yourself, keep track of meetings, and pick up your step work.</div></div>
+    </div>
+    <div class="notes"><strong>The middle path.</strong> Soft, calligraphic roots without fussiness; very well hinted for screens. Common on counseling and wellness sites — familiar in exactly this context, which the legibility research says is a feature, not a bug.</div>
+  </div>
+
+  <!-- Literata -->
+  <div class="card">
+    <div class="meta"><span class="name">Literata</span><span class="tag">designed for long-form screen reading · optical sizes</span></div>
+    <div class="hero f-literata">Find help. Keep working your program.</div>
+    <p class="sub">Find treatment, sober living, and meetings — for yourself or someone you love. If you're working a program, keep your check-ins, step work, and milestones here.</p>
+    <div class="ctas"><span class="cta primary">Find support</span><span class="cta secondary">Explore recovery tools</span></div>
+    <div class="row">
+      <div class="cell"><h4>Mobile hero · 30px</h4><div class="mobile-h f-literata">Find help. Keep working your program.</div></div>
+      <div class="cell"><h4>Section heading · 21px</h4><div class="section-h f-literata">What kind of help are you looking for?</div><h4 style="margin-top:14px">Serif at body size · 15px</h4><div class="body-test f-literata">Check in with yourself, keep track of meetings, and pick up your step work.</div></div>
+    </div>
+    <div class="notes"><strong>Built for reading, borrowed for display.</strong> Commissioned for Google Play Books; unimpeachable at small sizes, slightly bookish at hero size. Strong candidate if resource guides later want a serif reading face too — one family could serve both.</div>
+  </div>
+
+  <!-- Merriweather -->
+  <div class="card">
+    <div class="meta"><span class="name">Merriweather</span><span class="tag">screen-first workhorse · sturdy, open</span></div>
+    <div class="hero f-merriweather">Find help. Keep working your program.</div>
+    <p class="sub">Find treatment, sober living, and meetings — for yourself or someone you love. If you're working a program, keep your check-ins, step work, and milestones here.</p>
+    <div class="ctas"><span class="cta primary">Find support</span><span class="cta secondary">Explore recovery tools</span></div>
+    <div class="row">
+      <div class="cell"><h4>Mobile hero · 30px</h4><div class="mobile-h f-merriweather">Find help. Keep working your program.</div></div>
+      <div class="cell"><h4>Section heading · 21px</h4><div class="section-h f-merriweather">What kind of help are you looking for?</div><h4 style="margin-top:14px">Serif at body size · 15px</h4><div class="body-test f-merriweather">Check in with yourself, keep track of meetings, and pick up your step work.</div></div>
+    </div>
+    <div class="notes"><strong>Maximum sturdiness, minimum elegance.</strong> Never breaks, never dazzles. Reads a touch institutional next to Fraunces or Lora — closer to a university site than a warm welcome. Included as the durability benchmark.</div>
+  </div>
+
+  <!-- Playfair Display -->
+  <div class="card">
+    <div class="meta"><span class="name">Playfair Display</span><span class="tag">high-contrast didone · closest to Concept B's mockup look</span></div>
+    <div class="hero f-playfair">Find help. Keep working your program.</div>
+    <p class="sub">Find treatment, sober living, and meetings — for yourself or someone you love. If you're working a program, keep your check-ins, step work, and milestones here.</p>
+    <div class="ctas"><span class="cta primary">Find support</span><span class="cta secondary">Explore recovery tools</span></div>
+    <div class="row">
+      <div class="cell"><h4>Mobile hero · 30px</h4><div class="mobile-h f-playfair">Find help. Keep working your program.</div></div>
+      <div class="cell"><h4>Section heading · 21px</h4><div class="section-h f-playfair">What kind of help are you looking for?</div><h4 style="margin-top:14px">Serif at body size · 15px</h4><div class="body-test f-playfair">Check in with yourself, keep track of meetings, and pick up your step work.</div></div>
+    </div>
+    <div class="notes"><strong>What the mockup is imitating — and why to be careful.</strong> The thin hairlines that look editorial at 52px get fragile at section-heading size and below, and the vibe drifts toward luxury magazine. If B's exact look is the goal, this is it; for warmth + legibility, the faces above serve better.</div>
+  </div>
+
+  <!-- Outfit control -->
+  <div class="card control">
+    <div class="meta"><span class="name">Outfit (current)</span><span class="tag">control — what the site renders today</span></div>
+    <div class="hero f-outfit" style="font-weight:600">Find help. Keep working your program.</div>
+    <p class="sub">Find treatment, sober living, and meetings — for yourself or someone you love. If you're working a program, keep your check-ins, step work, and milestones here.</p>
+    <div class="ctas"><span class="cta primary">Find support</span><span class="cta secondary">Explore recovery tools</span></div>
+    <div class="notes"><strong>The baseline.</strong> Geometric, clean, slightly clinical — exactly the quality the redesign is trying to soften. Stays as the body/UI font in every option above; the question is only what sits on top of it.</div>
+  </div>
+
+  <p style="font-size:12.5px;color:var(--mid);max-width:640px">Contrast note: navy #003366 on cream #FAF7F2 is ~11.7:1 and passes WCAG AAA at all sizes. Teal #2A8A99 on cream is ~3.9:1 — fine for large text and the label style shown, not for small body copy. Final token sheet will carry full pair-by-pair results.</p>
+</div>
+</body>
+</html>
