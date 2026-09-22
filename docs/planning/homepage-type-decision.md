@@ -12,7 +12,8 @@
 
 - New token **`--font-editorial`**, applied deliberately per surface, homepage first. Do **not** repoint the existing `--font-display` alias (77 files reference it; that alias only gets cleaned up in the dashboard-stage review).
 - Load via **`next/font/google`** (Literata with `axes: ['opsz']`), not a CSS `@import`. While touching this, migrating the existing Outfit `@import` in `globals.css` to `next/font` is a cheap same-lane improvement.
-- Suggested cuts: hero `wght` 500–600 at large `opsz`; section headings 600; never all-caps letterspaced (that stays Outfit's job in the existing `.section-label` pattern).
+- Suggested cuts: hero `wght` 500–600; section headings 600; never all-caps letterspaced (that stays Outfit's job in the existing `.section-label` pattern).
+- **Optical size: pin it, don't auto it (added after v9 review).** Literata's auto optical sizing switches to a high-contrast display drawing at hero sizes that Travis rejected on sight ("not the font we chose"). The approved rendering is the mid-range cut: set `font-variation-settings: 'opsz' 42` for desktop headings and `'opsz' 32` for mobile headings, with `font-optical-sizing` left to these explicit values. Do not let large headings drift to `opsz` ≥ 60.
 - Contrast pairs already checked: navy `#003366` on cream `#FAF7F2` ≈ 11.7:1 (AAA); teal `#2A8A99` on cream ≈ 3.9:1 (large-text/label only). Full pair-by-pair table lands with the token sheet.
 
 ## What this unblocks
