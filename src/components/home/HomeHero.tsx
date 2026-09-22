@@ -62,13 +62,20 @@ export default function HomeHero({ facilityCount }: { facilityCount: number }) {
         className="-z-20 object-cover object-[68%_center] min-[701px]:object-[right_center]"
       />
 
-      {/* Scrim — vertical on mobile, raking left-to-right on desktop, per the comp. */}
+      {/*
+        Scrim — vertical on mobile, raking left-to-right on desktop, per the comp.
+        Opacity stops raised from the comp's originals per the gate audit
+        (docs/audits/homepage-hero-4a40813-gate.md, check 3): the comp's values left
+        the subhead and trust line at 2.94–4.14:1 over bright image detail. These exact
+        stops were browser-trialed to a 6.45:1 sampled minimum with the walkers still
+        visible. Gradient stops only — every other ratified value is unchanged.
+      */}
       <div
         aria-hidden
         className="absolute inset-0 -z-10 min-[701px]:hidden"
         style={{
           background:
-            "linear-gradient(180deg, rgba(11,47,74,0.72) 0%, rgba(11,47,74,0.5) 55%, rgba(14,58,91,0.2) 100%)",
+            "linear-gradient(180deg, rgba(11,47,74,0.80) 0%, rgba(11,47,74,0.78) 55%, rgba(14,58,91,0.76) 100%)",
         }}
       />
       <div
@@ -76,7 +83,7 @@ export default function HomeHero({ facilityCount }: { facilityCount: number }) {
         className="absolute inset-0 -z-10 hidden min-[701px]:block"
         style={{
           background:
-            "linear-gradient(100deg, rgba(11,47,74,0.80) 0%, rgba(11,47,74,0.52) 46%, rgba(14,58,91,0.14) 78%, rgba(14,58,91,0.05) 100%)",
+            "linear-gradient(100deg, rgba(11,47,74,0.86) 0%, rgba(11,47,74,0.80) 46%, rgba(14,58,91,0.74) 78%, rgba(14,58,91,0.66) 100%)",
         }}
       />
 
