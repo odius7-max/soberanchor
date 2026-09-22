@@ -82,6 +82,9 @@ export default function Footer() {
           <p className="text-white/30 text-[13px]">
             © 2026 SoberAnchor. Built with love for the recovery community.
           </p>
+          <p className="text-white/30 text-[13px] mt-1">
+            Some imagery on this site is illustrative.
+          </p>
           <div className="bg-white/5 rounded-lg px-5 py-3 mt-4 inline-block">
             <span className="text-white/50 text-[13px]">
               In crisis? Call SAMHSA:{" "}
