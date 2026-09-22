@@ -121,8 +121,13 @@ export default function Nav() {
             />
           </Link>
 
-          {/* Desktop nav links */}
-          <div className="hidden lg:flex items-center gap-0.5 flex-1">
+          {/* Desktop nav links.
+              min-w-0 is structural insurance, not the ODI-70 fix: a flex item
+              defaults to min-width:auto and so refuses to shrink below its
+              content. If this row ever grows past its container again it now
+              degrades by shrinking this cell rather than by pushing the auth
+              block off-screen and giving every page a horizontal scrollbar. */}
+          <div className="hidden lg:flex items-center gap-0.5 flex-1 min-w-0">
             {coreLinks.map(l => (
               <Link key={l.href} href={l.href} className={linkCls(l.href)}>
                 {l.label}
