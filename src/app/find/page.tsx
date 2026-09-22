@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { buildSearchFilter } from '@/lib/facility-search'
 import Link from 'next/link'
 import DirectorySearch from '@/components/find/DirectorySearch'
 import CategoryLane, { type LaneTile } from '@/components/find/CategoryLane'
@@ -99,12 +100,12 @@ async function previewFor(key: CategoryKey, limit: number): Promise<FacilityCard
 }
 
 async function keywordSearch(term: string, limit: number): Promise<FacilityCard[]> {
-  const clean = term.replace(/[%_,]/g, '')
-  if (!clean) return []
+  const filter = buildSearchFilter(term)
+  if (!filter) return []
   const { data } = await supabase
     .from('facilities')
     .select(`${CARD_SELECT}, facility_type`)
-    .or(`name.ilike.%${clean}%,city.ilike.%${clean}%`)
+    .or(filter)
     .order('name')
     .limit(limit)
   return (data ?? []) as FacilityCard[]
@@ -319,7 +320,7 @@ function SearchResults({ q, results }: { q: string; results: FacilityCard[] }) {
         </Link>
       </div>
       <p className="text-sm text-mid mb-5">
-        Matches for <span className="text-dark font-semibold">&ldquo;{q}&rdquo;</span> across name and city.
+        Matches for <span className="text-dark font-semibold">&ldquo;{q}&rdquo;</span> across name, city, and state.
       </p>
 
       {results.length === 0 ? (
