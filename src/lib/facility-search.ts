@@ -99,3 +99,114 @@ export function buildSearchFilter(term: string): string | null {
 
   return filters.size ? [...filters].join(",") : null;
 }
+
+// ── Location parsing (ODI-93) ────────────────────────────────────────────────
+//
+// Whole-input recognition only. A query becomes a location when the ENTIRE
+// input resolves as one — "Springfield" is a place, "Springfield Recovery
+// Center" is a facility name. Nothing here touches the database; resolution
+// against zip_centroids lives in location-resolve.ts so this file stays pure.
+
+/**
+ * Collapse a place name to its comparable core: diacritics folded, lowercased,
+ * non-alphanumerics dropped. "Coeur d'Alene", "Coeur d Alene" and
+ * "coeur-dalene" all become "coeurdalene", so the punctuation variants that
+ * GeoNames and SAMHSA disagree on stop mattering.
+ */
+export function normalizePlaceName(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
+/**
+ * ILIKE prefilter for the punctuation-insensitive city fallback: the input's
+ * alphanumeric runs joined by wildcards, so "winston salem" can reach
+ * "Winston-Salem" and "coeur d alene" can reach "Coeur d'Alene". This is only
+ * a prefilter to bound the row count — `normalizePlaceName` equality is what
+ * actually decides a match. Runs are alphanumeric by construction, so no user
+ * character survives into the pattern as a wildcard.
+ */
+export function cityIlikePattern(s: string): string | null {
+  const runs = s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .match(/[a-z0-9]+/g);
+  return runs?.length ? runs.join("%") : null;
+}
+
+export type LocationQuery =
+  /** Whole input is a state. Statewide browse — a state gets no distance origin. */
+  | { kind: "state"; code: string; name: string }
+  /** 5-digit ZIP (ZIP+4 accepted, first five used). */
+  | { kind: "zip"; zip: string }
+  /** 3–4 digit numeric: a ZIP-prefix filter, not a distance search. */
+  | { kind: "zip_prefix"; prefix: string }
+  /**
+   * Place-shaped. `attempts` are tried in order against the gazetteer; the
+   * first that resolves wins, and if none do the query falls through to text.
+   */
+  | { kind: "place"; attempts: Array<{ city: string; state: string | null }> }
+  /** Existing ODI-92 free-text path. */
+  | { kind: "text" };
+
+/**
+ * Classify a whole query. Order: state, numeric shapes, place, text.
+ *
+ * State wins over a same-named city ("Washington", "New York") — the slice-1
+ * rule Astra endorsed. An explicit city+state ("New York, NY") still selects
+ * the city, because the whole input is not a state.
+ */
+export function parseLocationQuery(input: string): LocationQuery {
+  const q = input.trim().replace(/\s+/g, " ");
+  if (!q) return { kind: "text" };
+
+  const whole = toStateCode(q);
+  if (whole) return { kind: "state", code: whole, name: STATE_NAMES[whole] };
+
+  // Numeric shapes. Leading zeroes are preserved (00901 stays five chars) and
+  // a longer numeric string is never truncated into a ZIP.
+  if (/^\d+$/.test(q) || /^\d{5}-\d{4}$/.test(q)) {
+    const digits = q.replace("-", "");
+    if (digits.length === 5 || digits.length === 9) return { kind: "zip", zip: digits.slice(0, 5) };
+    if (digits.length === 3 || digits.length === 4) return { kind: "zip_prefix", prefix: digits };
+    return { kind: "text" };
+  }
+
+  const attempts: Array<{ city: string; state: string | null }> = [];
+  const parts = q.split(",");
+
+  if (parts.length === 2) {
+    // An explicit state is authoritative: if it isn't a state we do NOT drop it
+    // and resolve some other Portland — the query goes to text instead.
+    const city = parts[0].trim();
+    const code = toStateCode(parts[1]);
+    if (city && code && /[a-z]/i.test(city)) attempts.push({ city, state: code });
+  } else if (parts.length === 1 && /[a-z]/i.test(q)) {
+    // Comma-free input. The whole string is the better reading ("Mount
+    // Washington" is a town, not Mount in Washington), so it is tried first;
+    // a trailing state is the fallback ("Portland ME", "Portland Maine").
+    attempts.push({ city: q, state: null });
+    const words = q.split(" ");
+    for (const take of [1, 2]) {
+      if (words.length <= take) continue;
+      const code = toStateCode(words.slice(-take).join(" "));
+      if (code) attempts.push({ city: words.slice(0, -take).join(" "), state: code });
+    }
+  }
+
+  return attempts.length ? { kind: "place", attempts } : { kind: "text" };
+}
+
+/**
+ * Card/note distance label. `search_facilities_near` already rounds to one
+ * decimal; that same rounded number drives both the card and the 50-mile note
+ * so the two can never contradict each other. A rounded zero is not an exact
+ * shared location, so it says so.
+ */
+export function formatMiles(d: number): string {
+  return d < 0.1 ? "Less than 0.1 mi" : `${d.toFixed(1)} mi`;
+}
