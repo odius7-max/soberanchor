@@ -121,8 +121,13 @@ export default function Nav() {
             />
           </Link>
 
-          {/* Desktop nav links */}
-          <div className="hidden md:flex items-center gap-0.5 flex-1">
+          {/* Desktop nav links.
+              min-w-0 is structural insurance, not the ODI-70 fix: a flex item
+              defaults to min-width:auto and so refuses to shrink below its
+              content. If this row ever grows past its container again it now
+              degrades by shrinking this cell rather than by pushing the auth
+              block off-screen and giving every page a horizontal scrollbar. */}
+          <div className="hidden lg:flex items-center gap-0.5 flex-1 min-w-0">
             {coreLinks.map(l => (
               <Link key={l.href} href={l.href} className={linkCls(l.href)}>
                 {l.label}
@@ -131,7 +136,7 @@ export default function Nav() {
           </div>
 
           {/* Desktop auth */}
-          <div className="hidden md:flex items-center gap-2 flex-shrink-0">
+          <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
             {!loading && (
               user ? (
                 /* Logged-in: My Recovery pill */
@@ -231,7 +236,7 @@ export default function Nav() {
 
           {/* Mobile: hamburger only (search is in Row 2) */}
           <button
-            className="md:hidden text-2xl text-navy"
+            className="lg:hidden text-2xl text-navy"
             aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
             onClick={() => setMobileOpen(o => !o)}
             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, lineHeight: 1 }}
@@ -279,7 +284,7 @@ export default function Nav() {
 
       {/* ── Mobile menu ── */}
       {mobileOpen && (
-        <div className="md:hidden bg-white border-b border-[var(--border)] px-6 pb-5">
+        <div className="lg:hidden bg-white border-b border-[var(--border)] px-6 pb-5">
           {coreLinks.map(l => (
             <Link
               key={l.href}
