@@ -12,6 +12,18 @@ export default function DirectorySearch({ initialQuery = '' }: { initialQuery?: 
   const router = useRouter()
   const [q, setQ] = useState(initialQuery)
 
+  // Navigation that changes ?q — picking a town out of the "Which Springfield?"
+  // chooser, say — has to be reflected in the field, or it keeps offering the
+  // ambiguous text back and re-submitting reopens the chooser. Adjusting state
+  // during render (React's documented pattern) syncs before paint, so the field
+  // never flashes the stale query. Typing is untouched: `initialQuery` only
+  // moves on navigation.
+  const [lastInitial, setLastInitial] = useState(initialQuery)
+  if (initialQuery !== lastInitial) {
+    setLastInitial(initialQuery)
+    setQ(initialQuery)
+  }
+
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const trimmed = q.trim()

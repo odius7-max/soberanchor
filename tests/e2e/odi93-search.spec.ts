@@ -21,6 +21,9 @@ test.describe('ODI-93 location search', () => {
     await page.goto(`${BASE}/find?q=Springfield#results`)
     await page.getByRole('link', { name: 'Springfield, IL' }).click()
     await expect(page.getByRole('heading', { name: 'Nearest listed centers to Springfield, IL' })).toBeVisible()
+    // ODI-99 item 3: the field follows the chosen town, so re-submitting
+    // repeats the disambiguated search instead of reopening the chooser.
+    await expect(page.locator('#directory-search')).toHaveValue('Springfield, IL')
     const firstCard = await page.locator('a[href^="/find/"]').first().getAttribute('href')
 
     await page.reload()
@@ -64,7 +67,7 @@ test.describe('ODI-93 location search', () => {
   for (const w of [320, 375, 768, 1024]) {
     test(`no horizontal overflow at ${w}px`, async ({ page }) => {
       await page.setViewportSize({ width: w, height: 900 })
-      for (const url of ['/find', '/find?q=Springfield', '/find?q=Missoula%2C+MT', '/find?q=69201', '/find?q=99999']) {
+      for (const url of ['/find', '/find?q=Springfield', '/find?q=Missoula%2C+MT', '/find?q=69201', '/find?q=99999', '/find?q=Faketown%2C+ME']) {
         await page.goto(BASE + url)
         const { scroll, client } = await page.evaluate(() => ({
           scroll: document.documentElement.scrollWidth,
@@ -74,4 +77,87 @@ test.describe('ODI-93 location search', () => {
       }
     })
   }
+
+  // ── ODI-99 ─────────────────────────────────────────────────────────────────
+
+  for (const q of ['Faketown, ME', 'Faketown, Maine']) {
+    test(`unresolvable city in a named state is an honest failure: ${q}`, async ({ page }) => {
+      await page.goto(`${BASE}/find?q=${encodeURIComponent(q)}#results`)
+
+      await expect(page.getByText(`We couldn't find Faketown in Maine.`)).toBeVisible()
+      // The old behaviour: an OR'd text filter returning every Maine listing.
+      await expect(page.locator('ul[role="list"] a[href^="/find/"]')).toHaveCount(0)
+      await expect(page.getByText(/Nearest listed centers to/)).toHaveCount(0)
+
+      await expect(page.getByRole('link', { name: 'Browse all Maine listings' })).toBeVisible()
+      await expect(page.getByRole('link', { name: /^Search .*Faketown.* as text$/ })).toBeVisible()
+    })
+  }
+
+  test('honest failure: browse-all lands on the statewide page', async ({ page }) => {
+    await page.goto(`${BASE}/find?q=Faketown%2C+ME#results`)
+    await page.getByRole('link', { name: 'Browse all Maine listings' }).click()
+    await expect(page.getByRole('heading', { name: 'Recovery services and places in Maine' })).toBeVisible()
+    expect(await page.locator('ul[role="list"] a[href^="/find/"]').count()).toBeGreaterThan(0)
+  })
+
+  test('honest failure: search-as-text runs the text path for the city alone', async ({ page }) => {
+    await page.goto(`${BASE}/find?q=Faketown%2C+ME#results`)
+    await page.getByRole('link', { name: /^Search .*Faketown.* as text$/ }).click()
+    await expect(page).toHaveURL(/q=Faketown&mode=text/)
+    await expect(page.getByRole('heading', { name: 'Search results' })).toBeVisible()
+    await expect(page.getByText('No matches.')).toBeVisible()
+    // Explicitly chosen — never silently re-routed back into a location guess.
+    await expect(page.getByText(`We couldn't find`)).toHaveCount(0)
+  })
+
+  test('a bare unrecognized word keeps the unchanged text behaviour', async ({ page }) => {
+    await page.goto(`${BASE}/find?q=Faketown#results`)
+    await expect(page.getByRole('heading', { name: 'Search results' })).toBeVisible()
+    await expect(page.getByText('No matches.')).toBeVisible()
+    await expect(page.getByText(/We couldn't find/)).toHaveCount(0)
+  })
+
+  test('statewide browse uses the ratified heading and no distance origin', async ({ page }) => {
+    await page.goto(`${BASE}/find?q=California#results`)
+    await expect(page.getByRole('heading', { name: 'Recovery services and places in California' })).toBeVisible()
+    await expect(page.getByText(/Nearest listed centers to/)).toHaveCount(0)
+    await expect(page.getByText(/Approximate straight-line distances/)).toHaveCount(0)
+  })
+
+  test('chooser options are a short tab route from the submit button', async ({ page }) => {
+    await page.goto(`${BASE}/find`)
+    const input = page.locator('#directory-search')
+    await input.fill('Springfield')
+    await input.press('Enter')
+    await expect(page.getByRole('heading', { name: 'Which Springfield?' })).toBeVisible()
+
+    const firstOption = 'a[href*="q=Springfield%2C"]'
+    let stops = 0
+    while (stops < 20) {
+      const onOption = await page.evaluate(
+        (sel) => !!document.activeElement?.matches(sel),
+        firstOption,
+      )
+      if (onOption) break
+      await page.keyboard.press('Tab')
+      stops += 1
+    }
+    expect(stops, 'tab stops from submission to the first chooser option').toBeLessThanOrEqual(3)
+
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('heading', { name: /Nearest listed centers to Springfield, [A-Z]{2}/ })).toBeVisible()
+  })
+
+  test('768 standing check', async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 900 })
+    for (const url of ['/find', '/']) {
+      await page.goto(BASE + url)
+      const { scroll, client } = await page.evaluate(() => ({
+        scroll: document.documentElement.scrollWidth,
+        client: document.documentElement.clientWidth,
+      }))
+      expect(scroll, `${url} at 768px`).toBe(client)
+    }
+  })
 })

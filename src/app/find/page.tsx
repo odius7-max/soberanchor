@@ -8,6 +8,7 @@ import Link from 'next/link'
 import DirectorySearch from '@/components/find/DirectorySearch'
 import CategoryLane, { type LaneTile } from '@/components/find/CategoryLane'
 import FeaturedBand from '@/components/find/FeaturedBand'
+import FocusOnMount from '@/components/find/FocusOnMount'
 
 // ── Category model ───────────────────────────────────────────────────────────
 
@@ -162,6 +163,7 @@ type Outcome =
   | { kind: 'distance'; place: string; results: FacilityCard[]; hasMore: boolean; page: number }
   | { kind: 'choose'; city: string; candidates: PlaceCandidate[] }
   | { kind: 'zip_unknown' }
+  | { kind: 'place_unknown'; city: string; stateName: string }
   | { kind: 'text'; results: FacilityCard[] }
   | { kind: 'error' }
 
@@ -175,10 +177,18 @@ type Outcome =
  * `p_facility_type` is passed as null: /find's category chip has never
  * filtered search results, and wiring it in here would change ODI-92
  * behaviour. The RPC parameter is ready for the slice-2 filter UI.
+ *
+ * `forceText` is the `mode=text` escape hatch behind the "Search as text"
+ * offer on the unresolved-place state: the user has read that we couldn't
+ * place the town and asked for the keyword search anyway, so location
+ * parsing is skipped rather than quietly resolving the same word somewhere
+ * else (ODI-99).
  */
-async function runSearch(q: string, page: number): Promise<Outcome> {
+async function runSearch(q: string, page: number, forceText: boolean): Promise<Outcome> {
   const parsed = parseLocationQuery(q)
   try {
+    if (forceText) return { kind: 'text', results: await keywordSearch(q, 15) }
+
     if (parsed.kind === 'state') {
       return { kind: 'state', stateName: parsed.name, results: await keywordSearch(q, 15) }
     }
@@ -216,6 +226,17 @@ async function runSearch(q: string, page: number): Promise<Outcome> {
           page,
         }
       }
+      // Nothing resolved. When the user named the state themselves, say so
+      // plainly instead of OR-ing "Faketown" and "ME" into every Maine
+      // listing under a generic heading — a failed lookup dressed up as
+      // results (ODI-99).
+      if (parsed.explicitState) {
+        return {
+          kind: 'place_unknown',
+          city: parsed.attempts[0].city,
+          stateName: parsed.explicitState.name,
+        }
+      }
     }
 
     return { kind: 'text', results: await keywordSearch(q, 15) }
@@ -243,7 +264,7 @@ function categoryTile(key: CategoryKey, active: CategoryKey, counts: Record<Cate
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 type FindPageProps = {
-  searchParams: Promise<{ category?: string; q?: string; page?: string }>
+  searchParams: Promise<{ category?: string; q?: string; page?: string; mode?: string }>
 }
 
 function isCategoryKey(v: string | undefined): v is CategoryKey {
@@ -259,7 +280,7 @@ export default async function FindPage({ searchParams }: FindPageProps) {
   const [countEntries, activePreview, outcome] = await Promise.all([
     Promise.all(CATEGORY_KEYS.map(async (k) => [k, await countFor(k)] as const)),
     q ? Promise.resolve([] as FacilityCard[]) : previewFor(category, 10),
-    q ? runSearch(q, page)                    : Promise.resolve(null),
+    q ? runSearch(q, page, params.mode === 'text') : Promise.resolve(null),
   ])
   const counts = Object.fromEntries(countEntries) as Record<CategoryKey, number>
 
@@ -419,11 +440,18 @@ function CategoryPreview({
   )
 }
 
-function ResultsHeader({ title }: { title: string }) {
+/**
+ * `headingId` makes the heading programmatically focusable so a client
+ * component can move focus to it once the results render (ODI-99 item 4).
+ * Omitted everywhere else, so no other state steals focus.
+ */
+function ResultsHeader({ title, headingId }: { title: string; headingId?: string }) {
   return (
     <div className="flex items-baseline justify-between gap-4 mb-1">
       <h2
-        className="text-[22px] font-semibold"
+        id={headingId}
+        tabIndex={headingId ? -1 : undefined}
+        className="text-[22px] font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--teal)]"
         style={{ fontFamily: 'var(--font-display)', color: 'var(--navy)', letterSpacing: '-0.5px' }}
       >
         {title}
@@ -466,6 +494,10 @@ function SearchResults({ q, outcome }: { q: string; outcome: Outcome }) {
     )
   }
 
+  if (outcome.kind === 'place_unknown') {
+    return <UnresolvedPlace city={outcome.city} stateName={outcome.stateName} />
+  }
+
   if (outcome.kind === 'choose') {
     return <PlaceChooser city={outcome.city} candidates={outcome.candidates} />
   }
@@ -479,7 +511,7 @@ function SearchResults({ q, outcome }: { q: string; outcome: Outcome }) {
   const { title, sub } =
     outcome.kind === 'state'
       ? {
-          title: `Treatment centers in ${outcome.stateName}`,
+          title: `Recovery services and places in ${outcome.stateName}`,
           sub: <>Listings across {outcome.stateName}, ordered by name.</>,
         }
       : outcome.kind === 'zip_prefix'
@@ -514,12 +546,51 @@ function SearchResults({ q, outcome }: { q: string; outcome: Outcome }) {
 }
 
 /**
+ * A town we cannot place inside a state the user named themselves. The old
+ * behaviour OR'd the parts into the ODI-92 text filter, so "Faketown, ME"
+ * returned fifteen Maine listings under "Search results" — a failed lookup
+ * wearing the costume of an answer. Both ways forward are offered by name so
+ * the next step is the visitor's choice, not ours.
+ */
+function UnresolvedPlace({ city, stateName }: { city: string; stateName: string }) {
+  const offer =
+    'inline-flex items-center justify-center min-h-[44px] px-5 rounded-[12px] border border-[var(--border)] bg-white text-teal font-semibold text-sm hover:border-teal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--teal)]'
+
+  return (
+    <>
+      <ResultsHeader title="Search results" />
+      <div className="mt-4 border border-[var(--border)] rounded-[14px] bg-white p-6 text-center">
+        <p className="text-navy font-semibold text-[15px]">
+          {`We couldn't find ${city} in ${stateName}.`}
+        </p>
+        <p className="text-mid text-[13.5px] mt-1">
+          {`It may be spelled differently here, or we may not list anything there yet.`}
+        </p>
+        <div className="flex flex-col sm:flex-row gap-2 justify-center mt-4">
+          <Link href={`/find?q=${encodeURIComponent(stateName)}#results`} className={offer}>
+            {`Browse all ${stateName} listings`}
+          </Link>
+          {/* mode=text is explicit consent to the keyword path: without it a
+              bare city name could resolve to a same-named town in a state the
+              visitor never asked about. */}
+          <Link href={`/find?q=${encodeURIComponent(city)}&mode=text#results`} className={offer}>
+            {`Search “${city}” as text`}
+          </Link>
+        </div>
+      </div>
+    </>
+  )
+}
+
+/**
  * Ambiguous town names get a choice, not a guess: a stressed visitor can
  * overlook a correction strip and trust results for the wrong Springfield.
  * No geographic results render until the place is settled. Each option is a
  * plain link to its own disambiguated query URL, so it is keyboard-operable
  * by construction and back/refresh/share all reproduce the choice.
  */
+const CHOOSER_HEADING_ID = 'chooser-heading'
+
 function PlaceChooser({ city, candidates }: { city: string; candidates: PlaceCandidate[] }) {
   const seen = new Set<string>()
   const options = candidates.filter((c) => {
@@ -531,7 +602,10 @@ function PlaceChooser({ city, candidates }: { city: string; candidates: PlaceCan
 
   return (
     <>
-      <ResultsHeader title={`Which ${city}?`} />
+      <ResultsHeader title={`Which ${city}?`} headingId={CHOOSER_HEADING_ID} />
+      {/* Without this a keyboard user lands back at the top of the document
+          and tabs past the nav and all six category tiles to reach a choice. */}
+      <FocusOnMount targetId={CHOOSER_HEADING_ID} />
       <p className="text-sm text-mid mb-5">Choose a state to see nearby centers.</p>
       <ul role="list" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
         {options.map((c) => {

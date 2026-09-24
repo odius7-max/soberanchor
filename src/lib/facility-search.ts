@@ -147,9 +147,20 @@ export type LocationQuery =
   | { kind: "zip_prefix"; prefix: string }
   /**
    * Place-shaped. `attempts` are tried in order against the gazetteer; the
-   * first that resolves wins, and if none do the query falls through to text.
+   * first that resolves wins.
+   *
+   * `explicitState` is set only for the comma form — "Faketown, ME" — where
+   * the user named a state we recognize. That case cannot fall through to
+   * text: the user told us the state, so failing to place the town is a
+   * lookup failure to report, not a reason to OR the parts into a statewide
+   * list (ODI-99). Without a comma the trailing word is a guess ("Recovery
+   * Ranch Montana" is a name), so those still fall through to text.
    */
-  | { kind: "place"; attempts: Array<{ city: string; state: string | null }> }
+  | {
+      kind: "place";
+      attempts: Array<{ city: string; state: string | null }>;
+      explicitState?: { code: string; name: string };
+    }
   /** Existing ODI-92 free-text path. */
   | { kind: "text" };
 
@@ -177,6 +188,7 @@ export function parseLocationQuery(input: string): LocationQuery {
   }
 
   const attempts: Array<{ city: string; state: string | null }> = [];
+  let explicitState: { code: string; name: string } | undefined;
   const parts = q.split(",");
 
   if (parts.length === 2) {
@@ -184,7 +196,10 @@ export function parseLocationQuery(input: string): LocationQuery {
     // and resolve some other Portland — the query goes to text instead.
     const city = parts[0].trim();
     const code = toStateCode(parts[1]);
-    if (city && code && /[a-z]/i.test(city)) attempts.push({ city, state: code });
+    if (city && code && /[a-z]/i.test(city)) {
+      attempts.push({ city, state: code });
+      explicitState = { code, name: STATE_NAMES[code] };
+    }
   } else if (parts.length === 1 && /[a-z]/i.test(q)) {
     // Comma-free input. The whole string is the better reading ("Mount
     // Washington" is a town, not Mount in Washington), so it is tried first;
@@ -198,7 +213,7 @@ export function parseLocationQuery(input: string): LocationQuery {
     }
   }
 
-  return attempts.length ? { kind: "place", attempts } : { kind: "text" };
+  return attempts.length ? { kind: "place", attempts, explicitState } : { kind: "text" };
 }
 
 /**
