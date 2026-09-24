@@ -1,0 +1,72 @@
+{
+  "rpcError": {
+    "text": "Search results\nClear search →\n\nWe couldn't load results. Please try again.\n\nThis one is on us, not your search.",
+    "heading": "Search results",
+    "cards": [],
+    "choices": []
+  },
+  "regressions": [
+    {
+      "q": "California",
+      "match": true,
+      "states": [
+        "CA"
+      ]
+    },
+    {
+      "q": "CA",
+      "match": true,
+      "states": [
+        "CA"
+      ]
+    },
+    {
+      "q": "Recovery",
+      "match": true,
+      "states": [
+        "CA",
+        "WI",
+        "MO",
+        "MD",
+        "MS",
+        "CO",
+        "TX",
+        "IL",
+        "MN",
+        "ND",
+        "LA",
+        "IA"
+      ]
+    },
+    {
+      "q": "Faketown, ME",
+      "match": true,
+      "states": [
+        "ME"
+      ]
+    },
+    {
+      "q": "abcde",
+      "match": true,
+      "states": []
+    },
+    {
+      "q": "Springfield Recovery Center",
+      "match": true,
+      "states": []
+    },
+    {
+      "q": "782",
+      "match": true,
+      "states": [
+        "TX"
+      ],
+      "zipPrefixCorrect": true
+    }
+  ],
+  "staleInput": {
+    "selected": "https://soberanchor-git-feat-search-v2-core-odius7-maxs-projects.vercel.app/find?q=Springfield%2C%20IL#results",
+    "input": "Springfield",
+    "resubmitHeading": "Which Springfield?"
+  }
+}

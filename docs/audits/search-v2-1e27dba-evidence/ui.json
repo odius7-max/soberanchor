@@ -1,0 +1,401 @@
+{
+  "layouts": [
+    {
+      "width": 320,
+      "q": "",
+      "scroll": 320,
+      "client": 320,
+      "overflow": []
+    },
+    {
+      "width": 320,
+      "q": "Springfield",
+      "scroll": 320,
+      "client": 320,
+      "overflow": []
+    },
+    {
+      "width": 320,
+      "q": "san diego",
+      "scroll": 320,
+      "client": 320,
+      "overflow": []
+    },
+    {
+      "width": 320,
+      "q": "Missoula, MT",
+      "scroll": 320,
+      "client": 320,
+      "overflow": []
+    },
+    {
+      "width": 320,
+      "q": "69201",
+      "scroll": 320,
+      "client": 320,
+      "overflow": []
+    },
+    {
+      "width": 320,
+      "q": "99999",
+      "scroll": 320,
+      "client": 320,
+      "overflow": []
+    },
+    {
+      "width": 320,
+      "q": "California",
+      "scroll": 320,
+      "client": 320,
+      "overflow": []
+    },
+    {
+      "width": 375,
+      "q": "",
+      "scroll": 375,
+      "client": 375,
+      "overflow": []
+    },
+    {
+      "width": 375,
+      "q": "Springfield",
+      "scroll": 375,
+      "client": 375,
+      "overflow": []
+    },
+    {
+      "width": 375,
+      "q": "san diego",
+      "scroll": 375,
+      "client": 375,
+      "overflow": []
+    },
+    {
+      "width": 375,
+      "q": "Missoula, MT",
+      "scroll": 375,
+      "client": 375,
+      "overflow": []
+    },
+    {
+      "width": 375,
+      "q": "69201",
+      "scroll": 375,
+      "client": 375,
+      "overflow": []
+    },
+    {
+      "width": 375,
+      "q": "99999",
+      "scroll": 375,
+      "client": 375,
+      "overflow": []
+    },
+    {
+      "width": 375,
+      "q": "California",
+      "scroll": 375,
+      "client": 375,
+      "overflow": []
+    },
+    {
+      "width": 768,
+      "q": "",
+      "scroll": 768,
+      "client": 768,
+      "overflow": []
+    },
+    {
+      "width": 768,
+      "q": "Springfield",
+      "scroll": 768,
+      "client": 768,
+      "overflow": []
+    },
+    {
+      "width": 768,
+      "q": "san diego",
+      "scroll": 768,
+      "client": 768,
+      "overflow": []
+    },
+    {
+      "width": 768,
+      "q": "Missoula, MT",
+      "scroll": 768,
+      "client": 768,
+      "overflow": []
+    },
+    {
+      "width": 768,
+      "q": "69201",
+      "scroll": 768,
+      "client": 768,
+      "overflow": []
+    },
+    {
+      "width": 768,
+      "q": "99999",
+      "scroll": 768,
+      "client": 768,
+      "overflow": []
+    },
+    {
+      "width": 768,
+      "q": "California",
+      "scroll": 768,
+      "client": 768,
+      "overflow": []
+    },
+    {
+      "width": 1024,
+      "q": "",
+      "scroll": 1024,
+      "client": 1024,
+      "overflow": []
+    },
+    {
+      "width": 1024,
+      "q": "Springfield",
+      "scroll": 1024,
+      "client": 1024,
+      "overflow": []
+    },
+    {
+      "width": 1024,
+      "q": "san diego",
+      "scroll": 1024,
+      "client": 1024,
+      "overflow": []
+    },
+    {
+      "width": 1024,
+      "q": "Missoula, MT",
+      "scroll": 1024,
+      "client": 1024,
+      "overflow": []
+    },
+    {
+      "width": 1024,
+      "q": "69201",
+      "scroll": 1024,
+      "client": 1024,
+      "overflow": []
+    },
+    {
+      "width": 1024,
+      "q": "99999",
+      "scroll": 1024,
+      "client": 1024,
+      "overflow": []
+    },
+    {
+      "width": 1024,
+      "q": "California",
+      "scroll": 1024,
+      "client": 1024,
+      "overflow": []
+    }
+  ],
+  "keyboard": [
+    {
+      "query": "Springfield",
+      "beforeCount": 0,
+      "chosen": {
+        "tag": "A",
+        "text": "Springfield, AR",
+        "href": "/find?q=Springfield%2C%20AR#results",
+        "outline": "solid"
+      },
+      "tabs": [
+        {
+          "tag": "BUTTON",
+          "text": "Search",
+          "href": null,
+          "outline": "solid"
+        },
+        {
+          "tag": "A",
+          "text": "🏥Treatment CentersInpatient, residential, and detox programs.3,416 listings● Showing below",
+          "href": "/find?category=treatment#results",
+          "outline": "solid"
+        },
+        {
+          "tag": "A",
+          "text": "🩺Medical DetoxMedically-supervised alcohol and drug detox.2,016 listings",
+          "href": "/find?category=detox#results",
+          "outline": "solid"
+        },
+        {
+          "tag": "A",
+          "text": "💊Outpatient / IOPIOP, OP, and day programs.7,989 listings",
+          "href": "/find?category=outpatient#results",
+          "outline": "solid"
+        },
+        {
+          "tag": "A",
+          "text": "💆TherapistsAddiction specialists, dual-diagnosis, family.2 listings",
+          "href": "/find?category=therapist#results",
+          "outline": "solid"
+        },
+        {
+          "tag": "A",
+          "text": "Just finished treatment? Find recovery housing →",
+          "href": "/find?category=sober_living#results",
+          "outline": "solid"
+        },
+        {
+          "tag": "A",
+          "text": "🏠Sober LivingTransitional housing and recovery residences.5 listings",
+          "href": "/find?category=sober_living#results",
+          "outline": "solid"
+        },
+        {
+          "tag": "A",
+          "text": "🍹Sober VenuesAlcohol-free bars, cafes, and event spaces.3 listings",
+          "href": "/find?category=venue#results",
+          "outline": "solid"
+        },
+        {
+          "tag": "A",
+          "text": "👥Find a MeetingOfficial fellowship finders — AA, NA, SMART Recovery, and more.",
+          "href": "/fellowships",
+          "outline": "solid"
+        },
+        {
+          "tag": "A",
+          "text": "📖Browse FellowshipsHow each program works — AA, NA, Al-Anon, SMART, and more.",
+          "href": "/fellowships",
+          "outline": "solid"
+        },
+        {
+          "tag": "A",
+          "text": "Clear search →",
+          "href": "/find",
+          "outline": "auto"
+        },
+        {
+          "tag": "A",
+          "text": "Springfield, AR",
+          "href": "/find?q=Springfield%2C%20AR#results",
+          "outline": "solid"
+        }
+      ],
+      "selectedUrl": "https://soberanchor-git-feat-search-v2-core-odius7-maxs-projects.vercel.app/find?q=Springfield%2C%20AR#results",
+      "selectedHeading": "Nearest listed centers to Springfield, AR",
+      "inputAfter": "Springfield",
+      "refreshSame": true,
+      "backHeading": "Which Springfield?"
+    },
+    {
+      "query": "san diego",
+      "beforeCount": 0,
+      "chosen": {
+        "tag": "A",
+        "text": "San Diego, CA",
+        "href": "/find?q=San%20Diego%2C%20CA#results",
+        "outline": "solid"
+      },
+      "tabs": [
+        {
+          "tag": "BUTTON",
+          "text": "Search",
+          "href": null,
+          "outline": "solid"
+        },
+        {
+          "tag": "A",
+          "text": "🏥Treatment CentersInpatient, residential, and detox programs.3,416 listings● Showing below",
+          "href": "/find?category=treatment#results",
+          "outline": "solid"
+        },
+        {
+          "tag": "A",
+          "text": "🩺Medical DetoxMedically-supervised alcohol and drug detox.2,016 listings",
+          "href": "/find?category=detox#results",
+          "outline": "solid"
+        },
+        {
+          "tag": "A",
+          "text": "💊Outpatient / IOPIOP, OP, and day programs.7,989 listings",
+          "href": "/find?category=outpatient#results",
+          "outline": "solid"
+        },
+        {
+          "tag": "A",
+          "text": "💆TherapistsAddiction specialists, dual-diagnosis, family.2 listings",
+          "href": "/find?category=therapist#results",
+          "outline": "solid"
+        },
+        {
+          "tag": "A",
+          "text": "Just finished treatment? Find recovery housing →",
+          "href": "/find?category=sober_living#results",
+          "outline": "solid"
+        },
+        {
+          "tag": "A",
+          "text": "🏠Sober LivingTransitional housing and recovery residences.5 listings",
+          "href": "/find?category=sober_living#results",
+          "outline": "solid"
+        },
+        {
+          "tag": "A",
+          "text": "🍹Sober VenuesAlcohol-free bars, cafes, and event spaces.3 listings",
+          "href": "/find?category=venue#results",
+          "outline": "solid"
+        },
+        {
+          "tag": "A",
+          "text": "👥Find a MeetingOfficial fellowship finders — AA, NA, SMART Recovery, and more.",
+          "href": "/fellowships",
+          "outline": "solid"
+        },
+        {
+          "tag": "A",
+          "text": "📖Browse FellowshipsHow each program works — AA, NA, Al-Anon, SMART, and more.",
+          "href": "/fellowships",
+          "outline": "solid"
+        },
+        {
+          "tag": "A",
+          "text": "Clear search →",
+          "href": "/find",
+          "outline": "auto"
+        },
+        {
+          "tag": "A",
+          "text": "San Diego, CA",
+          "href": "/find?q=San%20Diego%2C%20CA#results",
+          "outline": "solid"
+        }
+      ],
+      "selectedUrl": "https://soberanchor-git-feat-search-v2-core-odius7-maxs-projects.vercel.app/find?q=San%20Diego%2C%20CA#results",
+      "selectedHeading": "Nearest listed centers to San Diego, CA",
+      "inputAfter": "san diego",
+      "refreshSame": true,
+      "backHeading": "Which san diego?"
+    }
+  ],
+  "errors": [],
+  "home768": {
+    "scroll": 768,
+    "client": 768
+  },
+  "pagination": {
+    "first": 25,
+    "second": 50,
+    "prefixUnchanged": true,
+    "unique": 50
+  },
+  "rapid": {
+    "url": "https://soberanchor-git-feat-search-v2-core-odius7-maxs-projects.vercel.app/find?q=Portland%20ME#results",
+    "heading": "Nearest listed centers to Portland, ME"
+  },
+  "featured": {
+    "count": 1,
+    "text": [
+      "FeaturedSponsored⭐ FeaturedSoberAnchor Demo — ClaimedTreatment Center · Demo City, ZZ"
+    ]
+  }
+}

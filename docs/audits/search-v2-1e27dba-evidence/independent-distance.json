@@ -1,0 +1,4770 @@
+{
+  "pool": 11409,
+  "unknown": [],
+  "checks": [
+    {
+      "zip": "59801",
+      "type": null,
+      "origin": {
+        "zip": "59801",
+        "city": "Missoula",
+        "state": "MT",
+        "latitude": 46.8563,
+        "longitude": -114.0252
+      },
+      "idsMatch": true,
+      "stable": true,
+      "secondPageMatch": true,
+      "maxRoundDifference": 0.044701912265978194,
+      "expected": [
+        {
+          "id": "a2ba481e-5b55-475a-8709-c6a2cd9b9b80",
+          "d": 0.5733134120309071,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "38d5dc10-2a5a-4bc3-9da7-2d2bb964c244",
+          "d": 0.7741640866818533,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "e9edfa2b-fa31-4e61-a278-7a3a11f22bf6",
+          "d": 1.3243227490601248,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "34b8f1ea-cce8-4c14-aefd-8ce3ad597c0a",
+          "d": 1.5596801185418496,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "e70ec764-782a-4f23-8185-d9069baeb9a4",
+          "d": 1.6332916304081828,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "5f3f965c-c344-45e8-95ca-7817ab845370",
+          "d": 2.224741198005721,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "be892276-c194-4067-b6c4-ba42d26ea65d",
+          "d": 2.5335808227775107,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "2127c6f3-7344-4e20-99b3-b11cf36159c8",
+          "d": 6.082477845856813,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "8745cb07-0d09-421a-8cb4-d62b34b260c3",
+          "d": 32.32401304448041,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "da658458-da9b-4819-a51b-5e15a76af040",
+          "d": 43.06878017113066,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "50852a95-6216-4022-9ec2-111f00650630",
+          "d": 46.626355533398524,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "cd002391-376b-4cc1-ad52-8c75b2a61303",
+          "d": 46.77495603172195,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "42ac47af-f170-4e20-9b08-a82800716f65",
+          "d": 92.20063191016004,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "3ebda0ae-8425-4d87-b6d7-d071607d3817",
+          "d": 92.25558276101846,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "0519064c-9cc7-49e0-ab9a-3e1c6e9cabcc",
+          "d": 93.51057155438853,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "09f561bb-09dc-4b46-945b-43a3f96380f6",
+          "d": 93.96522244040497,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "a91d042f-78bf-47e0-a7e0-a63acebcf86b",
+          "d": 94.38977847058543,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "6f8b3203-71a1-4d87-9e91-a53b1960dd87",
+          "d": 95.11750587758004,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "40cf07a8-6e38-4c5a-9eb4-6efe47649f76",
+          "d": 95.16929403025694,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "bce48a1b-c090-4007-8195-476504ef087d",
+          "d": 95.27312634774756,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "a1da197b-f083-43ac-869c-3dc72844d59b",
+          "d": 95.49479078000964,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "88fc8603-7cd9-4129-bb0b-9934da6d6c93",
+          "d": 95.79089614091087,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "5334973c-d1f8-43f2-8bb3-42e11b3abe32",
+          "d": 95.82915498275578,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "f5ffd814-cfbf-4c5a-a9e7-6f82c22eaa0b",
+          "d": 96.00860635318546,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "55bc25ba-e0c0-4d9f-bb1e-7bb6767ca97a",
+          "d": 96.04470191226598,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "6547422a-b1ab-4d7e-a714-1092eb2bcc9c",
+          "d": 97.03840731859316,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "4b31e8ad-4eae-49ff-ad4b-000e84670364",
+          "d": 103.01487105626809,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "3b6bda8d-92f5-4b6d-a79a-d68ce79f11e5",
+          "d": 106.51250814786886,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "446eb948-0c2b-4c9e-bc62-555604efb299",
+          "d": 109.52769309533025,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "24d3cc44-cf3c-48d3-8acb-077c7cce0725",
+          "d": 118.69550507246,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "a618fdc8-51fe-40b6-b542-d5a144cd7f30",
+          "d": 131.57720065898656,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "a40c6910-67b8-481e-b833-32efb4ad920e",
+          "d": 135.3027056328222,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "0ae7dd29-a495-4424-b0a2-57a1d24a441d",
+          "d": 135.30828770914084,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "af595ed2-3e81-4558-9c15-df4e638e3d98",
+          "d": 135.97408448032164,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "311edca4-859d-4e57-b3c6-0acad8bf2c6f",
+          "d": 136.1015853098733,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "7f1ee5b7-fa61-43e0-a9f1-fc7ab98a21f7",
+          "d": 136.23041420247802,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "cd4d8e4c-41ef-4404-8556-f4af23a974ea",
+          "d": 139.0375524271702,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "8883e9be-4474-4a21-bb64-3a4af513b5c2",
+          "d": 140.97917479593838,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "d41e9dee-f172-49e6-8f7f-d9ed80d6fad3",
+          "d": 141.28466291350148,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "00ba19fd-b2f1-46eb-9a98-031bc4d4ed9b",
+          "d": 142.12975160557045,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "5f11de56-de33-4a42-a70d-091d208f5f7f",
+          "d": 142.15971409096755,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "b8418dd3-4433-4cda-af75-b77024bfe390",
+          "d": 142.4520060164915,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "f12969e3-ae44-406b-a389-647608a7a6f2",
+          "d": 142.4557508077558,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "ed3145f4-89fe-453f-8678-2d096efc9c34",
+          "d": 142.5964120633667,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "d5f05dda-4339-4747-afd4-c6d664505896",
+          "d": 142.8388137486093,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "de0dba71-4772-4133-bfe3-4c4468ff017b",
+          "d": 144.6596172141838,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "47093147-c2b7-4a85-9c9b-fc655dbd1334",
+          "d": 144.91186460468884,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "37cd06a2-d474-46de-95cb-756de1265046",
+          "d": 145.0342997567772,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "11c78265-b6c7-4401-be18-78fba2ffe0d8",
+          "d": 145.25068532415708,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "3b9a1ce9-9e26-4f28-944f-5a46d7315129",
+          "d": 146.6070709612452,
+          "listing_tier": "basic",
+          "is_featured": false
+        }
+      ],
+      "rpc": [
+        {
+          "id": "a2ba481e-5b55-475a-8709-c6a2cd9b9b80",
+          "name": "Community Medical Services",
+          "slug": "community-medical-services-missoula-mt-6mv24y",
+          "description": null,
+          "phone": "(406) 549-0114",
+          "website": "https://www.communitymedicalservices.org/locations/mt-missoula/",
+          "address_line1": "2415 South Catlin Street",
+          "city": "Missoula",
+          "state": "MT",
+          "zip": "59801",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.8482097,
+          "longitude": -114.0225045,
+          "distance_miles": 0.6
+        },
+        {
+          "id": "38d5dc10-2a5a-4bc3-9da7-2d2bb964c244",
+          "name": "Starr Counseling and Addiction Svcs",
+          "slug": "starr-counseling-and-addiction-svcs-missoula-mt-ithwwz",
+          "description": null,
+          "phone": "(406) 544-0432",
+          "website": "https://www.callstarrcounseling.com/",
+          "address_line1": "1515 Fairview Avenue",
+          "city": "Missoula",
+          "state": "MT",
+          "zip": "59801",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.8457129,
+          "longitude": -114.0198362,
+          "distance_miles": 0.8
+        },
+        {
+          "id": "e9edfa2b-fa31-4e61-a278-7a3a11f22bf6",
+          "name": "Stepping Stones Behavioral Health Serv",
+          "slug": "stepping-stones-behavioral-health-serv-missoula-mt-wtuurr",
+          "description": null,
+          "phone": "(406) 926-1453",
+          "website": "https://www.steppingstonesmissoula.com",
+          "address_line1": "202 Brooks Street",
+          "city": "Missoula",
+          "state": "MT",
+          "zip": "59801",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.8618728,
+          "longitude": -113.9983804,
+          "distance_miles": 1.3
+        },
+        {
+          "id": "34b8f1ea-cce8-4c14-aefd-8ce3ad597c0a",
+          "name": "Yellowstone Boys and Girls Ranch",
+          "slug": "yellowstone-boys-and-girls-ranch-missoula-mt-yuq15z",
+          "description": null,
+          "phone": "(406) 655-2100",
+          "website": "https://www.ybgr.org",
+          "address_line1": "619 SW Higgins",
+          "city": "Missoula",
+          "state": "MT",
+          "zip": "59803",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.83733,
+          "longitude": -114.0073109,
+          "distance_miles": 1.6
+        },
+        {
+          "id": "e70ec764-782a-4f23-8185-d9069baeb9a4",
+          "name": "Winds of Change",
+          "slug": "winds-of-change-missoula-mt-pftx2h",
+          "description": null,
+          "phone": "(406) 541-4673",
+          "website": "https://wellnessmt.com/",
+          "address_line1": "1120 Cedar Street",
+          "city": "Missoula",
+          "state": "MT",
+          "zip": "59802",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.8772454,
+          "longitude": -114.0091718,
+          "distance_miles": 1.6
+        },
+        {
+          "id": "5f3f965c-c344-45e8-95ca-7817ab845370",
+          "name": "Winds of Change",
+          "slug": "winds-of-change-missoula-mt-3dn56o",
+          "description": null,
+          "phone": "(406) 541-4673",
+          "website": "https://wellnessmt.com/",
+          "address_line1": "3000 Palmer",
+          "city": "Missoula",
+          "state": "MT",
+          "zip": "59808",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.887823,
+          "longitude": -114.0348008,
+          "distance_miles": 2.2
+        },
+        {
+          "id": "be892276-c194-4067-b6c4-ba42d26ea65d",
+          "name": "Cedar Creek Integrated Health",
+          "slug": "cedar-creek-integrated-health-missoula-mt-awbh5v",
+          "description": null,
+          "phone": "(406) 203-9948",
+          "website": "https://www.cedarcreekintegratedhealth.org",
+          "address_line1": "2620 Connery Way",
+          "city": "Missoula",
+          "state": "MT",
+          "zip": "59808",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.8900349,
+          "longitude": -114.0462241,
+          "distance_miles": 2.5
+        },
+        {
+          "id": "2127c6f3-7344-4e20-99b3-b11cf36159c8",
+          "name": "Yellowstone Boys and Girls Ranch",
+          "slug": "yellowstone-boys-and-girls-ranch-missoula-mt-2qi2v6",
+          "description": null,
+          "phone": "(406) 655-2100",
+          "website": "https://www.ybgr.org",
+          "address_line1": "775 West Gold Street",
+          "city": "Missoula",
+          "state": "MT",
+          "zip": "59803",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.7696119,
+          "longitude": -114.0028043,
+          "distance_miles": 6.1
+        },
+        {
+          "id": "8745cb07-0d09-421a-8cb4-d62b34b260c3",
+          "name": "Cedar Creek Integrated Health",
+          "slug": "cedar-creek-integrated-health-saint-ignatius-mt-40m7jz",
+          "description": null,
+          "phone": "(406) 381-3962",
+          "website": "https://www.cedarcreekintegratedhealth.org",
+          "address_line1": "61262 Watson Road",
+          "city": "Saint Ignatius",
+          "state": "MT",
+          "zip": "59865",
+          "facility_type": "treatment",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 47.322927,
+          "longitude": -114.0744567,
+          "distance_miles": 32.3
+        },
+        {
+          "id": "da658458-da9b-4819-a51b-5e15a76af040",
+          "name": "Yellowstone Boys and Girls Ranch",
+          "slug": "yellowstone-boys-and-girls-ranch-hamilton-mt-15aaed",
+          "description": null,
+          "phone": "(406) 655-2100",
+          "website": "https://www.ybgr.org",
+          "address_line1": "111 Baker Street",
+          "city": "Hamilton",
+          "state": "MT",
+          "zip": "59840",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.2394145,
+          "longitude": -114.1553081,
+          "distance_miles": 43.1
+        },
+        {
+          "id": "50852a95-6216-4022-9ec2-111f00650630",
+          "name": "Cedar Creek Integrated Health",
+          "slug": "cedar-creek-integrated-health-ronan-mt-czn13q",
+          "description": null,
+          "phone": "(406) 676-0630",
+          "website": "https://www.cedarcreekintegratedhealth.org",
+          "address_line1": "330 Main Street SW",
+          "city": "Ronan",
+          "state": "MT",
+          "zip": "59864",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 47.5290581,
+          "longitude": -114.1029729,
+          "distance_miles": 46.6
+        },
+        {
+          "id": "cd002391-376b-4cc1-ad52-8c75b2a61303",
+          "name": "Choices for Change Counseling",
+          "slug": "choices-for-change-counseling-superior-mt-gub88e",
+          "description": null,
+          "phone": "(406) 822-5422",
+          "website": "https://www.choicesforchange.net",
+          "address_line1": "304 4th Avenue East",
+          "city": "Superior",
+          "state": "MT",
+          "zip": "59872",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 47.1925488,
+          "longitude": -114.8871481,
+          "distance_miles": 46.8
+        },
+        {
+          "id": "42ac47af-f170-4e20-9b08-a82800716f65",
+          "name": "Southwest MT Community Health Center",
+          "slug": "southwest-mt-community-health-center-butte-mt-6m8qc0",
+          "description": null,
+          "phone": "(406) 723-4075",
+          "website": "https://www.swmtchc.org",
+          "address_line1": "445 Centennial Avenue",
+          "city": "Butte",
+          "state": "MT",
+          "zip": "59701",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 45.9985717,
+          "longitude": -112.5420178,
+          "distance_miles": 92.2
+        },
+        {
+          "id": "3ebda0ae-8425-4d87-b6d7-d071607d3817",
+          "name": "Montana Chemical Dependency Ctr",
+          "slug": "montana-chemical-dependency-ctr-butte-mt-uu071d",
+          "description": null,
+          "phone": "(406) 496-5400",
+          "website": "https://www.dphhs.mt.gov/healthcarefacilities/MCDC",
+          "address_line1": "525 East Mercury Street",
+          "city": "Butte",
+          "state": "MT",
+          "zip": "59701",
+          "facility_type": "treatment",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.0121172,
+          "longitude": -112.5240726,
+          "distance_miles": 92.3
+        },
+        {
+          "id": "0519064c-9cc7-49e0-ab9a-3e1c6e9cabcc",
+          "name": "Yellowstone Boys and Girls Ranch",
+          "slug": "yellowstone-boys-and-girls-ranch-kalispell-mt-fhpr6s",
+          "description": null,
+          "phone": "(406) 655-2100",
+          "website": "https://www.ybgr.org",
+          "address_line1": "1203 Highway 2 West",
+          "city": "Kalispell",
+          "state": "MT",
+          "zip": "59901",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 48.1939057,
+          "longitude": -114.3304705,
+          "distance_miles": 93.5
+        },
+        {
+          "id": "09f561bb-09dc-4b46-945b-43a3f96380f6",
+          "name": "Yellowstone Boys and Girls Ranch",
+          "slug": "yellowstone-boys-and-girls-ranch-kalispell-mt-879svp",
+          "description": null,
+          "phone": "(406) 655-2100",
+          "website": "https://www.ybgr.org",
+          "address_line1": "450 Corporate Drive",
+          "city": "Kalispell",
+          "state": "MT",
+          "zip": "59901",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 48.1995207,
+          "longitude": -114.3403929,
+          "distance_miles": 94
+        },
+        {
+          "id": "a91d042f-78bf-47e0-a7e0-a63acebcf86b",
+          "name": "Community Medical Services",
+          "slug": "community-medical-services-kalispell-mt-0vr0pi",
+          "description": null,
+          "phone": "(406) 206-3885",
+          "website": "https://www.communitymedicalservices.org",
+          "address_line1": "795 Sunset Boulevard",
+          "city": "Kalispell",
+          "state": "MT",
+          "zip": "59901",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 48.20778,
+          "longitude": -114.320637,
+          "distance_miles": 94.4
+        },
+        {
+          "id": "6f8b3203-71a1-4d87-9e91-a53b1960dd87",
+          "name": "BIG SKY Treatment",
+          "slug": "big-sky-treatment-kalispell-mt-kbt0it",
+          "description": null,
+          "phone": "(406) 604-1151",
+          "website": "https://www.bigskytreatment.com",
+          "address_line1": "1860 US-93",
+          "city": "Kalispell",
+          "state": "MT",
+          "zip": "59901",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 48.2174619,
+          "longitude": -114.3302564,
+          "distance_miles": 95.1
+        },
+        {
+          "id": "40cf07a8-6e38-4c5a-9eb4-6efe47649f76",
+          "name": "Instar Community Servs",
+          "slug": "instar-community-servs-helena-mt-wgurrq",
+          "description": null,
+          "phone": "(406) 422-4828",
+          "website": "https://www.instarhelena.com",
+          "address_line1": "1112 Leslie Avenue",
+          "city": "Helena",
+          "state": "MT",
+          "zip": "59601",
+          "facility_type": "treatment",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.60323,
+          "longitude": -112.0498376,
+          "distance_miles": 95.2
+        },
+        {
+          "id": "bce48a1b-c090-4007-8195-476504ef087d",
+          "name": "Many Rivers Whole Health",
+          "slug": "many-rivers-whole-health-kalispell-mt-pq3zlr",
+          "description": null,
+          "phone": "(406) 756-6453",
+          "website": "https://www.manyriverswholehealth.org",
+          "address_line1": "418 Windward Way",
+          "city": "Kalispell",
+          "state": "MT",
+          "zip": "59901",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 48.2201912,
+          "longitude": -114.3258036,
+          "distance_miles": 95.3
+        },
+        {
+          "id": "a1da197b-f083-43ac-869c-3dc72844d59b",
+          "name": "Florence Crittenton Home and Services",
+          "slug": "florence-crittenton-home-and-services-helena-mt-qr7ont",
+          "description": null,
+          "phone": "(406) 442-6950",
+          "website": "https://www.florencecrittenton.org",
+          "address_line1": "3404 Cooney Drive",
+          "city": "Helena",
+          "state": "MT",
+          "zip": "59602",
+          "facility_type": "treatment",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.6223406,
+          "longitude": -112.0375034,
+          "distance_miles": 95.5
+        },
+        {
+          "id": "88fc8603-7cd9-4129-bb0b-9934da6d6c93",
+          "name": "YWCA Helena",
+          "slug": "ywca-helena-helena-mt-ipvnox",
+          "description": null,
+          "phone": "(406) 442-8774",
+          "website": "https://www.ywcahelena.org",
+          "address_line1": "501 North Park Avenue",
+          "city": "Helena",
+          "state": "MT",
+          "zip": "59601",
+          "facility_type": "treatment",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.5922095,
+          "longitude": -112.0397403,
+          "distance_miles": 95.8
+        },
+        {
+          "id": "5334973c-d1f8-43f2-8bb3-42e11b3abe32",
+          "name": "Boyd Andrew Community Services",
+          "slug": "boyd-andrew-community-services-helena-mt-eptwqx",
+          "description": null,
+          "phone": "(406) 443-2343",
+          "website": "https://www.boydandrew.com",
+          "address_line1": "60 South Last Chance Gulch Street",
+          "city": "Helena",
+          "state": "MT",
+          "zip": "59601",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.5859101,
+          "longitude": -112.0408375,
+          "distance_miles": 95.8
+        },
+        {
+          "id": "f5ffd814-cfbf-4c5a-a9e7-6f82c22eaa0b",
+          "name": "Cedar Creek Integrated Health",
+          "slug": "cedar-creek-integrated-health-kalispell-mt-w2uvog",
+          "description": null,
+          "phone": "(406) 890-2570",
+          "website": "https://www.cedarcreekintegratedhealth.org",
+          "address_line1": "2282 U.S. Highway 93 South",
+          "city": "Kalispell",
+          "state": "MT",
+          "zip": "59901",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 48.2304012,
+          "longitude": -114.3313124,
+          "distance_miles": 96
+        },
+        {
+          "id": "55bc25ba-e0c0-4d9f-bb1e-7bb6767ca97a",
+          "name": "Helena Valley Addiciton Services",
+          "slug": "helena-valley-addiciton-services-helena-mt-yvzd8z",
+          "description": null,
+          "phone": "(406) 422-4933",
+          "website": "https://www.helenavalleyaddictionservices.com",
+          "address_line1": "833 North Last Chance Gulch",
+          "city": "Helena",
+          "state": "MT",
+          "zip": "59601",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.5961298,
+          "longitude": -112.0331112,
+          "distance_miles": 96
+        }
+      ]
+    },
+    {
+      "zip": "59801",
+      "type": "outpatient",
+      "origin": {
+        "zip": "59801",
+        "city": "Missoula",
+        "state": "MT",
+        "latitude": 46.8563,
+        "longitude": -114.0252
+      },
+      "idsMatch": true,
+      "stable": true,
+      "secondPageMatch": true,
+      "maxRoundDifference": 0.044701912265978194,
+      "expected": [
+        {
+          "id": "a2ba481e-5b55-475a-8709-c6a2cd9b9b80",
+          "d": 0.5733134120309071,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "38d5dc10-2a5a-4bc3-9da7-2d2bb964c244",
+          "d": 0.7741640866818533,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "e9edfa2b-fa31-4e61-a278-7a3a11f22bf6",
+          "d": 1.3243227490601248,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "34b8f1ea-cce8-4c14-aefd-8ce3ad597c0a",
+          "d": 1.5596801185418496,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "e70ec764-782a-4f23-8185-d9069baeb9a4",
+          "d": 1.6332916304081828,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "5f3f965c-c344-45e8-95ca-7817ab845370",
+          "d": 2.224741198005721,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "be892276-c194-4067-b6c4-ba42d26ea65d",
+          "d": 2.5335808227775107,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "2127c6f3-7344-4e20-99b3-b11cf36159c8",
+          "d": 6.082477845856813,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "da658458-da9b-4819-a51b-5e15a76af040",
+          "d": 43.06878017113066,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "50852a95-6216-4022-9ec2-111f00650630",
+          "d": 46.626355533398524,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "cd002391-376b-4cc1-ad52-8c75b2a61303",
+          "d": 46.77495603172195,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "42ac47af-f170-4e20-9b08-a82800716f65",
+          "d": 92.20063191016004,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "0519064c-9cc7-49e0-ab9a-3e1c6e9cabcc",
+          "d": 93.51057155438853,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "09f561bb-09dc-4b46-945b-43a3f96380f6",
+          "d": 93.96522244040497,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "a91d042f-78bf-47e0-a7e0-a63acebcf86b",
+          "d": 94.38977847058543,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "6f8b3203-71a1-4d87-9e91-a53b1960dd87",
+          "d": 95.11750587758004,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "bce48a1b-c090-4007-8195-476504ef087d",
+          "d": 95.27312634774756,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "5334973c-d1f8-43f2-8bb3-42e11b3abe32",
+          "d": 95.82915498275578,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "f5ffd814-cfbf-4c5a-a9e7-6f82c22eaa0b",
+          "d": 96.00860635318546,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "55bc25ba-e0c0-4d9f-bb1e-7bb6767ca97a",
+          "d": 96.04470191226598,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "6547422a-b1ab-4d7e-a714-1092eb2bcc9c",
+          "d": 97.03840731859316,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "446eb948-0c2b-4c9e-bc62-555604efb299",
+          "d": 109.52769309533025,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "24d3cc44-cf3c-48d3-8acb-077c7cce0725",
+          "d": 118.69550507246,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "a618fdc8-51fe-40b6-b542-d5a144cd7f30",
+          "d": 131.57720065898656,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "a40c6910-67b8-481e-b833-32efb4ad920e",
+          "d": 135.3027056328222,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "7f1ee5b7-fa61-43e0-a9f1-fc7ab98a21f7",
+          "d": 136.23041420247802,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "cd4d8e4c-41ef-4404-8556-f4af23a974ea",
+          "d": 139.0375524271702,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "8883e9be-4474-4a21-bb64-3a4af513b5c2",
+          "d": 140.97917479593838,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "d41e9dee-f172-49e6-8f7f-d9ed80d6fad3",
+          "d": 141.28466291350148,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "5f11de56-de33-4a42-a70d-091d208f5f7f",
+          "d": 142.15971409096755,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "f12969e3-ae44-406b-a389-647608a7a6f2",
+          "d": 142.4557508077558,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "ed3145f4-89fe-453f-8678-2d096efc9c34",
+          "d": 142.5964120633667,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "d5f05dda-4339-4747-afd4-c6d664505896",
+          "d": 142.8388137486093,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "de0dba71-4772-4133-bfe3-4c4468ff017b",
+          "d": 144.6596172141838,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "47093147-c2b7-4a85-9c9b-fc655dbd1334",
+          "d": 144.91186460468884,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "37cd06a2-d474-46de-95cb-756de1265046",
+          "d": 145.0342997567772,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "11c78265-b6c7-4401-be18-78fba2ffe0d8",
+          "d": 145.25068532415708,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "3b9a1ce9-9e26-4f28-944f-5a46d7315129",
+          "d": 146.6070709612452,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "27379459-e2ea-4779-a00d-c9a8dae331be",
+          "d": 148.7581076380557,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "ac9d199a-3d9d-48a2-b4fa-e8a3f4bd5643",
+          "d": 149.33161074764547,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "fb1e1f00-5e91-4b74-a65f-1a365cacaffa",
+          "d": 151.662658186325,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "57bacfc1-b31a-435c-8c93-27a25c312623",
+          "d": 152.14687365874633,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "c91cfc48-de19-4537-9333-b183d49c7601",
+          "d": 153.59211351998562,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "2793de0b-53b2-4157-8ab6-b5e5a011a30a",
+          "d": 153.9453100635464,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "42a144e4-809d-447d-9f55-362b733cbdc3",
+          "d": 160.8980301297032,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "23d740af-09aa-4d46-b942-9b0a3c84a0b8",
+          "d": 162.41925041422195,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "cc79838e-294f-4503-a15f-1e1f381be1e6",
+          "d": 162.52364924198005,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "8607eab0-547b-40bd-8e51-15886f5a533e",
+          "d": 165.34044423227658,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "b60372fa-657c-403b-b073-fdd40e47ec7a",
+          "d": 165.5774810520888,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "f93c6c8a-c78c-44b4-8dc2-f7a390ab1046",
+          "d": 165.88943356191638,
+          "listing_tier": "basic",
+          "is_featured": false
+        }
+      ],
+      "rpc": [
+        {
+          "id": "a2ba481e-5b55-475a-8709-c6a2cd9b9b80",
+          "name": "Community Medical Services",
+          "slug": "community-medical-services-missoula-mt-6mv24y",
+          "description": null,
+          "phone": "(406) 549-0114",
+          "website": "https://www.communitymedicalservices.org/locations/mt-missoula/",
+          "address_line1": "2415 South Catlin Street",
+          "city": "Missoula",
+          "state": "MT",
+          "zip": "59801",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.8482097,
+          "longitude": -114.0225045,
+          "distance_miles": 0.6
+        },
+        {
+          "id": "38d5dc10-2a5a-4bc3-9da7-2d2bb964c244",
+          "name": "Starr Counseling and Addiction Svcs",
+          "slug": "starr-counseling-and-addiction-svcs-missoula-mt-ithwwz",
+          "description": null,
+          "phone": "(406) 544-0432",
+          "website": "https://www.callstarrcounseling.com/",
+          "address_line1": "1515 Fairview Avenue",
+          "city": "Missoula",
+          "state": "MT",
+          "zip": "59801",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.8457129,
+          "longitude": -114.0198362,
+          "distance_miles": 0.8
+        },
+        {
+          "id": "e9edfa2b-fa31-4e61-a278-7a3a11f22bf6",
+          "name": "Stepping Stones Behavioral Health Serv",
+          "slug": "stepping-stones-behavioral-health-serv-missoula-mt-wtuurr",
+          "description": null,
+          "phone": "(406) 926-1453",
+          "website": "https://www.steppingstonesmissoula.com",
+          "address_line1": "202 Brooks Street",
+          "city": "Missoula",
+          "state": "MT",
+          "zip": "59801",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.8618728,
+          "longitude": -113.9983804,
+          "distance_miles": 1.3
+        },
+        {
+          "id": "34b8f1ea-cce8-4c14-aefd-8ce3ad597c0a",
+          "name": "Yellowstone Boys and Girls Ranch",
+          "slug": "yellowstone-boys-and-girls-ranch-missoula-mt-yuq15z",
+          "description": null,
+          "phone": "(406) 655-2100",
+          "website": "https://www.ybgr.org",
+          "address_line1": "619 SW Higgins",
+          "city": "Missoula",
+          "state": "MT",
+          "zip": "59803",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.83733,
+          "longitude": -114.0073109,
+          "distance_miles": 1.6
+        },
+        {
+          "id": "e70ec764-782a-4f23-8185-d9069baeb9a4",
+          "name": "Winds of Change",
+          "slug": "winds-of-change-missoula-mt-pftx2h",
+          "description": null,
+          "phone": "(406) 541-4673",
+          "website": "https://wellnessmt.com/",
+          "address_line1": "1120 Cedar Street",
+          "city": "Missoula",
+          "state": "MT",
+          "zip": "59802",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.8772454,
+          "longitude": -114.0091718,
+          "distance_miles": 1.6
+        },
+        {
+          "id": "5f3f965c-c344-45e8-95ca-7817ab845370",
+          "name": "Winds of Change",
+          "slug": "winds-of-change-missoula-mt-3dn56o",
+          "description": null,
+          "phone": "(406) 541-4673",
+          "website": "https://wellnessmt.com/",
+          "address_line1": "3000 Palmer",
+          "city": "Missoula",
+          "state": "MT",
+          "zip": "59808",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.887823,
+          "longitude": -114.0348008,
+          "distance_miles": 2.2
+        },
+        {
+          "id": "be892276-c194-4067-b6c4-ba42d26ea65d",
+          "name": "Cedar Creek Integrated Health",
+          "slug": "cedar-creek-integrated-health-missoula-mt-awbh5v",
+          "description": null,
+          "phone": "(406) 203-9948",
+          "website": "https://www.cedarcreekintegratedhealth.org",
+          "address_line1": "2620 Connery Way",
+          "city": "Missoula",
+          "state": "MT",
+          "zip": "59808",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.8900349,
+          "longitude": -114.0462241,
+          "distance_miles": 2.5
+        },
+        {
+          "id": "2127c6f3-7344-4e20-99b3-b11cf36159c8",
+          "name": "Yellowstone Boys and Girls Ranch",
+          "slug": "yellowstone-boys-and-girls-ranch-missoula-mt-2qi2v6",
+          "description": null,
+          "phone": "(406) 655-2100",
+          "website": "https://www.ybgr.org",
+          "address_line1": "775 West Gold Street",
+          "city": "Missoula",
+          "state": "MT",
+          "zip": "59803",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.7696119,
+          "longitude": -114.0028043,
+          "distance_miles": 6.1
+        },
+        {
+          "id": "da658458-da9b-4819-a51b-5e15a76af040",
+          "name": "Yellowstone Boys and Girls Ranch",
+          "slug": "yellowstone-boys-and-girls-ranch-hamilton-mt-15aaed",
+          "description": null,
+          "phone": "(406) 655-2100",
+          "website": "https://www.ybgr.org",
+          "address_line1": "111 Baker Street",
+          "city": "Hamilton",
+          "state": "MT",
+          "zip": "59840",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.2394145,
+          "longitude": -114.1553081,
+          "distance_miles": 43.1
+        },
+        {
+          "id": "50852a95-6216-4022-9ec2-111f00650630",
+          "name": "Cedar Creek Integrated Health",
+          "slug": "cedar-creek-integrated-health-ronan-mt-czn13q",
+          "description": null,
+          "phone": "(406) 676-0630",
+          "website": "https://www.cedarcreekintegratedhealth.org",
+          "address_line1": "330 Main Street SW",
+          "city": "Ronan",
+          "state": "MT",
+          "zip": "59864",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 47.5290581,
+          "longitude": -114.1029729,
+          "distance_miles": 46.6
+        },
+        {
+          "id": "cd002391-376b-4cc1-ad52-8c75b2a61303",
+          "name": "Choices for Change Counseling",
+          "slug": "choices-for-change-counseling-superior-mt-gub88e",
+          "description": null,
+          "phone": "(406) 822-5422",
+          "website": "https://www.choicesforchange.net",
+          "address_line1": "304 4th Avenue East",
+          "city": "Superior",
+          "state": "MT",
+          "zip": "59872",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 47.1925488,
+          "longitude": -114.8871481,
+          "distance_miles": 46.8
+        },
+        {
+          "id": "42ac47af-f170-4e20-9b08-a82800716f65",
+          "name": "Southwest MT Community Health Center",
+          "slug": "southwest-mt-community-health-center-butte-mt-6m8qc0",
+          "description": null,
+          "phone": "(406) 723-4075",
+          "website": "https://www.swmtchc.org",
+          "address_line1": "445 Centennial Avenue",
+          "city": "Butte",
+          "state": "MT",
+          "zip": "59701",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 45.9985717,
+          "longitude": -112.5420178,
+          "distance_miles": 92.2
+        },
+        {
+          "id": "0519064c-9cc7-49e0-ab9a-3e1c6e9cabcc",
+          "name": "Yellowstone Boys and Girls Ranch",
+          "slug": "yellowstone-boys-and-girls-ranch-kalispell-mt-fhpr6s",
+          "description": null,
+          "phone": "(406) 655-2100",
+          "website": "https://www.ybgr.org",
+          "address_line1": "1203 Highway 2 West",
+          "city": "Kalispell",
+          "state": "MT",
+          "zip": "59901",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 48.1939057,
+          "longitude": -114.3304705,
+          "distance_miles": 93.5
+        },
+        {
+          "id": "09f561bb-09dc-4b46-945b-43a3f96380f6",
+          "name": "Yellowstone Boys and Girls Ranch",
+          "slug": "yellowstone-boys-and-girls-ranch-kalispell-mt-879svp",
+          "description": null,
+          "phone": "(406) 655-2100",
+          "website": "https://www.ybgr.org",
+          "address_line1": "450 Corporate Drive",
+          "city": "Kalispell",
+          "state": "MT",
+          "zip": "59901",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 48.1995207,
+          "longitude": -114.3403929,
+          "distance_miles": 94
+        },
+        {
+          "id": "a91d042f-78bf-47e0-a7e0-a63acebcf86b",
+          "name": "Community Medical Services",
+          "slug": "community-medical-services-kalispell-mt-0vr0pi",
+          "description": null,
+          "phone": "(406) 206-3885",
+          "website": "https://www.communitymedicalservices.org",
+          "address_line1": "795 Sunset Boulevard",
+          "city": "Kalispell",
+          "state": "MT",
+          "zip": "59901",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 48.20778,
+          "longitude": -114.320637,
+          "distance_miles": 94.4
+        },
+        {
+          "id": "6f8b3203-71a1-4d87-9e91-a53b1960dd87",
+          "name": "BIG SKY Treatment",
+          "slug": "big-sky-treatment-kalispell-mt-kbt0it",
+          "description": null,
+          "phone": "(406) 604-1151",
+          "website": "https://www.bigskytreatment.com",
+          "address_line1": "1860 US-93",
+          "city": "Kalispell",
+          "state": "MT",
+          "zip": "59901",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 48.2174619,
+          "longitude": -114.3302564,
+          "distance_miles": 95.1
+        },
+        {
+          "id": "bce48a1b-c090-4007-8195-476504ef087d",
+          "name": "Many Rivers Whole Health",
+          "slug": "many-rivers-whole-health-kalispell-mt-pq3zlr",
+          "description": null,
+          "phone": "(406) 756-6453",
+          "website": "https://www.manyriverswholehealth.org",
+          "address_line1": "418 Windward Way",
+          "city": "Kalispell",
+          "state": "MT",
+          "zip": "59901",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 48.2201912,
+          "longitude": -114.3258036,
+          "distance_miles": 95.3
+        },
+        {
+          "id": "5334973c-d1f8-43f2-8bb3-42e11b3abe32",
+          "name": "Boyd Andrew Community Services",
+          "slug": "boyd-andrew-community-services-helena-mt-eptwqx",
+          "description": null,
+          "phone": "(406) 443-2343",
+          "website": "https://www.boydandrew.com",
+          "address_line1": "60 South Last Chance Gulch Street",
+          "city": "Helena",
+          "state": "MT",
+          "zip": "59601",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.5859101,
+          "longitude": -112.0408375,
+          "distance_miles": 95.8
+        },
+        {
+          "id": "f5ffd814-cfbf-4c5a-a9e7-6f82c22eaa0b",
+          "name": "Cedar Creek Integrated Health",
+          "slug": "cedar-creek-integrated-health-kalispell-mt-w2uvog",
+          "description": null,
+          "phone": "(406) 890-2570",
+          "website": "https://www.cedarcreekintegratedhealth.org",
+          "address_line1": "2282 U.S. Highway 93 South",
+          "city": "Kalispell",
+          "state": "MT",
+          "zip": "59901",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 48.2304012,
+          "longitude": -114.3313124,
+          "distance_miles": 96
+        },
+        {
+          "id": "55bc25ba-e0c0-4d9f-bb1e-7bb6767ca97a",
+          "name": "Helena Valley Addiciton Services",
+          "slug": "helena-valley-addiciton-services-helena-mt-yvzd8z",
+          "description": null,
+          "phone": "(406) 422-4933",
+          "website": "https://www.helenavalleyaddictionservices.com",
+          "address_line1": "833 North Last Chance Gulch",
+          "city": "Helena",
+          "state": "MT",
+          "zip": "59601",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.5961298,
+          "longitude": -112.0331112,
+          "distance_miles": 96
+        },
+        {
+          "id": "6547422a-b1ab-4d7e-a714-1092eb2bcc9c",
+          "name": "Yellowstone Boys and Girls Ranch",
+          "slug": "yellowstone-boys-and-girls-ranch-helena-mt-fyyccg",
+          "description": null,
+          "phone": "(406) 655-2100",
+          "website": "https://www.ybgr.org",
+          "address_line1": "901 North Harris Street",
+          "city": "Helena",
+          "state": "MT",
+          "zip": "59601",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 46.593786,
+          "longitude": -112.0124463,
+          "distance_miles": 97
+        },
+        {
+          "id": "446eb948-0c2b-4c9e-bc62-555604efb299",
+          "name": "Heritage Health",
+          "slug": "heritage-health-kellogg-id-o4ggti",
+          "description": null,
+          "phone": "(208) 783-1267",
+          "website": "https://www.myheritagehealth.org",
+          "address_line1": "740 McKinley Avenue West",
+          "city": "Kellogg",
+          "state": "ID",
+          "zip": "83837",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 47.5376681,
+          "longitude": -116.1317908,
+          "distance_miles": 109.5
+        },
+        {
+          "id": "24d3cc44-cf3c-48d3-8acb-077c7cce0725",
+          "name": "Camas Professional Counseling LLC",
+          "slug": "camas-professional-counseling-llc-grangeville-id-2c8v34",
+          "description": null,
+          "phone": "(208) 983-0235",
+          "website": "https://www.camasprofessionalcounseling.com",
+          "address_line1": "304 North State Street",
+          "city": "Grangeville",
+          "state": "ID",
+          "zip": "83530",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 45.9276603,
+          "longitude": -116.1208015,
+          "distance_miles": 118.7
+        },
+        {
+          "id": "a618fdc8-51fe-40b6-b542-d5a144cd7f30",
+          "name": "Yellowstone Boys and Girls Ranch",
+          "slug": "yellowstone-boys-and-girls-ranch-dillon-mt-fi1o0s",
+          "description": null,
+          "phone": "(406) 655-2100",
+          "website": "https://www.ybgr.org",
+          "address_line1": "312 South Pacific Street",
+          "city": "Dillon",
+          "state": "MT",
+          "zip": "59725",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 45.2136678,
+          "longitude": -112.637144,
+          "distance_miles": 131.6
+        },
+        {
+          "id": "a40c6910-67b8-481e-b833-32efb4ad920e",
+          "name": "Yellowstone Boys and Girls Ranch",
+          "slug": "yellowstone-boys-and-girls-ranch-great-falls-mt-ppwsqd",
+          "description": null,
+          "phone": "(406) 655-2100",
+          "website": "https://www.ybgr.org",
+          "address_line1": "225 7th Avenue South",
+          "city": "Great Falls",
+          "state": "MT",
+          "zip": "59401",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 47.497828,
+          "longitude": -111.3030654,
+          "distance_miles": 135.3
+        }
+      ]
+    },
+    {
+      "zip": "10001",
+      "type": null,
+      "origin": {
+        "zip": "10001",
+        "city": "New York",
+        "state": "NY",
+        "latitude": 40.7484,
+        "longitude": -73.9967
+      },
+      "idsMatch": true,
+      "stable": true,
+      "secondPageMatch": true,
+      "maxRoundDifference": 0.04432345149139583,
+      "expected": [
+        {
+          "id": "64a608ed-f808-4d26-85c4-1710912a75f2",
+          "d": 0.30677192750213483,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "c141ec52-31af-4f78-a3db-b8f8f3d5374b",
+          "d": 0.3834579744129255,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "44dc579d-0c3d-4ead-b24f-423e93e65c3c",
+          "d": 0.4318919399379638,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "de760e74-0696-4bc3-92ab-42763a3cd591",
+          "d": 0.4318919399379638,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "d9947542-e6a9-4471-9f23-d6bd7825e919",
+          "d": 0.46827613919886324,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "f8ae7a3b-d4ba-4328-97f5-0d4322a23ae8",
+          "d": 0.5181401398370962,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "6b19b92e-6955-426d-843f-c50f753693ab",
+          "d": 0.6556765485086041,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "945fec0f-4ff2-4704-abc2-0075c458b9a9",
+          "d": 0.6560360192937374,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "3a24bde5-4c08-4119-b011-94a021e02c7d",
+          "d": 0.6939510211753807,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "801cdea7-28ce-4404-a497-12b511384904",
+          "d": 0.7118528169420357,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "605f0fb6-1fd5-4eb2-80a4-27a9312db78c",
+          "d": 0.8950526210888312,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "ecc48e72-f5f2-4add-8d96-3965a67beb4e",
+          "d": 0.902827259439368,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "490f3700-b531-44cc-a16a-b3e712cbac5e",
+          "d": 1.0715517924112925,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "fdc688d3-70ed-4ba2-ac5a-ce7f0a3806e1",
+          "d": 1.3021678610476948,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "42f4de04-3775-47d0-b76b-3f76548e9f43",
+          "d": 1.3052637417362047,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "7993dfd3-de86-4399-bdb8-9df8517400fa",
+          "d": 1.3052637417362047,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "f57651e3-3e5a-4b10-b95d-cd8ab105d845",
+          "d": 1.4357570152482668,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "bfa47bbb-bc01-4164-8839-2001179084b3",
+          "d": 1.486772696180258,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "827d8761-f45c-41fa-a2dd-e1e5e196265f",
+          "d": 1.5342572807726171,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "23fc435e-e586-4aaf-93fd-01b34bda6092",
+          "d": 1.5599680783360799,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "33a73c6c-20d4-40bd-9616-23465d32e959",
+          "d": 1.5682597708723403,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "9920e532-3f1b-4a20-a53d-c90411ca19a1",
+          "d": 1.585552428890952,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "23533c68-76e0-4589-b853-aa6a0ca287b0",
+          "d": 1.7889050861376603,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "d207d957-723a-43b7-be27-f98a32750dd6",
+          "d": 1.7928474020517573,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "1596729b-87bc-4611-9a47-f9aa06208e9b",
+          "d": 1.8002790996982416,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "4828057c-2241-4cd1-b5a1-6d8964b3b791",
+          "d": 1.8445433229711063,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "13a65667-a983-47b5-a234-79ad9ec947a6",
+          "d": 1.936309502980682,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "f02e0b85-7752-4723-99b0-ca556795bdf2",
+          "d": 1.936309502980682,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "77335df9-4b9c-48ab-902b-be9506c651da",
+          "d": 1.9476000014514732,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "9a2c166a-b02e-430a-b31d-9a6494232076",
+          "d": 1.9538907830064627,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "dca6be34-f133-450d-b63b-ad08c6a59f51",
+          "d": 2.1143617337989076,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "c3c4173d-049d-4075-b968-2f507499543b",
+          "d": 2.117911887875888,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "20e4819e-e475-4655-9335-d8a1b6914a6b",
+          "d": 2.127269651218925,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "47c6415b-07ed-47a5-bbc8-23f75290e33b",
+          "d": 2.368914262878435,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "2c3ac325-547f-4622-a288-61a49f7892d8",
+          "d": 2.389409582032487,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "c65aed15-2f17-4b0b-9010-6dd21723696e",
+          "d": 2.3918852021991297,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "edb1510d-6252-4b95-8384-7dce727bc9db",
+          "d": 2.3959578313642664,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "ad74ff1d-4f85-415b-81f5-45d0e9454b63",
+          "d": 2.5157730201400494,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "8c85f705-863b-4594-a574-a80e5818038d",
+          "d": 2.6488819047784666,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "4d6d1c00-ee98-4503-a4d4-fb02f31d0501",
+          "d": 2.6841134214036537,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "372e1804-fd58-441e-8ca4-c5582ee92ab7",
+          "d": 3.0445809648549274,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "993c781a-fa12-4ec2-b5e9-280c730e7adf",
+          "d": 3.1092018842781055,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "1e955b2f-b5af-4836-b5c1-757126ca8cb1",
+          "d": 3.169885309400866,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "401ccb32-88dc-4c85-ab28-c50f19fa845a",
+          "d": 3.2669763925341764,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "e3d1c485-ca23-469c-b110-49ba8c8a63cc",
+          "d": 3.428461139549122,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "1a88f544-79d6-4fd2-a4bd-c70eaccb28fa",
+          "d": 3.5687756670688224,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "47cc8a4a-fdfe-4fcb-a99f-3f75157969bf",
+          "d": 3.66871204833381,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "f37f301b-b8c3-458d-b988-94a26fa3d7e6",
+          "d": 3.7002528054429296,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "5ff80261-e94f-478a-9cbb-c58cb95d3907",
+          "d": 3.788355134285068,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "8d8d5635-c47e-4400-a627-7e0f13738966",
+          "d": 3.8035098708772774,
+          "listing_tier": "basic",
+          "is_featured": false
+        }
+      ],
+      "rpc": [
+        {
+          "id": "64a608ed-f808-4d26-85c4-1710912a75f2",
+          "name": "Bowery Residents Committee Inc",
+          "slug": "bowery-residents-committee-inc-new-york-ny-d3br6z",
+          "description": null,
+          "phone": null,
+          "website": "https://www.brc.org",
+          "address_line1": "127 West 25th Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10001",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7448724,
+          "longitude": -73.9931412,
+          "distance_miles": 0.3
+        },
+        {
+          "id": "c141ec52-31af-4f78-a3db-b8f8f3d5374b",
+          "name": "Postgraduate Center for Mental Health",
+          "slug": "postgraduate-center-for-mental-health-new-york-ny-87ecnr",
+          "description": null,
+          "phone": "(212) 576-4104",
+          "website": "https://www.pgcmh.org",
+          "address_line1": "213 West 35th Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10001",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7522262,
+          "longitude": -73.9913934,
+          "distance_miles": 0.4
+        },
+        {
+          "id": "44dc579d-0c3d-4ead-b24f-423e93e65c3c",
+          "name": "Addiction Care Interventions",
+          "slug": "addiction-care-interventions-new-york-ny-wffokm",
+          "description": null,
+          "phone": null,
+          "website": "https://www.acirehab.org",
+          "address_line1": "255 West 36th Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10018",
+          "facility_type": "treatment",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7532276,
+          "longitude": -73.9914584,
+          "distance_miles": 0.4
+        },
+        {
+          "id": "de760e74-0696-4bc3-92ab-42763a3cd591",
+          "name": "Alcoholism Treatment Center",
+          "slug": "alcoholism-treatment-center-new-york-ny-ht7ly8",
+          "description": null,
+          "phone": null,
+          "website": "https://www.acirehab.org",
+          "address_line1": "255 West 36th Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10018",
+          "facility_type": "treatment",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7532276,
+          "longitude": -73.9914584,
+          "distance_miles": 0.4
+        },
+        {
+          "id": "d9947542-e6a9-4471-9f23-d6bd7825e919",
+          "name": "Mountainside Chelsea",
+          "slug": "mountainside-chelsea-new-york-ny-ltf43w",
+          "description": null,
+          "phone": "(860) 824-1397",
+          "website": "https://Mountainside.com",
+          "address_line1": "243 West 18th Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10011",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7420067,
+          "longitude": -73.9996689,
+          "distance_miles": 0.5
+        },
+        {
+          "id": "f8ae7a3b-d4ba-4328-97f5-0d4322a23ae8",
+          "name": "CARES",
+          "slug": "cares-new-york-ny-1uw6ne",
+          "description": null,
+          "phone": "(212) 523-7233",
+          "website": "https://www.mountsinai.org/care/psychiatry/services/cares",
+          "address_line1": "307 West 38th Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10018",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7551715,
+          "longitude": -73.9924463,
+          "distance_miles": 0.5
+        },
+        {
+          "id": "6b19b92e-6955-426d-843f-c50f753693ab",
+          "name": "Shiloh Psychological Consulting PLLC",
+          "slug": "shiloh-psychological-consulting-pllc-new-york-ny-051bdl",
+          "description": null,
+          "phone": "(212) 564-7631",
+          "website": "https://shilohconsultingLLC.com",
+          "address_line1": "566 7th Avenue",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10018",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.755236,
+          "longitude": -73.9880113,
+          "distance_miles": 0.7
+        },
+        {
+          "id": "945fec0f-4ff2-4704-abc2-0075c458b9a9",
+          "name": "TRI Center Inc",
+          "slug": "tri-center-inc-new-york-ny-67wzb7",
+          "description": null,
+          "phone": "(212) 268-8830",
+          "website": "https://www.tricenter.com",
+          "address_line1": "20 West 37th Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10018",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7506915,
+          "longitude": -73.9845371,
+          "distance_miles": 0.7
+        },
+        {
+          "id": "3a24bde5-4c08-4119-b011-94a021e02c7d",
+          "name": "Bliss Poston the Second Wind",
+          "slug": "bliss-poston-the-second-wind-new-york-ny-8uwzww",
+          "description": null,
+          "phone": "(212) 481-1055",
+          "website": "https://www.thesecondwind.com",
+          "address_line1": "928 Broadway",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10010",
+          "facility_type": "treatment",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7400754,
+          "longitude": -73.9892831,
+          "distance_miles": 0.7
+        },
+        {
+          "id": "801cdea7-28ce-4404-a497-12b511384904",
+          "name": "Inter Care Ltd",
+          "slug": "inter-care-ltd-new-york-ny-ljq8vf",
+          "description": null,
+          "phone": null,
+          "website": "https://www.inter-care.com",
+          "address_line1": "51 East 25th Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10010",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7419324,
+          "longitude": -73.9861145,
+          "distance_miles": 0.7
+        },
+        {
+          "id": "605f0fb6-1fd5-4eb2-80a4-27a9312db78c",
+          "name": "Realization Center Inc",
+          "slug": "realization-center-inc-new-york-ny-e8f3kd",
+          "description": null,
+          "phone": "(212) 627-9600",
+          "website": "https://www.realizationcenternyc.com",
+          "address_line1": "19 Union Square West",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10003",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7361247,
+          "longitude": -73.9912374,
+          "distance_miles": 0.9
+        },
+        {
+          "id": "ecc48e72-f5f2-4add-8d96-3965a67beb4e",
+          "name": "Parallax Center Inc",
+          "slug": "parallax-center-inc-new-york-ny-dypzho",
+          "description": null,
+          "phone": "(212) 779-9207",
+          "website": "https://www.parallaxcenter.com",
+          "address_line1": "145 East 32nd Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10016",
+          "facility_type": "treatment",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7450693,
+          "longitude": -73.9800222,
+          "distance_miles": 0.9
+        },
+        {
+          "id": "490f3700-b531-44cc-a16a-b3e712cbac5e",
+          "name": "Wholeview Wellness LLC",
+          "slug": "wholeview-wellness-llc-new-york-ny-b4fo0n",
+          "description": null,
+          "phone": "(212) 204-8430",
+          "website": "https://www.wholeview.co",
+          "address_line1": "369 Lexington Avenue",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10017",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.750579,
+          "longitude": -73.9764314,
+          "distance_miles": 1.1
+        },
+        {
+          "id": "fdc688d3-70ed-4ba2-ac5a-ce7f0a3806e1",
+          "name": "VA NY Harbor Healthcare System",
+          "slug": "va-ny-harbor-healthcare-system-new-york-ny-1lvoof",
+          "description": null,
+          "phone": "(212) 686-7500",
+          "website": null,
+          "address_line1": "423 East 23rd Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10010",
+          "facility_type": "treatment",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7370457,
+          "longitude": -73.9768461,
+          "distance_miles": 1.3
+        },
+        {
+          "id": "42f4de04-3775-47d0-b76b-3f76548e9f43",
+          "name": "HH/Bellevue Hospital",
+          "slug": "hh-bellevue-hospital-new-york-ny-lwsic0",
+          "description": null,
+          "phone": "(212) 562-4487",
+          "website": null,
+          "address_line1": "462 1st Avenue",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10016",
+          "facility_type": "treatment",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7390729,
+          "longitude": -73.9750165,
+          "distance_miles": 1.3
+        },
+        {
+          "id": "7993dfd3-de86-4399-bdb8-9df8517400fa",
+          "name": "Bellevue Hospital Center (HHC)",
+          "slug": "bellevue-hospital-center-hhc-new-york-ny-fx4so0",
+          "description": null,
+          "phone": "(212) 562-3201",
+          "website": "https://www.nyc.gov/bellevue",
+          "address_line1": "462 1st Avenue and 27th Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10016",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7390729,
+          "longitude": -73.9750165,
+          "distance_miles": 1.3
+        },
+        {
+          "id": "f57651e3-3e5a-4b10-b95d-cd8ab105d845",
+          "name": "Freedom Institute Inc",
+          "slug": "freedom-institute-inc-new-york-ny-bmdx90",
+          "description": null,
+          "phone": "(212) 838-0044",
+          "website": "https://www.freedominstitute.org",
+          "address_line1": "515 Madison Avenue",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10022",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7597893,
+          "longitude": -73.9737557,
+          "distance_miles": 1.4
+        },
+        {
+          "id": "bfa47bbb-bc01-4164-8839-2001179084b3",
+          "name": "Saint Marks Place Institute for MH Inc",
+          "slug": "saint-marks-place-institute-for-mh-inc-new-york-ny-bwkvqs",
+          "description": null,
+          "phone": null,
+          "website": "https://www.unitas-nyc.org",
+          "address_line1": "57 Saint Marks Place",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10003",
+          "facility_type": "treatment",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7283624,
+          "longitude": -73.9863473,
+          "distance_miles": 1.5
+        },
+        {
+          "id": "827d8761-f45c-41fa-a2dd-e1e5e196265f",
+          "name": "Greenwich House Inc",
+          "slug": "greenwich-house-inc-new-york-ny-vgh9or",
+          "description": null,
+          "phone": "(212) 677-3400",
+          "website": "https://www.greenwichhouse.org",
+          "address_line1": "190 Mercer Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10012",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.726197,
+          "longitude": -73.997144,
+          "distance_miles": 1.5
+        },
+        {
+          "id": "23fc435e-e586-4aaf-93fd-01b34bda6092",
+          "name": "New York Center for Living Inc",
+          "slug": "new-york-center-for-living-inc-new-york-ny-cubnsq",
+          "description": null,
+          "phone": "(212) 712-8800",
+          "website": "https://www.centerforliving.org",
+          "address_line1": "226 East 52nd Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10022",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7564439,
+          "longitude": -73.9688517,
+          "distance_miles": 1.6
+        },
+        {
+          "id": "33a73c6c-20d4-40bd-9616-23465d32e959",
+          "name": "Addiction Institute at Mt Sinai West",
+          "slug": "addiction-institute-at-mt-sinai-west-new-york-ny-f6wyj3",
+          "description": null,
+          "phone": "(212) 523-6491",
+          "website": "https://www.mountsinai.org/locations/addiction-institute",
+          "address_line1": "1000 10th Avenue",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10019",
+          "facility_type": "treatment",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7699942,
+          "longitude": -73.9874704,
+          "distance_miles": 1.6
+        },
+        {
+          "id": "9920e532-3f1b-4a20-a53d-c90411ca19a1",
+          "name": "Project Renewal Inc",
+          "slug": "project-renewal-inc-new-york-ny-2ydww1",
+          "description": null,
+          "phone": "(212) 533-8400",
+          "website": "https://www.projectrenewal.org",
+          "address_line1": "8 East 3rd Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10003",
+          "facility_type": "treatment",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7258567,
+          "longitude": -73.9910376,
+          "distance_miles": 1.6
+        },
+        {
+          "id": "23533c68-76e0-4589-b853-aa6a0ca287b0",
+          "name": "Ascendant New York",
+          "slug": "ascendant-new-york-new-york-ny-cnnung",
+          "description": null,
+          "phone": "(917) 262-0003",
+          "website": "https://ascendantny.com",
+          "address_line1": "210 East 58th Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10022",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7604289,
+          "longitude": -73.9664337,
+          "distance_miles": 1.8
+        },
+        {
+          "id": "d207d957-723a-43b7-be27-f98a32750dd6",
+          "name": "Lafayette Medical Approach LLC",
+          "slug": "lafayette-medical-approach-llc-new-york-ny-mmnwhs",
+          "description": null,
+          "phone": "(212) 431-6177",
+          "website": "https://www.lafayettemedical.org",
+          "address_line1": "233 Lafayette Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10012",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.722452,
+          "longitude": -73.9968219,
+          "distance_miles": 1.8
+        },
+        {
+          "id": "1596729b-87bc-4611-9a47-f9aa06208e9b",
+          "name": "Ascendant New York",
+          "slug": "ascendant-new-york-new-york-ny-v8j863",
+          "description": null,
+          "phone": "(917) 262-0003",
+          "website": "https://www.ascendantny.com",
+          "address_line1": "113 East 60th Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10022",
+          "facility_type": "treatment",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7634358,
+          "longitude": -73.9686079,
+          "distance_miles": 1.8
+        }
+      ]
+    },
+    {
+      "zip": "10001",
+      "type": "outpatient",
+      "origin": {
+        "zip": "10001",
+        "city": "New York",
+        "state": "NY",
+        "latitude": 40.7484,
+        "longitude": -73.9967
+      },
+      "idsMatch": true,
+      "stable": true,
+      "secondPageMatch": true,
+      "maxRoundDifference": 0.04760000145147325,
+      "expected": [
+        {
+          "id": "64a608ed-f808-4d26-85c4-1710912a75f2",
+          "d": 0.30677192750213483,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "c141ec52-31af-4f78-a3db-b8f8f3d5374b",
+          "d": 0.3834579744129255,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "d9947542-e6a9-4471-9f23-d6bd7825e919",
+          "d": 0.46827613919886324,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "f8ae7a3b-d4ba-4328-97f5-0d4322a23ae8",
+          "d": 0.5181401398370962,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "6b19b92e-6955-426d-843f-c50f753693ab",
+          "d": 0.6556765485086041,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "945fec0f-4ff2-4704-abc2-0075c458b9a9",
+          "d": 0.6560360192937374,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "801cdea7-28ce-4404-a497-12b511384904",
+          "d": 0.7118528169420357,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "605f0fb6-1fd5-4eb2-80a4-27a9312db78c",
+          "d": 0.8950526210888312,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "490f3700-b531-44cc-a16a-b3e712cbac5e",
+          "d": 1.0715517924112925,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "7993dfd3-de86-4399-bdb8-9df8517400fa",
+          "d": 1.3052637417362047,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "f57651e3-3e5a-4b10-b95d-cd8ab105d845",
+          "d": 1.4357570152482668,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "827d8761-f45c-41fa-a2dd-e1e5e196265f",
+          "d": 1.5342572807726171,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "23fc435e-e586-4aaf-93fd-01b34bda6092",
+          "d": 1.5599680783360799,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "23533c68-76e0-4589-b853-aa6a0ca287b0",
+          "d": 1.7889050861376603,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "d207d957-723a-43b7-be27-f98a32750dd6",
+          "d": 1.7928474020517573,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "4828057c-2241-4cd1-b5a1-6d8964b3b791",
+          "d": 1.8445433229711063,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "77335df9-4b9c-48ab-902b-be9506c651da",
+          "d": 1.9476000014514732,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "9a2c166a-b02e-430a-b31d-9a6494232076",
+          "d": 1.9538907830064627,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "dca6be34-f133-450d-b63b-ad08c6a59f51",
+          "d": 2.1143617337989076,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "c3c4173d-049d-4075-b968-2f507499543b",
+          "d": 2.117911887875888,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "47c6415b-07ed-47a5-bbc8-23f75290e33b",
+          "d": 2.368914262878435,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "2c3ac325-547f-4622-a288-61a49f7892d8",
+          "d": 2.389409582032487,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "c65aed15-2f17-4b0b-9010-6dd21723696e",
+          "d": 2.3918852021991297,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "edb1510d-6252-4b95-8384-7dce727bc9db",
+          "d": 2.3959578313642664,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "ad74ff1d-4f85-415b-81f5-45d0e9454b63",
+          "d": 2.5157730201400494,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "8c85f705-863b-4594-a574-a80e5818038d",
+          "d": 2.6488819047784666,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "372e1804-fd58-441e-8ca4-c5582ee92ab7",
+          "d": 3.0445809648549274,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "993c781a-fa12-4ec2-b5e9-280c730e7adf",
+          "d": 3.1092018842781055,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "1e955b2f-b5af-4836-b5c1-757126ca8cb1",
+          "d": 3.169885309400866,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "401ccb32-88dc-4c85-ab28-c50f19fa845a",
+          "d": 3.2669763925341764,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "e3d1c485-ca23-469c-b110-49ba8c8a63cc",
+          "d": 3.428461139549122,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "1a88f544-79d6-4fd2-a4bd-c70eaccb28fa",
+          "d": 3.5687756670688224,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "47cc8a4a-fdfe-4fcb-a99f-3f75157969bf",
+          "d": 3.66871204833381,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "f37f301b-b8c3-458d-b988-94a26fa3d7e6",
+          "d": 3.7002528054429296,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "8663f048-7b14-4cbb-bf10-78947478bfef",
+          "d": 3.8107238714193428,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "500915e6-2e47-4a18-aafb-feb1e1f8b0fb",
+          "d": 3.819919444463123,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "fb52ab18-ba18-4c7b-96f5-47af986bfd3b",
+          "d": 3.9719321093162,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "3e6d196e-791b-44d7-90ff-40b0abb2f221",
+          "d": 4.044547734967452,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "f3a44d05-d0ea-4531-a3a9-6d990c256f12",
+          "d": 4.206609166592287,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "3edf93c2-ade8-4f27-b720-946875bcc912",
+          "d": 4.281854988573184,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "cdce554b-a469-4b6b-8bcf-1d9c458f8228",
+          "d": 4.351859966902484,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "59d65054-1428-4432-9452-e22490cc533a",
+          "d": 4.353513892328477,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "9389fb2c-8ba9-4e53-a798-efbc4729d32e",
+          "d": 4.409285395218623,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "8d653891-cb6c-4894-83b8-206b2dfb1ae6",
+          "d": 4.506523158130507,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "f7be4726-0408-42d5-b77b-d424b47159d1",
+          "d": 4.714434854767262,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "ae699978-8fc1-4985-8ed7-4fabc56e91ed",
+          "d": 4.769906262765963,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "8c645007-0389-4640-91c2-cca686501ae1",
+          "d": 4.826717888448703,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "27e60d87-506c-4f55-9c73-0ac188151fe1",
+          "d": 4.835642813253761,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "07a1d9ba-fa17-410d-823b-31478bb66062",
+          "d": 4.85765421247296,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "c5de6a0f-ad0e-408d-99fa-49321389177a",
+          "d": 4.85765421247296,
+          "listing_tier": "basic",
+          "is_featured": false
+        }
+      ],
+      "rpc": [
+        {
+          "id": "64a608ed-f808-4d26-85c4-1710912a75f2",
+          "name": "Bowery Residents Committee Inc",
+          "slug": "bowery-residents-committee-inc-new-york-ny-d3br6z",
+          "description": null,
+          "phone": null,
+          "website": "https://www.brc.org",
+          "address_line1": "127 West 25th Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10001",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7448724,
+          "longitude": -73.9931412,
+          "distance_miles": 0.3
+        },
+        {
+          "id": "c141ec52-31af-4f78-a3db-b8f8f3d5374b",
+          "name": "Postgraduate Center for Mental Health",
+          "slug": "postgraduate-center-for-mental-health-new-york-ny-87ecnr",
+          "description": null,
+          "phone": "(212) 576-4104",
+          "website": "https://www.pgcmh.org",
+          "address_line1": "213 West 35th Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10001",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7522262,
+          "longitude": -73.9913934,
+          "distance_miles": 0.4
+        },
+        {
+          "id": "d9947542-e6a9-4471-9f23-d6bd7825e919",
+          "name": "Mountainside Chelsea",
+          "slug": "mountainside-chelsea-new-york-ny-ltf43w",
+          "description": null,
+          "phone": "(860) 824-1397",
+          "website": "https://Mountainside.com",
+          "address_line1": "243 West 18th Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10011",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7420067,
+          "longitude": -73.9996689,
+          "distance_miles": 0.5
+        },
+        {
+          "id": "f8ae7a3b-d4ba-4328-97f5-0d4322a23ae8",
+          "name": "CARES",
+          "slug": "cares-new-york-ny-1uw6ne",
+          "description": null,
+          "phone": "(212) 523-7233",
+          "website": "https://www.mountsinai.org/care/psychiatry/services/cares",
+          "address_line1": "307 West 38th Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10018",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7551715,
+          "longitude": -73.9924463,
+          "distance_miles": 0.5
+        },
+        {
+          "id": "6b19b92e-6955-426d-843f-c50f753693ab",
+          "name": "Shiloh Psychological Consulting PLLC",
+          "slug": "shiloh-psychological-consulting-pllc-new-york-ny-051bdl",
+          "description": null,
+          "phone": "(212) 564-7631",
+          "website": "https://shilohconsultingLLC.com",
+          "address_line1": "566 7th Avenue",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10018",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.755236,
+          "longitude": -73.9880113,
+          "distance_miles": 0.7
+        },
+        {
+          "id": "945fec0f-4ff2-4704-abc2-0075c458b9a9",
+          "name": "TRI Center Inc",
+          "slug": "tri-center-inc-new-york-ny-67wzb7",
+          "description": null,
+          "phone": "(212) 268-8830",
+          "website": "https://www.tricenter.com",
+          "address_line1": "20 West 37th Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10018",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7506915,
+          "longitude": -73.9845371,
+          "distance_miles": 0.7
+        },
+        {
+          "id": "801cdea7-28ce-4404-a497-12b511384904",
+          "name": "Inter Care Ltd",
+          "slug": "inter-care-ltd-new-york-ny-ljq8vf",
+          "description": null,
+          "phone": null,
+          "website": "https://www.inter-care.com",
+          "address_line1": "51 East 25th Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10010",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7419324,
+          "longitude": -73.9861145,
+          "distance_miles": 0.7
+        },
+        {
+          "id": "605f0fb6-1fd5-4eb2-80a4-27a9312db78c",
+          "name": "Realization Center Inc",
+          "slug": "realization-center-inc-new-york-ny-e8f3kd",
+          "description": null,
+          "phone": "(212) 627-9600",
+          "website": "https://www.realizationcenternyc.com",
+          "address_line1": "19 Union Square West",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10003",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7361247,
+          "longitude": -73.9912374,
+          "distance_miles": 0.9
+        },
+        {
+          "id": "490f3700-b531-44cc-a16a-b3e712cbac5e",
+          "name": "Wholeview Wellness LLC",
+          "slug": "wholeview-wellness-llc-new-york-ny-b4fo0n",
+          "description": null,
+          "phone": "(212) 204-8430",
+          "website": "https://www.wholeview.co",
+          "address_line1": "369 Lexington Avenue",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10017",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.750579,
+          "longitude": -73.9764314,
+          "distance_miles": 1.1
+        },
+        {
+          "id": "7993dfd3-de86-4399-bdb8-9df8517400fa",
+          "name": "Bellevue Hospital Center (HHC)",
+          "slug": "bellevue-hospital-center-hhc-new-york-ny-fx4so0",
+          "description": null,
+          "phone": "(212) 562-3201",
+          "website": "https://www.nyc.gov/bellevue",
+          "address_line1": "462 1st Avenue and 27th Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10016",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7390729,
+          "longitude": -73.9750165,
+          "distance_miles": 1.3
+        },
+        {
+          "id": "f57651e3-3e5a-4b10-b95d-cd8ab105d845",
+          "name": "Freedom Institute Inc",
+          "slug": "freedom-institute-inc-new-york-ny-bmdx90",
+          "description": null,
+          "phone": "(212) 838-0044",
+          "website": "https://www.freedominstitute.org",
+          "address_line1": "515 Madison Avenue",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10022",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7597893,
+          "longitude": -73.9737557,
+          "distance_miles": 1.4
+        },
+        {
+          "id": "827d8761-f45c-41fa-a2dd-e1e5e196265f",
+          "name": "Greenwich House Inc",
+          "slug": "greenwich-house-inc-new-york-ny-vgh9or",
+          "description": null,
+          "phone": "(212) 677-3400",
+          "website": "https://www.greenwichhouse.org",
+          "address_line1": "190 Mercer Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10012",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.726197,
+          "longitude": -73.997144,
+          "distance_miles": 1.5
+        },
+        {
+          "id": "23fc435e-e586-4aaf-93fd-01b34bda6092",
+          "name": "New York Center for Living Inc",
+          "slug": "new-york-center-for-living-inc-new-york-ny-cubnsq",
+          "description": null,
+          "phone": "(212) 712-8800",
+          "website": "https://www.centerforliving.org",
+          "address_line1": "226 East 52nd Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10022",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7564439,
+          "longitude": -73.9688517,
+          "distance_miles": 1.6
+        },
+        {
+          "id": "23533c68-76e0-4589-b853-aa6a0ca287b0",
+          "name": "Ascendant New York",
+          "slug": "ascendant-new-york-new-york-ny-cnnung",
+          "description": null,
+          "phone": "(917) 262-0003",
+          "website": "https://ascendantny.com",
+          "address_line1": "210 East 58th Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10022",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7604289,
+          "longitude": -73.9664337,
+          "distance_miles": 1.8
+        },
+        {
+          "id": "d207d957-723a-43b7-be27-f98a32750dd6",
+          "name": "Lafayette Medical Approach LLC",
+          "slug": "lafayette-medical-approach-llc-new-york-ny-mmnwhs",
+          "description": null,
+          "phone": "(212) 431-6177",
+          "website": "https://www.lafayettemedical.org",
+          "address_line1": "233 Lafayette Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10012",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.722452,
+          "longitude": -73.9968219,
+          "distance_miles": 1.8
+        },
+        {
+          "id": "4828057c-2241-4cd1-b5a1-6d8964b3b791",
+          "name": "OTP Avenue A Clinic",
+          "slug": "otp-avenue-a-clinic-new-york-ny-mkvbmi",
+          "description": null,
+          "phone": "(212) 420-2078",
+          "website": "https://MountSinai.org",
+          "address_line1": "26 Avenue A",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10009",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7231342,
+          "longitude": -73.9853215,
+          "distance_miles": 1.8
+        },
+        {
+          "id": "77335df9-4b9c-48ab-902b-be9506c651da",
+          "name": "Guardian Intensive Outpatient Program",
+          "slug": "guardian-intensive-outpatient-program-hoboken-nj-su8iu8",
+          "description": null,
+          "phone": "(201) 448-8304",
+          "website": "https://www.guardianiop.com",
+          "address_line1": "33-41 Newark Street",
+          "city": "Hoboken",
+          "state": "NJ",
+          "zip": "07030",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7362444,
+          "longitude": -74.0302672,
+          "distance_miles": 1.9
+        },
+        {
+          "id": "9a2c166a-b02e-430a-b31d-9a6494232076",
+          "name": "Hazelden",
+          "slug": "hazelden-new-york-ny-xrikub",
+          "description": null,
+          "phone": "(646) 601-7028",
+          "website": "https://www.hazeldenbettyford.org/treatment/locations/tribeca",
+          "address_line1": "283 West Broadway",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10013",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7208017,
+          "longitude": -74.0048389,
+          "distance_miles": 2
+        },
+        {
+          "id": "dca6be34-f133-450d-b63b-ad08c6a59f51",
+          "name": "Gouverneur Clinic",
+          "slug": "gouverneur-clinic-new-york-ny-gm2z98",
+          "description": null,
+          "phone": "(212) 614-2840",
+          "website": "https://www.mountsinai.org",
+          "address_line1": "109-11 Delancey Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10002",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7184126,
+          "longitude": -73.9886502,
+          "distance_miles": 2.1
+        },
+        {
+          "id": "c3c4173d-049d-4075-b968-2f507499543b",
+          "name": "Hoboken University Medical Center",
+          "slug": "hoboken-university-medical-center-hoboken-nj-321uw7",
+          "description": null,
+          "phone": null,
+          "website": "https://www.hudsonregionalhealth.com",
+          "address_line1": "122 Clinton Street",
+          "city": "Hoboken",
+          "state": "NJ",
+          "zip": "07030",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7393121,
+          "longitude": -74.0353396,
+          "distance_miles": 2.1
+        },
+        {
+          "id": "47c6415b-07ed-47a5-bbc8-23f75290e33b",
+          "name": "Neighborhood Coalition for Shelter Inc",
+          "slug": "neighborhood-coalition-for-shelter-inc-new-york-ny-949q24",
+          "description": null,
+          "phone": "(917) 677-0722",
+          "website": "https://www.ncsinc.org",
+          "address_line1": "921-923 Madison Avenue",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10021",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7725016,
+          "longitude": -73.9645065,
+          "distance_miles": 2.4
+        },
+        {
+          "id": "2c3ac325-547f-4622-a288-61a49f7892d8",
+          "name": "Lower Eastside Service Center",
+          "slug": "lower-eastside-service-center-new-york-ny-1gjeg7",
+          "description": null,
+          "phone": "(212) 343-3591",
+          "website": "https://www.lesc.org",
+          "address_line1": "62 East Broadway",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10002",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7138376,
+          "longitude": -73.9951519,
+          "distance_miles": 2.4
+        },
+        {
+          "id": "c65aed15-2f17-4b0b-9010-6dd21723696e",
+          "name": "Lower East Side Service Ctr Inc",
+          "slug": "lower-east-side-service-ctr-inc-new-york-ny-3ye3u9",
+          "description": null,
+          "phone": "(212) 343-3533",
+          "website": "https://www.lesc.org",
+          "address_line1": "46 East Broadway",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10002",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7137876,
+          "longitude": -73.9958686,
+          "distance_miles": 2.4
+        },
+        {
+          "id": "edb1510d-6252-4b95-8384-7dce727bc9db",
+          "name": "Hoboken University Medical Center",
+          "slug": "hoboken-university-medical-center-hoboken-nj-jeox32",
+          "description": null,
+          "phone": null,
+          "website": "https://www.carepointhealth.org/",
+          "address_line1": "61 Monroe Street",
+          "city": "Hoboken",
+          "state": "NJ",
+          "zip": "07030",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.737867,
+          "longitude": -74.0403072,
+          "distance_miles": 2.4
+        },
+        {
+          "id": "ad74ff1d-4f85-415b-81f5-45d0e9454b63",
+          "name": "New York Presbyterian Hospital",
+          "slug": "new-york-presbyterian-hospital-new-york-ny-3wix14",
+          "description": null,
+          "phone": "(212) 746-9229",
+          "website": "https://www.nyp.org/acn/specialty-care/vincent-p-dole-opaite-dependency",
+          "address_line1": "503 East 70th Street",
+          "city": "New York",
+          "state": "NY",
+          "zip": "10021",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7655029,
+          "longitude": -73.9542643,
+          "distance_miles": 2.5
+        }
+      ]
+    },
+    {
+      "zip": "69201",
+      "type": null,
+      "origin": {
+        "zip": "69201",
+        "city": "Valentine",
+        "state": "NE",
+        "latitude": 42.8062,
+        "longitude": -100.6215
+      },
+      "idsMatch": true,
+      "stable": true,
+      "secondPageMatch": true,
+      "maxRoundDifference": 0.04325944360368794,
+      "expected": [
+        {
+          "id": "0a81f51e-e496-4873-9282-704dc0d2870a",
+          "d": 102.80507482925798,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "106b34e3-01e0-43e6-838a-63d0224b2cb4",
+          "d": 103.07942390835164,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "6b9151c7-50ac-4b04-ba54-33b240912191",
+          "d": 103.39677935451708,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "2b646100-63c7-49d0-8de5-46673e130ef7",
+          "d": 105.29540074152506,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "1a31907b-d00a-40bf-b13e-89c45c76b664",
+          "d": 110.21251262427039,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "e4c73139-0138-4bf1-af04-6801a2a3dfe9",
+          "d": 114.93572916885581,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "6612690b-6186-4210-ba6f-0eb3ec2054f3",
+          "d": 115.5856811218962,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "4b8346f2-6009-4217-ac38-f9aacc8cd944",
+          "d": 115.66542855222475,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "19eb81ca-3d59-4625-9b34-2ffc6c370c02",
+          "d": 115.78126133706625,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "c4d3da39-90cf-4277-a0d7-7d4e27b4151c",
+          "d": 115.87203889764888,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "846c26ac-9237-42a3-9407-9348cc005175",
+          "d": 124.31158567030812,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "c8b5c80a-cfe1-450f-a26d-59c537c9b7c7",
+          "d": 124.7180791676977,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "9d877685-7a38-4d97-90ad-85a6f8cb4b7e",
+          "d": 129.2286801475477,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "b3c2b4d6-f476-4ff0-80b5-b5c63f5059f1",
+          "d": 131.32302057172984,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "701ee56b-5d0b-4a15-8ca9-8174c17cdba0",
+          "d": 146.48741732554396,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "3ee170a4-f7fe-48d4-8c71-780bed8843b2",
+          "d": 147.0777797368841,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "0dd5a06e-9f2d-400b-8854-69b14123bb3a",
+          "d": 147.33819739193433,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "158531f4-d27d-450a-bc83-ed06d7d65c56",
+          "d": 150.271779685652,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "95367707-fedc-49a3-bcd3-97c840070af7",
+          "d": 150.51137220636076,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "704b5b1d-d91f-4c51-a065-dfd1af36be04",
+          "d": 151.40698600770222,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "565fa09a-54e0-4014-a61f-06f580d3ede7",
+          "d": 155.9318460902211,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "7d0d44cd-200c-4a12-867d-60eb0c397886",
+          "d": 156.41263376414975,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "27bcd6e1-2d5d-42ec-b96b-3d14954a1f74",
+          "d": 156.7352464231011,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "91d23cc9-e2f7-4c29-a03e-9cbbb2d885fc",
+          "d": 156.7352464231011,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "52ff4363-96b6-441b-98f4-9b3f7c737b95",
+          "d": 156.9567405563963,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "c6883984-08f4-436a-aa35-94379c45766c",
+          "d": 157.26183607098295,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "c4f23899-346e-4c4d-a980-8131d3c96433",
+          "d": 157.7107715273823,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "b0ff8d40-aa4f-4418-a43e-336da7cd397f",
+          "d": 158.06470289375892,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "3a8c530a-28c2-4256-a43c-74bf311fb483",
+          "d": 161.52225818120556,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "f6aa9df9-626f-4f34-bec9-1f8f058f8b97",
+          "d": 163.16577809470277,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "e3302bb5-0e0f-4be3-bc04-a7ed0ffc42b4",
+          "d": 163.43316076945754,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "7fd62014-4d31-4b0a-afe5-fd62c74944b7",
+          "d": 163.61568812479894,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "329e346d-8c1c-4f64-a660-c7ee73b67071",
+          "d": 164.92470106858858,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "5ef11dfb-a585-4e3a-9b95-9d7ad5a68508",
+          "d": 166.65550930750618,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "6d8feb1f-cb3a-49fe-b435-562061c57564",
+          "d": 168.3412245724995,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "f10cce71-5175-4444-bdf6-3536a872375c",
+          "d": 168.85951918457786,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "562598cd-ca3d-4f78-96c4-88fefc10d0b5",
+          "d": 169.76725953755022,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "01ef4acd-cd6c-4852-99b8-67e440329a34",
+          "d": 170.07411690146094,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "3ca3457b-ac7e-4c8a-9e6b-3cbe1bf6527a",
+          "d": 170.71227496701567,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "24ac3bc5-db2f-4c27-9010-2f67a220dc38",
+          "d": 171.2484388717588,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "a8b741ea-8dcf-43d7-af53-5770ea5ef6f7",
+          "d": 171.5059195732047,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "255f1bb8-21d0-426c-b14f-fa8f28480ddb",
+          "d": 171.78260523033617,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "57562279-c3cb-4c53-bf5f-8ff8f0417caf",
+          "d": 171.88357929641347,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "2ec2de80-0338-4e2c-a5a5-96bf06eedb5d",
+          "d": 171.9409190882964,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "24eba129-b679-43a3-babc-dd5a1db51263",
+          "d": 172.22353080655404,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "193e79a9-09a1-44b3-be61-dfcfddddc250",
+          "d": 172.30637401764315,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "6677e4c4-72af-4565-bd33-f5cf917cb7d9",
+          "d": 172.43568630389004,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "c36c16f2-1465-4279-a0c3-32e991b783c1",
+          "d": 172.47342018120622,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "211a6b46-2294-49c0-a843-c55fecc82ebd",
+          "d": 172.56400384753115,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "ca3e1d70-6cf6-4b62-87a6-14bc542d62b3",
+          "d": 174.24969716722464,
+          "listing_tier": "basic",
+          "is_featured": false
+        }
+      ],
+      "rpc": [
+        {
+          "id": "0a81f51e-e496-4873-9282-704dc0d2870a",
+          "name": "Heartland Counseling Services Inc",
+          "slug": "heartland-counseling-services-inc-o-neill-ne-n110qo",
+          "description": null,
+          "phone": "(402) 336-2800",
+          "website": "https://www.heartlandcounselingservices.org",
+          "address_line1": "221 West Douglas Street",
+          "city": "O'Neill",
+          "state": "NE",
+          "zip": "68763",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 42.4574424,
+          "longitude": -98.6553962,
+          "distance_miles": 102.8
+        },
+        {
+          "id": "106b34e3-01e0-43e6-838a-63d0224b2cb4",
+          "name": "Ally Counseling Services",
+          "slug": "ally-counseling-services-o-neill-ne-j1fh8f",
+          "description": null,
+          "phone": "(402) 336-1306",
+          "website": "https://www.allycounselingservicesllc.com",
+          "address_line1": "614 North 4th Street",
+          "city": "O'Neill",
+          "state": "NE",
+          "zip": "68763",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 42.464599,
+          "longitude": -98.6474179,
+          "distance_miles": 103.1
+        },
+        {
+          "id": "6b9151c7-50ac-4b04-ba54-33b240912191",
+          "name": "Valley Hope of ONeill",
+          "slug": "valley-hope-of-oneill-o-neill-ne-fcwwid",
+          "description": null,
+          "phone": "(785) 877-5111",
+          "website": "https://www.valleyhope.org",
+          "address_line1": "1421 North 10th Street",
+          "city": "O'Neill",
+          "state": "NE",
+          "zip": "68763",
+          "facility_type": "treatment",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 42.4694532,
+          "longitude": -98.6393916,
+          "distance_miles": 103.4
+        },
+        {
+          "id": "2b646100-63c7-49d0-8de5-46673e130ef7",
+          "name": "Fort Thompson Service Unit",
+          "slug": "fort-thompson-service-unit-fort-thompson-sd-rphfyt",
+          "description": null,
+          "phone": "(605) 245-1546",
+          "website": "https://www.ihs.gov/greatplains/healthcarefacilities/fortthompson",
+          "address_line1": "1323 BIA Route 4",
+          "city": "Fort Thompson",
+          "state": "SD",
+          "zip": "57339",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 44.0654692,
+          "longitude": -99.4394009,
+          "distance_miles": 105.3
+        },
+        {
+          "id": "1a31907b-d00a-40bf-b13e-89c45c76b664",
+          "name": "Capital Area Counseling Services",
+          "slug": "capital-area-counseling-services-pierre-sd-u1ka0n",
+          "description": null,
+          "phone": "(605) 224-5811",
+          "website": "https://www.cacsnet.org",
+          "address_line1": "2001 Eastgate Avenue",
+          "city": "Pierre",
+          "state": "SD",
+          "zip": "57501",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 44.3859136,
+          "longitude": -100.3160522,
+          "distance_miles": 110.2
+        },
+        {
+          "id": "e4c73139-0138-4bf1-af04-6801a2a3dfe9",
+          "name": "Lutheran Family Services",
+          "slug": "lutheran-family-services-north-platte-ne-n8yooh",
+          "description": null,
+          "phone": "(308) 532-0587",
+          "website": "https://www.onelfs.org",
+          "address_line1": "120 East 12th Street",
+          "city": "North Platte",
+          "state": "NE",
+          "zip": "69101",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 41.1459158,
+          "longitude": -100.7602155,
+          "distance_miles": 114.9
+        },
+        {
+          "id": "6612690b-6186-4210-ba6f-0eb3ec2054f3",
+          "name": "Beacon of Hope Counseling Center LLC",
+          "slug": "beacon-of-hope-counseling-center-llc-north-platte-ne-0h1bdd",
+          "description": null,
+          "phone": "(308) 532-0777",
+          "website": "https://www.beaconofhopenp.com",
+          "address_line1": "308 West 4th Street",
+          "city": "North Platte",
+          "state": "NE",
+          "zip": "69101",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 41.1367742,
+          "longitude": -100.7662444,
+          "distance_miles": 115.6
+        },
+        {
+          "id": "4b8346f2-6009-4217-ac38-f9aacc8cd944",
+          "name": "Psychiatric Hope",
+          "slug": "psychiatric-hope-north-platte-ne-0ry1gn",
+          "description": null,
+          "phone": "(308) 221-4651",
+          "website": "https://www.psychiatrichope.com",
+          "address_line1": "321 East 3rd Street",
+          "city": "North Platte",
+          "state": "NE",
+          "zip": "69101",
+          "facility_type": "treatment",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 41.1353248,
+          "longitude": -100.759992,
+          "distance_miles": 115.7
+        },
+        {
+          "id": "19eb81ca-3d59-4625-9b34-2ffc6c370c02",
+          "name": "Heartland Counseling Clinic",
+          "slug": "heartland-counseling-clinic-north-platte-ne-jn9j20",
+          "description": null,
+          "phone": "(308) 534-6029",
+          "website": "https://www.r2hs.com",
+          "address_line1": "110 North Bailey Street",
+          "city": "North Platte",
+          "state": "NE",
+          "zip": "69103",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 41.1337245,
+          "longitude": -100.7617134,
+          "distance_miles": 115.8
+        },
+        {
+          "id": "c4d3da39-90cf-4277-a0d7-7d4e27b4151c",
+          "name": "Family Matters Counseling Services LLC",
+          "slug": "family-matters-counseling-services-llc-north-platte-ne-0pxofe",
+          "description": null,
+          "phone": "(308) 534-3351",
+          "website": null,
+          "address_line1": "410 East B Street",
+          "city": "North Platte",
+          "state": "NE",
+          "zip": "69101",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 41.1323242,
+          "longitude": -100.7598874,
+          "distance_miles": 115.9
+        },
+        {
+          "id": "846c26ac-9237-42a3-9407-9348cc005175",
+          "name": "Human Services Inc",
+          "slug": "human-services-inc-alliance-ne-wxo0dl",
+          "description": null,
+          "phone": "(308) 762-7177",
+          "website": "https://www.hsinc.org",
+          "address_line1": "419 West 25th Street",
+          "city": "Alliance",
+          "state": "NE",
+          "zip": "69301",
+          "facility_type": "treatment",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 42.1193757999754,
+          "longitude": -102.875769693788,
+          "distance_miles": 124.3
+        },
+        {
+          "id": "c8b5c80a-cfe1-450f-a26d-59c537c9b7c7",
+          "name": "Sandhills Center for Hope",
+          "slug": "sandhills-center-for-hope-alliance-ne-majkoy",
+          "description": null,
+          "phone": "(308) 761-4226",
+          "website": null,
+          "address_line1": "212 Box Butte Avenue",
+          "city": "Alliance",
+          "state": "NE",
+          "zip": "69301",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 42.0965537,
+          "longitude": -102.8710111,
+          "distance_miles": 124.7
+        },
+        {
+          "id": "9d877685-7a38-4d97-90ad-85a6f8cb4b7e",
+          "name": "Heartland Counseling Clinic",
+          "slug": "heartland-counseling-clinic-ogallala-ne-m1l4rd",
+          "description": null,
+          "phone": "(308) 284-6767",
+          "website": "https://www.r2hs.com",
+          "address_line1": "401 West 1st Street",
+          "city": "Ogallala",
+          "state": "NE",
+          "zip": "69153",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 41.1245779,
+          "longitude": -101.7227762,
+          "distance_miles": 129.2
+        },
+        {
+          "id": "b3c2b4d6-f476-4ff0-80b5-b5c63f5059f1",
+          "name": "Ponca Tribe of Nebraska",
+          "slug": "ponca-tribe-of-nebraska-niobrara-ne-4rm3f9",
+          "description": null,
+          "phone": "(402) 857-3391",
+          "website": "https://www.poncatribe-ne.gov",
+          "address_line1": "2523 Woodbine Street",
+          "city": "Niobrara",
+          "state": "NE",
+          "zip": "68760",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 42.7512034,
+          "longitude": -98.0329667,
+          "distance_miles": 131.3
+        },
+        {
+          "id": "701ee56b-5d0b-4a15-8ca9-8174c17cdba0",
+          "name": "Lexington Regional Health Center",
+          "slug": "lexington-regional-health-center-lexington-ne-d3i9df",
+          "description": null,
+          "phone": "(308) 324-5651",
+          "website": "https://www.lexingtonregional.org",
+          "address_line1": "1201 North Erie Street",
+          "city": "Lexington",
+          "state": "NE",
+          "zip": "68850",
+          "facility_type": "treatment",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7858929,
+          "longitude": -99.7589814,
+          "distance_miles": 146.5
+        },
+        {
+          "id": "3ee170a4-f7fe-48d4-8c71-780bed8843b2",
+          "name": "Lutheran Family Services of Nebraska",
+          "slug": "lutheran-family-services-of-nebraska-lexington-ne-0oe3by",
+          "description": null,
+          "phone": "(308) 532-0587",
+          "website": "https://www.onelfs.org",
+          "address_line1": "800 North Washington Street",
+          "city": "Lexington",
+          "state": "NE",
+          "zip": "68850",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7812316,
+          "longitude": -99.7409967,
+          "distance_miles": 147.1
+        },
+        {
+          "id": "0dd5a06e-9f2d-400b-8854-69b14123bb3a",
+          "name": "Heartland Counseling Clinic",
+          "slug": "heartland-counseling-clinic-lexington-ne-5qjptl",
+          "description": null,
+          "phone": "(308) 324-6754",
+          "website": "https://www.r2hs.com",
+          "address_line1": "307 East 5th Street",
+          "city": "Lexington",
+          "state": "NE",
+          "zip": "68850",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7779918,
+          "longitude": -99.7380302,
+          "distance_miles": 147.3
+        },
+        {
+          "id": "158531f4-d27d-450a-bc83-ed06d7d65c56",
+          "name": "Addiction Recovery Centers of the",
+          "slug": "addiction-recovery-centers-of-the-hot-springs-sd-vj36uz",
+          "description": null,
+          "phone": "(605) 745-6300",
+          "website": "https://www.arcbh.org",
+          "address_line1": "112 North Chicago Street",
+          "city": "Hot Springs",
+          "state": "SD",
+          "zip": "57747",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 43.4315434,
+          "longitude": -103.475451,
+          "distance_miles": 150.3
+        },
+        {
+          "id": "95367707-fedc-49a3-bcd3-97c840070af7",
+          "name": "VA Black Hills Healthcare System",
+          "slug": "va-black-hills-healthcare-system-hot-springs-sd-ciowf9",
+          "description": null,
+          "phone": null,
+          "website": null,
+          "address_line1": "500 North 5th Street",
+          "city": "Hot Springs",
+          "state": "SD",
+          "zip": "57747",
+          "facility_type": "treatment",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 43.4368989,
+          "longitude": -103.4783281,
+          "distance_miles": 150.5
+        },
+        {
+          "id": "704b5b1d-d91f-4c51-a065-dfd1af36be04",
+          "name": "Centennial Mental Health Center Inc",
+          "slug": "centennial-mental-health-center-inc-julesburg-co-iyja86",
+          "description": null,
+          "phone": "(970) 474-3769",
+          "website": "https://www.centennialmhc.org",
+          "address_line1": "118 West 3rd Street",
+          "city": "Julesburg",
+          "state": "CO",
+          "zip": "80737",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.9879642,
+          "longitude": -102.2649513,
+          "distance_miles": 151.4
+        },
+        {
+          "id": "565fa09a-54e0-4014-a61f-06f580d3ede7",
+          "name": "Buffalo Plains Recovery",
+          "slug": "buffalo-plains-recovery-rapid-city-sd-k6ezpe",
+          "description": null,
+          "phone": "(605) 600-6985",
+          "website": "https://buffaloplainsrecovery.com",
+          "address_line1": "405 East Fairlane Drive",
+          "city": "Rapid City",
+          "state": "SD",
+          "zip": "57701",
+          "facility_type": "treatment",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 44.0556147,
+          "longitude": -103.2098021,
+          "distance_miles": 155.9
+        },
+        {
+          "id": "7d0d44cd-200c-4a12-867d-60eb0c397886",
+          "name": "Rapid City",
+          "slug": "rapid-city-rapid-city-sd-d4go1f",
+          "description": null,
+          "phone": null,
+          "website": null,
+          "address_line1": "2165 Promise Road",
+          "city": "Rapid City",
+          "state": "SD",
+          "zip": "57701",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 44.0217641,
+          "longitude": -103.2508196,
+          "distance_miles": 156.4
+        },
+        {
+          "id": "27bcd6e1-2d5d-42ec-b96b-3d14954a1f74",
+          "name": "Wellfully Wellspring Inc",
+          "slug": "wellfully-wellspring-inc-rapid-city-sd-s0j9rd",
+          "description": null,
+          "phone": null,
+          "website": "https://www.wellfully.org",
+          "address_line1": "22 Waterloo Street",
+          "city": "Rapid City",
+          "state": "SD",
+          "zip": "57701",
+          "facility_type": "treatment",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 44.082662,
+          "longitude": -103.204629,
+          "distance_miles": 156.7
+        },
+        {
+          "id": "91d23cc9-e2f7-4c29-a03e-9cbbb2d885fc",
+          "name": "Abbott House West",
+          "slug": "abbott-house-west-rapid-city-sd-ke7c4j",
+          "description": null,
+          "phone": null,
+          "website": null,
+          "address_line1": "22 Waterloo Street",
+          "city": "Rapid City",
+          "state": "SD",
+          "zip": "57701",
+          "facility_type": "treatment",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 44.082662,
+          "longitude": -103.204629,
+          "distance_miles": 156.7
+        },
+        {
+          "id": "52ff4363-96b6-441b-98f4-9b3f7c737b95",
+          "name": "ROADS Inc",
+          "slug": "roads-inc-rapid-city-sd-8b9dbf",
+          "description": null,
+          "phone": "(605) 348-8026",
+          "website": null,
+          "address_line1": "103 East Omaha Street",
+          "city": "Rapid City",
+          "state": "SD",
+          "zip": "57701",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 44.081047,
+          "longitude": -103.2114443,
+          "distance_miles": 157
+        }
+      ]
+    },
+    {
+      "zip": "69201",
+      "type": "outpatient",
+      "origin": {
+        "zip": "69201",
+        "city": "Valentine",
+        "state": "NE",
+        "latitude": 42.8062,
+        "longitude": -100.6215
+      },
+      "idsMatch": true,
+      "stable": true,
+      "secondPageMatch": true,
+      "maxRoundDifference": 0.04449069249380955,
+      "expected": [
+        {
+          "id": "0a81f51e-e496-4873-9282-704dc0d2870a",
+          "d": 102.80507482925798,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "106b34e3-01e0-43e6-838a-63d0224b2cb4",
+          "d": 103.07942390835164,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "2b646100-63c7-49d0-8de5-46673e130ef7",
+          "d": 105.29540074152506,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "1a31907b-d00a-40bf-b13e-89c45c76b664",
+          "d": 110.21251262427039,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "e4c73139-0138-4bf1-af04-6801a2a3dfe9",
+          "d": 114.93572916885581,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "6612690b-6186-4210-ba6f-0eb3ec2054f3",
+          "d": 115.5856811218962,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "19eb81ca-3d59-4625-9b34-2ffc6c370c02",
+          "d": 115.78126133706625,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "c4d3da39-90cf-4277-a0d7-7d4e27b4151c",
+          "d": 115.87203889764888,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "c8b5c80a-cfe1-450f-a26d-59c537c9b7c7",
+          "d": 124.7180791676977,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "9d877685-7a38-4d97-90ad-85a6f8cb4b7e",
+          "d": 129.2286801475477,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "b3c2b4d6-f476-4ff0-80b5-b5c63f5059f1",
+          "d": 131.32302057172984,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "3ee170a4-f7fe-48d4-8c71-780bed8843b2",
+          "d": 147.0777797368841,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "0dd5a06e-9f2d-400b-8854-69b14123bb3a",
+          "d": 147.33819739193433,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "158531f4-d27d-450a-bc83-ed06d7d65c56",
+          "d": 150.271779685652,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "704b5b1d-d91f-4c51-a065-dfd1af36be04",
+          "d": 151.40698600770222,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "7d0d44cd-200c-4a12-867d-60eb0c397886",
+          "d": 156.41263376414975,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "52ff4363-96b6-441b-98f4-9b3f7c737b95",
+          "d": 156.9567405563963,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "c6883984-08f4-436a-aa35-94379c45766c",
+          "d": 157.26183607098295,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "c4f23899-346e-4c4d-a980-8131d3c96433",
+          "d": 157.7107715273823,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "b0ff8d40-aa4f-4418-a43e-336da7cd397f",
+          "d": 158.06470289375892,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "3a8c530a-28c2-4256-a43c-74bf311fb483",
+          "d": 161.52225818120556,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "329e346d-8c1c-4f64-a660-c7ee73b67071",
+          "d": 164.92470106858858,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "5ef11dfb-a585-4e3a-9b95-9d7ad5a68508",
+          "d": 166.65550930750618,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "6d8feb1f-cb3a-49fe-b435-562061c57564",
+          "d": 168.3412245724995,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "f10cce71-5175-4444-bdf6-3536a872375c",
+          "d": 168.85951918457786,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "562598cd-ca3d-4f78-96c4-88fefc10d0b5",
+          "d": 169.76725953755022,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "01ef4acd-cd6c-4852-99b8-67e440329a34",
+          "d": 170.07411690146094,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "3ca3457b-ac7e-4c8a-9e6b-3cbe1bf6527a",
+          "d": 170.71227496701567,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "24eba129-b679-43a3-babc-dd5a1db51263",
+          "d": 172.22353080655404,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "193e79a9-09a1-44b3-be61-dfcfddddc250",
+          "d": 172.30637401764315,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "6677e4c4-72af-4565-bd33-f5cf917cb7d9",
+          "d": 172.43568630389004,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "c36c16f2-1465-4279-a0c3-32e991b783c1",
+          "d": 172.47342018120622,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "3295427a-613a-445f-bd00-ca04916f6c89",
+          "d": 175.352272302096,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "7cb25d10-487a-45ff-bd96-d12de6811cd9",
+          "d": 176.15919201884117,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "9e2439c8-63f9-488f-9310-1bde63d24c8a",
+          "d": 176.16832132629182,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "45b81473-ebf2-4e19-86ac-1b8d0069d271",
+          "d": 179.5407703589281,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "71623a8f-bf61-48cb-ac90-12e756559930",
+          "d": 180.640911451762,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "689d2a61-b5b4-4b02-80ce-825ac5e98de9",
+          "d": 190.55621475041508,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "3bd25a74-9602-421e-9bb2-c9c052880ee1",
+          "d": 191.6846102209049,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "55a80f56-54df-4ecf-8355-d0d0ab228148",
+          "d": 191.68713540736107,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "85fdb863-28f5-4934-b293-bad856d8e58b",
+          "d": 192.23534617660513,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "d9a691d6-455c-433d-a6f0-cc999e488917",
+          "d": 192.25972004824465,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "aa5b3585-efd5-4d5d-9725-8d9bee29a87d",
+          "d": 195.23588633760113,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "8427d249-b546-453a-bcde-acab5f11b491",
+          "d": 200.0035213456994,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "087959be-8344-419f-adc0-dcfc5a888ad7",
+          "d": 200.27690354973402,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "d8c63c55-8c7c-4831-9850-fad31c4d92a9",
+          "d": 200.71503292669533,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "64273e2b-4dfc-4ca1-b998-aebdef213e16",
+          "d": 201.20760989118534,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "c7c66f8b-5214-48cb-bb94-34eeb9b43970",
+          "d": 201.32110949607215,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "ae461ed1-be17-4d32-b1f9-56f84aa27739",
+          "d": 201.43519448746648,
+          "listing_tier": "basic",
+          "is_featured": false
+        },
+        {
+          "id": "2f4b881f-1f11-4add-a204-6b835d51ed05",
+          "d": 202.81155906621703,
+          "listing_tier": "basic",
+          "is_featured": false
+        }
+      ],
+      "rpc": [
+        {
+          "id": "0a81f51e-e496-4873-9282-704dc0d2870a",
+          "name": "Heartland Counseling Services Inc",
+          "slug": "heartland-counseling-services-inc-o-neill-ne-n110qo",
+          "description": null,
+          "phone": "(402) 336-2800",
+          "website": "https://www.heartlandcounselingservices.org",
+          "address_line1": "221 West Douglas Street",
+          "city": "O'Neill",
+          "state": "NE",
+          "zip": "68763",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 42.4574424,
+          "longitude": -98.6553962,
+          "distance_miles": 102.8
+        },
+        {
+          "id": "106b34e3-01e0-43e6-838a-63d0224b2cb4",
+          "name": "Ally Counseling Services",
+          "slug": "ally-counseling-services-o-neill-ne-j1fh8f",
+          "description": null,
+          "phone": "(402) 336-1306",
+          "website": "https://www.allycounselingservicesllc.com",
+          "address_line1": "614 North 4th Street",
+          "city": "O'Neill",
+          "state": "NE",
+          "zip": "68763",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 42.464599,
+          "longitude": -98.6474179,
+          "distance_miles": 103.1
+        },
+        {
+          "id": "2b646100-63c7-49d0-8de5-46673e130ef7",
+          "name": "Fort Thompson Service Unit",
+          "slug": "fort-thompson-service-unit-fort-thompson-sd-rphfyt",
+          "description": null,
+          "phone": "(605) 245-1546",
+          "website": "https://www.ihs.gov/greatplains/healthcarefacilities/fortthompson",
+          "address_line1": "1323 BIA Route 4",
+          "city": "Fort Thompson",
+          "state": "SD",
+          "zip": "57339",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 44.0654692,
+          "longitude": -99.4394009,
+          "distance_miles": 105.3
+        },
+        {
+          "id": "1a31907b-d00a-40bf-b13e-89c45c76b664",
+          "name": "Capital Area Counseling Services",
+          "slug": "capital-area-counseling-services-pierre-sd-u1ka0n",
+          "description": null,
+          "phone": "(605) 224-5811",
+          "website": "https://www.cacsnet.org",
+          "address_line1": "2001 Eastgate Avenue",
+          "city": "Pierre",
+          "state": "SD",
+          "zip": "57501",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 44.3859136,
+          "longitude": -100.3160522,
+          "distance_miles": 110.2
+        },
+        {
+          "id": "e4c73139-0138-4bf1-af04-6801a2a3dfe9",
+          "name": "Lutheran Family Services",
+          "slug": "lutheran-family-services-north-platte-ne-n8yooh",
+          "description": null,
+          "phone": "(308) 532-0587",
+          "website": "https://www.onelfs.org",
+          "address_line1": "120 East 12th Street",
+          "city": "North Platte",
+          "state": "NE",
+          "zip": "69101",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 41.1459158,
+          "longitude": -100.7602155,
+          "distance_miles": 114.9
+        },
+        {
+          "id": "6612690b-6186-4210-ba6f-0eb3ec2054f3",
+          "name": "Beacon of Hope Counseling Center LLC",
+          "slug": "beacon-of-hope-counseling-center-llc-north-platte-ne-0h1bdd",
+          "description": null,
+          "phone": "(308) 532-0777",
+          "website": "https://www.beaconofhopenp.com",
+          "address_line1": "308 West 4th Street",
+          "city": "North Platte",
+          "state": "NE",
+          "zip": "69101",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 41.1367742,
+          "longitude": -100.7662444,
+          "distance_miles": 115.6
+        },
+        {
+          "id": "19eb81ca-3d59-4625-9b34-2ffc6c370c02",
+          "name": "Heartland Counseling Clinic",
+          "slug": "heartland-counseling-clinic-north-platte-ne-jn9j20",
+          "description": null,
+          "phone": "(308) 534-6029",
+          "website": "https://www.r2hs.com",
+          "address_line1": "110 North Bailey Street",
+          "city": "North Platte",
+          "state": "NE",
+          "zip": "69103",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 41.1337245,
+          "longitude": -100.7617134,
+          "distance_miles": 115.8
+        },
+        {
+          "id": "c4d3da39-90cf-4277-a0d7-7d4e27b4151c",
+          "name": "Family Matters Counseling Services LLC",
+          "slug": "family-matters-counseling-services-llc-north-platte-ne-0pxofe",
+          "description": null,
+          "phone": "(308) 534-3351",
+          "website": null,
+          "address_line1": "410 East B Street",
+          "city": "North Platte",
+          "state": "NE",
+          "zip": "69101",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 41.1323242,
+          "longitude": -100.7598874,
+          "distance_miles": 115.9
+        },
+        {
+          "id": "c8b5c80a-cfe1-450f-a26d-59c537c9b7c7",
+          "name": "Sandhills Center for Hope",
+          "slug": "sandhills-center-for-hope-alliance-ne-majkoy",
+          "description": null,
+          "phone": "(308) 761-4226",
+          "website": null,
+          "address_line1": "212 Box Butte Avenue",
+          "city": "Alliance",
+          "state": "NE",
+          "zip": "69301",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 42.0965537,
+          "longitude": -102.8710111,
+          "distance_miles": 124.7
+        },
+        {
+          "id": "9d877685-7a38-4d97-90ad-85a6f8cb4b7e",
+          "name": "Heartland Counseling Clinic",
+          "slug": "heartland-counseling-clinic-ogallala-ne-m1l4rd",
+          "description": null,
+          "phone": "(308) 284-6767",
+          "website": "https://www.r2hs.com",
+          "address_line1": "401 West 1st Street",
+          "city": "Ogallala",
+          "state": "NE",
+          "zip": "69153",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 41.1245779,
+          "longitude": -101.7227762,
+          "distance_miles": 129.2
+        },
+        {
+          "id": "b3c2b4d6-f476-4ff0-80b5-b5c63f5059f1",
+          "name": "Ponca Tribe of Nebraska",
+          "slug": "ponca-tribe-of-nebraska-niobrara-ne-4rm3f9",
+          "description": null,
+          "phone": "(402) 857-3391",
+          "website": "https://www.poncatribe-ne.gov",
+          "address_line1": "2523 Woodbine Street",
+          "city": "Niobrara",
+          "state": "NE",
+          "zip": "68760",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 42.7512034,
+          "longitude": -98.0329667,
+          "distance_miles": 131.3
+        },
+        {
+          "id": "3ee170a4-f7fe-48d4-8c71-780bed8843b2",
+          "name": "Lutheran Family Services of Nebraska",
+          "slug": "lutheran-family-services-of-nebraska-lexington-ne-0oe3by",
+          "description": null,
+          "phone": "(308) 532-0587",
+          "website": "https://www.onelfs.org",
+          "address_line1": "800 North Washington Street",
+          "city": "Lexington",
+          "state": "NE",
+          "zip": "68850",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7812316,
+          "longitude": -99.7409967,
+          "distance_miles": 147.1
+        },
+        {
+          "id": "0dd5a06e-9f2d-400b-8854-69b14123bb3a",
+          "name": "Heartland Counseling Clinic",
+          "slug": "heartland-counseling-clinic-lexington-ne-5qjptl",
+          "description": null,
+          "phone": "(308) 324-6754",
+          "website": "https://www.r2hs.com",
+          "address_line1": "307 East 5th Street",
+          "city": "Lexington",
+          "state": "NE",
+          "zip": "68850",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7779918,
+          "longitude": -99.7380302,
+          "distance_miles": 147.3
+        },
+        {
+          "id": "158531f4-d27d-450a-bc83-ed06d7d65c56",
+          "name": "Addiction Recovery Centers of the",
+          "slug": "addiction-recovery-centers-of-the-hot-springs-sd-vj36uz",
+          "description": null,
+          "phone": "(605) 745-6300",
+          "website": "https://www.arcbh.org",
+          "address_line1": "112 North Chicago Street",
+          "city": "Hot Springs",
+          "state": "SD",
+          "zip": "57747",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 43.4315434,
+          "longitude": -103.475451,
+          "distance_miles": 150.3
+        },
+        {
+          "id": "704b5b1d-d91f-4c51-a065-dfd1af36be04",
+          "name": "Centennial Mental Health Center Inc",
+          "slug": "centennial-mental-health-center-inc-julesburg-co-iyja86",
+          "description": null,
+          "phone": "(970) 474-3769",
+          "website": "https://www.centennialmhc.org",
+          "address_line1": "118 West 3rd Street",
+          "city": "Julesburg",
+          "state": "CO",
+          "zip": "80737",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.9879642,
+          "longitude": -102.2649513,
+          "distance_miles": 151.4
+        },
+        {
+          "id": "7d0d44cd-200c-4a12-867d-60eb0c397886",
+          "name": "Rapid City",
+          "slug": "rapid-city-rapid-city-sd-d4go1f",
+          "description": null,
+          "phone": null,
+          "website": null,
+          "address_line1": "2165 Promise Road",
+          "city": "Rapid City",
+          "state": "SD",
+          "zip": "57701",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 44.0217641,
+          "longitude": -103.2508196,
+          "distance_miles": 156.4
+        },
+        {
+          "id": "52ff4363-96b6-441b-98f4-9b3f7c737b95",
+          "name": "ROADS Inc",
+          "slug": "roads-inc-rapid-city-sd-8b9dbf",
+          "description": null,
+          "phone": "(605) 348-8026",
+          "website": null,
+          "address_line1": "103 East Omaha Street",
+          "city": "Rapid City",
+          "state": "SD",
+          "zip": "57701",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 44.081047,
+          "longitude": -103.2114443,
+          "distance_miles": 157
+        },
+        {
+          "id": "c6883984-08f4-436a-aa35-94379c45766c",
+          "name": "Youth and Family Services Inc",
+          "slug": "youth-and-family-services-inc-rapid-city-sd-skhqih",
+          "description": null,
+          "phone": "(605) 342-4789",
+          "website": "https://www.youthandfamilyservices.org",
+          "address_line1": "202 East Adams Street",
+          "city": "Rapid City",
+          "state": "SD",
+          "zip": "57701",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 44.0912109,
+          "longitude": -103.2094892,
+          "distance_miles": 157.3
+        },
+        {
+          "id": "c4f23899-346e-4c4d-a980-8131d3c96433",
+          "name": "Lifeways",
+          "slug": "lifeways-rapid-city-sd-x6tg94",
+          "description": null,
+          "phone": "(605) 716-6555",
+          "website": "https://www.lifeways.us",
+          "address_line1": "1010 9th Street",
+          "city": "Rapid City",
+          "state": "SD",
+          "zip": "57701",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 44.0762378,
+          "longitude": -103.2339314,
+          "distance_miles": 157.7
+        },
+        {
+          "id": "b0ff8d40-aa4f-4418-a43e-336da7cd397f",
+          "name": "Addiction Recovery Centers of the",
+          "slug": "addiction-recovery-centers-of-the-rapid-city-sd-o2imhb",
+          "description": null,
+          "phone": "(605) 716-7841",
+          "website": "https://www.arcbh.org",
+          "address_line1": "1520 North Haines Avenue",
+          "city": "Rapid City",
+          "state": "SD",
+          "zip": "57701",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 44.0997804,
+          "longitude": -103.2209941,
+          "distance_miles": 158.1
+        },
+        {
+          "id": "3a8c530a-28c2-4256-a43c-74bf311fb483",
+          "name": "Community Counseling Services",
+          "slug": "community-counseling-services-huron-sd-u513r9",
+          "description": null,
+          "phone": null,
+          "website": "https://www.ccs-sd.org",
+          "address_line1": "357 Kansas Avenue SE",
+          "city": "Huron",
+          "state": "SD",
+          "zip": "57350",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 44.3624518,
+          "longitude": -98.2128822,
+          "distance_miles": 161.5
+        },
+        {
+          "id": "329e346d-8c1c-4f64-a660-c7ee73b67071",
+          "name": "South Central Behavioral Services Inc",
+          "slug": "south-central-behavioral-services-inc-kearney-ne-9jxuug",
+          "description": null,
+          "phone": "(308) 237-5951",
+          "website": "https://www.scbsne.com",
+          "address_line1": "3810 Central Avenue",
+          "city": "Kearney",
+          "state": "NE",
+          "zip": "68848",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 40.7133698,
+          "longitude": -99.0822938,
+          "distance_miles": 164.9
+        },
+        {
+          "id": "5ef11dfb-a585-4e3a-9b95-9d7ad5a68508",
+          "name": "Karuna Counseling",
+          "slug": "karuna-counseling-sidney-ne-ufc0dz",
+          "description": null,
+          "phone": "(308) 249-7853",
+          "website": "https://nekarunacounseling.com",
+          "address_line1": "731 Illinois Street",
+          "city": "Sidney",
+          "state": "NE",
+          "zip": "69162",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 41.1446982,
+          "longitude": -102.9738096,
+          "distance_miles": 166.7
+        },
+        {
+          "id": "6d8feb1f-cb3a-49fe-b435-562061c57564",
+          "name": "VA Panhandle of Nebraska",
+          "slug": "va-panhandle-of-nebraska-scottsbluff-ne-z2fyjh",
+          "description": null,
+          "phone": "(308) 225-5330",
+          "website": null,
+          "address_line1": "601 South 5th Avenue",
+          "city": "Scottsbluff",
+          "state": "NE",
+          "zip": "69361",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 41.8533752,
+          "longitude": -103.6549859,
+          "distance_miles": 168.3
+        },
+        {
+          "id": "f10cce71-5175-4444-bdf6-3536a872375c",
+          "name": "Community Action Partnership of",
+          "slug": "community-action-partnership-of-gering-ne-gqxp7j",
+          "description": null,
+          "phone": "(308) 632-2540",
+          "website": "https://www.capwn.org",
+          "address_line1": "975 Cresent Drive",
+          "city": "Gering",
+          "state": "NE",
+          "zip": "69341",
+          "facility_type": "outpatient",
+          "listing_tier": "basic",
+          "is_verified": false,
+          "is_featured": false,
+          "latitude": 41.8437621,
+          "longitude": -103.6602409,
+          "distance_miles": 168.9
+        }
+      ]
+    }
+  ]
+}
