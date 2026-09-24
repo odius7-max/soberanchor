@@ -1,0 +1,308 @@
+[
+  {
+    "width": 375,
+    "gradients": [
+      {
+        "gradient": "linear-gradient(rgba(11, 47, 74, 0.8) 0%, rgba(11, 47, 74, 0.78) 55%, rgba(14, 58, 91, 0.76) 100%)",
+        "display": "block"
+      },
+      {
+        "gradient": "linear-gradient(100deg, rgba(11, 47, 74, 0.86) 0%, rgba(11, 47, 74, 0.8) 46%, rgba(14, 58, 91, 0.74) 78%, rgba(14, 58, 91, 0.66) 100%)",
+        "display": "none"
+      }
+    ],
+    "rows": [
+      {
+        "name": "headline",
+        "left": 42.5,
+        "right": 355,
+        "pixels": 5392,
+        "min": 10.26,
+        "p05": 11.439,
+        "median": 11.922
+      },
+      {
+        "name": "subhead",
+        "left": 42.5,
+        "right": 355,
+        "pixels": 3650,
+        "min": 7.951,
+        "p05": 10.56,
+        "median": 13.051
+      },
+      {
+        "name": "trust",
+        "left": 42.5,
+        "right": 355,
+        "pixels": 675,
+        "min": 6.481,
+        "p05": 7.234,
+        "median": 8.212
+      },
+      {
+        "name": "hint",
+        "left": 42.5,
+        "right": 186.08,
+        "pixels": 243,
+        "min": 6.405,
+        "p05": 6.805,
+        "median": 7.699
+      }
+    ]
+  },
+  {
+    "width": 1024,
+    "gradients": [
+      {
+        "gradient": "linear-gradient(rgba(11, 47, 74, 0.8) 0%, rgba(11, 47, 74, 0.78) 55%, rgba(14, 58, 91, 0.76) 100%)",
+        "display": "none"
+      },
+      {
+        "gradient": "linear-gradient(100deg, rgba(11, 47, 74, 0.86) 0%, rgba(11, 47, 74, 0.8) 46%, rgba(14, 58, 91, 0.74) 78%, rgba(14, 58, 91, 0.66) 100%)",
+        "display": "block"
+      }
+    ],
+    "rows": [
+      {
+        "name": "headline",
+        "left": 81.44,
+        "right": 761.44,
+        "pixels": 14279,
+        "min": 6.782,
+        "p05": 10.424,
+        "median": 12.111
+      },
+      {
+        "name": "subhead",
+        "left": 81.44,
+        "right": 641.44,
+        "pixels": 3661,
+        "min": 8.009,
+        "p05": 10.101,
+        "median": 11.305
+      },
+      {
+        "name": "trust",
+        "left": 81.44,
+        "right": 761.44,
+        "pixels": 661,
+        "min": 7.435,
+        "p05": 7.868,
+        "median": 8.98
+      },
+      {
+        "name": "hint",
+        "left": 81.44,
+        "right": 225.02,
+        "pixels": 245,
+        "min": 7.683,
+        "p05": 7.958,
+        "median": 8.643
+      }
+    ]
+  },
+  {
+    "width": 1280,
+    "gradients": [
+      {
+        "gradient": "linear-gradient(rgba(11, 47, 74, 0.8) 0%, rgba(11, 47, 74, 0.78) 55%, rgba(14, 58, 91, 0.76) 100%)",
+        "display": "none"
+      },
+      {
+        "gradient": "linear-gradient(100deg, rgba(11, 47, 74, 0.86) 0%, rgba(11, 47, 74, 0.8) 46%, rgba(14, 58, 91, 0.74) 78%, rgba(14, 58, 91, 0.66) 100%)",
+        "display": "block"
+      }
+    ],
+    "rows": [
+      {
+        "name": "headline",
+        "left": 104,
+        "right": 784,
+        "pixels": 19470,
+        "min": 7.129,
+        "p05": 10.457,
+        "median": 12.388
+      },
+      {
+        "name": "subhead",
+        "left": 104,
+        "right": 664,
+        "pixels": 5662,
+        "min": 7.628,
+        "p05": 8.508,
+        "median": 10.99
+      },
+      {
+        "name": "trust",
+        "left": 104,
+        "right": 784,
+        "pixels": 713,
+        "min": 7.236,
+        "p05": 8.135,
+        "median": 9.306
+      },
+      {
+        "name": "hint",
+        "left": 104,
+        "right": 247.58,
+        "pixels": 225,
+        "min": 8.361,
+        "p05": 9.115,
+        "median": 9.625
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "gradients": [
+      {
+        "gradient": "linear-gradient(rgba(11, 47, 74, 0.8) 0%, rgba(11, 47, 74, 0.78) 55%, rgba(14, 58, 91, 0.76) 100%)",
+        "display": "none"
+      },
+      {
+        "gradient": "linear-gradient(100deg, rgba(11, 47, 74, 0.86) 0%, rgba(11, 47, 74, 0.8) 46%, rgba(14, 58, 91, 0.74) 78%, rgba(14, 58, 91, 0.66) 100%)",
+        "display": "block"
+      }
+    ],
+    "rows": [
+      {
+        "name": "headline",
+        "left": 184,
+        "right": 864,
+        "pixels": 19469,
+        "min": 8.111,
+        "p05": 10.179,
+        "median": 12.29
+      },
+      {
+        "name": "subhead",
+        "left": 184,
+        "right": 744,
+        "pixels": 5659,
+        "min": 7.77,
+        "p05": 8.528,
+        "median": 10.935
+      },
+      {
+        "name": "trust",
+        "left": 184,
+        "right": 864,
+        "pixels": 713,
+        "min": 7.076,
+        "p05": 7.759,
+        "median": 8.683
+      },
+      {
+        "name": "hint",
+        "left": 184,
+        "right": 327.58,
+        "pixels": 224,
+        "min": 7.905,
+        "p05": 8.929,
+        "median": 9.536
+      }
+    ]
+  },
+  {
+    "width": 1920,
+    "gradients": [
+      {
+        "gradient": "linear-gradient(rgba(11, 47, 74, 0.8) 0%, rgba(11, 47, 74, 0.78) 55%, rgba(14, 58, 91, 0.76) 100%)",
+        "display": "none"
+      },
+      {
+        "gradient": "linear-gradient(100deg, rgba(11, 47, 74, 0.86) 0%, rgba(11, 47, 74, 0.8) 46%, rgba(14, 58, 91, 0.74) 78%, rgba(14, 58, 91, 0.66) 100%)",
+        "display": "block"
+      }
+    ],
+    "rows": [
+      {
+        "name": "headline",
+        "left": 424,
+        "right": 1104,
+        "pixels": 19470,
+        "min": 8.279,
+        "p05": 10.228,
+        "median": 12.266
+      },
+      {
+        "name": "subhead",
+        "left": 424,
+        "right": 984,
+        "pixels": 5669,
+        "min": 7.643,
+        "p05": 8.826,
+        "median": 11.022
+      },
+      {
+        "name": "trust",
+        "left": 424,
+        "right": 1104,
+        "pixels": 708,
+        "min": 7.283,
+        "p05": 7.71,
+        "median": 8.525
+      },
+      {
+        "name": "hint",
+        "left": 424,
+        "right": 567.58,
+        "pixels": 226,
+        "min": 7.629,
+        "p05": 7.995,
+        "median": 8.69
+      }
+    ]
+  },
+  {
+    "width": 2560,
+    "gradients": [
+      {
+        "gradient": "linear-gradient(rgba(11, 47, 74, 0.8) 0%, rgba(11, 47, 74, 0.78) 55%, rgba(14, 58, 91, 0.76) 100%)",
+        "display": "none"
+      },
+      {
+        "gradient": "linear-gradient(100deg, rgba(11, 47, 74, 0.86) 0%, rgba(11, 47, 74, 0.8) 46%, rgba(14, 58, 91, 0.74) 78%, rgba(14, 58, 91, 0.66) 100%)",
+        "display": "block"
+      }
+    ],
+    "rows": [
+      {
+        "name": "headline",
+        "left": 744,
+        "right": 1424,
+        "pixels": 19470,
+        "min": 8.152,
+        "p05": 10.748,
+        "median": 12.26
+      },
+      {
+        "name": "subhead",
+        "left": 744,
+        "right": 1304,
+        "pixels": 5665,
+        "min": 7.677,
+        "p05": 9.78,
+        "median": 11.119
+      },
+      {
+        "name": "trust",
+        "left": 744,
+        "right": 1424,
+        "pixels": 709,
+        "min": 6.703,
+        "p05": 7.444,
+        "median": 8.061
+      },
+      {
+        "name": "hint",
+        "left": 744,
+        "right": 887.58,
+        "pixels": 225,
+        "min": 7.66,
+        "p05": 8.186,
+        "median": 8.967
+      }
+    ]
+  }
+]

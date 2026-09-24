@@ -50,6 +50,20 @@ export default function HomeHero({ facilityCount }: { facilityCount: number }) {
         @media (min-width: 701px) { .sa-hero-h1 { font-variation-settings: 'opsz' 42; } }
         .sa-hero-focus:focus-visible,
         .sa-hero-search:focus-within { outline: 3px solid #7FD4C1; outline-offset: 3px; }
+        /*
+          ODI-102. The copy column is inset to the site's content container — the same
+          max-w-[1120px] box and 24px gutter Nav uses — so the headline starts on the nav
+          logo's vertical instead of drifting to the viewport edge as the window widens.
+          50% is of this grid item's containing block, i.e. the section's content box
+          (viewport minus the section's 2×20px padding), so 50% - 536px resolves to the
+          container's left gutter measured from that box's own left edge.
+          max() keeps the comp's original clamp wherever the clamp is the larger of the
+          two — every width up to ~1264px — so 1024 and below, mobile included, stay
+          pixel-identical, and nothing ever moves left of where it sits today.
+          A media query can't express this (the crossover is continuous) and a Tailwind
+          arbitrary value can't hold the spaces max() needs, so it lives here.
+        */
+        .sa-hero-copy { padding-left: max(clamp(4px, 6vw, 90px), 50% - 536px); }
       `}</style>
 
       {/* Decorative: the photograph carries no information the copy doesn't. */}
@@ -89,11 +103,12 @@ export default function HomeHero({ facilityCount }: { facilityCount: number }) {
 
       {/*
         Two boxes so the comp's geometry survives border-box: the outer one carries the
-        left inset, the inner one caps the copy at 680px. min-w-0 (plus the section's
+        left inset (.sa-hero-copy above — the site content container's gutter), the inner
+        one caps the copy at 680px inside it. min-w-0 (plus the section's
         grid-cols-[minmax(0,1fr)]) stops the column being sized by its min-content and
         overflowing narrow viewports.
       */}
-      <div className="relative min-w-0 text-left pl-[clamp(4px,6vw,90px)]">
+      <div className="sa-hero-copy relative min-w-0 text-left">
         <div className="max-w-[680px]">
           <div
             aria-hidden

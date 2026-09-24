@@ -1,0 +1,53 @@
+[
+  {
+    "width": 1920,
+    "gradients": [
+      {
+        "gradient": "linear-gradient(rgba(11, 47, 74, 0.8) 0%, rgba(11, 47, 74, 0.78) 55%, rgba(14, 58, 91, 0.76) 100%)",
+        "display": "none"
+      },
+      {
+        "gradient": "linear-gradient(100deg, rgba(11, 47, 74, 0.86) 0%, rgba(11, 47, 74, 0.8) 46%, rgba(14, 58, 91, 0.74) 78%, rgba(14, 58, 91, 0.66) 100%)",
+        "display": "block"
+      }
+    ],
+    "rows": [
+      {
+        "name": "headline",
+        "left": 110,
+        "right": 790,
+        "pixels": 19470,
+        "min": 8.267,
+        "p05": 10.517,
+        "median": 12.916
+      },
+      {
+        "name": "subhead",
+        "left": 110,
+        "right": 670,
+        "pixels": 5670,
+        "min": 7.237,
+        "p05": 8.454,
+        "median": 10.55
+      },
+      {
+        "name": "trust",
+        "left": 110,
+        "right": 790,
+        "pixels": 710,
+        "min": 7.952,
+        "p05": 8.635,
+        "median": 9.448
+      },
+      {
+        "name": "hint",
+        "left": 110,
+        "right": 253.58,
+        "pixels": 224,
+        "min": 8.804,
+        "p05": 9.107,
+        "median": 9.702
+      }
+    ]
+  }
+]
