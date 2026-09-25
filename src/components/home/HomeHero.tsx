@@ -64,6 +64,23 @@ export default function HomeHero({ facilityCount }: { facilityCount: number }) {
           arbitrary value can't hold the spaces max() needs, so it lives here.
         */
         .sa-hero-copy { padding-left: max(clamp(4px, 6vw, 90px), 50% - 536px); }
+        /*
+          ODI-102 gate, finding 4. Once the copy column is anchored to the content
+          container, the headline's long middle line ("treatment to tracking") grows
+          away from the viewport edge at the same rate the left walker does, and from
+          about 1520px up the terminal "g" lands on his head — measured contact, not a
+          near miss. object-position cannot help: the photograph is 2000x1180 against a
+          hero this wide, so cover scales it by width and there is exactly zero
+          horizontal slack to shift (see docs/audits/odi-102/after-clearance.json).
+          Capping the headline is the lever that leaves the photograph alone, and the
+          cap is the 560px the subhead already uses, so above this breakpoint the whole
+          copy block reads on one measure. text-wrap:balance then settles it into four
+          lines whose longest is 422px, which clears the walker by ~200px at every
+          width from 1520 to 2560. Below the breakpoint nothing changes at all, which
+          is what keeps 1280/1440 — and every width the first gate pixel-diffed —
+          byte-identical. The opsz 42 pin above is untouched and still applies.
+        */
+        @media (min-width: 1500px) { .sa-hero-h1 { max-width: 560px; } }
       `}</style>
 
       {/* Decorative: the photograph carries no information the copy doesn't. */}

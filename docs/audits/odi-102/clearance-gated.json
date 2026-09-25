@@ -1,0 +1,850 @@
+[
+  {
+    "width": 1280,
+    "lines": [
+      {
+        "x": 104,
+        "right": 494.69,
+        "top": 213.84,
+        "bottom": 308.84,
+        "width": 390.69
+      },
+      {
+        "x": 104,
+        "right": 732.28,
+        "top": 284.23,
+        "bottom": 379.23,
+        "width": 628.28
+      },
+      {
+        "x": 104,
+        "right": 525.98,
+        "top": 354.63,
+        "bottom": 449.63,
+        "width": 421.98
+      }
+    ],
+    "lineCount": 3,
+    "h1Box": {
+      "x": 104,
+      "y": 226.84,
+      "w": 680,
+      "h": 211.17
+    },
+    "h1FontSize": "64px",
+    "opsz": "\"opsz\" 42",
+    "opticalSizing": "none",
+    "h1MaxWidth": "none",
+    "objectPosition": "100% 50%",
+    "objectFit": "cover",
+    "imgBox": {
+      "x": 0,
+      "y": 116.3,
+      "w": 1280,
+      "h": 760
+    },
+    "natural": {
+      "w": 1333,
+      "h": 786
+    },
+    "copyLeft": 104,
+    "copyWidth": 680,
+    "navLogoLeft": 104,
+    "sectionHeight": 760,
+    "overflow": false,
+    "cover": {
+      "scale": 0.9669,
+      "drawnW": 1288.9,
+      "drawnH": 760,
+      "horizontalSlackPx": 8.9,
+      "verticalSlackPx": 0
+    },
+    "rowsMeasured": 43,
+    "minClearance": 144,
+    "minClearanceAt": {
+      "y": 428,
+      "rightGlyph": 522,
+      "leftWalker": 666
+    },
+    "tightestRows": [
+      {
+        "y": 428,
+        "rightGlyph": 522,
+        "leftWalker": 666,
+        "gap": 144
+      },
+      {
+        "y": 426,
+        "rightGlyph": 522,
+        "leftWalker": 667,
+        "gap": 145
+      },
+      {
+        "y": 427,
+        "rightGlyph": 522,
+        "leftWalker": 667,
+        "gap": 145
+      },
+      {
+        "y": 429,
+        "rightGlyph": 521,
+        "leftWalker": 666,
+        "gap": 145
+      },
+      {
+        "y": 424,
+        "rightGlyph": 522,
+        "leftWalker": 668,
+        "gap": 146
+      },
+      {
+        "y": 425,
+        "rightGlyph": 522,
+        "leftWalker": 668,
+        "gap": 146
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "lines": [
+      {
+        "x": 184,
+        "right": 574.69,
+        "top": 213.84,
+        "bottom": 308.84,
+        "width": 390.69
+      },
+      {
+        "x": 184,
+        "right": 812.28,
+        "top": 284.23,
+        "bottom": 379.23,
+        "width": 628.28
+      },
+      {
+        "x": 184,
+        "right": 605.98,
+        "top": 354.63,
+        "bottom": 449.63,
+        "width": 421.98
+      }
+    ],
+    "lineCount": 3,
+    "h1Box": {
+      "x": 184,
+      "y": 226.84,
+      "w": 680,
+      "h": 211.17
+    },
+    "h1FontSize": "64px",
+    "opsz": "\"opsz\" 42",
+    "opticalSizing": "none",
+    "h1MaxWidth": "none",
+    "objectPosition": "100% 50%",
+    "objectFit": "cover",
+    "imgBox": {
+      "x": 0,
+      "y": 116.3,
+      "w": 1440,
+      "h": 760
+    },
+    "natural": {
+      "w": 1500,
+      "h": 885
+    },
+    "copyLeft": 184,
+    "copyWidth": 680,
+    "navLogoLeft": 184,
+    "sectionHeight": 760,
+    "overflow": false,
+    "cover": {
+      "scale": 0.96,
+      "drawnW": 1440,
+      "drawnH": 849.6,
+      "horizontalSlackPx": 0,
+      "verticalSlackPx": 89.6
+    },
+    "rowsMeasured": 50,
+    "minClearance": 150,
+    "minClearanceAt": {
+      "y": 426,
+      "rightGlyph": 602,
+      "leftWalker": 752
+    },
+    "tightestRows": [
+      {
+        "y": 426,
+        "rightGlyph": 602,
+        "leftWalker": 752,
+        "gap": 150
+      },
+      {
+        "y": 427,
+        "rightGlyph": 602,
+        "leftWalker": 752,
+        "gap": 150
+      },
+      {
+        "y": 424,
+        "rightGlyph": 602,
+        "leftWalker": 753,
+        "gap": 151
+      },
+      {
+        "y": 425,
+        "rightGlyph": 602,
+        "leftWalker": 753,
+        "gap": 151
+      },
+      {
+        "y": 429,
+        "rightGlyph": 601,
+        "leftWalker": 752,
+        "gap": 151
+      },
+      {
+        "y": 430,
+        "rightGlyph": 600,
+        "leftWalker": 751,
+        "gap": 151
+      }
+    ]
+  },
+  {
+    "width": 1680,
+    "lines": [
+      {
+        "x": 304,
+        "right": 694.69,
+        "top": 213.84,
+        "bottom": 308.84,
+        "width": 390.69
+      },
+      {
+        "x": 304,
+        "right": 932.28,
+        "top": 284.23,
+        "bottom": 379.23,
+        "width": 628.28
+      },
+      {
+        "x": 304,
+        "right": 725.98,
+        "top": 354.63,
+        "bottom": 449.63,
+        "width": 421.98
+      }
+    ],
+    "lineCount": 3,
+    "h1Box": {
+      "x": 304,
+      "y": 226.84,
+      "w": 680,
+      "h": 211.17
+    },
+    "h1FontSize": "64px",
+    "opsz": "\"opsz\" 42",
+    "opticalSizing": "none",
+    "h1MaxWidth": "none",
+    "objectPosition": "100% 50%",
+    "objectFit": "cover",
+    "imgBox": {
+      "x": 0,
+      "y": 116.3,
+      "w": 1680,
+      "h": 760
+    },
+    "natural": {
+      "w": 1749,
+      "h": 1032
+    },
+    "copyLeft": 304,
+    "copyWidth": 680,
+    "navLogoLeft": 304,
+    "sectionHeight": 760,
+    "overflow": false,
+    "cover": {
+      "scale": 0.9605,
+      "drawnW": 1680,
+      "drawnH": 991.3,
+      "horizontalSlackPx": 0,
+      "verticalSlackPx": 231.3
+    },
+    "rowsMeasured": 93,
+    "minClearance": 1,
+    "minClearanceAt": {
+      "y": 353,
+      "rightGlyph": 925,
+      "leftWalker": 926
+    },
+    "tightestRows": [
+      {
+        "y": 353,
+        "rightGlyph": 925,
+        "leftWalker": 926,
+        "gap": 1
+      },
+      {
+        "y": 354,
+        "rightGlyph": 928,
+        "leftWalker": 929,
+        "gap": 1
+      },
+      {
+        "y": 355,
+        "rightGlyph": 929,
+        "leftWalker": 930,
+        "gap": 1
+      },
+      {
+        "y": 356,
+        "rightGlyph": 930,
+        "leftWalker": 931,
+        "gap": 1
+      },
+      {
+        "y": 357,
+        "rightGlyph": 931,
+        "leftWalker": 932,
+        "gap": 1
+      },
+      {
+        "y": 358,
+        "rightGlyph": 931,
+        "leftWalker": 932,
+        "gap": 1
+      }
+    ]
+  },
+  {
+    "width": 1760,
+    "lines": [
+      {
+        "x": 344,
+        "right": 734.69,
+        "top": 213.84,
+        "bottom": 308.84,
+        "width": 390.69
+      },
+      {
+        "x": 344,
+        "right": 972.28,
+        "top": 284.23,
+        "bottom": 379.23,
+        "width": 628.28
+      },
+      {
+        "x": 344,
+        "right": 765.98,
+        "top": 354.63,
+        "bottom": 449.63,
+        "width": 421.98
+      }
+    ],
+    "lineCount": 3,
+    "h1Box": {
+      "x": 344,
+      "y": 226.84,
+      "w": 680,
+      "h": 211.17
+    },
+    "h1FontSize": "64px",
+    "opsz": "\"opsz\" 42",
+    "opticalSizing": "none",
+    "h1MaxWidth": "none",
+    "objectPosition": "100% 50%",
+    "objectFit": "cover",
+    "imgBox": {
+      "x": 0,
+      "y": 116.3,
+      "w": 1760,
+      "h": 760
+    },
+    "natural": {
+      "w": 1833,
+      "h": 1081
+    },
+    "copyLeft": 344,
+    "copyWidth": 680,
+    "navLogoLeft": 344,
+    "sectionHeight": 760,
+    "overflow": false,
+    "cover": {
+      "scale": 0.9602,
+      "drawnW": 1760,
+      "drawnH": 1037.9,
+      "horizontalSlackPx": 0,
+      "verticalSlackPx": 277.9
+    },
+    "rowsMeasured": 116,
+    "minClearance": 1,
+    "minClearanceAt": {
+      "y": 353,
+      "rightGlyph": 965,
+      "leftWalker": 966
+    },
+    "tightestRows": [
+      {
+        "y": 353,
+        "rightGlyph": 965,
+        "leftWalker": 966,
+        "gap": 1
+      },
+      {
+        "y": 354,
+        "rightGlyph": 968,
+        "leftWalker": 969,
+        "gap": 1
+      },
+      {
+        "y": 355,
+        "rightGlyph": 969,
+        "leftWalker": 970,
+        "gap": 1
+      },
+      {
+        "y": 356,
+        "rightGlyph": 970,
+        "leftWalker": 971,
+        "gap": 1
+      },
+      {
+        "y": 357,
+        "rightGlyph": 971,
+        "leftWalker": 972,
+        "gap": 1
+      },
+      {
+        "y": 358,
+        "rightGlyph": 971,
+        "leftWalker": 972,
+        "gap": 1
+      }
+    ]
+  },
+  {
+    "width": 1920,
+    "lines": [
+      {
+        "x": 424,
+        "right": 814.69,
+        "top": 213.84,
+        "bottom": 308.84,
+        "width": 390.69
+      },
+      {
+        "x": 424,
+        "right": 1052.28,
+        "top": 284.23,
+        "bottom": 379.23,
+        "width": 628.28
+      },
+      {
+        "x": 424,
+        "right": 845.98,
+        "top": 354.63,
+        "bottom": 449.63,
+        "width": 421.98
+      }
+    ],
+    "lineCount": 3,
+    "h1Box": {
+      "x": 424,
+      "y": 226.84,
+      "w": 680,
+      "h": 211.17
+    },
+    "h1FontSize": "64px",
+    "opsz": "\"opsz\" 42",
+    "opticalSizing": "none",
+    "h1MaxWidth": "none",
+    "objectPosition": "100% 50%",
+    "objectFit": "cover",
+    "imgBox": {
+      "x": 0,
+      "y": 116.3,
+      "w": 1920,
+      "h": 760
+    },
+    "natural": {
+      "w": 2000,
+      "h": 1180
+    },
+    "copyLeft": 424,
+    "copyWidth": 680,
+    "navLogoLeft": 424,
+    "sectionHeight": 760,
+    "overflow": false,
+    "cover": {
+      "scale": 0.96,
+      "drawnW": 1920,
+      "drawnH": 1132.8,
+      "horizontalSlackPx": 0,
+      "verticalSlackPx": 372.8
+    },
+    "rowsMeasured": 148,
+    "minClearance": 1,
+    "minClearanceAt": {
+      "y": 336,
+      "rightGlyph": 1048,
+      "leftWalker": 1049
+    },
+    "tightestRows": [
+      {
+        "y": 336,
+        "rightGlyph": 1048,
+        "leftWalker": 1049,
+        "gap": 1
+      },
+      {
+        "y": 337,
+        "rightGlyph": 1048,
+        "leftWalker": 1049,
+        "gap": 1
+      },
+      {
+        "y": 338,
+        "rightGlyph": 1048,
+        "leftWalker": 1049,
+        "gap": 1
+      },
+      {
+        "y": 339,
+        "rightGlyph": 1048,
+        "leftWalker": 1049,
+        "gap": 1
+      },
+      {
+        "y": 340,
+        "rightGlyph": 1047,
+        "leftWalker": 1048,
+        "gap": 1
+      },
+      {
+        "y": 341,
+        "rightGlyph": 1047,
+        "leftWalker": 1048,
+        "gap": 1
+      }
+    ]
+  },
+  {
+    "width": 2048,
+    "lines": [
+      {
+        "x": 488,
+        "right": 878.69,
+        "top": 213.84,
+        "bottom": 308.84,
+        "width": 390.69
+      },
+      {
+        "x": 488,
+        "right": 1116.28,
+        "top": 284.23,
+        "bottom": 379.23,
+        "width": 628.28
+      },
+      {
+        "x": 488,
+        "right": 909.98,
+        "top": 354.63,
+        "bottom": 449.63,
+        "width": 421.98
+      }
+    ],
+    "lineCount": 3,
+    "h1Box": {
+      "x": 488,
+      "y": 226.84,
+      "w": 680,
+      "h": 211.17
+    },
+    "h1FontSize": "64px",
+    "opsz": "\"opsz\" 42",
+    "opticalSizing": "none",
+    "h1MaxWidth": "none",
+    "objectPosition": "100% 50%",
+    "objectFit": "cover",
+    "imgBox": {
+      "x": 0,
+      "y": 116.3,
+      "w": 2048,
+      "h": 760
+    },
+    "natural": {
+      "w": 2000,
+      "h": 1180
+    },
+    "copyLeft": 488,
+    "copyWidth": 680,
+    "navLogoLeft": 488,
+    "sectionHeight": 760,
+    "overflow": false,
+    "cover": {
+      "scale": 1.024,
+      "drawnW": 2048,
+      "drawnH": 1208.3,
+      "horizontalSlackPx": 0,
+      "verticalSlackPx": 448.3
+    },
+    "rowsMeasured": 164,
+    "minClearance": 1,
+    "minClearanceAt": {
+      "y": 325,
+      "rightGlyph": 1118,
+      "leftWalker": 1119
+    },
+    "tightestRows": [
+      {
+        "y": 325,
+        "rightGlyph": 1118,
+        "leftWalker": 1119,
+        "gap": 1
+      },
+      {
+        "y": 326,
+        "rightGlyph": 1118,
+        "leftWalker": 1119,
+        "gap": 1
+      },
+      {
+        "y": 327,
+        "rightGlyph": 1117,
+        "leftWalker": 1118,
+        "gap": 1
+      },
+      {
+        "y": 328,
+        "rightGlyph": 1116,
+        "leftWalker": 1117,
+        "gap": 1
+      },
+      {
+        "y": 334,
+        "rightGlyph": 1112,
+        "leftWalker": 1113,
+        "gap": 1
+      },
+      {
+        "y": 335,
+        "rightGlyph": 1112,
+        "leftWalker": 1113,
+        "gap": 1
+      }
+    ]
+  },
+  {
+    "width": 2200,
+    "lines": [
+      {
+        "x": 564,
+        "right": 954.69,
+        "top": 213.84,
+        "bottom": 308.84,
+        "width": 390.69
+      },
+      {
+        "x": 564,
+        "right": 1192.28,
+        "top": 284.23,
+        "bottom": 379.23,
+        "width": 628.28
+      },
+      {
+        "x": 564,
+        "right": 985.98,
+        "top": 354.63,
+        "bottom": 449.63,
+        "width": 421.98
+      }
+    ],
+    "lineCount": 3,
+    "h1Box": {
+      "x": 564,
+      "y": 226.84,
+      "w": 680,
+      "h": 211.17
+    },
+    "h1FontSize": "64px",
+    "opsz": "\"opsz\" 42",
+    "opticalSizing": "none",
+    "h1MaxWidth": "none",
+    "objectPosition": "100% 50%",
+    "objectFit": "cover",
+    "imgBox": {
+      "x": 0,
+      "y": 116.3,
+      "w": 2200,
+      "h": 760
+    },
+    "natural": {
+      "w": 1145,
+      "h": 676
+    },
+    "copyLeft": 564,
+    "copyWidth": 680,
+    "navLogoLeft": 564,
+    "sectionHeight": 760,
+    "overflow": false,
+    "cover": {
+      "scale": 1.9214,
+      "drawnW": 2200,
+      "drawnH": 1298.9,
+      "horizontalSlackPx": 0,
+      "verticalSlackPx": 538.9
+    },
+    "rowsMeasured": 107,
+    "minClearance": 1,
+    "minClearanceAt": {
+      "y": 323,
+      "rightGlyph": 1194,
+      "leftWalker": 1195
+    },
+    "tightestRows": [
+      {
+        "y": 323,
+        "rightGlyph": 1194,
+        "leftWalker": 1195,
+        "gap": 1
+      },
+      {
+        "y": 324,
+        "rightGlyph": 1194,
+        "leftWalker": 1195,
+        "gap": 1
+      },
+      {
+        "y": 325,
+        "rightGlyph": 1194,
+        "leftWalker": 1195,
+        "gap": 1
+      },
+      {
+        "y": 326,
+        "rightGlyph": 1194,
+        "leftWalker": 1195,
+        "gap": 1
+      },
+      {
+        "y": 327,
+        "rightGlyph": 1193,
+        "leftWalker": 1194,
+        "gap": 1
+      },
+      {
+        "y": 328,
+        "rightGlyph": 1192,
+        "leftWalker": 1193,
+        "gap": 1
+      }
+    ]
+  },
+  {
+    "width": 2560,
+    "lines": [
+      {
+        "x": 744,
+        "right": 1134.69,
+        "top": 213.84,
+        "bottom": 308.84,
+        "width": 390.69
+      },
+      {
+        "x": 744,
+        "right": 1372.28,
+        "top": 284.23,
+        "bottom": 379.23,
+        "width": 628.28
+      },
+      {
+        "x": 744,
+        "right": 1165.98,
+        "top": 354.63,
+        "bottom": 449.63,
+        "width": 421.98
+      }
+    ],
+    "lineCount": 3,
+    "h1Box": {
+      "x": 744,
+      "y": 226.84,
+      "w": 680,
+      "h": 211.17
+    },
+    "h1FontSize": "64px",
+    "opsz": "\"opsz\" 42",
+    "opticalSizing": "none",
+    "h1MaxWidth": "none",
+    "objectPosition": "100% 50%",
+    "objectFit": "cover",
+    "imgBox": {
+      "x": 0,
+      "y": 116.3,
+      "w": 2560,
+      "h": 760
+    },
+    "natural": {
+      "w": 1333,
+      "h": 786
+    },
+    "copyLeft": 744,
+    "copyWidth": 680,
+    "navLogoLeft": 744,
+    "sectionHeight": 760,
+    "overflow": false,
+    "cover": {
+      "scale": 1.9205,
+      "drawnW": 2560,
+      "drawnH": 1509.5,
+      "horizontalSlackPx": 0,
+      "verticalSlackPx": 749.5
+    },
+    "rowsMeasured": 142,
+    "minClearance": 1,
+    "minClearanceAt": {
+      "y": 334,
+      "rightGlyph": 1368,
+      "leftWalker": 1369
+    },
+    "tightestRows": [
+      {
+        "y": 334,
+        "rightGlyph": 1368,
+        "leftWalker": 1369,
+        "gap": 1
+      },
+      {
+        "y": 335,
+        "rightGlyph": 1368,
+        "leftWalker": 1369,
+        "gap": 1
+      },
+      {
+        "y": 336,
+        "rightGlyph": 1368,
+        "leftWalker": 1369,
+        "gap": 1
+      },
+      {
+        "y": 337,
+        "rightGlyph": 1368,
+        "leftWalker": 1369,
+        "gap": 1
+      },
+      {
+        "y": 338,
+        "rightGlyph": 1368,
+        "leftWalker": 1369,
+        "gap": 1
+      },
+      {
+        "y": 339,
+        "rightGlyph": 1368,
+        "leftWalker": 1369,
+        "gap": 1
+      }
+    ]
+  }
+]

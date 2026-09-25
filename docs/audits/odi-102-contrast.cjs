@@ -11,7 +11,7 @@
  *
  * Usage: node docs/audits/odi-102-contrast.cjs <label> [width ...]
  */
-const { chromium } = require('playwright'), fs = require('fs'), sharp = require('sharp');
+const { chromium } = require('playwright'), fs = require('fs'), sharp = require('sharp'), path = require('path');
 const BASE = process.env.BASE || 'http://127.0.0.1:3000';
 const LABEL = process.argv[2] || 'run';
 const WIDTHS = process.argv.slice(3).map(Number);
@@ -23,6 +23,19 @@ const lum = (c) => c.map((v) => v / 255)
 (async () => {
   const b = await chromium.launch({ headless: true });
   const p = await b.newPage({ deviceScaleFactor: 1 });
+
+  // Pin ONLY the w=3840 variant (asked for at 2560): the local optimizer's AVIF encode for the
+  // the local optimizer's encode for it never returns, and an unpainted
+  // photograph would measure as flattering contrast against bare scrim. Every
+  // narrower width keeps the real optimizer output, because substituting the
+  // full-size source for a 640w variant would change the downsampling and so
+  // change the very pixels being measured.
+  const HERO = path.resolve('public/hero-tree-lined-path.jpg');
+  await p.route('**/_next/image*', (route) =>
+    route.request().url().includes('hero-tree-lined-path')
+      && /[?&]w=3840/.test(route.request().url())
+      ? route.fulfill({ status: 200, contentType: 'image/jpeg', body: fs.readFileSync(HERO) })
+      : route.continue());
   const results = [];
   for (const w of (WIDTHS.length ? WIDTHS : [1920])) {
     await p.setViewportSize({ width: w, height: 1000 });
@@ -37,6 +50,9 @@ const lum = (c) => c.map((v) => v / 255)
       await p.waitForTimeout(250);
     }
     await p.waitForTimeout(400);
+
+    const st = await p.evaluate(() => { const i = document.querySelector('h1').closest('section').querySelector('img'); return { c: i.complete, nw: i.naturalWidth }; });
+    if (!st.c || !st.nw) throw new Error('hero image not loaded at ' + w + 'px');
 
     // Record the live scrim gradients so the report can prove they were not touched.
     const gradients = await p.evaluate(() =>

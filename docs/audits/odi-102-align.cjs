@@ -4,7 +4,7 @@
  * section heading, both inside `max-w-[1120px] mx-auto px-6`) at each width.
  * Usage: node docs/audits/odi-102-align.cjs <label>
  */
-const { chromium } = require('playwright'), fs = require('fs');
+const { chromium } = require('playwright'), fs = require('fs'), path = require('path');
 const BASE = process.env.BASE || 'http://127.0.0.1:3000';
 const LABEL = process.argv[2] || 'run';
 const WIDTHS = [320, 375, 700, 768, 1024, 1280, 1440, 1920, 2560];
@@ -12,6 +12,16 @@ const WIDTHS = [320, 375, 700, 768, 1024, 1280, 1440, 1920, 2560];
 (async () => {
   const b = await chromium.launch({ headless: true });
   const p = await b.newPage({ viewport: { width: 1440, height: 1000 } });
+
+  // Pin the hero to its source file. The local image optimizer serves this
+  // variant as AVIF or WebP depending on whether its encode beats the browser's
+  // patience, so an unpinned capture flips between two renderings of the same
+  // photograph and no pixel diff can mean anything. Layout is untouched by this.
+  const HERO = path.resolve('public/hero-tree-lined-path.jpg');
+  await p.route('**/_next/image*', (route) =>
+    route.request().url().includes('hero-tree-lined-path')
+      ? route.fulfill({ status: 200, contentType: 'image/jpeg', body: fs.readFileSync(HERO) })
+      : route.continue());
   const rows = [];
   for (const w of WIDTHS) {
     await p.setViewportSize({ width: w, height: 1000 });
