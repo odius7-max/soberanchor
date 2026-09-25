@@ -8,7 +8,7 @@ import Link from 'next/link'
 import DirectorySearch from '@/components/find/DirectorySearch'
 import CategoryLane, { type LaneTile } from '@/components/find/CategoryLane'
 import FeaturedBand from '@/components/find/FeaturedBand'
-import FocusOnMount from '@/components/find/FocusOnMount'
+import FocusOnQuery from '@/components/find/FocusOnQuery'
 
 // ── Category model ───────────────────────────────────────────────────────────
 
@@ -604,8 +604,10 @@ function PlaceChooser({ city, candidates }: { city: string; candidates: PlaceCan
     <>
       <ResultsHeader title={`Which ${city}?`} headingId={CHOOSER_HEADING_ID} />
       {/* Without this a keyboard user lands back at the top of the document
-          and tabs past the nav and all six category tiles to reach a choice. */}
-      <FocusOnMount targetId={CHOOSER_HEADING_ID} />
+          and tabs past the nav and all six category tiles to reach a choice.
+          Keyed on `city` so a second ambiguous search — Springfield, then san
+          diego — re-fires it; this component stays mounted across that. */}
+      <FocusOnQuery targetId={CHOOSER_HEADING_ID} query={city} />
       <p className="text-sm text-mid mb-5">Choose a state to see nearby centers.</p>
       <ul role="list" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
         {options.map((c) => {

@@ -149,6 +149,126 @@ test.describe('ODI-93 location search', () => {
     await expect(page.getByRole('heading', { name: /Nearest listed centers to Springfield, [A-Z]{2}/ })).toBeVisible()
   })
 
+  // ── ODI-99 gate, finding 4: focus has to survive chooser-to-chooser ────────
+
+  /**
+   * The id of the focused element, read straight from the document.
+   * `toBeFocused` reports "inactive" for any page that does not hold the OS
+   * window focus, which is most of them once the suite runs fullyParallel;
+   * document.activeElement does not care.
+   */
+  const activeId = (page: import('@playwright/test').Page) =>
+    page.evaluate(() => document.activeElement?.id || document.activeElement?.tagName || '')
+
+  /**
+   * Focus arrives from a client effect, so it cannot be asserted until the page
+   * has hydrated — and under `fullyParallel` every worker is queued behind the
+   * same server, which pushes that well past the default 5s poll.
+   */
+  const expectFocus = (page: import('@playwright/test').Page, id: string) =>
+    expect.poll(() => activeId(page), { timeout: 15_000 }).toBe(id)
+
+  /** Resolves once the App Router client runtime is up. */
+  async function waitForHydration(page: import('@playwright/test').Page) {
+    await page.waitForFunction(
+      () => !!(window as unknown as { next?: { router?: unknown } }).next?.router,
+      null,
+      { timeout: 20_000 },
+    )
+    await page.waitForTimeout(1000)
+  }
+
+  /** Tabs forward until a "City, ST" chooser option has focus. Returns the count. */
+  async function tabsToChooserOption(page: import('@playwright/test').Page) {
+    let stops = 0
+    while (stops < 25) {
+      if (await page.evaluate(() => !!document.activeElement?.matches('a[href*="%2C"]'))) break
+      await page.keyboard.press('Tab')
+      stops += 1
+    }
+    return stops
+  }
+
+  for (const [first, second, option] of [
+    ['Springfield', 'san diego', 'San Diego, CA'],
+    ['san diego', 'Springfield', 'Springfield, AR'],
+  ] as const) {
+    test(`a second ambiguous search refocuses the new heading: ${first} then ${second}`, async ({ page }) => {
+      await page.goto(`${BASE}/find?q=${encodeURIComponent(first)}#results`)
+      await expect(page.getByRole('heading', { name: `Which ${first}?` })).toBeVisible()
+      await expectFocus(page, 'chooser-heading')
+
+      // The chooser component stays mounted across this transition, so a
+      // mount-only effect left focus in the field and the first option was 12
+      // tabs away. Submitting from the field is the ordinary repeat-search path.
+      const input = page.locator('#directory-search')
+      await input.fill(second)
+      await input.press('Enter')
+      await expect(page.getByRole('heading', { name: `Which ${second}?` })).toBeVisible()
+      await expectFocus(page, 'chooser-heading')
+
+      expect(
+        await tabsToChooserOption(page),
+        'tab stops from the second chooser to its first option',
+      ).toBeLessThanOrEqual(3)
+      expect(await page.evaluate(() => document.activeElement?.textContent?.trim())).toBe(option)
+
+      // Field sync survives the refocus.
+      await expect(input).toHaveValue(second)
+    })
+  }
+
+  test('typing a new query does not steal focus from the field', async ({ page }) => {
+    await page.goto(`${BASE}/find?q=Springfield#results`)
+    await expectFocus(page, 'chooser-heading')
+    await page.locator('#directory-search').fill('Spring')
+    await expectFocus(page, 'directory-search')
+  })
+
+  test('a direct visit without #results leaves initial focus alone', async ({ page }) => {
+    // Nothing asked for the results region, so the page must not put the
+    // keyboard on a heading ~1000px below an unscrolled viewport.
+    await page.setViewportSize({ width: 1024, height: 900 })
+    await page.goto(`${BASE}/find?q=Springfield`)
+    await expect(page.getByRole('heading', { name: 'Which Springfield?' })).toBeVisible()
+    await waitForHydration(page)
+
+    expect(await activeId(page)).toBe('BODY')
+    expect(await page.evaluate(() => window.scrollY)).toBe(0)
+
+    // The heading is well below the fold on a cold visit, which is the whole
+    // reason not to put the keyboard on it.
+    expect(
+      await page.locator('#chooser-heading').evaluate((e) => e.getBoundingClientRect().top),
+    ).toBeGreaterThan(900)
+
+    // And the negative above is about the hash, not about a dead page: the same
+    // runtime does focus the heading the moment a search asks for results.
+    const input = page.locator('#directory-search')
+    await input.fill('san diego')
+    await input.press('Enter')
+    await expect(page.getByRole('heading', { name: 'Which san diego?' })).toBeVisible()
+    await expectFocus(page, 'chooser-heading')
+  })
+
+  test('a direct visit with #results still focuses the heading', async ({ page }) => {
+    await page.goto(`${BASE}/find?q=Springfield#results`)
+    await expect(page.getByRole('heading', { name: 'Which Springfield?' })).toBeVisible()
+    await expectFocus(page, 'chooser-heading')
+  })
+
+  test('returning to the chooser with Back refocuses its heading', async ({ page }) => {
+    await page.goto(`${BASE}/find?q=Springfield#results`)
+    await page.locator('a[href*="q=Springfield%2C"]').first().click()
+    await page.waitForURL(/q=Springfield%2C/)
+    await expect(page.locator('#directory-search')).toHaveValue(/^Springfield, [A-Z]{2}$/)
+
+    await page.goBack()
+    await expect(page.getByRole('heading', { name: 'Which Springfield?' })).toBeVisible()
+    await expectFocus(page, 'chooser-heading')
+    await expect(page.locator('#directory-search')).toHaveValue('Springfield')
+  })
+
   test('768 standing check', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 900 })
     for (const url of ['/find', '/']) {
