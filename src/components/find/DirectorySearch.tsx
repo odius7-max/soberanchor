@@ -12,21 +12,39 @@ export default function DirectorySearch({ initialQuery = '' }: { initialQuery?: 
   const router = useRouter()
   const [q, setQ] = useState(initialQuery)
 
+  // What the field last handed to the router. While the field still reads
+  // exactly this, nobody has touched it since that submission and it is safe
+  // for an arriving navigation to rewrite it.
+  const [submitted, setSubmitted] = useState(initialQuery)
+
   // Navigation that changes ?q — picking a town out of the "Which Springfield?"
   // chooser, say — has to be reflected in the field, or it keeps offering the
   // ambiguous text back and re-submitting reopens the chooser. Adjusting state
   // during render (React's documented pattern) syncs before paint, so the field
-  // never flashes the stale query. Typing is untouched: `initialQuery` only
-  // moves on navigation.
+  // never flashes the stale query.
+  //
+  // But only when the field is untouched. Submitting and then carrying on
+  // typing is ordinary — the response is in flight for as long as the network
+  // takes — and the old code replaced that draft with the query the visitor had
+  // already moved past (ODI-99 retest, R1). An edit makes the field the
+  // visitor's until they submit again; `data-user-edited` says so out loud, and
+  // FocusOnQuery reads it so the caret is left alone too.
   const [lastInitial, setLastInitial] = useState(initialQuery)
+  const userEdited = q !== submitted
   if (initialQuery !== lastInitial) {
     setLastInitial(initialQuery)
-    setQ(initialQuery)
+    if (!userEdited) {
+      setQ(initialQuery)
+      setSubmitted(initialQuery)
+    }
   }
 
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const trimmed = q.trim()
+    // The field is clean again from here: it holds exactly what was just sent.
+    setQ(trimmed)
+    setSubmitted(trimmed)
     if (trimmed) router.push(`/find?q=${encodeURIComponent(trimmed)}#results`)
     else router.push('/find')
   }
@@ -48,6 +66,7 @@ export default function DirectorySearch({ initialQuery = '' }: { initialQuery?: 
           type="search"
           value={q}
           onChange={(e) => setQ(e.target.value)}
+          data-user-edited={userEdited ? 'true' : undefined}
           placeholder="Search treatment, sober living, therapists…"
           className="flex-1 min-w-0 px-3 py-3 bg-transparent outline-none text-[15px] text-dark placeholder:text-[var(--mid)]"
           autoComplete="off"

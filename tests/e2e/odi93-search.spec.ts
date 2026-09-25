@@ -269,6 +269,112 @@ test.describe('ODI-93 location search', () => {
     await expect(page.locator('#directory-search')).toHaveValue('Springfield')
   })
 
+  // ── ODI-99 retest R1/R2: the focus fix must not trample the visitor ────────
+
+  /**
+   * Holds the in-flight navigation open so "typed while the response was
+   * pending" is a reproducible state rather than a race. Applied after the
+   * first load so it only delays the client-side navigation.
+   */
+  async function delayFindResponses(page: import('@playwright/test').Page, ms: number) {
+    await page.route(/\/find(\?|$)/, async (route) => {
+      await new Promise((r) => setTimeout(r, ms))
+      await route.continue()
+    })
+  }
+
+  /** Counts focus() calls landing on the chooser heading, for R2's cap. */
+  async function instrumentHeadingFocus(page: import('@playwright/test').Page) {
+    await page.addInitScript(() => {
+      const w = window as unknown as { __headingFocus: number[] }
+      w.__headingFocus = []
+      const original = HTMLElement.prototype.focus
+      HTMLElement.prototype.focus = function patched(this: HTMLElement, ...args) {
+        if (this.id === 'chooser-heading') w.__headingFocus.push(Math.round(performance.now()))
+        return original.apply(this, args)
+      }
+    })
+  }
+  const headingFocusCount = (page: import('@playwright/test').Page) =>
+    page.evaluate(() => (window as unknown as { __headingFocus: number[] }).__headingFocus.length)
+
+  for (const [label, first, typed] of [
+    ['chooser', 'Springfield', 'Springfield next'],
+    ['distance results', 'Missoula, MT', 'Missoula, MT next'],
+  ] as const) {
+    test(`typing while the response is pending keeps the draft and the caret: ${label}`, async ({ page }) => {
+      await page.goto(`${BASE}/find`)
+      await waitForHydration(page)
+      await delayFindResponses(page, 900)
+
+      const input = page.locator('#directory-search')
+      await input.click()
+      await input.fill(first)
+      await input.press('Enter')
+      // Carry on typing while the results are still in flight.
+      await input.type(' next', { delay: 20 })
+      expect(await activeId(page)).toBe('directory-search')
+      await expect(input).toHaveValue(typed)
+
+      // Let the response land and the focus effect run.
+      await expect(
+        page.getByRole('heading', { name: label === 'chooser' ? 'Which Springfield?' : /Nearest listed centers to/ }),
+      ).toBeVisible({ timeout: 20_000 })
+      await page.waitForTimeout(1500)
+
+      // The draft survives and so does the caret.
+      await expect(input).toHaveValue(typed)
+      expect(await activeId(page)).toBe('directory-search')
+    })
+  }
+
+  test('a submitted query still syncs into an untouched field', async ({ page }) => {
+    // The guard above must not cost the ODI-99 finding-3 behaviour.
+    await page.goto(`${BASE}/find?q=Springfield#results`)
+    await page.locator('a[href*="q=Springfield%2C"]').first().click()
+    await page.waitForURL(/q=Springfield%2C/)
+    await expect(page.locator('#directory-search')).toHaveValue(/^Springfield, [A-Z]{2}$/)
+    await expect(page.locator('#directory-search')).not.toHaveAttribute('data-user-edited', 'true')
+  })
+
+  test('the heading is focused at most twice per query, even under repeated resets', async ({ page }) => {
+    await instrumentHeadingFocus(page)
+    await page.goto(`${BASE}/find?q=Springfield#results`)
+    await expectFocus(page, 'chooser-heading')
+
+    // Astra's stress: hand focus back to the body repeatedly inside the
+    // recovery window. Programmatic, so it is not a user interaction that
+    // would legitimately cancel the loop — this probes the cap itself.
+    for (let i = 0; i < 4; i++) {
+      await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
+      await page.waitForTimeout(70)
+    }
+    await page.waitForTimeout(1500)
+
+    expect(await headingFocusCount(page), 'focus() calls on the chooser heading').toBeLessThanOrEqual(2)
+  })
+
+  test('a new query earns its own focus budget', async ({ page }) => {
+    // The cap is per submitted query, not per page: a second chooser must still
+    // announce itself, which is the ODI-99 finding-4 fix.
+    await instrumentHeadingFocus(page)
+    await page.goto(`${BASE}/find?q=Springfield#results`)
+    await expectFocus(page, 'chooser-heading')
+    const afterFirst = await headingFocusCount(page)
+    expect(afterFirst).toBeLessThanOrEqual(2)
+
+    const input = page.locator('#directory-search')
+    await input.fill('san diego')
+    await input.press('Enter')
+    await expect(page.getByRole('heading', { name: 'Which san diego?' })).toBeVisible()
+    await expectFocus(page, 'chooser-heading')
+    await page.waitForTimeout(1200)
+
+    const total = await headingFocusCount(page)
+    expect(total - afterFirst, 'focus calls for the second query').toBeGreaterThanOrEqual(1)
+    expect(total - afterFirst, 'focus calls for the second query').toBeLessThanOrEqual(2)
+  })
+
   test('768 standing check', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 900 })
     for (const url of ['/find', '/']) {
