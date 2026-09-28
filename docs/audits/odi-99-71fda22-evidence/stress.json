@@ -1,0 +1,817 @@
+{
+  "errors": [],
+  "focusRoutes": [],
+  "guards": [],
+  "regression": [],
+  "layouts": [],
+  "stress": [
+    {
+      "rate": 1,
+      "case": "pending-edit-and-resubmit",
+      "q": "Springfield",
+      "edited": {
+        "id": "directory-search",
+        "tag": "INPUT",
+        "text": "",
+        "scrollY": 984,
+        "input": "Springfield next",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 8343.300000071526,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 9427.800000071526,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          }
+        ]
+      },
+      "resubmitted": {
+        "id": "chooser-heading",
+        "tag": "H2",
+        "text": "Which san diego?",
+        "scrollY": 868,
+        "input": "san diego",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 8343.300000071526,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 9427.800000071526,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 11523.800000071526,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 11524.900000095367,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 11525.400000095367,
+            "id": "chooser-heading",
+            "tag": "H2"
+          }
+        ]
+      },
+      "chosen": {
+        "id": "",
+        "tag": "BODY",
+        "text": "FindFellowshipsResourcesOur StoryFor ProvidersSign InGet Started☰Ask anything…Need immedia",
+        "scrollY": 984,
+        "input": "San Diego, CA",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 8343.300000071526,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 9427.800000071526,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 11523.800000071526,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 11524.900000095367,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 11525.400000095367,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 12828.800000071526,
+            "id": "",
+            "tag": "A"
+          },
+          {
+            "t": 13847.300000071526,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "BODY"
+          }
+        ]
+      }
+    },
+    {
+      "rate": 1,
+      "case": "pending-edit-and-resubmit",
+      "q": "Missoula, MT",
+      "edited": {
+        "id": "directory-search",
+        "tag": "INPUT",
+        "text": "",
+        "scrollY": 984,
+        "input": "Missoula, MT next",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 2534.6999999284744,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 4035.5,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          }
+        ]
+      },
+      "resubmitted": {
+        "id": "chooser-heading",
+        "tag": "H2",
+        "text": "Which san diego?",
+        "scrollY": 868,
+        "input": "san diego",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 2534.6999999284744,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 4035.5,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 6067.399999976158,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 6067.799999952316,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 6068.199999928474,
+            "id": "chooser-heading",
+            "tag": "H2"
+          }
+        ]
+      },
+      "chosen": {
+        "id": "",
+        "tag": "BODY",
+        "text": "FindFellowshipsResourcesOur StoryFor ProvidersSign InGet Started☰Ask anything…Need immedia",
+        "scrollY": 984,
+        "input": "San Diego, CA",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 2534.6999999284744,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 4035.5,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 6067.399999976158,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 6067.799999952316,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 6068.199999928474,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 7528.899999976158,
+            "id": "",
+            "tag": "A"
+          },
+          {
+            "t": 8108.5,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "BODY"
+          }
+        ]
+      }
+    },
+    {
+      "rate": 1,
+      "case": "five-resets-fresh-budget",
+      "budgets": [
+        {
+          "q": "Springfield",
+          "calls": 2,
+          "transitions": 2,
+          "id": "",
+          "tag": "BODY",
+          "text": "FindFellowshipsResourcesOur StoryFor ProvidersSign InGet Started☰Ask anything…Need immedia",
+          "scrollY": 984,
+          "input": "Springfield",
+          "log": [
+            {
+              "t": 3065.100000023842,
+              "id": "results",
+              "tag": "SECTION",
+              "before": "directory-search"
+            },
+            {
+              "t": 3065.399999976158,
+              "id": "chooser-heading",
+              "tag": "H2",
+              "before": "directory-search"
+            },
+            {
+              "event": "focusin",
+              "t": 3065.6999999284744,
+              "id": "chooser-heading",
+              "tag": "H2"
+            },
+            {
+              "t": 3084.399999976158,
+              "id": "chooser-heading",
+              "tag": "H2",
+              "before": "BODY"
+            },
+            {
+              "event": "focusin",
+              "t": 3084.5,
+              "id": "chooser-heading",
+              "tag": "H2"
+            }
+          ]
+        },
+        {
+          "q": "san diego",
+          "calls": 2,
+          "transitions": 2,
+          "id": "",
+          "tag": "BODY",
+          "text": "FindFellowshipsResourcesOur StoryFor ProvidersSign InGet Started☰Ask anything…Need immedia",
+          "scrollY": 868,
+          "input": "san diego",
+          "log": [
+            {
+              "t": 4950.399999976158,
+              "id": "results",
+              "tag": "SECTION",
+              "before": "directory-search"
+            },
+            {
+              "t": 4951.5,
+              "id": "chooser-heading",
+              "tag": "H2",
+              "before": "directory-search"
+            },
+            {
+              "event": "focusin",
+              "t": 4951.799999952316,
+              "id": "chooser-heading",
+              "tag": "H2"
+            },
+            {
+              "t": 4983.5,
+              "id": "chooser-heading",
+              "tag": "H2",
+              "before": "BODY"
+            },
+            {
+              "event": "focusin",
+              "t": 4983.699999928474,
+              "id": "chooser-heading",
+              "tag": "H2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rate": 1,
+      "case": "permanent-cancel-after-tab",
+      "moved": {
+        "id": "",
+        "tag": "A",
+        "text": "Clear search →",
+        "scrollY": 0,
+        "input": "Springfield",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 2421.899999976158,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 2970.8000000715256,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 2971,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 2971.3000000715256,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 2984.2000000476837,
+            "id": "",
+            "tag": "A"
+          }
+        ]
+      },
+      "after": {
+        "id": "",
+        "tag": "BODY",
+        "text": "FindFellowshipsResourcesOur StoryFor ProvidersSign InGet Started☰Ask anything…Need immedia",
+        "scrollY": 657,
+        "input": "Springfield",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 2421.899999976158,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 2970.8000000715256,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 2971,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 2971.3000000715256,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 2984.2000000476837,
+            "id": "",
+            "tag": "A"
+          }
+        ]
+      }
+    },
+    {
+      "rate": 8,
+      "case": "pending-edit-and-resubmit",
+      "q": "Springfield",
+      "edited": {
+        "id": "directory-search",
+        "tag": "INPUT",
+        "text": "",
+        "scrollY": 984,
+        "input": "Springfield next",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 3392.2999999523163,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 4995.799999952316,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          }
+        ]
+      },
+      "resubmitted": {
+        "id": "chooser-heading",
+        "tag": "H2",
+        "text": "Which san diego?",
+        "scrollY": 868,
+        "input": "san diego",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 3392.2999999523163,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 4995.799999952316,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 6854.699999928474,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 6866.199999928474,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 6872.399999976158,
+            "id": "chooser-heading",
+            "tag": "H2"
+          }
+        ]
+      },
+      "chosen": {
+        "id": "",
+        "tag": "BODY",
+        "text": "FindFellowshipsResourcesOur StoryFor ProvidersSign InGet Started☰Ask anything…Need immedia",
+        "scrollY": 984,
+        "input": "San Diego, CA",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 3392.2999999523163,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 4995.799999952316,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 6854.699999928474,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 6866.199999928474,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 6872.399999976158,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 8412.799999952316,
+            "id": "",
+            "tag": "A"
+          },
+          {
+            "t": 10072.699999928474,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "BODY"
+          }
+        ]
+      }
+    },
+    {
+      "rate": 8,
+      "case": "pending-edit-and-resubmit",
+      "q": "Missoula, MT",
+      "edited": {
+        "id": "directory-search",
+        "tag": "INPUT",
+        "text": "",
+        "scrollY": 984,
+        "input": "Missoula, MT next",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 3030.399999976158,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 4283.300000071526,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          }
+        ]
+      },
+      "resubmitted": {
+        "id": "chooser-heading",
+        "tag": "H2",
+        "text": "Which san diego?",
+        "scrollY": 868,
+        "input": "san diego",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 3030.399999976158,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 4283.300000071526,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 6871.100000023842,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 6883.600000023842,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 6888.5,
+            "id": "chooser-heading",
+            "tag": "H2"
+          }
+        ]
+      },
+      "chosen": {
+        "id": "",
+        "tag": "BODY",
+        "text": "FindFellowshipsResourcesOur StoryFor ProvidersSign InGet Started☰Ask anything…Need immedia",
+        "scrollY": 886,
+        "input": "San Diego, CA",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 3030.399999976158,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 4283.300000071526,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 6871.100000023842,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 6883.600000023842,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 6888.5,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 8506.5,
+            "id": "",
+            "tag": "A"
+          },
+          {
+            "t": 10424.200000047684,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "BODY"
+          }
+        ]
+      }
+    },
+    {
+      "rate": 8,
+      "case": "five-resets-fresh-budget",
+      "budgets": [
+        {
+          "q": "Springfield",
+          "calls": 2,
+          "transitions": 2,
+          "id": "",
+          "tag": "BODY",
+          "text": "FindFellowshipsResourcesOur StoryFor ProvidersSign InGet Started☰Ask anything…Need immedia",
+          "scrollY": 984,
+          "input": "Springfield",
+          "log": [
+            {
+              "t": 3758.0999999046326,
+              "id": "results",
+              "tag": "SECTION",
+              "before": "directory-search"
+            },
+            {
+              "t": 3773.899999976158,
+              "id": "chooser-heading",
+              "tag": "H2",
+              "before": "directory-search"
+            },
+            {
+              "event": "focusin",
+              "t": 3781.399999976158,
+              "id": "chooser-heading",
+              "tag": "H2"
+            },
+            {
+              "t": 3804.0999999046326,
+              "id": "chooser-heading",
+              "tag": "H2",
+              "before": "BODY"
+            },
+            {
+              "event": "focusin",
+              "t": 3804.7999999523163,
+              "id": "chooser-heading",
+              "tag": "H2"
+            }
+          ]
+        },
+        {
+          "q": "san diego",
+          "calls": 2,
+          "transitions": 2,
+          "id": "",
+          "tag": "BODY",
+          "text": "FindFellowshipsResourcesOur StoryFor ProvidersSign InGet Started☰Ask anything…Need immedia",
+          "scrollY": 868,
+          "input": "san diego",
+          "log": [
+            {
+              "t": 5996.799999952316,
+              "id": "results",
+              "tag": "SECTION",
+              "before": "directory-search"
+            },
+            {
+              "t": 6009.799999952316,
+              "id": "chooser-heading",
+              "tag": "H2",
+              "before": "directory-search"
+            },
+            {
+              "event": "focusin",
+              "t": 6016,
+              "id": "chooser-heading",
+              "tag": "H2"
+            },
+            {
+              "t": 6035,
+              "id": "chooser-heading",
+              "tag": "H2",
+              "before": "BODY"
+            },
+            {
+              "event": "focusin",
+              "t": 6035.899999976158,
+              "id": "chooser-heading",
+              "tag": "H2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rate": 8,
+      "case": "permanent-cancel-after-tab",
+      "moved": {
+        "id": "",
+        "tag": "A",
+        "text": "Clear search →",
+        "scrollY": 2,
+        "input": "Springfield",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 3005.600000023842,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 3697.7999999523163,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 3712.7999999523163,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 3717.600000023842,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 3734,
+            "id": "",
+            "tag": "A"
+          }
+        ]
+      },
+      "after": {
+        "id": "",
+        "tag": "BODY",
+        "text": "FindFellowshipsResourcesOur StoryFor ProvidersSign InGet Started☰Ask anything…Need immedia",
+        "scrollY": 657,
+        "input": "Springfield",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 3005.600000023842,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 3697.7999999523163,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 3712.7999999523163,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 3717.600000023842,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 3734,
+            "id": "",
+            "tag": "A"
+          }
+        ]
+      }
+    }
+  ]
+}

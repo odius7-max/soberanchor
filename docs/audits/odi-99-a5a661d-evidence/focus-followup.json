@@ -1,0 +1,292 @@
+[
+  {
+    "case": "chooser-to-chooser",
+    "focus": {
+      "id": "directory-search",
+      "tag": "INPUT",
+      "text": "",
+      "href": null,
+      "top": -511.53125,
+      "scrollY": 864,
+      "outline": "none"
+    },
+    "input": "san diego"
+  },
+  {
+    "case": "chooser-to-chooser-tab-route",
+    "count": 12,
+    "tabs": [
+      {
+        "id": "",
+        "tag": "BUTTON",
+        "text": "Search",
+        "href": null,
+        "top": -511.53125,
+        "scrollY": 864,
+        "outline": "solid"
+      },
+      {
+        "id": "",
+        "tag": "A",
+        "text": "🏥Treatment CentersInpatient, residential, and detox programs.3,416 listings● Showing below",
+        "href": "/find?category=treatment#results",
+        "top": -402.28125,
+        "scrollY": 864,
+        "outline": "solid"
+      },
+      {
+        "id": "",
+        "tag": "A",
+        "text": "🩺Medical DetoxMedically-supervised alcohol and drug detox.2,016 listings",
+        "href": "/find?category=detox#results",
+        "top": -402.28125,
+        "scrollY": 864,
+        "outline": "solid"
+      },
+      {
+        "id": "",
+        "tag": "A",
+        "text": "💊Outpatient / IOPIOP, OP, and day programs.7,989 listings",
+        "href": "/find?category=outpatient#results",
+        "top": -404.28125,
+        "scrollY": 866,
+        "outline": "solid"
+      },
+      {
+        "id": "",
+        "tag": "A",
+        "text": "💆TherapistsAddiction specialists, dual-diagnosis, family.2 listings",
+        "href": "/find?category=therapist#results",
+        "top": -404.28125,
+        "scrollY": 866,
+        "outline": "solid"
+      },
+      {
+        "id": "",
+        "tag": "A",
+        "text": "Just finished treatment? Find recovery housing →",
+        "href": "/find?category=sober_living#results",
+        "top": -204.40625,
+        "scrollY": 866,
+        "outline": "solid"
+      },
+      {
+        "id": "",
+        "tag": "A",
+        "text": "🏠Sober LivingTransitional housing and recovery residences.5 listings",
+        "href": "/find?category=sober_living#results",
+        "top": -108.15625,
+        "scrollY": 866,
+        "outline": "solid"
+      },
+      {
+        "id": "",
+        "tag": "A",
+        "text": "🍹Sober VenuesAlcohol-free bars, cafes, and event spaces.3 listings",
+        "href": "/find?category=venue#results",
+        "top": -108.15625,
+        "scrollY": 866,
+        "outline": "solid"
+      },
+      {
+        "id": "",
+        "tag": "A",
+        "text": "👥Find a MeetingOfficial fellowship finders — AA, NA, SMART Recovery, and more.",
+        "href": "/fellowships",
+        "top": 76.09375,
+        "scrollY": 864,
+        "outline": "solid"
+      },
+      {
+        "id": "",
+        "tag": "A",
+        "text": "📖Browse FellowshipsHow each program works — AA, NA, Al-Anon, SMART, and more.",
+        "href": "/fellowships",
+        "top": 76.09375,
+        "scrollY": 864,
+        "outline": "solid"
+      },
+      {
+        "id": "",
+        "tag": "A",
+        "text": "Clear search →",
+        "href": "/find",
+        "top": 233.46875,
+        "scrollY": 864,
+        "outline": "auto"
+      },
+      {
+        "id": "",
+        "tag": "A",
+        "text": "San Diego, CA",
+        "href": "/find?q=San%20Diego%2C%20CA#results",
+        "top": 301.46875,
+        "scrollY": 864,
+        "outline": "solid"
+      }
+    ]
+  },
+  {
+    "case": "direct-no-hash",
+    "focus": {
+      "id": "chooser-heading",
+      "tag": "H2",
+      "text": "Which Springfield?",
+      "href": null,
+      "top": 1088.46875,
+      "scrollY": 0,
+      "outline": "solid"
+    }
+  },
+  {
+    "case": "direct-first-tab",
+    "focus": {
+      "id": "",
+      "tag": "A",
+      "text": "Clear search →",
+      "href": "/find",
+      "top": 1097.46875,
+      "scrollY": 0,
+      "outline": "auto"
+    }
+  },
+  {
+    "case": "chosen-resubmit",
+    "input": "Springfield, IL",
+    "heading": "Nearest listed centers to Springfield, IL",
+    "text": "Nearest listed centers to Springfield, IL\nClear search →\n\nApproximate straight-line distances from the center of Springfield, IL. Travel distances may be longer.\n\n📍\nTreatment\nSAMHSA Listed\nGateway Foundation\n\n📍 Springfield, IL\n1.2 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nGateway Foundation\n\n📍 Springfield, IL\n1.2 mi\n\nView Details →\n📍\nTreatment\nSAMHSA Listed\nRiverwood Group LLC\n\n📍 Springfield, IL\n1.6 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nHopewell Clinical\n\n📍 Springfield, IL\n1.9 mi\n\nView Details →\n📍\nTreatment\nSAMHSA Listed\nFamily Guidance Centers Inc\n\n📍 Springfield, IL\n2.2 mi\n\nView Details →\n📍\nTreatment\nSAMHSA Listed\nSIU Center for Healthy Aging and\n\n📍 Springfield, IL\n2.6 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nDUI Evaluation and Treatment Servs\n\n📍 Springfield, IL\n3.8 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nClinical Counseling Group and\n\n📍 Springfield, IL\n4.7 mi\n\nView Details →\n📍\nTreatment\nSAMHSA Listed\nRose Medical Association Inc\n\n📍 Springfield, IL\n5.5 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nSIU Center for Family Medicine\n\n📍 Taylorville, IL\n22.9 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nLiberty Counseling Center Inc\n\n📍 Taylorville, IL\n23.3 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nSIU Center for Family Medicine\n\n📍 Lincoln, IL\n28.7 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nTrillium Place\n\n📍 Lincoln, IL\n28.9 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nTazwood Mental Health Center Inc\n\n📍 Lincoln, IL\n28.9 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nSIU Center for Family Medicine\n\n📍 Jacksonville, IL\n32.3 mi\n\nView Details →\n📍\nTreatment\nSAMHSA Listed\nGateway Foundation\n\n📍 Jacksonville, IL\n33.6 mi\n\nView Details →\n📍\nTreatment\nSAMHSA Listed\nLincoln Recovery\n\n📍 Raymond, IL\n34.2 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nDUI Services\n\n📍 Decatur, IL\n35.3 mi\n\nView Details →\n📍\nTreatment\nSAMHSA Listed\nHeritage Behavioral Health Center\n\n📍 Decatur, IL\n35.5 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nPleasant Counseling\n\n📍 Decatur, IL\n35.7 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nElements at Crossing Healthcare\n\n📍 Decatur, IL\n35.8 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nLocust Street Resource Center\n\n📍 Carlinville, IL\n37.3 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nMacoupin County Public Health Dept\n\n📍 Litchfield, IL\n41.1 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nHeritage Behavioral Health Center Inc\n\n📍 Clinton, IL\n42.3 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nMacoupin County Public Health Departme\n\n📍 Gillespie, IL\n45.9 mi\n\nView Details →\nShow more\n\nShowing the 25 nearest listed centers.",
+    "cards": [
+      {
+        "id": "ec590a31-2482-4c3f-80d1-b21286e3573c",
+        "text": "📍\nTreatment\nSAMHSA Listed\nGateway Foundation\n\n📍 Springfield, IL\n1.2 mi\n\nView Details →",
+        "miles": "1.2"
+      },
+      {
+        "id": "8be51cfa-f484-4b25-a104-4dd9d01c950b",
+        "text": "📍\nOutpatient\nSAMHSA Listed\nGateway Foundation\n\n📍 Springfield, IL\n1.2 mi\n\nView Details →",
+        "miles": "1.2"
+      },
+      {
+        "id": "63e07d45-0cbc-4a2d-ab0d-fd2ad24d6033",
+        "text": "📍\nTreatment\nSAMHSA Listed\nRiverwood Group LLC\n\n📍 Springfield, IL\n1.6 mi\n\nView Details →",
+        "miles": "1.6"
+      },
+      {
+        "id": "60c46ad3-68fa-466c-8230-1dc7b8144e5c",
+        "text": "📍\nOutpatient\nSAMHSA Listed\nHopewell Clinical\n\n📍 Springfield, IL\n1.9 mi\n\nView Details →",
+        "miles": "1.9"
+      },
+      {
+        "id": "0b7a000b-8288-43db-9a9f-e727adf8f361",
+        "text": "📍\nTreatment\nSAMHSA Listed\nFamily Guidance Centers Inc\n\n📍 Springfield, IL\n2.2 mi\n\nView Details →",
+        "miles": "2.2"
+      },
+      {
+        "id": "490e7e3a-3e5d-4c42-a4e2-6a0eed18c0a7",
+        "text": "📍\nTreatment\nSAMHSA Listed\nSIU Center for Healthy Aging and\n\n📍 Springfield, IL\n2.6 mi\n\nView Details →",
+        "miles": "2.6"
+      },
+      {
+        "id": "87d0f979-e107-4c44-a616-2cac2ba1dbd5",
+        "text": "📍\nOutpatient\nSAMHSA Listed\nDUI Evaluation and Treatment Servs\n\n📍 Springfield, IL\n3.8 mi\n\nView Details →",
+        "miles": "3.8"
+      },
+      {
+        "id": "5b963bb6-60da-490b-af6e-0698fb163e11",
+        "text": "📍\nOutpatient\nSAMHSA Listed\nClinical Counseling Group and\n\n📍 Springfield, IL\n4.7 mi\n\nView Details →",
+        "miles": "4.7"
+      },
+      {
+        "id": "e1d07fde-79e1-4b22-a7e3-84f7e93621e7",
+        "text": "📍\nTreatment\nSAMHSA Listed\nRose Medical Association Inc\n\n📍 Springfield, IL\n5.5 mi\n\nView Details →",
+        "miles": "5.5"
+      },
+      {
+        "id": "fb961d44-e802-4ae4-8891-7ca9c1008534",
+        "text": "📍\nOutpatient\nSAMHSA Listed\nSIU Center for Family Medicine\n\n📍 Taylorville, IL\n22.9 mi\n\nView Details →",
+        "miles": "22.9"
+      },
+      {
+        "id": "a295090d-1c9e-4f6a-bfc2-303e36045c8f",
+        "text": "📍\nOutpatient\nSAMHSA Listed\nLiberty Counseling Center Inc\n\n📍 Taylorville, IL\n23.3 mi\n\nView Details →",
+        "miles": "23.3"
+      },
+      {
+        "id": "1b45edf2-b664-484d-8253-9fbbba082a67",
+        "text": "📍\nOutpatient\nSAMHSA Listed\nSIU Center for Family Medicine\n\n📍 Lincoln, IL\n28.7 mi\n\nView Details →",
+        "miles": "28.7"
+      },
+      {
+        "id": "40cb398b-ffed-4b6d-9f70-b4b2c62f8974",
+        "text": "📍\nOutpatient\nSAMHSA Listed\nTrillium Place\n\n📍 Lincoln, IL\n28.9 mi\n\nView Details →",
+        "miles": "28.9"
+      },
+      {
+        "id": "933b2531-f721-4975-9f9c-e215477640ec",
+        "text": "📍\nOutpatient\nSAMHSA Listed\nTazwood Mental Health Center Inc\n\n📍 Lincoln, IL\n28.9 mi\n\nView Details →",
+        "miles": "28.9"
+      },
+      {
+        "id": "b93d2eba-366b-46d3-8df6-99dc6b655ef3",
+        "text": "📍\nOutpatient\nSAMHSA Listed\nSIU Center for Family Medicine\n\n📍 Jacksonville, IL\n32.3 mi\n\nView Details →",
+        "miles": "32.3"
+      },
+      {
+        "id": "5403d839-f868-457b-989a-c19cf21ca7e1",
+        "text": "📍\nTreatment\nSAMHSA Listed\nGateway Foundation\n\n📍 Jacksonville, IL\n33.6 mi\n\nView Details →",
+        "miles": "33.6"
+      },
+      {
+        "id": "8754a670-1715-4539-9864-153b0b062aeb",
+        "text": "📍\nTreatment\nSAMHSA Listed\nLincoln Recovery\n\n📍 Raymond, IL\n34.2 mi\n\nView Details →",
+        "miles": "34.2"
+      },
+      {
+        "id": "87e8d445-1d08-49a0-8d3b-c0d8767c20be",
+        "text": "📍\nOutpatient\nSAMHSA Listed\nDUI Services\n\n📍 Decatur, IL\n35.3 mi\n\nView Details →",
+        "miles": "35.3"
+      },
+      {
+        "id": "ff9fc3f3-31a5-497a-a080-13c4742caaf2",
+        "text": "📍\nTreatment\nSAMHSA Listed\nHeritage Behavioral Health Center\n\n📍 Decatur, IL\n35.5 mi\n\nView Details →",
+        "miles": "35.5"
+      },
+      {
+        "id": "948ecaaa-e250-46cd-baf8-e81d014b333f",
+        "text": "📍\nOutpatient\nSAMHSA Listed\nPleasant Counseling\n\n📍 Decatur, IL\n35.7 mi\n\nView Details →",
+        "miles": "35.7"
+      },
+      {
+        "id": "9cead02d-e4f1-44cd-83f1-d1412cbb1e7a",
+        "text": "📍\nOutpatient\nSAMHSA Listed\nElements at Crossing Healthcare\n\n📍 Decatur, IL\n35.8 mi\n\nView Details →",
+        "miles": "35.8"
+      },
+      {
+        "id": "1815d77b-2425-4294-a146-c35751b43b96",
+        "text": "📍\nOutpatient\nSAMHSA Listed\nLocust Street Resource Center\n\n📍 Carlinville, IL\n37.3 mi\n\nView Details →",
+        "miles": "37.3"
+      },
+      {
+        "id": "e5d0f08e-87f0-4f14-b945-f8c5806add54",
+        "text": "📍\nOutpatient\nSAMHSA Listed\nMacoupin County Public Health Dept\n\n📍 Litchfield, IL\n41.1 mi\n\nView Details →",
+        "miles": "41.1"
+      },
+      {
+        "id": "1b60e276-1a41-43c8-a9e5-adace30155c6",
+        "text": "📍\nOutpatient\nSAMHSA Listed\nHeritage Behavioral Health Center Inc\n\n📍 Clinton, IL\n42.3 mi\n\nView Details →",
+        "miles": "42.3"
+      },
+      {
+        "id": "e124956b-d04b-4e55-971f-c546968d3e29",
+        "text": "📍\nOutpatient\nSAMHSA Listed\nMacoupin County Public Health Departme\n\n📍 Gillespie, IL\n45.9 mi\n\nView Details →",
+        "miles": "45.9"
+      }
+    ],
+    "links": [
+      {
+        "text": "Show more",
+        "href": "/find?q=Springfield%2C%20IL&page=2#results"
+      }
+    ]
+  }
+]

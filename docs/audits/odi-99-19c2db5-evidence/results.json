@@ -1,0 +1,1601 @@
+{
+  "errors": [],
+  "focusRoutes": [
+    {
+      "q": "Springfield",
+      "at": {
+        "id": "chooser-heading",
+        "tag": "H2",
+        "text": "Which Springfield?",
+        "scrollY": 984,
+        "input": "Springfield",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 12013.399999976158,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 12659.5,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 12661.399999976158,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 12662.099999904633,
+            "id": "chooser-heading",
+            "tag": "H2"
+          }
+        ]
+      },
+      "one": {
+        "id": "",
+        "tag": "A",
+        "text": "Clear search →",
+        "scrollY": 984,
+        "input": "Springfield",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 12013.399999976158,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 12659.5,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 12661.399999976158,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 12662.099999904633,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 14023.299999952316,
+            "id": "",
+            "tag": "A"
+          }
+        ]
+      },
+      "two": {
+        "id": "",
+        "tag": "A",
+        "text": "Springfield, AR",
+        "scrollY": 984,
+        "input": "Springfield",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 12013.399999976158,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 12659.5,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 12661.399999976158,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 12662.099999904633,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 14023.299999952316,
+            "id": "",
+            "tag": "A"
+          },
+          {
+            "event": "focusin",
+            "t": 14028.299999952316,
+            "id": "",
+            "tag": "A"
+          }
+        ]
+      }
+    },
+    {
+      "q": "san diego",
+      "at": {
+        "id": "chooser-heading",
+        "tag": "H2",
+        "text": "Which san diego?",
+        "scrollY": 868,
+        "input": "san diego",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 12013.399999976158,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 12659.5,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 12661.399999976158,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 12662.099999904633,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 14023.299999952316,
+            "id": "",
+            "tag": "A"
+          },
+          {
+            "event": "focusin",
+            "t": 14028.299999952316,
+            "id": "",
+            "tag": "A"
+          },
+          {
+            "event": "focusin",
+            "t": 14035.299999952316,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 14608,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 14609.599999904633,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 14610.199999928474,
+            "id": "chooser-heading",
+            "tag": "H2"
+          }
+        ]
+      },
+      "one": {
+        "id": "",
+        "tag": "A",
+        "text": "Clear search →",
+        "scrollY": 868,
+        "input": "san diego",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 12013.399999976158,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 12659.5,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 12661.399999976158,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 12662.099999904633,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 14023.299999952316,
+            "id": "",
+            "tag": "A"
+          },
+          {
+            "event": "focusin",
+            "t": 14028.299999952316,
+            "id": "",
+            "tag": "A"
+          },
+          {
+            "event": "focusin",
+            "t": 14035.299999952316,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 14608,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 14609.599999904633,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 14610.199999928474,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 16027.199999928474,
+            "id": "",
+            "tag": "A"
+          }
+        ]
+      },
+      "two": {
+        "id": "",
+        "tag": "A",
+        "text": "San Diego, CA",
+        "scrollY": 868,
+        "input": "san diego",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 12013.399999976158,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 12659.5,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 12661.399999976158,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 12662.099999904633,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 14023.299999952316,
+            "id": "",
+            "tag": "A"
+          },
+          {
+            "event": "focusin",
+            "t": 14028.299999952316,
+            "id": "",
+            "tag": "A"
+          },
+          {
+            "event": "focusin",
+            "t": 14035.299999952316,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 14608,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 14609.599999904633,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 14610.199999928474,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 16027.199999928474,
+            "id": "",
+            "tag": "A"
+          },
+          {
+            "event": "focusin",
+            "t": 16031.599999904633,
+            "id": "",
+            "tag": "A"
+          }
+        ]
+      }
+    },
+    {
+      "q": "Springfield",
+      "at": {
+        "id": "chooser-heading",
+        "tag": "H2",
+        "text": "Which Springfield?",
+        "scrollY": 984,
+        "input": "Springfield",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 12013.399999976158,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 12659.5,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 12661.399999976158,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 12662.099999904633,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 14023.299999952316,
+            "id": "",
+            "tag": "A"
+          },
+          {
+            "event": "focusin",
+            "t": 14028.299999952316,
+            "id": "",
+            "tag": "A"
+          },
+          {
+            "event": "focusin",
+            "t": 14035.299999952316,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 14608,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 14609.599999904633,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 14610.199999928474,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 16027.199999928474,
+            "id": "",
+            "tag": "A"
+          },
+          {
+            "event": "focusin",
+            "t": 16031.599999904633,
+            "id": "",
+            "tag": "A"
+          },
+          {
+            "event": "focusin",
+            "t": 16038.099999904633,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 16585.699999928474,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 16585.799999952316,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 16586.299999952316,
+            "id": "chooser-heading",
+            "tag": "H2"
+          }
+        ]
+      },
+      "one": {
+        "id": "",
+        "tag": "A",
+        "text": "Clear search →",
+        "scrollY": 984,
+        "input": "Springfield",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 12013.399999976158,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 12659.5,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 12661.399999976158,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 12662.099999904633,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 14023.299999952316,
+            "id": "",
+            "tag": "A"
+          },
+          {
+            "event": "focusin",
+            "t": 14028.299999952316,
+            "id": "",
+            "tag": "A"
+          },
+          {
+            "event": "focusin",
+            "t": 14035.299999952316,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 14608,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 14609.599999904633,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 14610.199999928474,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 16027.199999928474,
+            "id": "",
+            "tag": "A"
+          },
+          {
+            "event": "focusin",
+            "t": 16031.599999904633,
+            "id": "",
+            "tag": "A"
+          },
+          {
+            "event": "focusin",
+            "t": 16038.099999904633,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 16585.699999928474,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 16585.799999952316,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 16586.299999952316,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 18046.199999928474,
+            "id": "",
+            "tag": "A"
+          }
+        ]
+      },
+      "two": {
+        "id": "",
+        "tag": "A",
+        "text": "Springfield, AR",
+        "scrollY": 984,
+        "input": "Springfield",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 12013.399999976158,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 12659.5,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 12661.399999976158,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 12662.099999904633,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 14023.299999952316,
+            "id": "",
+            "tag": "A"
+          },
+          {
+            "event": "focusin",
+            "t": 14028.299999952316,
+            "id": "",
+            "tag": "A"
+          },
+          {
+            "event": "focusin",
+            "t": 14035.299999952316,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 14608,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 14609.599999904633,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 14610.199999928474,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 16027.199999928474,
+            "id": "",
+            "tag": "A"
+          },
+          {
+            "event": "focusin",
+            "t": 16031.599999904633,
+            "id": "",
+            "tag": "A"
+          },
+          {
+            "event": "focusin",
+            "t": 16038.099999904633,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 16585.699999928474,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 16585.799999952316,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 16586.299999952316,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 18046.199999928474,
+            "id": "",
+            "tag": "A"
+          },
+          {
+            "event": "focusin",
+            "t": 18050.299999952316,
+            "id": "",
+            "tag": "A"
+          }
+        ]
+      }
+    },
+    {
+      "direct": true,
+      "hash": "",
+      "id": "",
+      "tag": "BODY",
+      "text": "FindFellowshipsResourcesOur StoryFor ProvidersSign InGet Started☰Ask anything…Need immedia",
+      "scrollY": 0,
+      "input": "Springfield",
+      "log": []
+    },
+    {
+      "direct": true,
+      "hash": "#results",
+      "id": "chooser-heading",
+      "tag": "H2",
+      "text": "Which Springfield?",
+      "scrollY": 984,
+      "input": "Springfield",
+      "log": [
+        {
+          "t": 687.7999999523163,
+          "id": "chooser-heading",
+          "tag": "H2",
+          "before": "BODY"
+        },
+        {
+          "event": "focusin",
+          "t": 688,
+          "id": "chooser-heading",
+          "tag": "H2"
+        }
+      ]
+    }
+  ],
+  "guards": [
+    {
+      "case": "typing-before-result",
+      "delayed": 1,
+      "before": {
+        "id": "directory-search",
+        "tag": "INPUT",
+        "text": "",
+        "scrollY": 0,
+        "input": "Springfield next",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 2723.8000000715256,
+            "id": "directory-search",
+            "tag": "INPUT"
+          }
+        ]
+      },
+      "after": {
+        "id": "chooser-heading",
+        "tag": "H2",
+        "text": "Which Springfield?",
+        "scrollY": 984,
+        "input": "Springfield",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 2723.8000000715256,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 3755.5,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 3756.8000000715256,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 3757.2000000476837,
+            "id": "chooser-heading",
+            "tag": "H2"
+          }
+        ]
+      }
+    },
+    {
+      "case": "typing-after-result",
+      "before": {
+        "id": "directory-search",
+        "tag": "INPUT",
+        "text": "",
+        "scrollY": 0,
+        "input": "san diego next",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 2518.2999999523163,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 2992.5999999046326,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 2993.899999976158,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 2994.2999999523163,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 4766.599999904633,
+            "id": "directory-search",
+            "tag": "INPUT"
+          }
+        ]
+      },
+      "after": {
+        "id": "directory-search",
+        "tag": "INPUT",
+        "text": "",
+        "scrollY": 0,
+        "input": "san diego next",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 2518.2999999523163,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 2992.5999999046326,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 2993.899999976158,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 2994.2999999523163,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 4766.599999904633,
+            "id": "directory-search",
+            "tag": "INPUT"
+          }
+        ]
+      }
+    },
+    {
+      "case": "tab-away",
+      "before": {
+        "id": "",
+        "tag": "A",
+        "text": "Clear search →",
+        "scrollY": 0,
+        "input": "Springfield",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 2390.2999999523163,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 2848,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 2848.1999999284744,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 2848.5,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 2859.6999999284744,
+            "id": "",
+            "tag": "A"
+          }
+        ]
+      },
+      "after": {
+        "id": "",
+        "tag": "A",
+        "text": "Clear search →",
+        "scrollY": 657,
+        "input": "Springfield",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 2390.2999999523163,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 2848,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 2848.1999999284744,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 2848.5,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "event": "focusin",
+            "t": 2859.6999999284744,
+            "id": "",
+            "tag": "A"
+          }
+        ]
+      }
+    },
+    {
+      "case": "controlled-three-body-resets",
+      "before": {
+        "id": "chooser-heading",
+        "tag": "H2",
+        "text": "Which san diego?",
+        "scrollY": 0,
+        "input": "san diego",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 2404.600000023842,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 2861.600000023842,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 2862,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 2862.2999999523163,
+            "id": "chooser-heading",
+            "tag": "H2"
+          }
+        ]
+      },
+      "after": {
+        "id": "chooser-heading",
+        "tag": "H2",
+        "text": "Which san diego?",
+        "scrollY": 730,
+        "input": "san diego",
+        "log": [
+          {
+            "event": "focusin",
+            "t": 2404.600000023842,
+            "id": "directory-search",
+            "tag": "INPUT"
+          },
+          {
+            "t": 2861.600000023842,
+            "id": "results",
+            "tag": "SECTION",
+            "before": "directory-search"
+          },
+          {
+            "t": 2862,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "directory-search"
+          },
+          {
+            "event": "focusin",
+            "t": 2862.2999999523163,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "t": 2884,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "BODY"
+          },
+          {
+            "event": "focusin",
+            "t": 2884.100000023842,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "t": 2967,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "BODY"
+          },
+          {
+            "event": "focusin",
+            "t": 2967.100000023842,
+            "id": "chooser-heading",
+            "tag": "H2"
+          },
+          {
+            "t": 3034.399999976158,
+            "id": "chooser-heading",
+            "tag": "H2",
+            "before": "BODY"
+          },
+          {
+            "event": "focusin",
+            "t": 3034.5,
+            "id": "chooser-heading",
+            "tag": "H2"
+          }
+        ]
+      }
+    }
+  ],
+  "regression": [
+    {
+      "q": "Faketown, ME",
+      "heading": "Search results",
+      "text": "Search results\nClear search →\n\nWe couldn't find Faketown in Maine.\n\nIt may be spelled differently here, or we may not list anything there yet.\n\nBrowse all Maine listings\nSearch “Faketown” as text",
+      "cards": []
+    },
+    {
+      "q": "Faketown, Maine",
+      "heading": "Search results",
+      "text": "Search results\nClear search →\n\nWe couldn't find Faketown in Maine.\n\nIt may be spelled differently here, or we may not list anything there yet.\n\nBrowse all Maine listings\nSearch “Faketown” as text",
+      "cards": []
+    },
+    {
+      "q": "faketown, me",
+      "heading": "Search results",
+      "text": "Search results\nClear search →\n\nWe couldn't find faketown in Maine.\n\nIt may be spelled differently here, or we may not list anything there yet.\n\nBrowse all Maine listings\nSearch “faketown” as text",
+      "cards": []
+    },
+    {
+      "q": "Missoula, ND",
+      "heading": "Search results",
+      "text": "Search results\nClear search →\n\nWe couldn't find Missoula in North Dakota.\n\nIt may be spelled differently here, or we may not list anything there yet.\n\nBrowse all North Dakota listings\nSearch “Missoula” as text",
+      "cards": []
+    },
+    {
+      "q": "Faketown",
+      "heading": "Search results",
+      "text": "Search results\nClear search →\n\nMatches for “Faketown” across name, city, and state.\n\nNo matches.\n\nTry different keywords, or pick a category above to browse.",
+      "cards": []
+    },
+    {
+      "q": "California",
+      "heading": "Recovery services and places in California",
+      "text": "Recovery services and places in California\nClear search →\n\nListings across California, ordered by name.\n\n🔎\nOutpatient\nSAMHSA Listed\n12 South Recovery\n\n📍 Lake Forest, CA\n\nView Details →\n🔎\nOutpatient\nSAMHSA Listed\n449 Recovery\n\n📍 Mission Viejo, CA\n\nView Details →\n🔎\nOutpatient\nSAMHSA Listed\nAble to Change Recovery Inc\n\n📍 San Juan Capistrano, CA\n\nView Details →\n🔎\nTreatment\nSAMHSA Listed\nAbsolute Control Transitional\n\n📍 Burbank, CA\n\nView Details →\n🔎\nOutpatient\nSAMHSA Listed\nAction Consultants Therapy\n\n📍 Costa Mesa, CA\n\nView Details →\n🔎\nOutpatient\nSAMHSA Listed\nAction Family Counseling\n\n📍 Santa Clarita, CA\n\nView Details →\n🔎\nOutpatient\nSAMHSA Listed\nAction Family Counseling\n\n📍 Bakersfield, CA\n\nView Details →\n🔎\nOutpatient\nSAMHSA Listed\nAddiction Research and Treatment Inc\n\n📍 Porterville, CA\n\nView Details →\n🔎\nOutpatient\nSAMHSA Listed\nAddiction Research and Treatment Inc\n\n📍 Oakland, CA\n\nView Details →\n🔎\nOutpatient\nSAMHSA Listed\nAddiction Research and Treatment Inc\n\n📍 San Francisco, CA\n\nView Details →\n🔎\nTreatment\nSAMHSA Listed\nAddiction Research and Treatment Inc\n\n📍 La Puente, CA\n\nView Details →\n🔎\nTreatment\nSAMHSA Listed\nAddiction Research and Treatment Inc\n\n📍 Richmond, CA\n\nView Details →\n🔎\nTreatment\nSAMHSA Listed\nAddiction Research and Treatment Inc\n\n📍 Los Angeles, CA\n\nView Details →\n🔎\nTreatment\nSAMHSA Listed\nAddiction Therapeutic Services\n\n📍 Rancho Mirage, CA\n\nView Details →\n🔎\nOutpatient\nSAMHSA Listed\nAdolescent Counseling Services\n\n📍 Redwood City, CA\n\nView Details →",
+      "cards": [
+        {
+          "id": "/find/7058cd02-2d6f-4302-b555-38523cd28e52",
+          "text": "🔎\nOutpatient\nSAMHSA Listed\n12 South Recovery\n\n📍 Lake Forest, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/ad9fec0c-b8cb-454f-9acc-18bd423506d1",
+          "text": "🔎\nOutpatient\nSAMHSA Listed\n449 Recovery\n\n📍 Mission Viejo, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/cb0f8678-5e0d-4a71-a9d1-a558627d25c0",
+          "text": "🔎\nOutpatient\nSAMHSA Listed\nAble to Change Recovery Inc\n\n📍 San Juan Capistrano, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/b044f954-152b-4863-bfb7-8533fd304c21",
+          "text": "🔎\nTreatment\nSAMHSA Listed\nAbsolute Control Transitional\n\n📍 Burbank, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/299153df-e419-431e-95c8-b4e74ad180fd",
+          "text": "🔎\nOutpatient\nSAMHSA Listed\nAction Consultants Therapy\n\n📍 Costa Mesa, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/e8ba8292-5130-4e12-a00a-ecd33abdc0b2",
+          "text": "🔎\nOutpatient\nSAMHSA Listed\nAction Family Counseling\n\n📍 Santa Clarita, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/3f5eca1e-8355-4479-8c24-22818d6b51d6",
+          "text": "🔎\nOutpatient\nSAMHSA Listed\nAction Family Counseling\n\n📍 Bakersfield, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/c3b745b7-288b-4891-8127-84434b287804",
+          "text": "🔎\nOutpatient\nSAMHSA Listed\nAddiction Research and Treatment Inc\n\n📍 Porterville, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/b7e570cc-844e-4b43-bd7e-75a945de010c",
+          "text": "🔎\nOutpatient\nSAMHSA Listed\nAddiction Research and Treatment Inc\n\n📍 Oakland, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/87ffacf7-0cd9-405b-b3fa-e3a5a733b363",
+          "text": "🔎\nOutpatient\nSAMHSA Listed\nAddiction Research and Treatment Inc\n\n📍 San Francisco, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/8b6f35d4-e02d-469b-babd-1efe9d04d808",
+          "text": "🔎\nTreatment\nSAMHSA Listed\nAddiction Research and Treatment Inc\n\n📍 La Puente, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/516e8f4a-e7ed-44c2-a960-6c10ccc9863e",
+          "text": "🔎\nTreatment\nSAMHSA Listed\nAddiction Research and Treatment Inc\n\n📍 Richmond, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/d19c0d3a-8ad1-47e8-bcdf-c2df43843d1b",
+          "text": "🔎\nTreatment\nSAMHSA Listed\nAddiction Research and Treatment Inc\n\n📍 Los Angeles, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/da5bcda2-6a9b-4d38-9e46-bbe9ff5099bb",
+          "text": "🔎\nTreatment\nSAMHSA Listed\nAddiction Therapeutic Services\n\n📍 Rancho Mirage, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/ae966329-46c0-4f37-8bb8-1ed17e224456",
+          "text": "🔎\nOutpatient\nSAMHSA Listed\nAdolescent Counseling Services\n\n📍 Redwood City, CA\n\nView Details →"
+        }
+      ]
+    },
+    {
+      "q": "CA",
+      "heading": "Recovery services and places in California",
+      "text": "Recovery services and places in California\nClear search →\n\nListings across California, ordered by name.\n\n🔎\nOutpatient\nSAMHSA Listed\n12 South Recovery\n\n📍 Lake Forest, CA\n\nView Details →\n🔎\nOutpatient\nSAMHSA Listed\n449 Recovery\n\n📍 Mission Viejo, CA\n\nView Details →\n🔎\nOutpatient\nSAMHSA Listed\nAble to Change Recovery Inc\n\n📍 San Juan Capistrano, CA\n\nView Details →\n🔎\nTreatment\nSAMHSA Listed\nAbsolute Control Transitional\n\n📍 Burbank, CA\n\nView Details →\n🔎\nOutpatient\nSAMHSA Listed\nAction Consultants Therapy\n\n📍 Costa Mesa, CA\n\nView Details →\n🔎\nOutpatient\nSAMHSA Listed\nAction Family Counseling\n\n📍 Santa Clarita, CA\n\nView Details →\n🔎\nOutpatient\nSAMHSA Listed\nAction Family Counseling\n\n📍 Bakersfield, CA\n\nView Details →\n🔎\nOutpatient\nSAMHSA Listed\nAddiction Research and Treatment Inc\n\n📍 Porterville, CA\n\nView Details →\n🔎\nOutpatient\nSAMHSA Listed\nAddiction Research and Treatment Inc\n\n📍 Oakland, CA\n\nView Details →\n🔎\nTreatment\nSAMHSA Listed\nAddiction Research and Treatment Inc\n\n📍 La Puente, CA\n\nView Details →\n🔎\nOutpatient\nSAMHSA Listed\nAddiction Research and Treatment Inc\n\n📍 San Francisco, CA\n\nView Details →\n🔎\nTreatment\nSAMHSA Listed\nAddiction Research and Treatment Inc\n\n📍 Richmond, CA\n\nView Details →\n🔎\nTreatment\nSAMHSA Listed\nAddiction Research and Treatment Inc\n\n📍 Los Angeles, CA\n\nView Details →\n🔎\nTreatment\nSAMHSA Listed\nAddiction Therapeutic Services\n\n📍 Rancho Mirage, CA\n\nView Details →\n🔎\nOutpatient\nSAMHSA Listed\nAdolescent Counseling Services\n\n📍 Redwood City, CA\n\nView Details →",
+      "cards": [
+        {
+          "id": "/find/7058cd02-2d6f-4302-b555-38523cd28e52",
+          "text": "🔎\nOutpatient\nSAMHSA Listed\n12 South Recovery\n\n📍 Lake Forest, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/ad9fec0c-b8cb-454f-9acc-18bd423506d1",
+          "text": "🔎\nOutpatient\nSAMHSA Listed\n449 Recovery\n\n📍 Mission Viejo, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/cb0f8678-5e0d-4a71-a9d1-a558627d25c0",
+          "text": "🔎\nOutpatient\nSAMHSA Listed\nAble to Change Recovery Inc\n\n📍 San Juan Capistrano, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/b044f954-152b-4863-bfb7-8533fd304c21",
+          "text": "🔎\nTreatment\nSAMHSA Listed\nAbsolute Control Transitional\n\n📍 Burbank, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/299153df-e419-431e-95c8-b4e74ad180fd",
+          "text": "🔎\nOutpatient\nSAMHSA Listed\nAction Consultants Therapy\n\n📍 Costa Mesa, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/e8ba8292-5130-4e12-a00a-ecd33abdc0b2",
+          "text": "🔎\nOutpatient\nSAMHSA Listed\nAction Family Counseling\n\n📍 Santa Clarita, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/3f5eca1e-8355-4479-8c24-22818d6b51d6",
+          "text": "🔎\nOutpatient\nSAMHSA Listed\nAction Family Counseling\n\n📍 Bakersfield, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/c3b745b7-288b-4891-8127-84434b287804",
+          "text": "🔎\nOutpatient\nSAMHSA Listed\nAddiction Research and Treatment Inc\n\n📍 Porterville, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/b7e570cc-844e-4b43-bd7e-75a945de010c",
+          "text": "🔎\nOutpatient\nSAMHSA Listed\nAddiction Research and Treatment Inc\n\n📍 Oakland, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/8b6f35d4-e02d-469b-babd-1efe9d04d808",
+          "text": "🔎\nTreatment\nSAMHSA Listed\nAddiction Research and Treatment Inc\n\n📍 La Puente, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/87ffacf7-0cd9-405b-b3fa-e3a5a733b363",
+          "text": "🔎\nOutpatient\nSAMHSA Listed\nAddiction Research and Treatment Inc\n\n📍 San Francisco, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/516e8f4a-e7ed-44c2-a960-6c10ccc9863e",
+          "text": "🔎\nTreatment\nSAMHSA Listed\nAddiction Research and Treatment Inc\n\n📍 Richmond, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/d19c0d3a-8ad1-47e8-bcdf-c2df43843d1b",
+          "text": "🔎\nTreatment\nSAMHSA Listed\nAddiction Research and Treatment Inc\n\n📍 Los Angeles, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/da5bcda2-6a9b-4d38-9e46-bbe9ff5099bb",
+          "text": "🔎\nTreatment\nSAMHSA Listed\nAddiction Therapeutic Services\n\n📍 Rancho Mirage, CA\n\nView Details →"
+        },
+        {
+          "id": "/find/ae966329-46c0-4f37-8bb8-1ed17e224456",
+          "text": "🔎\nOutpatient\nSAMHSA Listed\nAdolescent Counseling Services\n\n📍 Redwood City, CA\n\nView Details →"
+        }
+      ]
+    },
+    {
+      "q": "Missoula, MT",
+      "heading": "Nearest listed centers to Missoula, MT",
+      "text": "Nearest listed centers to Missoula, MT\nClear search →\n\nApproximate straight-line distances from the center of Missoula, MT. Travel distances may be longer.\n\n📍\nOutpatient\nSAMHSA Listed\nWinds of Change\n\n📍 Missoula, MT\n0.5 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nCedar Creek Integrated Health\n\n📍 Missoula, MT\n1.0 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nWinds of Change\n\n📍 Missoula, MT\n1.0 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nStepping Stones Behavioral Health Serv\n\n📍 Missoula, MT\n2.0 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nCommunity Medical Services\n\n📍 Missoula, MT\n2.4 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nStarr Counseling and Addiction Svcs\n\n📍 Missoula, MT\n2.6 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nYellowstone Boys and Girls Ranch\n\n📍 Missoula, MT\n3.3 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nYellowstone Boys and Girls Ranch\n\n📍 Missoula, MT\n7.9 mi\n\nView Details →\n📍\nTreatment\nSAMHSA Listed\nCedar Creek Integrated Health\n\n📍 Saint Ignatius, MT\n30.5 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nYellowstone Boys and Girls Ranch\n\n📍 Hamilton, MT\n44.8 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nCedar Creek Integrated Health\n\n📍 Ronan, MT\n44.8 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nChoices for Change Counseling\n\n📍 Superior, MT\n45.7 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nYellowstone Boys and Girls Ranch\n\n📍 Kalispell, MT\n91.7 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nYellowstone Boys and Girls Ranch\n\n📍 Kalispell, MT\n92.2 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nCommunity Medical Services\n\n📍 Kalispell, MT\n92.6 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nBIG SKY Treatment\n\n📍 Kalispell, MT\n93.3 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nMany Rivers Whole Health\n\n📍 Kalispell, MT\n93.5 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nSouthwest MT Community Health Center\n\n📍 Butte, MT\n93.5 mi\n\nView Details →\n📍\nTreatment\nSAMHSA Listed\nMontana Chemical Dependency Ctr\n\n📍 Butte, MT\n93.5 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nCedar Creek Integrated Health\n\n📍 Kalispell, MT\n94.2 mi\n\nView Details →\n📍\nTreatment\nSAMHSA Listed\nInstar Community Servs\n\n📍 Helena, MT\n95.7 mi\n\nView Details →\n📍\nTreatment\nSAMHSA Listed\nFlorence Crittenton Home and Services\n\n📍 Helena, MT\n96.0 mi\n\nView Details →\n📍\nTreatment\nSAMHSA Listed\nYWCA Helena\n\n📍 Helena, MT\n96.3 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nBoyd Andrew Community Services\n\n📍 Helena, MT\n96.4 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nHelena Valley Addiciton Services\n\n📍 Helena, MT\n96.6 mi\n\nView Details →\nShow more\n\nShowing the 25 nearest listed centers.",
+      "cards": [
+        {
+          "id": "/find/5f3f965c-c344-45e8-95ca-7817ab845370",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nWinds of Change\n\n📍 Missoula, MT\n0.5 mi\n\nView Details →",
+          "miles": "0.5"
+        },
+        {
+          "id": "/find/be892276-c194-4067-b6c4-ba42d26ea65d",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nCedar Creek Integrated Health\n\n📍 Missoula, MT\n1.0 mi\n\nView Details →",
+          "miles": "1.0"
+        },
+        {
+          "id": "/find/e70ec764-782a-4f23-8185-d9069baeb9a4",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nWinds of Change\n\n📍 Missoula, MT\n1.0 mi\n\nView Details →",
+          "miles": "1.0"
+        },
+        {
+          "id": "/find/e9edfa2b-fa31-4e61-a278-7a3a11f22bf6",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nStepping Stones Behavioral Health Serv\n\n📍 Missoula, MT\n2.0 mi\n\nView Details →",
+          "miles": "2.0"
+        },
+        {
+          "id": "/find/a2ba481e-5b55-475a-8709-c6a2cd9b9b80",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nCommunity Medical Services\n\n📍 Missoula, MT\n2.4 mi\n\nView Details →",
+          "miles": "2.4"
+        },
+        {
+          "id": "/find/38d5dc10-2a5a-4bc3-9da7-2d2bb964c244",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nStarr Counseling and Addiction Svcs\n\n📍 Missoula, MT\n2.6 mi\n\nView Details →",
+          "miles": "2.6"
+        },
+        {
+          "id": "/find/34b8f1ea-cce8-4c14-aefd-8ce3ad597c0a",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nYellowstone Boys and Girls Ranch\n\n📍 Missoula, MT\n3.3 mi\n\nView Details →",
+          "miles": "3.3"
+        },
+        {
+          "id": "/find/2127c6f3-7344-4e20-99b3-b11cf36159c8",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nYellowstone Boys and Girls Ranch\n\n📍 Missoula, MT\n7.9 mi\n\nView Details →",
+          "miles": "7.9"
+        },
+        {
+          "id": "/find/8745cb07-0d09-421a-8cb4-d62b34b260c3",
+          "text": "📍\nTreatment\nSAMHSA Listed\nCedar Creek Integrated Health\n\n📍 Saint Ignatius, MT\n30.5 mi\n\nView Details →",
+          "miles": "30.5"
+        },
+        {
+          "id": "/find/da658458-da9b-4819-a51b-5e15a76af040",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nYellowstone Boys and Girls Ranch\n\n📍 Hamilton, MT\n44.8 mi\n\nView Details →",
+          "miles": "44.8"
+        },
+        {
+          "id": "/find/50852a95-6216-4022-9ec2-111f00650630",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nCedar Creek Integrated Health\n\n📍 Ronan, MT\n44.8 mi\n\nView Details →",
+          "miles": "44.8"
+        },
+        {
+          "id": "/find/cd002391-376b-4cc1-ad52-8c75b2a61303",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nChoices for Change Counseling\n\n📍 Superior, MT\n45.7 mi\n\nView Details →",
+          "miles": "45.7"
+        },
+        {
+          "id": "/find/0519064c-9cc7-49e0-ab9a-3e1c6e9cabcc",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nYellowstone Boys and Girls Ranch\n\n📍 Kalispell, MT\n91.7 mi\n\nView Details →",
+          "miles": "91.7"
+        },
+        {
+          "id": "/find/09f561bb-09dc-4b46-945b-43a3f96380f6",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nYellowstone Boys and Girls Ranch\n\n📍 Kalispell, MT\n92.2 mi\n\nView Details →",
+          "miles": "92.2"
+        },
+        {
+          "id": "/find/a91d042f-78bf-47e0-a7e0-a63acebcf86b",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nCommunity Medical Services\n\n📍 Kalispell, MT\n92.6 mi\n\nView Details →",
+          "miles": "92.6"
+        },
+        {
+          "id": "/find/6f8b3203-71a1-4d87-9e91-a53b1960dd87",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nBIG SKY Treatment\n\n📍 Kalispell, MT\n93.3 mi\n\nView Details →",
+          "miles": "93.3"
+        },
+        {
+          "id": "/find/bce48a1b-c090-4007-8195-476504ef087d",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nMany Rivers Whole Health\n\n📍 Kalispell, MT\n93.5 mi\n\nView Details →",
+          "miles": "93.5"
+        },
+        {
+          "id": "/find/42ac47af-f170-4e20-9b08-a82800716f65",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nSouthwest MT Community Health Center\n\n📍 Butte, MT\n93.5 mi\n\nView Details →",
+          "miles": "93.5"
+        },
+        {
+          "id": "/find/3ebda0ae-8425-4d87-b6d7-d071607d3817",
+          "text": "📍\nTreatment\nSAMHSA Listed\nMontana Chemical Dependency Ctr\n\n📍 Butte, MT\n93.5 mi\n\nView Details →",
+          "miles": "93.5"
+        },
+        {
+          "id": "/find/f5ffd814-cfbf-4c5a-a9e7-6f82c22eaa0b",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nCedar Creek Integrated Health\n\n📍 Kalispell, MT\n94.2 mi\n\nView Details →",
+          "miles": "94.2"
+        },
+        {
+          "id": "/find/40cf07a8-6e38-4c5a-9eb4-6efe47649f76",
+          "text": "📍\nTreatment\nSAMHSA Listed\nInstar Community Servs\n\n📍 Helena, MT\n95.7 mi\n\nView Details →",
+          "miles": "95.7"
+        },
+        {
+          "id": "/find/a1da197b-f083-43ac-869c-3dc72844d59b",
+          "text": "📍\nTreatment\nSAMHSA Listed\nFlorence Crittenton Home and Services\n\n📍 Helena, MT\n96.0 mi\n\nView Details →",
+          "miles": "96.0"
+        },
+        {
+          "id": "/find/88fc8603-7cd9-4129-bb0b-9934da6d6c93",
+          "text": "📍\nTreatment\nSAMHSA Listed\nYWCA Helena\n\n📍 Helena, MT\n96.3 mi\n\nView Details →",
+          "miles": "96.3"
+        },
+        {
+          "id": "/find/5334973c-d1f8-43f2-8bb3-42e11b3abe32",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nBoyd Andrew Community Services\n\n📍 Helena, MT\n96.4 mi\n\nView Details →",
+          "miles": "96.4"
+        },
+        {
+          "id": "/find/55bc25ba-e0c0-4d9f-bb1e-7bb6767ca97a",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nHelena Valley Addiciton Services\n\n📍 Helena, MT\n96.6 mi\n\nView Details →",
+          "miles": "96.6"
+        }
+      ]
+    },
+    {
+      "q": "69201",
+      "heading": "Nearest listed centers to Valentine, NE 69201",
+      "text": "Nearest listed centers to Valentine, NE 69201\nClear search →\n\nApproximate straight-line distances from the center of Valentine, NE 69201. Travel distances may be longer.\n\nThe closest center listed for this search is about 102.8 miles from Valentine, NE 69201.\n\n📍\nOutpatient\nSAMHSA Listed\nHeartland Counseling Services Inc\n\n📍 O'Neill, NE\n102.8 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nAlly Counseling Services\n\n📍 O'Neill, NE\n103.1 mi\n\nView Details →\n📍\nTreatment\nSAMHSA Listed\nValley Hope of ONeill\n\n📍 O'Neill, NE\n103.4 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nFort Thompson Service Unit\n\n📍 Fort Thompson, SD\n105.3 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nCapital Area Counseling Services\n\n📍 Pierre, SD\n110.2 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nLutheran Family Services\n\n📍 North Platte, NE\n114.9 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nBeacon of Hope Counseling Center LLC\n\n📍 North Platte, NE\n115.6 mi\n\nView Details →\n📍\nTreatment\nSAMHSA Listed\nPsychiatric Hope\n\n📍 North Platte, NE\n115.7 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nHeartland Counseling Clinic\n\n📍 North Platte, NE\n115.8 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nFamily Matters Counseling Services LLC\n\n📍 North Platte, NE\n115.9 mi\n\nView Details →\n📍\nTreatment\nSAMHSA Listed\nHuman Services Inc\n\n📍 Alliance, NE\n124.3 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nSandhills Center for Hope\n\n📍 Alliance, NE\n124.7 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nHeartland Counseling Clinic\n\n📍 Ogallala, NE\n129.2 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nPonca Tribe of Nebraska\n\n📍 Niobrara, NE\n131.3 mi\n\nView Details →\n📍\nTreatment\nSAMHSA Listed\nLexington Regional Health Center\n\n📍 Lexington, NE\n146.5 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nLutheran Family Services of Nebraska\n\n📍 Lexington, NE\n147.1 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nHeartland Counseling Clinic\n\n📍 Lexington, NE\n147.3 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nAddiction Recovery Centers of the\n\n📍 Hot Springs, SD\n150.3 mi\n\nView Details →\n📍\nTreatment\nSAMHSA Listed\nVA Black Hills Healthcare System\n\n📍 Hot Springs, SD\n150.5 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nCentennial Mental Health Center Inc\n\n📍 Julesburg, CO\n151.4 mi\n\nView Details →\n📍\nTreatment\nSAMHSA Listed\nBuffalo Plains Recovery\n\n📍 Rapid City, SD\n155.9 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nRapid City\n\n📍 Rapid City, SD\n156.4 mi\n\nView Details →\n📍\nTreatment\nSAMHSA Listed\nWellfully Wellspring Inc\n\n📍 Rapid City, SD\n156.7 mi\n\nView Details →\n📍\nTreatment\nSAMHSA Listed\nAbbott House West\n\n📍 Rapid City, SD\n156.7 mi\n\nView Details →\n📍\nOutpatient\nSAMHSA Listed\nROADS Inc\n\n📍 Rapid City, SD\n157.0 mi\n\nView Details →\nShow more\n\nShowing the 25 nearest listed centers.",
+      "cards": [
+        {
+          "id": "/find/0a81f51e-e496-4873-9282-704dc0d2870a",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nHeartland Counseling Services Inc\n\n📍 O'Neill, NE\n102.8 mi\n\nView Details →",
+          "miles": "102.8"
+        },
+        {
+          "id": "/find/106b34e3-01e0-43e6-838a-63d0224b2cb4",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nAlly Counseling Services\n\n📍 O'Neill, NE\n103.1 mi\n\nView Details →",
+          "miles": "103.1"
+        },
+        {
+          "id": "/find/6b9151c7-50ac-4b04-ba54-33b240912191",
+          "text": "📍\nTreatment\nSAMHSA Listed\nValley Hope of ONeill\n\n📍 O'Neill, NE\n103.4 mi\n\nView Details →",
+          "miles": "103.4"
+        },
+        {
+          "id": "/find/2b646100-63c7-49d0-8de5-46673e130ef7",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nFort Thompson Service Unit\n\n📍 Fort Thompson, SD\n105.3 mi\n\nView Details →",
+          "miles": "105.3"
+        },
+        {
+          "id": "/find/1a31907b-d00a-40bf-b13e-89c45c76b664",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nCapital Area Counseling Services\n\n📍 Pierre, SD\n110.2 mi\n\nView Details →",
+          "miles": "110.2"
+        },
+        {
+          "id": "/find/e4c73139-0138-4bf1-af04-6801a2a3dfe9",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nLutheran Family Services\n\n📍 North Platte, NE\n114.9 mi\n\nView Details →",
+          "miles": "114.9"
+        },
+        {
+          "id": "/find/6612690b-6186-4210-ba6f-0eb3ec2054f3",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nBeacon of Hope Counseling Center LLC\n\n📍 North Platte, NE\n115.6 mi\n\nView Details →",
+          "miles": "115.6"
+        },
+        {
+          "id": "/find/4b8346f2-6009-4217-ac38-f9aacc8cd944",
+          "text": "📍\nTreatment\nSAMHSA Listed\nPsychiatric Hope\n\n📍 North Platte, NE\n115.7 mi\n\nView Details →",
+          "miles": "115.7"
+        },
+        {
+          "id": "/find/19eb81ca-3d59-4625-9b34-2ffc6c370c02",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nHeartland Counseling Clinic\n\n📍 North Platte, NE\n115.8 mi\n\nView Details →",
+          "miles": "115.8"
+        },
+        {
+          "id": "/find/c4d3da39-90cf-4277-a0d7-7d4e27b4151c",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nFamily Matters Counseling Services LLC\n\n📍 North Platte, NE\n115.9 mi\n\nView Details →",
+          "miles": "115.9"
+        },
+        {
+          "id": "/find/846c26ac-9237-42a3-9407-9348cc005175",
+          "text": "📍\nTreatment\nSAMHSA Listed\nHuman Services Inc\n\n📍 Alliance, NE\n124.3 mi\n\nView Details →",
+          "miles": "124.3"
+        },
+        {
+          "id": "/find/c8b5c80a-cfe1-450f-a26d-59c537c9b7c7",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nSandhills Center for Hope\n\n📍 Alliance, NE\n124.7 mi\n\nView Details →",
+          "miles": "124.7"
+        },
+        {
+          "id": "/find/9d877685-7a38-4d97-90ad-85a6f8cb4b7e",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nHeartland Counseling Clinic\n\n📍 Ogallala, NE\n129.2 mi\n\nView Details →",
+          "miles": "129.2"
+        },
+        {
+          "id": "/find/b3c2b4d6-f476-4ff0-80b5-b5c63f5059f1",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nPonca Tribe of Nebraska\n\n📍 Niobrara, NE\n131.3 mi\n\nView Details →",
+          "miles": "131.3"
+        },
+        {
+          "id": "/find/701ee56b-5d0b-4a15-8ca9-8174c17cdba0",
+          "text": "📍\nTreatment\nSAMHSA Listed\nLexington Regional Health Center\n\n📍 Lexington, NE\n146.5 mi\n\nView Details →",
+          "miles": "146.5"
+        },
+        {
+          "id": "/find/3ee170a4-f7fe-48d4-8c71-780bed8843b2",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nLutheran Family Services of Nebraska\n\n📍 Lexington, NE\n147.1 mi\n\nView Details →",
+          "miles": "147.1"
+        },
+        {
+          "id": "/find/0dd5a06e-9f2d-400b-8854-69b14123bb3a",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nHeartland Counseling Clinic\n\n📍 Lexington, NE\n147.3 mi\n\nView Details →",
+          "miles": "147.3"
+        },
+        {
+          "id": "/find/158531f4-d27d-450a-bc83-ed06d7d65c56",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nAddiction Recovery Centers of the\n\n📍 Hot Springs, SD\n150.3 mi\n\nView Details →",
+          "miles": "150.3"
+        },
+        {
+          "id": "/find/95367707-fedc-49a3-bcd3-97c840070af7",
+          "text": "📍\nTreatment\nSAMHSA Listed\nVA Black Hills Healthcare System\n\n📍 Hot Springs, SD\n150.5 mi\n\nView Details →",
+          "miles": "150.5"
+        },
+        {
+          "id": "/find/704b5b1d-d91f-4c51-a065-dfd1af36be04",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nCentennial Mental Health Center Inc\n\n📍 Julesburg, CO\n151.4 mi\n\nView Details →",
+          "miles": "151.4"
+        },
+        {
+          "id": "/find/565fa09a-54e0-4014-a61f-06f580d3ede7",
+          "text": "📍\nTreatment\nSAMHSA Listed\nBuffalo Plains Recovery\n\n📍 Rapid City, SD\n155.9 mi\n\nView Details →",
+          "miles": "155.9"
+        },
+        {
+          "id": "/find/7d0d44cd-200c-4a12-867d-60eb0c397886",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nRapid City\n\n📍 Rapid City, SD\n156.4 mi\n\nView Details →",
+          "miles": "156.4"
+        },
+        {
+          "id": "/find/27bcd6e1-2d5d-42ec-b96b-3d14954a1f74",
+          "text": "📍\nTreatment\nSAMHSA Listed\nWellfully Wellspring Inc\n\n📍 Rapid City, SD\n156.7 mi\n\nView Details →",
+          "miles": "156.7"
+        },
+        {
+          "id": "/find/91d23cc9-e2f7-4c29-a03e-9cbbb2d885fc",
+          "text": "📍\nTreatment\nSAMHSA Listed\nAbbott House West\n\n📍 Rapid City, SD\n156.7 mi\n\nView Details →",
+          "miles": "156.7"
+        },
+        {
+          "id": "/find/52ff4363-96b6-441b-98f4-9b3f7c737b95",
+          "text": "📍\nOutpatient\nSAMHSA Listed\nROADS Inc\n\n📍 Rapid City, SD\n157.0 mi\n\nView Details →",
+          "miles": "157.0"
+        }
+      ]
+    }
+  ],
+  "layouts": [
+    {
+      "path": "/find",
+      "scroll": 768,
+      "client": 768
+    },
+    {
+      "path": "/",
+      "scroll": 768,
+      "client": 768
+    }
+  ],
+  "chosen": {
+    "id": "",
+    "tag": "BODY",
+    "text": "FindFellowshipsResourcesOur StoryFor ProvidersSign InGet Started☰Ask anything…Need immedia",
+    "scrollY": 984,
+    "input": "Springfield, IL",
+    "log": [
+      {
+        "t": 687.7999999523163,
+        "id": "chooser-heading",
+        "tag": "H2",
+        "before": "BODY"
+      },
+      {
+        "event": "focusin",
+        "t": 688,
+        "id": "chooser-heading",
+        "tag": "H2"
+      },
+      {
+        "event": "focusin",
+        "t": 5784.799999952316,
+        "id": "",
+        "tag": "A"
+      },
+      {
+        "t": 7011.5,
+        "id": "results",
+        "tag": "SECTION",
+        "before": "BODY"
+      }
+    ]
+  },
+  "back": {
+    "id": "chooser-heading",
+    "tag": "H2",
+    "text": "Which Springfield?",
+    "scrollY": 984,
+    "input": "Springfield",
+    "log": [
+      {
+        "t": 687.7999999523163,
+        "id": "chooser-heading",
+        "tag": "H2",
+        "before": "BODY"
+      },
+      {
+        "event": "focusin",
+        "t": 688,
+        "id": "chooser-heading",
+        "tag": "H2"
+      },
+      {
+        "event": "focusin",
+        "t": 5784.799999952316,
+        "id": "",
+        "tag": "A"
+      },
+      {
+        "t": 7011.5,
+        "id": "results",
+        "tag": "SECTION",
+        "before": "BODY"
+      },
+      {
+        "t": 7167.5,
+        "id": "chooser-heading",
+        "tag": "H2",
+        "before": "BODY"
+      },
+      {
+        "event": "focusin",
+        "t": 7167.700000047684,
+        "id": "chooser-heading",
+        "tag": "H2"
+      }
+    ]
+  },
+  "textOffer": {
+    "heading": "Search results",
+    "text": "Search results\nClear search →\n\nMatches for “Missoula” across name, city, and state.\n\n🔎\nOutpatient\nSAMHSA Listed\nCedar Creek Integrated Health\n\n📍 Missoula, MT\n\nView Details →\n🔎\nOutpatient\nSAMHSA Listed\nCommunity Medical Services\n\n📍 Missoula, MT\n\nView Details →\n🔎\nOutpatient\nSAMHSA Listed\nStarr Counseling and Addiction Svcs\n\n📍 Missoula, MT\n\nView Details →\n🔎\nOutpatient\nSAMHSA Listed\nStepping Stones Behavioral Health Serv\n\n📍 Missoula, MT\n\nView Details →\n🔎\nOutpatient\nSAMHSA Listed\nWinds of Change\n\n📍 Missoula, MT\n\nView Details →\n🔎\nOutpatient\nSAMHSA Listed\nWinds of Change\n\n📍 Missoula, MT\n\nView Details →\n🔎\nOutpatient\nSAMHSA Listed\nYellowstone Boys and Girls Ranch\n\n📍 Missoula, MT\n\nView Details →\n🔎\nOutpatient\nSAMHSA Listed\nYellowstone Boys and Girls Ranch\n\n📍 Missoula, MT\n\nView Details →",
+    "cards": [
+      {
+        "id": "/find/be892276-c194-4067-b6c4-ba42d26ea65d",
+        "text": "🔎\nOutpatient\nSAMHSA Listed\nCedar Creek Integrated Health\n\n📍 Missoula, MT\n\nView Details →"
+      },
+      {
+        "id": "/find/a2ba481e-5b55-475a-8709-c6a2cd9b9b80",
+        "text": "🔎\nOutpatient\nSAMHSA Listed\nCommunity Medical Services\n\n📍 Missoula, MT\n\nView Details →"
+      },
+      {
+        "id": "/find/38d5dc10-2a5a-4bc3-9da7-2d2bb964c244",
+        "text": "🔎\nOutpatient\nSAMHSA Listed\nStarr Counseling and Addiction Svcs\n\n📍 Missoula, MT\n\nView Details →"
+      },
+      {
+        "id": "/find/e9edfa2b-fa31-4e61-a278-7a3a11f22bf6",
+        "text": "🔎\nOutpatient\nSAMHSA Listed\nStepping Stones Behavioral Health Serv\n\n📍 Missoula, MT\n\nView Details →"
+      },
+      {
+        "id": "/find/5f3f965c-c344-45e8-95ca-7817ab845370",
+        "text": "🔎\nOutpatient\nSAMHSA Listed\nWinds of Change\n\n📍 Missoula, MT\n\nView Details →"
+      },
+      {
+        "id": "/find/e70ec764-782a-4f23-8185-d9069baeb9a4",
+        "text": "🔎\nOutpatient\nSAMHSA Listed\nWinds of Change\n\n📍 Missoula, MT\n\nView Details →"
+      },
+      {
+        "id": "/find/34b8f1ea-cce8-4c14-aefd-8ce3ad597c0a",
+        "text": "🔎\nOutpatient\nSAMHSA Listed\nYellowstone Boys and Girls Ranch\n\n📍 Missoula, MT\n\nView Details →"
+      },
+      {
+        "id": "/find/2127c6f3-7344-4e20-99b3-b11cf36159c8",
+        "text": "🔎\nOutpatient\nSAMHSA Listed\nYellowstone Boys and Girls Ranch\n\n📍 Missoula, MT\n\nView Details →"
+      }
+    ]
+  }
+}
