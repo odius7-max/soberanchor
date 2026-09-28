@@ -67,6 +67,13 @@ const HERO = path.resolve('public/hero-tree-lined-path.jpg');
       if (ok) break;
       await p.waitForTimeout(250);
     }
+    // UNCAP=1 strips the headline cap in-page, so the uncapped composition can
+    // be measured in the same session, against the same pixels, without a
+    // second build.
+    if (process.env.UNCAP) {
+      await p.evaluate(() => { document.querySelector('h1').style.maxWidth = 'none'; });
+      await p.waitForTimeout(300);
+    }
     await p.waitForTimeout(500);
 
     // An unloaded photograph reads as smooth scrim with no walkers in it, which
@@ -128,11 +135,20 @@ const HERO = path.resolve('public/hero-tree-lined-path.jpg');
     // Local background model: each row's own wide median, which flattens the
     // scrim ramp without flattening a walker.
     const WIN = Math.max(151, Math.round(301 * scale) | 1);
-    // A walker's head is ~64px across where the photo is drawn at scale 0.96.
-    const MIN_RUN = Math.max(24, Math.round((45 * scale) / 0.96));
+    /*
+      Run-length floor for "this is a figure, not speckle".
+      This was 45px-at-scale-0.96, which is torso width, and that was a bug:
+      where the headline met only a walker's *head* the run fell under the
+      floor, the scan skipped it and reported the next figure's distance, so a
+      hard contact read as ~150px of clearance and put the collision onset about
+      80px too high (ODI-102 retest). The floor is now 18px at that scale, and
+      the matched run's length is reported with every hit — a threshold this
+      small has to be auditable rather than trusted.
+    */
+    const MIN_RUN = Math.max(12, Math.round((18 * scale) / 0.96));
     const y0 = Math.max(0, Math.floor(geo.h1Box.y)), y1 = Math.min(H, Math.ceil(geo.h1Box.y + geo.h1Box.h));
     const rows = [];
-    let minGap = Infinity, minRow = null, minGlyph = null, minWalker = null;
+    let minGap = Infinity, minRow = null, minGlyph = null, minWalker = null, minRun = 0;
 
     for (let y = y0; y < y1; y++) {
       const lumRow = new Float64Array(w);
@@ -152,9 +168,9 @@ const HERO = path.resolve('public/hero-tree-lined-path.jpg');
         First *walker* pixel to the right of the type. The row's local mean
         (prefix sums over a wide window) flattens the scrim ramp; anything well
         under it is dark. The run-length floor is what separates a walker from
-        background: at 1440 the type ends against a 28px-wide dark sliver of
-        mist/branch, while the walker's head is 64px and up. Without the floor
-        every width reports contact with something.
+        background. It has to stay well under a head's width: a crown is only
+        tens of pixels of dark in one scanline, and a floor set for torsos walks
+        straight past it.
       */
       const dark = [];
       for (let x = rightGlyph + 1; x < w; x++) {
@@ -162,23 +178,23 @@ const HERO = path.resolve('public/hero-tree-lined-path.jpg');
         const mean = (pre[z + 1] - pre[a]) / (z + 1 - a);
         dark.push(lumRow[x] < mean * 0.78);
       }
-      let leftWalker = null;
+      let leftWalker = null, runLen = 0;
       for (let k = 0; k < dark.length; k++) {
         if (!dark[k]) continue;
         let j = k;
         while (j < dark.length && dark[j]) j += 1;
-        if (j - k >= MIN_RUN) { leftWalker = rightGlyph + 1 + k; break; }
+        if (j - k >= MIN_RUN) { leftWalker = rightGlyph + 1 + k; runLen = j - k; break; }
         k = j;
       }
       if (leftWalker === null) continue;
       const gap = leftWalker - rightGlyph;
-      rows.push({ y, rightGlyph, leftWalker, gap });
-      if (gap < minGap) { minGap = gap; minRow = y; minGlyph = rightGlyph; minWalker = leftWalker; }
+      rows.push({ y, rightGlyph, leftWalker, gap, runLen });
+      if (gap < minGap) { minGap = gap; minRow = y; minGlyph = rightGlyph; minWalker = leftWalker; minRun = runLen; }
     }
 
     geo.rowsMeasured = rows.length;
     geo.minClearance = minGap === Infinity ? null : minGap;
-    geo.minClearanceAt = minRow === null ? null : { y: minRow, rightGlyph: minGlyph, leftWalker: minWalker };
+    geo.minClearanceAt = minRow === null ? null : { y: minRow, rightGlyph: minGlyph, leftWalker: minWalker, runLen: minRun };
     geo.tightestRows = rows.slice().sort((m, n) => m.gap - n.gap).slice(0, 6);
     out.push({ width: w, ...geo });
 

@@ -10,8 +10,8 @@ const DIR = 'docs/audits/odi-102';
   const out = [];
   for (const w of [320, 375, 700, 768, 1024, 1280, 1440, 1920, 2560]) {
     const [a, b] = await Promise.all([
-      sharp(`${DIR}/gated2-${w}.png`).removeAlpha().raw().toBuffer({ resolveWithObject: true }),
-      sharp(`${DIR}/fixed2-${w}.png`).removeAlpha().raw().toBuffer({ resolveWithObject: true }),
+      sharp(`${DIR}/nocap-${w}.png`).removeAlpha().raw().toBuffer({ resolveWithObject: true }),
+      sharp(`${DIR}/cap1441-${w}.png`).removeAlpha().raw().toBuffer({ resolveWithObject: true }),
     ]);
     if (a.data.length !== b.data.length) { out.push({ w, note: 'dimension mismatch' }); continue; }
     let diff = 0, maxd = 0;
