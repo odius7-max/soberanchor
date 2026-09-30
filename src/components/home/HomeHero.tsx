@@ -50,6 +50,48 @@ export default function HomeHero({ facilityCount }: { facilityCount: number }) {
         @media (min-width: 701px) { .sa-hero-h1 { font-variation-settings: 'opsz' 42; } }
         .sa-hero-focus:focus-visible,
         .sa-hero-search:focus-within { outline: 3px solid #7FD4C1; outline-offset: 3px; }
+        /*
+          ODI-102. The copy column is inset to the site's content container — the same
+          max-w-[1120px] box and 24px gutter Nav uses — so the headline starts on the nav
+          logo's vertical instead of drifting to the viewport edge as the window widens.
+          50% is of this grid item's containing block, i.e. the section's content box
+          (viewport minus the section's 2×20px padding), so 50% - 536px resolves to the
+          container's left gutter measured from that box's own left edge.
+          max() keeps the comp's original clamp wherever the clamp is the larger of the
+          two — every width up to ~1264px — so 1024 and below, mobile included, stay
+          pixel-identical, and nothing ever moves left of where it sits today.
+          A media query can't express this (the crossover is continuous) and a Tailwind
+          arbitrary value can't hold the spaces max() needs, so it lives here.
+        */
+        .sa-hero-copy { padding-left: max(clamp(4px, 6vw, 90px), 50% - 536px); }
+        /*
+          ODI-102 gate, finding 4. Once the copy column is anchored to the content
+          container, the headline's long middle line ("treatment to tracking") grows
+          away from the viewport edge at the same rate the left walker does, until the
+          terminal "g" lands on his head — measured contact, not a near miss.
+          object-position cannot help: the photograph is 2000x1180 against a hero this
+          wide, so cover scales it by width and there is exactly zero horizontal slack
+          to shift (docs/audits/odi-102/clearance-uncapped.json). Capping the headline
+          is the lever that leaves the photograph alone, and the cap is the 560px the
+          subhead already uses, so above this breakpoint the whole copy block reads on
+          one measure. text-wrap:balance then settles it into four lines whose longest
+          is 422px.
+
+          1441 is the breakpoint because 1440 is the top of the range the gate
+          pixel-diffed and protected, and the collision is already present at the very
+          next pixel. An earlier attempt put this at 1500 on a measured "onset" of
+          ~1520; that measurement was wrong — the probe behind it required a dark run
+          wide enough to be a torso before it would call something a walker, so where
+          the headline met only the narrower head it reported the *next* figure's
+          distance instead and read as clear. Corrected, the contact runs continuous
+          from the protected range upward, so the cap starts as early as the contract
+          allows rather than at a width the sweep happened to sample.
+
+          Below 1441 nothing changes at all, which is what keeps 1280/1440 — and every
+          width the gate pixel-diffed — byte-identical. The opsz 42 pin above is
+          untouched and still applies.
+        */
+        @media (min-width: 1441px) { .sa-hero-h1 { max-width: 560px; } }
       `}</style>
 
       {/* Decorative: the photograph carries no information the copy doesn't. */}
@@ -89,11 +131,12 @@ export default function HomeHero({ facilityCount }: { facilityCount: number }) {
 
       {/*
         Two boxes so the comp's geometry survives border-box: the outer one carries the
-        left inset, the inner one caps the copy at 680px. min-w-0 (plus the section's
+        left inset (.sa-hero-copy above — the site content container's gutter), the inner
+        one caps the copy at 680px inside it. min-w-0 (plus the section's
         grid-cols-[minmax(0,1fr)]) stops the column being sized by its min-content and
         overflowing narrow viewports.
       */}
-      <div className="relative min-w-0 text-left pl-[clamp(4px,6vw,90px)]">
+      <div className="sa-hero-copy relative min-w-0 text-left">
         <div className="max-w-[680px]">
           <div
             aria-hidden

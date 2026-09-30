@@ -1,0 +1,65 @@
+[
+  {
+    "w": 320,
+    "mustMatch": true,
+    "differingSubpixels": 0,
+    "maxChannelDelta": 0,
+    "identical": true
+  },
+  {
+    "w": 375,
+    "mustMatch": true,
+    "differingSubpixels": 0,
+    "maxChannelDelta": 0,
+    "identical": true
+  },
+  {
+    "w": 700,
+    "mustMatch": true,
+    "differingSubpixels": 0,
+    "maxChannelDelta": 0,
+    "identical": true
+  },
+  {
+    "w": 768,
+    "mustMatch": true,
+    "differingSubpixels": 0,
+    "maxChannelDelta": 0,
+    "identical": true
+  },
+  {
+    "w": 1024,
+    "mustMatch": true,
+    "differingSubpixels": 0,
+    "maxChannelDelta": 0,
+    "identical": true
+  },
+  {
+    "w": 1280,
+    "mustMatch": true,
+    "differingSubpixels": 0,
+    "maxChannelDelta": 0,
+    "identical": true
+  },
+  {
+    "w": 1440,
+    "mustMatch": true,
+    "differingSubpixels": 0,
+    "maxChannelDelta": 0,
+    "identical": true
+  },
+  {
+    "w": 1920,
+    "mustMatch": false,
+    "differingSubpixels": 3922516,
+    "maxChannelDelta": 255,
+    "identical": false
+  },
+  {
+    "w": 2560,
+    "mustMatch": false,
+    "differingSubpixels": 5051169,
+    "maxChannelDelta": 255,
+    "identical": false
+  }
+]
