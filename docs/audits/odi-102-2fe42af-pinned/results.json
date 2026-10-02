@@ -1,0 +1,447 @@
+{
+  "measurements": [
+    {
+      "opsz": "\"opsz\" 42",
+      "lineHeight": "70.4px",
+      "h1": {
+        "x": 184,
+        "y": 226.84375,
+        "width": 680,
+        "height": 211.171875,
+        "right": 864
+      },
+      "copy": {
+        "x": 184,
+        "y": 197.84375,
+        "width": 680,
+        "height": 584.796875,
+        "right": 864
+      },
+      "logo": {
+        "x": 184,
+        "y": 15,
+        "width": 220.3125,
+        "height": 30,
+        "right": 404.3125
+      },
+      "section": {
+        "x": 0,
+        "y": 116.25,
+        "width": 1440,
+        "height": 760,
+        "right": 1440
+      },
+      "headings": [
+        {
+          "text": "Find what you need.",
+          "x": 160,
+          "y": 957.25,
+          "width": 1120,
+          "height": 54,
+          "right": 1280
+        },
+        {
+          "text": "Built for the work that happens every day.",
+          "x": 160,
+          "y": 1466.96875,
+          "width": 565.703125,
+          "height": 92,
+          "right": 725.703125
+        },
+        {
+          "text": "Why we built SoberAnchor.",
+          "x": 600.328125,
+          "y": 1940.25,
+          "width": 638.671875,
+          "height": 39,
+          "right": 1239
+        }
+      ],
+      "scroll": 1440,
+      "client": 1440,
+      "image": {
+        "position": "100% 50%",
+        "fit": "cover",
+        "naturalWidth": 1500,
+        "naturalHeight": 885,
+        "x": 0,
+        "y": 116.25,
+        "width": 1440,
+        "height": 760,
+        "right": 1440
+      },
+      "gradients": [
+        {
+          "background": "linear-gradient(rgba(11, 47, 74, 0.8) 0%, rgba(11, 47, 74, 0.78) 55%, rgba(14, 58, 91, 0.76) 100%)",
+          "display": "none"
+        },
+        {
+          "background": "linear-gradient(100deg, rgba(11, 47, 74, 0.86) 0%, rgba(11, 47, 74, 0.8) 46%, rgba(14, 58, 91, 0.74) 78%, rgba(14, 58, 91, 0.66) 100%)",
+          "display": "block"
+        }
+      ],
+      "width": 1440,
+      "delta": 0,
+      "priorRuleDifferentChannels": 0,
+      "priorRuleTotalChannels": 4320000
+    },
+    {
+      "opsz": "\"opsz\" 42",
+      "lineHeight": "70.4px",
+      "h1": {
+        "x": 184.5,
+        "y": 217.25,
+        "width": 560,
+        "height": 281.5625,
+        "right": 744.5
+      },
+      "copy": {
+        "x": 184.5,
+        "y": 188.25,
+        "width": 680,
+        "height": 655.1875,
+        "right": 864.5
+      },
+      "logo": {
+        "x": 184.5,
+        "y": 15,
+        "width": 220.3125,
+        "height": 30,
+        "right": 404.8125
+      },
+      "section": {
+        "x": 0,
+        "y": 116.25,
+        "width": 1441,
+        "height": 811.1875,
+        "right": 1441
+      },
+      "headings": [
+        {
+          "text": "Find what you need.",
+          "x": 160.5,
+          "y": 1008.4375,
+          "width": 1120,
+          "height": 54,
+          "right": 1280.5
+        },
+        {
+          "text": "Built for the work that happens every day.",
+          "x": 160.5,
+          "y": 1518.15625,
+          "width": 565.703125,
+          "height": 92,
+          "right": 726.203125
+        },
+        {
+          "text": "Why we built SoberAnchor.",
+          "x": 600.828125,
+          "y": 1991.4375,
+          "width": 638.671875,
+          "height": 39,
+          "right": 1239.5
+        }
+      ],
+      "scroll": 1441,
+      "client": 1441,
+      "image": {
+        "position": "100% 50%",
+        "fit": "cover",
+        "naturalWidth": 1501,
+        "naturalHeight": 885,
+        "x": 0,
+        "y": 116.25,
+        "width": 1441,
+        "height": 811.1875,
+        "right": 1441
+      },
+      "gradients": [
+        {
+          "background": "linear-gradient(rgba(11, 47, 74, 0.8) 0%, rgba(11, 47, 74, 0.78) 55%, rgba(14, 58, 91, 0.76) 100%)",
+          "display": "none"
+        },
+        {
+          "background": "linear-gradient(100deg, rgba(11, 47, 74, 0.86) 0%, rgba(11, 47, 74, 0.8) 46%, rgba(14, 58, 91, 0.74) 78%, rgba(14, 58, 91, 0.66) 100%)",
+          "display": "block"
+        }
+      ],
+      "width": 1441,
+      "delta": 0
+    },
+    {
+      "opsz": "\"opsz\" 42",
+      "lineHeight": "70.4px",
+      "h1": {
+        "x": 213.5,
+        "y": 217.25,
+        "width": 560,
+        "height": 281.5625,
+        "right": 773.5
+      },
+      "copy": {
+        "x": 213.5,
+        "y": 188.25,
+        "width": 680,
+        "height": 655.1875,
+        "right": 893.5
+      },
+      "logo": {
+        "x": 213.5,
+        "y": 15,
+        "width": 220.3125,
+        "height": 30,
+        "right": 433.8125
+      },
+      "section": {
+        "x": 0,
+        "y": 116.25,
+        "width": 1499,
+        "height": 811.1875,
+        "right": 1499
+      },
+      "headings": [
+        {
+          "text": "Find what you need.",
+          "x": 189.5,
+          "y": 1008.4375,
+          "width": 1120,
+          "height": 54,
+          "right": 1309.5
+        },
+        {
+          "text": "Built for the work that happens every day.",
+          "x": 189.5,
+          "y": 1518.15625,
+          "width": 565.703125,
+          "height": 92,
+          "right": 755.203125
+        },
+        {
+          "text": "Why we built SoberAnchor.",
+          "x": 629.828125,
+          "y": 1991.4375,
+          "width": 638.671875,
+          "height": 39,
+          "right": 1268.5
+        }
+      ],
+      "scroll": 1499,
+      "client": 1499,
+      "image": {
+        "position": "100% 50%",
+        "fit": "cover",
+        "naturalWidth": 1561,
+        "naturalHeight": 921,
+        "x": 0,
+        "y": 116.25,
+        "width": 1499,
+        "height": 811.1875,
+        "right": 1499
+      },
+      "gradients": [
+        {
+          "background": "linear-gradient(rgba(11, 47, 74, 0.8) 0%, rgba(11, 47, 74, 0.78) 55%, rgba(14, 58, 91, 0.76) 100%)",
+          "display": "none"
+        },
+        {
+          "background": "linear-gradient(100deg, rgba(11, 47, 74, 0.86) 0%, rgba(11, 47, 74, 0.8) 46%, rgba(14, 58, 91, 0.74) 78%, rgba(14, 58, 91, 0.66) 100%)",
+          "display": "block"
+        }
+      ],
+      "width": 1499,
+      "delta": 0
+    },
+    {
+      "opsz": "\"opsz\" 42",
+      "lineHeight": "70.4px",
+      "h1": {
+        "x": 424,
+        "y": 217.25,
+        "width": 560,
+        "height": 281.5625,
+        "right": 984
+      },
+      "copy": {
+        "x": 424,
+        "y": 188.25,
+        "width": 680,
+        "height": 655.1875,
+        "right": 1104
+      },
+      "logo": {
+        "x": 424,
+        "y": 15,
+        "width": 220.3125,
+        "height": 30,
+        "right": 644.3125
+      },
+      "section": {
+        "x": 0,
+        "y": 116.25,
+        "width": 1920,
+        "height": 811.1875,
+        "right": 1920
+      },
+      "headings": [
+        {
+          "text": "Find what you need.",
+          "x": 400,
+          "y": 1008.4375,
+          "width": 1120,
+          "height": 54,
+          "right": 1520
+        },
+        {
+          "text": "Built for the work that happens every day.",
+          "x": 400,
+          "y": 1518.15625,
+          "width": 565.703125,
+          "height": 92,
+          "right": 965.703125
+        },
+        {
+          "text": "Why we built SoberAnchor.",
+          "x": 840.328125,
+          "y": 1991.4375,
+          "width": 638.671875,
+          "height": 39,
+          "right": 1479
+        }
+      ],
+      "scroll": 1920,
+      "client": 1920,
+      "image": {
+        "position": "100% 50%",
+        "fit": "cover",
+        "naturalWidth": 2000,
+        "naturalHeight": 1180,
+        "x": 0,
+        "y": 116.25,
+        "width": 1920,
+        "height": 811.1875,
+        "right": 1920
+      },
+      "gradients": [
+        {
+          "background": "linear-gradient(rgba(11, 47, 74, 0.8) 0%, rgba(11, 47, 74, 0.78) 55%, rgba(14, 58, 91, 0.76) 100%)",
+          "display": "none"
+        },
+        {
+          "background": "linear-gradient(100deg, rgba(11, 47, 74, 0.86) 0%, rgba(11, 47, 74, 0.8) 46%, rgba(14, 58, 91, 0.74) 78%, rgba(14, 58, 91, 0.66) 100%)",
+          "display": "block"
+        }
+      ],
+      "width": 1920,
+      "delta": 0
+    }
+  ],
+  "contrast": [
+    {
+      "width": 1441,
+      "rows": [
+        {
+          "name": "headline",
+          "x": 184.5,
+          "y": 217.25,
+          "width": 560,
+          "height": 281.5625,
+          "color": "rgb(250, 247, 242)",
+          "samples": 19428,
+          "min": 7.862540706781447,
+          "p05": 9.74148329409094,
+          "rectangleMin": 7.499623928424169
+        },
+        {
+          "name": "subhead",
+          "x": 184.5,
+          "y": 518.8125,
+          "width": 560,
+          "height": 118.375,
+          "color": "rgba(250, 247, 242, 0.94)",
+          "samples": 5545,
+          "min": 7.540329127325543,
+          "p05": 8.437886298378814,
+          "rectangleMin": 6.856667117762646
+        },
+        {
+          "name": "trust",
+          "x": 184.5,
+          "y": 823.1875,
+          "width": 680,
+          "height": 20.25,
+          "color": "rgba(250, 247, 242, 0.82)",
+          "samples": 682,
+          "min": 7.2356696045933475,
+          "p05": 7.998051410720676,
+          "rectangleMin": 4.934886650782503
+        },
+        {
+          "name": "hint",
+          "x": 184.5,
+          "y": 725.1875,
+          "width": 143.578125,
+          "height": 18,
+          "color": "rgba(250, 247, 242, 0.82)",
+          "samples": 241,
+          "min": 8.817051926917724,
+          "p05": 9.068747051018708,
+          "rectangleMin": 7.467288896199037
+        }
+      ]
+    },
+    {
+      "width": 1499,
+      "rows": [
+        {
+          "name": "headline",
+          "x": 213.5,
+          "y": 217.25,
+          "width": 560,
+          "height": 281.5625,
+          "color": "rgb(250, 247, 242)",
+          "samples": 19429,
+          "min": 8.170729076595585,
+          "p05": 9.592062654752032,
+          "rectangleMin": 7.538049851030158
+        },
+        {
+          "name": "subhead",
+          "x": 213.5,
+          "y": 518.8125,
+          "width": 560,
+          "height": 118.375,
+          "color": "rgba(250, 247, 242, 0.94)",
+          "samples": 5552,
+          "min": 7.67004065658378,
+          "p05": 8.500046679382937,
+          "rectangleMin": 6.847969284900422
+        },
+        {
+          "name": "trust",
+          "x": 213.5,
+          "y": 823.1875,
+          "width": 680,
+          "height": 20.25,
+          "color": "rgba(250, 247, 242, 0.82)",
+          "samples": 686,
+          "min": 6.857245729753264,
+          "p05": 7.860474700656014,
+          "rectangleMin": 4.793993069484839
+        },
+        {
+          "name": "hint",
+          "x": 213.5,
+          "y": 725.1875,
+          "width": 143.578125,
+          "height": 18,
+          "color": "rgba(250, 247, 242, 0.82)",
+          "samples": 243,
+          "min": 8.15218522221126,
+          "p05": 8.93016299590902,
+          "rectangleMin": 7.9267889064526535
+        }
+      ]
+    }
+  ],
+  "errors": []
+}
