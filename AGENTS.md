@@ -30,3 +30,24 @@ Role boundaries the routing protects:
 - Claude (Cowork): specs, prompts, Linear, database reads/writes, research; writes documents here via the file bus.
 
 Session hygiene: one branch/task per session for both Claude Code and Astra. Fresh session per new task; stay in-session for a task's fix/retest loop; durable context belongs in docs/, never in chat history. `docs/planning/README.md` indexes the current documents.
+
+# Pre-build review and role boundaries (ratified by Travis, 2026-10-07)
+
+**Pre-build review (standing).** Any non-trivial ticket gets an Astra design/technical
+review of its spec before the build prompt goes to Claude Code. Her findings fold into
+the spec; her ratified decisions ride in the build prompt. Trivial fixes (one-liners
+with an obvious verification) may skip this at Claude's discretion, stated in the
+build prompt.
+
+**Acceptance criteria are Astra's.** The spec's test matrix and acceptance criteria
+are written or amended by Astra in the pre-build review, so the eventual gate verifies
+her own list. Technical consultation during fix loops — prescriptions, candidate
+values, diagnosis docs — is explicitly within her role.
+
+**The hard line is unchanged.** Astra never writes, commits, merges, or pushes
+application code, and no one gates a build they authored. Independence is what makes
+a PASS mean something.
+
+**Evidence-commit scope (standing).** Gate records commit all text/JSON evidence plus
+the captures the verdicts turn on; bulk full-page capture sets stay untracked,
+regenerable via the committed probes.
