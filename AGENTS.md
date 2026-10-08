@@ -51,3 +51,12 @@ a PASS mean something.
 **Evidence-commit scope (standing).** Gate records commit all text/JSON evidence plus
 the captures the verdicts turn on; bulk full-page capture sets stay untracked,
 regenerable via the committed probes.
+
+# Angel's intake (added 2026-10-08)
+
+Angel files findings to Linear from her own Claude (free account + Linear connector)
+or directly in the Linear app, labeled **angel-triage**. She is not expected to know
+ODI conventions. Claude (Cowork) sweeps angel-triage periodically: dedupe against
+existing tickets, add repro detail, set priority/relations, then remove the label
+once triaged (the label means "not yet triaged"). Never close her tickets as
+duplicates without a comment linking the original.
